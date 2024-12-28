@@ -1,0 +1,82 @@
+"""Code formatting utilities."""
+
+import logging
+import re
+from typing import Tuple
+
+import autopep8
+import black
+
+logger = logging.getLogger(__name__)
+
+def extract_code_block(text: str) -> str:
+    """Extract Python code block from text, handling various formats."""
+    # Try to find a Python code block
+    if match := re.search(r'```(?:python)?\n(.*?)\n```', text, re.DOTALL):
+        return match.group(1).strip()
+    
+    # If no code block markers, look for Python-like content
+    lines = text.strip().split('\n')
+    
+    # Find the first line that looks like Python code
+    start = 0
+    for i, line in enumerate(lines):
+        if re.match(r'^(import\s+|from\s+|def\s+|class\s+|#)', line):
+            start = i
+            break
+    
+    # Find the last line that looks like Python code
+    end = len(lines)
+    for i in range(len(lines) - 1, -1, -1):
+        line = lines[i].strip()
+        if line and not line.startswith(('```', '"""', "'''", '#')):
+            end = i + 1
+            break
+    
+    return '\n'.join(lines[start:end])
+
+def format_code(source_code: str) -> Tuple[str, bool]:
+    """Format Python code using black and autopep8.
+    
+    Args:
+        source_code: Python source code to format
+        
+    Returns:
+        Tuple of (formatted_code, success)
+    """
+    try:
+        # First extract actual code if needed
+        code = extract_code_block(source_code)
+        
+        # Fix common issues
+        code = code.replace('\\n', '\n')  # Fix escaped newlines
+        code = code.replace('\\"', '"')   # Fix escaped quotes
+        
+        # Try to fix basic syntax with autopep8
+        try:
+            fixed_code = autopep8.fix_code(
+                code,
+                options={'aggressive': 1}
+            )
+        except Exception as e:
+            logger.warning("autopep8 failed: %s", str(e))
+            fixed_code = code
+        
+        try:
+            # Then try to format with black
+            mode = black.Mode(
+                target_versions={black.TargetVersion.PY39},
+                line_length=88,
+                string_normalization=True,
+                is_pyi=False,
+            )
+            formatted_code = black.format_str(fixed_code, mode=mode)
+            return formatted_code, True
+        except Exception as e:
+            logger.warning("black formatting failed: %s", str(e))
+            # If black fails, return the autopep8 result
+            return fixed_code, True
+            
+    except Exception as e:
+        logger.warning("Code formatting failed: %s", str(e))
+        return source_code, False

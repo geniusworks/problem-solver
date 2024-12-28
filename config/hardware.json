@@ -1,0 +1,22 @@
+{
+    "max_model_size": 7,
+    "concurrent_models": 2,
+    "profiles": {
+        "m1_16gb": {
+            "max_model_size": 7,
+            "concurrent_models": 1
+        },
+        "m1_32gb": {
+            "max_model_size": 13,
+            "concurrent_models": 2
+        },
+        "m2_16gb": {
+            "max_model_size": 7,
+            "concurrent_models": 2
+        },
+        "m2_32gb": {
+            "max_model_size": 13,
+            "concurrent_models": 3
+        }
+    }
+}

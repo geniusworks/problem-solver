@@ -2,6 +2,7 @@
 import json
 import logging
 import time
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Tuple, Dict, Any
@@ -119,28 +120,50 @@ def fetch_problem_text(year: int, day: int) -> str:
         # Get the title
         title = article.find('h2')
         if title:
-            texts.append(title.get_text())
+            texts.append(title.get_text().strip())
+            texts.append("")  # Add blank line after title
         
-        # Get all paragraphs
-        for p in article.find_all('p'):
-            # Remove code elements but keep their text
-            for code in p.find_all('code'):
-                code.replace_with(code.get_text())
-            # Remove em elements but keep their text
-            for em in p.find_all('em'):
-                em.replace_with(em.get_text())
-            # Remove span elements but keep their text
-            for span in p.find_all('span'):
-                span.replace_with(span.get_text())
-            texts.append(p.get_text(strip=True))
-        
-        # Handle code blocks
-        for pre in article.find_all('pre'):
-            code = pre.find('code')
-            if code:
-                texts.append('\nExample:\n' + code.get_text().strip())
+        # Process each element in the article
+        for elem in article.children:
+            if elem.name == 'p':
+                # Handle paragraphs
+                text = ""
+                for child in elem.children:
+                    if isinstance(child, str):
+                        text += child
+                    elif child.name == 'code':
+                        text += f"`{child.get_text()}`"
+                    elif child.name == 'em':
+                        text += f"*{child.get_text()}*"
+                    elif child.name == 'span':
+                        if child.get('title'):
+                            text += f"{child.get_text()} ({child['title']})"
+                        else:
+                            text += child.get_text()
+                    else:
+                        text += child.get_text()
+                texts.append(text.strip())
+                texts.append("")  # Add blank line after paragraph
+            elif elem.name == 'pre':
+                # Handle code blocks
+                code = elem.find('code')
+                if code:
+                    texts.append("Example:")
+                    # Clean up the code text
+                    code_lines = []
+                    for line in code.get_text().strip().split('\n'):
+                        # Remove any emphasized text markers but keep the text
+                        line = line.replace('(increased)', '')
+                        line = line.replace('(decreased)', '')
+                        line = line.replace('(N/A - no previous measurement)', '')
+                        # Clean up whitespace but preserve indentation
+                        line = line.strip()
+                        code_lines.append(line)
+                    texts.append('\n'.join(code_lines))
+                    texts.append("")  # Add blank line after code block
     
-    return '\n\n'.join(texts)
+    # Join all text with proper spacing
+    return '\n'.join(texts).strip()
 
 def save_to_file(filename: str, content: str, problem_dir: Path) -> None:
     """Save content to a file in the problem directory."""
@@ -290,3 +313,31 @@ def read_input(year: int, day: int) -> str:
     if not input_path.exists():
         raise InputError(f"Input file not found: {input_path}")
     return input_path.read_text().strip()
+
+def download_input(year: int, day: int) -> str:
+    """Download input from Advent of Code website."""
+    # Get session cookie from environment
+    session = os.getenv("AOC_SESSION")
+    if not session:
+        raise ValueError(
+            "AOC_SESSION environment variable not set. "
+            "Get it from browser cookies at adventofcode.com"
+        )
+    
+    # Create directory if it doesn't exist
+    input_dir = Path(f"{year}/day{day:02d}")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Download input if it doesn't exist
+    input_file = input_dir / "input.txt"
+    if not input_file.exists():
+        url = f"https://adventofcode.com/{year}/day/{day}/input"
+        response = requests.get(
+            url,
+            cookies={"session": session},
+            headers={"User-Agent": "advent-of-code-solver v1.0"}
+        )
+        response.raise_for_status()
+        input_file.write_text(response.text)
+    
+    return input_file.read_text()

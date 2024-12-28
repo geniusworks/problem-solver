@@ -1,10 +1,21 @@
 requests==2.31.0
-pandas>=2.1.0
-numpy>=1.24.0
-pytest>=7.4.0
-black>=23.7.0
-isort>=5.12.0
-flake8>=6.1.0
-mypy>=1.5.0
 beautifulsoup4==4.12.2
-python-dotenv==1.0.0
+python-dotenv>=1.0.0
+anthropic>=0.7.4  # For Claude API
+pytest>=7.4.3     # For testing framework
+pytest-asyncio==0.21.1  # For async tests
+aiohttp>=3.9.1    # For async HTTP requests
+pydantic==2.5.2   # For data validation
+rich==13.7.0      # For beautiful console output
+openai>=1.3.7
+psutil>=5.9.6
+
+# Code Quality Tools
+pylint>=3.0.3     # Style checking
+black==23.12.1    # Code formatting
+autopep8==2.0.4   # Code formatting
+mypy>=1.7.1       # Type checking
+radon>=6.0.1      # Code metrics
+bandit>=1.7.5     # Security checking
+types-psutil>=5.9.5
+coverage==7.3.3   # Code coverage
