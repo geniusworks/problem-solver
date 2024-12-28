@@ -222,6 +222,37 @@ class SolutionExecutor:
             input_file.read_text()
         )
 
+    async def test_solution(self, solution_path: Path, test_cases: List[TestCase]) -> bool:
+        """Test a solution against test cases.
+        
+        Args:
+            solution_path: Path to solution file
+            test_cases: List of test cases to validate against
+            
+        Returns:
+            True if all test cases pass, False otherwise
+        """
+        # Run each test case
+        for test_case in test_cases:
+            result = await self.execute_solution(
+                solution_path,
+                test_case.input_data
+            )
+            
+            if result.error:
+                logger.error("Test case failed with error: %s", result.error)
+                return False
+                
+            if result.output.strip() != test_case.expected_output.strip():
+                logger.error(
+                    "Test case failed: expected %s, got %s",
+                    test_case.expected_output,
+                    result.output
+                )
+                return False
+        
+        return True
+
     def cleanup(self) -> None:
         """Clean up temporary files."""
         try:

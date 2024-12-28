@@ -1,10 +1,21 @@
 """Problem parsing and structuring utilities."""
 
 import json
+import logging
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Set
+
+logger = logging.getLogger(__name__)
+
+class ExamplePurpose(Enum):
+    """Purpose of an example."""
+    DEMONSTRATION = "demonstration"
+    EDGE_CASE = "edge case"
+    CORNER_CASE = "corner case"
+    UNKNOWN = "unknown"
 
 @dataclass
 class TestCase:
@@ -12,6 +23,10 @@ class TestCase:
     input_data: str
     expected_output: str
     description: Optional[str] = None
+    order: int = 0  # Order in which example appears
+    demonstrates: Set[str] = field(default_factory=set)  # What this example demonstrates
+    referenced_by: List[str] = field(default_factory=list)  # Parts of text referencing this example
+    purpose: Optional[ExamplePurpose] = None  # Purpose of this example
 
 @dataclass
 class ProblemConstraint:
@@ -19,6 +34,15 @@ class ProblemConstraint:
     description: str
     type: str  # 'input', 'output', 'time', 'memory', etc.
     value: Optional[str] = None
+    applies_to: str = "all"  # "example", "full", or "all"
+
+@dataclass
+class InputFormat:
+    """Description of input format with variations."""
+    base_format: str
+    variations: List[str] = field(default_factory=list)
+    example_format: Optional[str] = None
+    full_format: Optional[str] = None
 
 @dataclass
 class ParsedProblem:
@@ -30,9 +54,12 @@ class ParsedProblem:
     part: int
     examples: List[TestCase]
     constraints: List[ProblemConstraint]
-    input_format: str
+    input_format: InputFormat
     output_format: str
-    
+    final_question: str
+    condition_changes: List[str] = field(default_factory=list)  # Changes between example and full
+    key_concepts: Set[str] = field(default_factory=set)
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
@@ -43,9 +70,13 @@ class ParsedProblem:
             "part": self.part,
             "examples": [
                 {
-                    "input": ex.input_data,
-                    "expected": ex.expected_output,
-                    "description": ex.description
+                    "input_data": ex.input_data,
+                    "expected_output": ex.expected_output,
+                    "description": ex.description,
+                    "order": ex.order,
+                    "demonstrates": list(ex.demonstrates),
+                    "referenced_by": ex.referenced_by,
+                    "purpose": ex.purpose.name if ex.purpose else None
                 }
                 for ex in self.examples
             ],
@@ -53,30 +84,44 @@ class ParsedProblem:
                 {
                     "description": c.description,
                     "type": c.type,
-                    "value": c.value
+                    "value": c.value,
+                    "applies_to": c.applies_to
                 }
                 for c in self.constraints
             ],
-            "input_format": self.input_format,
-            "output_format": self.output_format
+            "input_format": {
+                "base_format": self.input_format.base_format,
+                "variations": self.input_format.variations,
+                "example_format": self.input_format.example_format,
+                "full_format": self.input_format.full_format
+            },
+            "output_format": self.output_format,
+            "final_question": self.final_question,
+            "condition_changes": self.condition_changes,
+            "key_concepts": list(self.key_concepts)
         }
-    
+
     def save(self, file_path: Path) -> None:
         """Save the parsed problem to a JSON file."""
         with open(file_path, 'w') as f:
             json.dump(self.to_dict(), f, indent=2)
-    
+
     @classmethod
     def load(cls, file_path: Path) -> 'ParsedProblem':
         """Load a parsed problem from a JSON file."""
         with open(file_path) as f:
             data = json.load(f)
         
+        # Convert back to proper objects
         examples = [
             TestCase(
-                input_data=ex["input"],
-                expected_output=ex["expected"],
-                description=ex.get("description")
+                input_data=ex["input_data"],
+                expected_output=ex["expected_output"],
+                description=ex["description"],
+                order=ex["order"],
+                demonstrates=set(ex["demonstrates"]),
+                referenced_by=ex["referenced_by"],
+                purpose=ExamplePurpose[ex["purpose"]] if ex["purpose"] else None
             )
             for ex in data["examples"]
         ]
@@ -85,11 +130,19 @@ class ParsedProblem:
             ProblemConstraint(
                 description=c["description"],
                 type=c["type"],
-                value=c.get("value")
+                value=c["value"],
+                applies_to=c["applies_to"]
             )
             for c in data["constraints"]
         ]
-        
+
+        input_format = InputFormat(
+            base_format=data["input_format"]["base_format"],
+            variations=data["input_format"]["variations"],
+            example_format=data["input_format"]["example_format"],
+            full_format=data["input_format"]["full_format"]
+        )
+
         return cls(
             year=data["year"],
             day=data["day"],
@@ -98,49 +151,159 @@ class ParsedProblem:
             part=data["part"],
             examples=examples,
             constraints=constraints,
-            input_format=data["input_format"],
-            output_format=data["output_format"]
+            input_format=input_format,
+            output_format=data["output_format"],
+            final_question=data["final_question"],
+            condition_changes=data["condition_changes"],
+            key_concepts=set(data["key_concepts"])
         )
+
+def _extract_examples(text: str) -> List[TestCase]:
+    """Extract all examples from problem text with their context."""
+    logger.debug("Starting example extraction...")
+    examples = []
+    
+    # First split the text into sections based on example indicators
+    sections = re.split(r'(?:For example|Here\'s a|Consider this|Example)', text)[1:]  # Skip intro
+    if not sections:
+        logger.debug("No example sections found")
+        return examples
+        
+    for i, section in enumerate(sections):
+        logger.debug(f"Processing example section {i+1}")
+        try:
+            # Find the description (text before the numbers)
+            description = section[:section.find('\n\n')].strip()
+            
+            # Find the block of numbers
+            number_block = re.search(r'(?:\d+[^\n]*\n)+', section)
+            if not number_block:
+                logger.debug(f"No number block found in section {i+1}")
+                continue
+                
+            input_data = number_block.group().strip()
+            
+            # Find the expected output after the number block
+            remaining_text = section[number_block.end():]
+            output_match = re.search(r'(?:In this example|the result is|answer is)[^\n]*?(\d+)', remaining_text, re.IGNORECASE)
+            if not output_match:
+                logger.debug(f"No output found in section {i+1}")
+                continue
+                
+            expected_output = output_match.group(1)
+            
+            logger.debug(f"Example {i+1} parsed successfully:")
+            logger.debug(f"  Description: {description[:50]}...")
+            logger.debug(f"  Input data: {input_data[:50]}...")
+            logger.debug(f"  Expected output: {expected_output}")
+            
+            examples.append(TestCase(
+                input_data=input_data,
+                expected_output=expected_output,
+                description=description,
+                order=i,
+                demonstrates=set(),  # Will be filled by analysis
+                referenced_by=[]  # Will be filled by analysis
+            ))
+        except Exception as e:
+            logger.error(f"Error processing section {i+1}: {e}")
+            
+    logger.debug(f"Extracted {len(examples)} examples")
+    return examples
+
+def _extract_final_question(text: str) -> str:
+    """Extract the final question from problem text."""
+    patterns = [
+        r'\*([^*]+)\*\?',  # Markdown style
+        r'(?:What|How|Calculate|Find).*?\?',  # Question words
+        r'Your puzzle answer.*?$'  # Generic ending
+    ]
+    
+    for pattern in patterns:
+        matches = re.finditer(pattern, text, re.MULTILINE)
+        # Take the last match as it's usually the final question
+        final_match = None
+        for match in matches:
+            final_match = match
+        if final_match:
+            return final_match.group().strip()
+    
+    return ""
 
 def parse_problem_text(text: str, year: int, day: int, part: int = 1) -> ParsedProblem:
     """Parse problem text into structured format."""
+    logger.debug("Starting problem text parsing...")
+    
     # Extract title
-    title_match = re.search(r"---\s+(Day \d+:.+?)\s+---", text)
-    title = title_match.group(1) if title_match else f"Day {day}"
+    logger.debug("Extracting title...")
+    title_match = re.search(r'---\s+Day\s+\d+:\s+([^-]+?)\s+---', text)
+    title = title_match.group(1) if title_match else ""
+    logger.debug(f"Title: {title}")
+
+    # Split text into main sections
+    sections = text.split('\n\n')
     
-    # Extract examples
-    examples = []
-    example_blocks = re.finditer(r"Example:?\n(.*?)(?=\n\n|\Z)", text, re.DOTALL)
-    for block in example_blocks:
-        example_text = block.group(1).strip()
-        # TODO: Extract expected output from surrounding context
-        examples.append(TestCase(
-            input_data=example_text,
-            expected_output="",  # This needs to be extracted from context
-            description=None
-        ))
+    # Extract introduction (everything before first example)
+    intro_end = text.find('For example')
+    if intro_end == -1:
+        intro_end = text.find('Example')
+    description = text[:intro_end].strip() if intro_end != -1 else text
     
+    # Extract examples with context
+    logger.debug("Extracting examples...")
+    examples = _extract_examples(text)
+    logger.debug(f"Found {len(examples)} examples")
+
     # Extract constraints
+    logger.debug("Extracting constraints...")
     constraints = []
-    # TODO: Implement constraint extraction
-    # Look for patterns like:
-    # - "must be"
-    # - "cannot exceed"
-    # - "at most/least"
-    # - Time/memory limits
-    
-    # Determine input/output format
-    input_format = "One number per line"  # TODO: Detect from examples
-    output_format = "Single number"  # TODO: Detect from problem description
-    
+    constraint_patterns = [
+        (r'must be (\d+)', 'value'),
+        (r'cannot exceed (\d+)', 'limit'),
+        (r'at least (\d+)', 'minimum'),
+        (r'at most (\d+)', 'maximum'),
+        (r'only (\d+)', 'exact'),
+        (r'exactly (\d+)', 'exact')
+    ]
+
+    for pattern, type_ in constraint_patterns:
+        for match in re.finditer(pattern, text, re.IGNORECASE):
+            constraints.append(ProblemConstraint(
+                description=match.group().strip(),
+                type=type_,
+                value=match.group(1)
+            ))
+    logger.debug(f"Found {len(constraints)} constraints")
+
+    # Create input format structure
+    input_format = InputFormat(
+        base_format="",  # Will be filled by analyzer
+        variations=[],
+        example_format=None,
+        full_format=None
+    )
+
+    # Extract final question (everything after the last example)
+    final_question = _extract_final_question(text)
+    if not final_question and examples:
+        # If no explicit final question found, use text after last example
+        last_example_pos = text.rfind(examples[-1].input_data)
+        if last_example_pos != -1:
+            remaining_text = text[last_example_pos + len(examples[-1].input_data):].strip()
+            final_question = remaining_text.split('\n')[-1].strip()
+
+    logger.debug("Creating ParsedProblem object...")
     return ParsedProblem(
         year=year,
         day=day,
         title=title,
-        description=text,
+        description=description,
         part=part,
         examples=examples,
         constraints=constraints,
         input_format=input_format,
-        output_format=output_format
+        output_format="",  # Will be filled by analyzer
+        final_question=final_question,
+        condition_changes=[],  # Will be filled by analyzer
+        key_concepts=set()  # Will be filled by analyzer
     )

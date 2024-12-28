@@ -15,6 +15,9 @@ from shared.execution import SolutionExecutor, TestCase
 from shared.hardware import HardwareManager
 from shared.llm import OllamaProvider
 from shared.utils import download_input
+from shared.parser import parse_problem_text
+from shared.problem_analysis import ProblemAnalyzer
+from shared.llm.prompts import PromptGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +60,8 @@ class ProblemSolver:
         )
         self.model_provider = OllamaProvider()
         self.solution_executor = SolutionExecutor(str(self.workspace_dir))
+        self.problem_analyzer = ProblemAnalyzer()
+        self.prompt_generator = PromptGenerator()
 
     async def solve_problem(
         self,
@@ -73,94 +78,58 @@ class ProblemSolver:
             # Download input if needed
             input_data = download_input(year, day)
             
-            # Load problem description and test cases
-            description, test_cases = self._load_problem_description(
-                year,
-                day,
-                part
+            # Load and parse problem description
+            problem_dir = Path(f"years/{year}/day{day:02d}")
+            problem_file = problem_dir / "problem.txt"
+            if not problem_file.exists():
+                logger.error("Problem file not found: %s", problem_file)
+                return None
+            
+            problem_text = problem_file.read_text()
+            parsed_problem = parse_problem_text(problem_text, year, day, part)
+            
+            # Generate optimized prompt
+            prompt = self.prompt_generator.generate(parsed_problem, self.problem_analyzer)
+            
+            # Get solution from model
+            logger.info("Requesting solution from model...")
+            solution = await self.model_provider.generate_solution(prompt)
+            
+            if not solution:
+                logger.error("Failed to get solution from model")
+                return None
+            
+            # Save solution to file
+            solution_path = self.solution_executor.temp_dir / "solution.py"
+            solution_path.write_text(solution)
+            
+            # Execute solution
+            logger.info("Testing solution...")
+            test_passed = await self.solution_executor.test_solution(
+                solution_path,
+                parsed_problem.examples
             )
             
-            # Generate prompt
-            prompt = self._create_prompt(description, test_cases)
+            if not test_passed:
+                logger.error("Solution failed tests")
+                return None
             
-            # Try to generate a solution
-            max_retries = 3
-            for attempt in range(max_retries):
-                try:
-                    # Generate solution
-                    result = await self.model_provider.generate(prompt)
-                    
-                    # Validate solution
-                    is_valid, error = await self.solution_executor.prepare_solution(
-                        problem_id,
-                        result.content,
-                        test_cases
-                    )
-                    
-                    if is_valid:
-                        # Run against full input
-                        return await self.solution_executor.run_against_full_input(
-                            problem_id,
-                            year,
-                            day,
-                            result.content
-                        )
-                    else:
-                        logger.warning(
-                            "Solution failed validation (attempt %d): %s",
-                            attempt + 1,
-                            error
-                        )
-                except Exception as e:
-                    logger.error(
-                        "Error generating solution (attempt %d): %s",
-                        attempt + 1,
-                        str(e)
-                    )
+            # Run against full input
+            logger.info("Running against full input...")
+            result = await self.solution_executor.execute_solution(
+                solution_path,
+                input_data
+            )
             
-            logger.error("Failed to generate valid solution after %d attempts", max_retries)
-            return None
+            if result.error:
+                logger.error("Solution failed: %s", result.error)
+                return None
+            
+            return result.output.strip()
             
         except Exception as e:
             logger.error("Failed to solve problem: %s", str(e))
             return None
-        
-        finally:
-            # Cleanup
-            self.solution_executor.cleanup()
-
-    def _create_prompt(
-        self,
-        description: str,
-        test_cases: List[TestCase]
-    ) -> str:
-        """Create a prompt for the models."""
-        test_cases_str = "\n".join(
-            f"Test Case {i+1}:\nInput:\n{test.input_data}\nExpected Output:\n{test.expected_output}\n"
-            for i, test in enumerate(test_cases)
-        )
-        return PROMPT_TEMPLATE.format(
-            description=description,
-            test_cases=test_cases_str
-        )
-
-    def _load_problem_description(
-        self,
-        year: int,
-        day: int,
-        part: int
-    ) -> tuple[str, List[TestCase]]:
-        """Load problem description and test cases."""
-        # For now, just return a simple test case
-        return (
-            "Count the number of times a depth measurement increases",
-            [
-                TestCase(
-                    "199 (N/A - no previous measurement)\n200\n208\n210\n200\n207\n240\n269\n260\n263",
-                    "7"
-                )
-            ]
-        )
 
 async def main():
     """Main entry point."""

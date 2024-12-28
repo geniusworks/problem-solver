@@ -1,0 +1,16 @@
+{
+    "name": "basic_solution",
+    "description": "Template for generating Advent of Code solutions",
+    "template": "Solve this Advent of Code problem:\n\nTitle: {title}\n\nDescription:\n{description}\n\nKey Concepts Required:\n{key_concepts}\n\nExamples (Progressive Understanding):\n{examples}\n\nInput Format:\n{input_format}\n\nOutput Format:\n{output_format}\n\nConstraints:\n{constraints}\n\nImportant Changes from Examples to Full Input:\n{condition_changes}\n\nFinal Question to Answer:\n{final_question}\n\nRemember to:\n1. Handle all input format variations robustly\n2. Account for differences between examples and full input\n3. Consider all constraints\n4. Focus on solving the final question accurately",
+    "variables": [
+        "title",
+        "description",
+        "examples",
+        "constraints",
+        "input_format",
+        "output_format",
+        "key_concepts",
+        "condition_changes",
+        "final_question"
+    ]
+}
