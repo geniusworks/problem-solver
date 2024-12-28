@@ -1,0 +1,33 @@
+# Ignore PHPStorm files
+/.idea/
+*.iml
+*.ipr
+*.iws
+
+# Ignore PHP cache and logs
+/phpcache/
+/phplogs/
+
+# Ignore vendor directory (if using Composer)
+/vendor/
+
+# Ignore node_modules directory (if using npm or yarn)
+/node_modules/
+
+# Ignore OS and editor files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+*.bak
+*.tmp
+*.log
+
+# Ignore PHPStorm deployment files
+/deployment/
+/deployment_settings.xml
+
+# Ignore PHPStorm debugging files
+/.phpstorm-debug/
+
+# Ignore AoC input files
+*/input[0-9][0-9].txt
