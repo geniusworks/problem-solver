@@ -1,5 +1,13 @@
 # Advent of Code Solver
 
+An automated solver for [Advent of Code](https://adventofcode.com) problems.
+
+## Author
+
+Martin Diekhoff  
+ 2024  
+GitHub: [github.com/geniusworks](https://github.com/geniusworks)
+
 ## About
 
 The objective of this project is to create an automated [Advent of Code](https://adventofcode.com) solver.
@@ -48,14 +56,20 @@ AdventOfCode/
 ├── years/
 │   ├── 2023/
 │   │   ├── day01/
-│   │   │   ├── input.txt
-│   │   │   ├── example.txt
+│   │   │   ├── input.txt        # Problem input data
+│   │   │   ├── example.txt      # Example data from problem description
+│   │   │   ├── problem.txt      # Full problem description text
+│   │   │   ├── logic.txt        # Problem broken down into logical components
+│   │   │   ├── attempts.log     # Log of solution attempts and their results
 │   │   │   ├── part1.py
 │   │   │   ├── part2.py
 │   │   │   └── README.md
 │   │   ├── day02/
 │   │   │   ├── input.txt
 │   │   │   ├── example.txt
+│   │   │   ├── problem.txt
+│   │   │   ├── logic.txt
+│   │   │   ├── attempts.log
 │   │   │   ├── part1.py
 │   │   │   ├── part2.py
 │   │   │   └── README.md
@@ -64,6 +78,9 @@ AdventOfCode/
 │   │   ├── day01/
 │   │   │   ├── input.txt
 │   │   │   ├── example.txt
+│   │   │   ├── problem.txt
+│   │   │   ├── logic.txt
+│   │   │   ├── attempts.log
 │   │   │   ├── part1.py
 │   │   │   ├── part2.py
 │   │   │   └── README.md
@@ -77,6 +94,72 @@ AdventOfCode/
 ├── README.md
 └── .gitignore
 `
+
+## Additional Methodology
+
+1. Problem Text Storage
+   - The full problem text will be stored in `problem.txt` to avoid repeated URL requests
+   - Example data from the problem will be stored in `example.txt`
+   - The problem's logical components will be analyzed and stored in `logic.txt`
+
+2. Input Data Management
+   - Problem input data will be downloaded once and stored in `input.txt`
+   - The solver will check for existing input data before making new requests
+
+3. Solution Attempt Logging
+   - All solution attempts will be logged in `attempts.log`
+   - Each log entry will include:
+     - Timestamp
+     - Part number (1 or 2)
+     - Attempted solution
+     - Result (accepted/rejected)
+     - Any feedback received
+
+4. Solution Submission
+   - Solutions will only be submitted after:
+     - Passing all example test cases
+     - Code review and optimization
+     - Proper logging of the attempt
+
+## Development Process
+
+1. Setup Phase
+   - Initialize problem directory and files
+   - Retrieve and store problem text
+   - Extract example data
+   - Analyze problem requirements
+   - Download input data
+
+2. Solution Development
+   - Create test cases from example data
+   - Implement solution with proper error handling
+   - Test solution against examples
+   - Log all solution attempts
+   - Submit only after passing all tests
+
+3. Documentation
+   - Maintain CHECKPOINT.md for development progress
+   - Document each problem's solution approach
+   - Track attempted solutions and their results
+   - Record any insights or lessons learned
+
+4. Code Quality
+   - Follow Python best practices
+   - Use type hints
+   - Include error handling
+   - Add logging for debugging
+   - Rate limit API requests
+
+## Getting Started
+
+1. Clone the repository
+2. Create virtual environment: `python -m venv venv`
+3. Activate virtual environment: `source venv/bin/activate`
+4. Install dependencies: `pip install -r requirements.txt`
+5. Copy `.env.template` to `.env` and add your AOC session cookie
+6. Run setup for a problem: `python years/YYYY/dayDD/setup.py`
+7. Implement solution in `part1.py` and `part2.py`
+8. Check CHECKPOINT.md for current status and next steps
 
 <!-- Instructions to AI:
 - We will build this solver using any recommended stable public libraries, but also custom libraries as needed.

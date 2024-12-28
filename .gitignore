@@ -1,20 +1,40 @@
-# Ignore PHPStorm files
-/.idea/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
 *.iml
 *.ipr
 *.iws
+.vscode/
+*.swp
+*.swo
 
-# Ignore PHP cache and logs
-/phpcache/
-/phplogs/
-
-# Ignore vendor directory (if using Composer)
-/vendor/
-
-# Ignore node_modules directory (if using npm or yarn)
-/node_modules/
-
-# Ignore OS and editor files
+# OS
 .DS_Store
 Thumbs.db
 ehthumbs.db
@@ -22,12 +42,10 @@ ehthumbs.db
 *.tmp
 *.log
 
-# Ignore PHPStorm deployment files
-/deployment/
-/deployment_settings.xml
+# Advent of Code specific
+.env
+**/input.txt
+**/attempts.log
 
-# Ignore PHPStorm debugging files
-/.phpstorm-debug/
-
-# Ignore AoC input files
-*/input[0-9][0-9].txt
+# Keep templates
+!.env.template
