@@ -9,11 +9,16 @@ load_dotenv()
 # Base directory is two levels up from this file
 BASE_DIR = Path(__file__).parent.parent
 
-# Get session cookie from environment variable
+# Base URL for Advent of Code API
+AOC_BASE_URL = "https://adventofcode.com"
+
+# Session cookie from environment variable
 AOC_SESSION = os.getenv('AOC_SESSION')
+if not AOC_SESSION:
+    raise SessionError("AOC_SESSION environment variable not set")
 
 # URLs
-AOC_BASE_URL = "https://adventofcode.com"
+# AOC_BASE_URL = "https://adventofcode.com"
 
 # File patterns
 INPUT_FILE = "input.txt"
@@ -23,7 +28,7 @@ LOGIC_FILE = "logic.txt"
 ATTEMPTS_LOG = "attempts.log"
 
 # HTTP settings
-USER_AGENT = "github.com/geniusworks/advent-of-code-solver"
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15"
 REQUEST_DELAY = 1  # seconds between requests to avoid rate limiting
 
 # Testing
