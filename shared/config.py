@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).parent.parent
 AOC_BASE_URL = "https://adventofcode.com"
 
 # Session cookie from environment variable
-AOC_SESSION = os.getenv('AOC_SESSION')
+AOC_SESSION = os.getenv("AOC_SESSION")
 if not AOC_SESSION:
     raise SessionError("AOC_SESSION environment variable not set")
 
@@ -32,16 +32,22 @@ USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.
 REQUEST_DELAY = 1  # seconds between requests to avoid rate limiting
 
 # Testing
-TEST_MODE = os.getenv('AOC_TEST_MODE', 'false').lower() == 'true'
+TEST_MODE = os.getenv("AOC_TEST_MODE", "false").lower() == "true"
+
 
 class AocError(Exception):
     """Base exception for Advent of Code solver."""
+
     pass
+
 
 class SessionError(AocError):
     """Raised when there are issues with the session cookie."""
+
     pass
+
 
 class InputError(AocError):
     """Raised when there are issues with input data."""
+
     pass

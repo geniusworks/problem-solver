@@ -8,21 +8,25 @@ from typing import Dict, List, Set
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class HardwareProfile:
     """Hardware profile configuration."""
+
     max_model_size: int
     concurrent_models: int
 
+
 class ConfigurationError(Exception):
     """Raised when there is an error in the configuration."""
+
 
 class HardwareManager:
     """Manages hardware capabilities and model registration."""
 
     def __init__(self, config_path: str):
         """Initialize the hardware manager.
-        
+
         Args:
             config_path: Path to the hardware configuration file.
         """
@@ -33,10 +37,10 @@ class HardwareManager:
 
     def _load_capabilities(self) -> HardwareProfile:
         """Load hardware capabilities from environment variables or config file.
-        
+
         Returns:
             HardwareProfile: Hardware capabilities configuration.
-            
+
         Raises:
             ConfigurationError: If there is an error loading the configuration.
         """
@@ -56,12 +60,16 @@ class HardwareManager:
                     try:
                         max_model_size = int(config.get("max_model_size", 0))
                     except ValueError as exc:
-                        raise ConfigurationError("MAX_MODEL_SIZE must be an integer") from exc
+                        raise ConfigurationError(
+                            "MAX_MODEL_SIZE must be an integer"
+                        ) from exc
 
                     try:
                         concurrent_models = int(config.get("concurrent_models", 0))
                     except ValueError as exc:
-                        raise ConfigurationError("CONCURRENT_MODELS must be an integer") from exc
+                        raise ConfigurationError(
+                            "CONCURRENT_MODELS must be an integer"
+                        ) from exc
 
             if max_model_size <= 0:
                 raise ConfigurationError("MAX_MODEL_SIZE must be positive")
@@ -80,11 +88,11 @@ class HardwareManager:
 
     def register_model(self, model_name: str, model_size: int) -> None:
         """Register a model with its size.
-        
+
         Args:
             model_name: Name of the model.
             model_size: Size of the model in billions of parameters.
-            
+
         Raises:
             ConfigurationError: If the model is too large for the hardware.
         """
@@ -97,10 +105,10 @@ class HardwareManager:
 
     def activate_model(self, model_name: str) -> None:
         """Activate a model for use.
-        
+
         Args:
             model_name: Name of the model to activate.
-            
+
         Raises:
             ConfigurationError: If the model cannot be activated.
         """
@@ -117,7 +125,7 @@ class HardwareManager:
 
     def deactivate_model(self, model_name: str) -> None:
         """Deactivate a model.
-        
+
         Args:
             model_name: Name of the model to deactivate.
         """
@@ -125,7 +133,7 @@ class HardwareManager:
 
     def get_recommended_defaults(self) -> Dict[str, List[str]]:
         """Get recommended model defaults based on hardware profile.
-        
+
         Returns:
             Dict[str, List[str]]: Dictionary mapping model types to recommended models.
         """

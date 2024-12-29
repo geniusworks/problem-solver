@@ -1,0 +1,236 @@
+"""Base solver class for Advent of Code problems."""
+
+import logging
+import os
+import tempfile
+from pathlib import Path
+from typing import List, Optional, Dict
+from datetime import datetime
+import json
+
+from aiohttp import ClientError
+
+from shared.config import AocError
+from shared.execution import SolutionExecutor, TestCase
+from shared.llm.local import OllamaProvider
+from shared.parser import parse_problem_text
+from shared.utils import fetch_problem_text, ensure_input_file
+from shared.aoc import check_embargo_period, submit_solution, AocError
+
+class BaseSolver:
+    """Base class for solving AoC problems."""
+
+    def __init__(self, workspace_dir: Path) -> None:
+        """Initialize the base solver.
+
+        Args:
+            workspace_dir: Workspace directory path
+        """
+        self.workspace_dir = workspace_dir
+        self.solution_executor = SolutionExecutor(workspace_dir)
+        self.model = OllamaProvider()
+
+    async def solve_problem(
+        self, year: int, day: int, part: int, force: bool = False
+    ) -> Optional[str]:
+        """Solve an Advent of Code problem.
+
+        Args:
+            year: Problem year
+            day: Problem day
+            part: Problem part
+            force: Force new solution even if already solved
+
+        Returns:
+            Optional[str]: Solution if found, None otherwise
+        """
+        try:
+            # Check embargo period
+            is_embargoed, reason = check_embargo_period(year, day)
+            if is_embargoed:
+                logging.warning(f"Problem is under embargo: {reason}")
+                return None
+
+            # Create solution directories
+            day_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}"
+            solutions_dir = day_dir / "solutions"
+            example_dir = solutions_dir / "examples"
+            full_dir = solutions_dir / "full"
+            
+            for d in [day_dir, solutions_dir, example_dir, full_dir]:
+                d.mkdir(parents=True, exist_ok=True)
+
+            # Parse and solve
+            problem_text = await fetch_problem_text(year, day)
+            problem = parse_problem_text(problem_text)
+            
+            # Record start time for performance tracking
+            start_time = datetime.now()
+            
+            # Generate solution
+            solution_code = await self.model.generate_solution(problem)
+            generation_time = (datetime.now() - start_time).total_seconds()
+            
+            # Test solution
+            test_result = await self.solution_executor.test_solution(
+                solution_code,
+                year,
+                day,
+                problem.examples
+            )
+            execution_time = (datetime.now() - start_time).total_seconds() - generation_time
+            
+            # Unpack test results
+            example_passed, full_passed, example_results, full_result, full_answer = test_result
+            
+            # Prepare solution info
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            solution_info = {
+                "code": solution_code,
+                "prompt": self.model.last_prompt,
+                "model": {
+                    **self.model.model_info,
+                    "parameters": {
+                        "temperature": float(os.getenv("DEFAULT_TEMPERATURE", "0.1")),
+                        "max_tokens": int(os.getenv("MAX_TOKENS", "2000"))
+                    },
+                    "generation_time": generation_time
+                },
+                "test_results": {
+                    "examples": {
+                        "passed": example_passed,
+                        "inputs": problem.examples,
+                        "expected": [ex.expected_output for ex in problem.examples],
+                        "actual": [output.output for output in example_results],
+                        "performance": [
+                            output.performance.to_dict() if output.performance else None 
+                            for output in example_results
+                        ]
+                    },
+                    "full_input": {
+                        "passed": full_passed,
+                        "answer": full_answer,
+                        "performance": full_result.performance.to_dict() if full_result and full_result.performance else None
+                    }
+                },
+                "submission": {
+                    "submitted": False,
+                    "success": None,
+                    "message": None,
+                    "timestamp": None
+                },
+                "metadata": {
+                    "timestamp": timestamp,
+                    "year": year,
+                    "day": day,
+                    "part": part
+                }
+            }
+            
+            # Save solution based on test results
+            if example_passed:
+                example_file = example_dir / f"solution_{timestamp}.json"
+                with open(example_file, "w") as f:
+                    json.dump(solution_info, f, indent=2)
+            
+            result = None
+            if full_passed:
+                # Update solution info with submission attempt
+                try:
+                    success, message = await submit_solution(year, day, part, full_answer)
+                    solution_info["submission"].update({
+                        "submitted": True,
+                        "success": success,
+                        "message": message,
+                        "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
+                    })
+                    if success:
+                        logging.info(f"Solution submitted successfully: {message}")
+                    else:
+                        logging.warning(f"Solution submission failed: {message}")
+                except AocError as e:
+                    solution_info["submission"].update({
+                        "submitted": True,
+                        "success": False,
+                        "message": str(e),
+                        "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
+                    })
+                    logging.error(f"Error submitting solution: {e}")
+                
+                # Save full solution
+                full_file = full_dir / f"solution_{timestamp}.json"
+                with open(full_file, "w") as f:
+                    json.dump(solution_info, f, indent=2)
+                
+                result = full_answer
+
+            return result
+
+        except Exception as e:
+            logging.error(f"Error solving problem: {e}")
+            return None
+
+    def _create_prompt(self, description: str, test_cases: List[TestCase]) -> str:
+        """Create a prompt for the LLM.
+
+        Args:
+            description: Problem description
+            test_cases: List of test cases
+
+        Returns:
+            Prompt string
+        """
+        prompt = """You are a Python code generator for Advent of Code solutions. Follow these rules exactly:
+
+1. Output ONLY Python code, no markdown, no comments, no explanations
+2. Code MUST start with necessary imports (always include 're' for parsing)
+3. Code MUST define a solve() function that:
+   - Reads input from os.environ["AOC_INPUT_FILE"]
+   - Handles variations between example and full input format
+   - Extracts numbers/data robustly using regex where needed
+   - Returns the final answer as a single number or string
+4. No print statements except in __main__ block
+5. No test cases or examples in the code
+6. No docstrings or comments
+7. Use proper indentation (4 spaces)
+8. Make solution general enough to handle:
+   - Different sizes of input than shown in examples
+   - Additional text or annotations in full input
+   - Different parameters or conditions than in examples
+   - Edge cases implied by problem description
+
+Problem Description:
+"""
+        prompt += description
+
+        if test_cases:
+            prompt += "\n\nExample test cases:\n"
+            for i, test in enumerate(test_cases, 1):
+                prompt += f"\nTest {i}:\n"
+                prompt += f"Input:\n{test.input_data}\n"
+                prompt += f"Expected output: {test.expected_output}\n"
+
+        return prompt
+
+    def _format_test_cases(self, test_cases: List[TestCase]) -> str:
+        """Format test cases for the prompt.
+
+        Args:
+            test_cases: List of test cases to format
+
+        Returns:
+            Formatted test cases string
+        """
+        result = []
+        for i, test in enumerate(test_cases, 1):
+            result.extend(
+                [
+                    f"Test Case {i}:",
+                    "Input:",
+                    test.input_data,
+                    "Expected Output:",
+                    test.expected_output,
+                    "",
+                ]
+            )
+        return "\n".join(result)

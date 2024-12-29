@@ -13,26 +13,34 @@ import openai
 
 logger = logging.getLogger(__name__)
 
+
 class ProviderError(Exception):
     """Base class for provider-related errors."""
+
 
 class RateLimitError(ProviderError):
     """Raised when a provider's rate limit is exceeded."""
 
+
 class ProviderTimeoutError(ProviderError):
     """Raised when a provider request times out."""
+
 
 class AuthenticationError(ProviderError):
     """Raised when authentication with a provider fails."""
 
+
 class ServiceUnavailableError(ProviderError):
     """Raised when a provider's service is unavailable."""
+
 
 @dataclass
 class GenerationResult:
     """Result from a model generation."""
+
     content: str
     total_tokens: int
+
 
 class ModelProvider(ABC):
     """Abstract base class for model providers."""
@@ -272,7 +280,7 @@ class OllamaProvider(ModelProvider):
             ) as response:
                 if response.status == 404:
                     raise ServiceUnavailableError(f"Model {self.model_name} not found")
-                
+
                 response_text = ""
                 async for line in response.content:
                     try:

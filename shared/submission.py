@@ -8,19 +8,22 @@ from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class SubmissionResult:
     """Result of a solution submission."""
+
     was_correct: bool
     cooldown_seconds: Optional[int]
     error_message: Optional[str]
+
 
 class SubmissionManager:
     """Manages solution submissions and rate limiting."""
 
     def __init__(self, history_file: str = "submission_history.json"):
         """Initialize the submission manager.
-        
+
         Args:
             history_file: Path to the submission history file.
         """
@@ -52,13 +55,11 @@ class SubmissionManager:
         try:
             data = {
                 "last_submission": {
-                    k: v.isoformat()
-                    for k, v in self.last_submission.items()
+                    k: v.isoformat() for k, v in self.last_submission.items()
                 },
                 "cooldown_periods": {
-                    k: v.total_seconds()
-                    for k, v in self.cooldown_periods.items()
-                }
+                    k: v.total_seconds() for k, v in self.cooldown_periods.items()
+                },
             }
             with open(self.history_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
@@ -67,10 +68,10 @@ class SubmissionManager:
 
     def can_submit(self, problem_id: str) -> tuple[bool, Optional[timedelta]]:
         """Check if we can submit a solution for a problem.
-        
+
         Args:
             problem_id: Unique identifier for the problem (e.g., "2021_day1_part1")
-            
+
         Returns:
             Tuple of (can_submit, time_remaining)
         """
@@ -79,35 +80,33 @@ class SubmissionManager:
 
         cooldown = self.cooldown_periods.get(problem_id, timedelta(seconds=0))
         time_since_last = datetime.now() - self.last_submission[problem_id]
-        
+
         if time_since_last < cooldown:
             return False, cooldown - time_since_last
         return True, None
 
-    def record_submission(
-        self, problem_id: str, result: SubmissionResult
-    ) -> None:
+    def record_submission(self, problem_id: str, result: SubmissionResult) -> None:
         """Record a submission attempt and update cooldown if necessary.
-        
+
         Args:
             problem_id: Unique identifier for the problem
             result: Result of the submission
         """
         self.last_submission[problem_id] = datetime.now()
-        
+
         if result.cooldown_seconds:
             self.cooldown_periods[problem_id] = timedelta(
                 seconds=result.cooldown_seconds
             )
-        
+
         self._save_history()
 
     def get_cooldown_period(self, problem_id: str) -> Optional[timedelta]:
         """Get the current cooldown period for a problem.
-        
+
         Args:
             problem_id: Unique identifier for the problem
-            
+
         Returns:
             Current cooldown period or None if not set
         """
