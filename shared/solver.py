@@ -180,35 +180,36 @@ class BaseSolver:
         Returns:
             Prompt string
         """
+        # Convert test cases to dicts for serialization
+        test_cases_dict = [test_case.to_dict() for test_case in test_cases]
         prompt = """You are a Python code generator for Advent of Code solutions. Follow these rules exactly:
 
-1. Output ONLY Python code, no markdown, no comments, no explanations
-2. Code MUST start with necessary imports (always include 're' for parsing)
-3. Code MUST define a solve() function that:
-   - Reads input from os.environ["AOC_INPUT_FILE"]
-   - Handles variations between example and full input format
-   - Extracts numbers/data robustly using regex where needed
-   - Returns the final answer as a single number or string
-4. No print statements except in __main__ block
-5. No test cases or examples in the code
-6. No docstrings or comments
-7. Use proper indentation (4 spaces)
-8. Make solution general enough to handle:
-   - Different sizes of input than shown in examples
-   - Additional text or annotations in full input
-   - Different parameters or conditions than in examples
-   - Edge cases implied by problem description
+    1. Output ONLY Python code, no markdown, no comments, no explanations
+    2. Code MUST start with necessary imports (always include 're' for parsing)
+    3. Code MUST define a solve() function that:
+       - Reads input from os.environ["AOC_INPUT_FILE"]
+       - Handles variations between example and full input format
+       - Extracts numbers/data robustly using regex where needed
+       - Returns the final answer as a single number or string
+    4. No print statements except in __main__ block
+    5. No test cases or examples in the code
+    6. No docstrings or comments
+    7. Use proper indentation (4 spaces)
+    8. Make solution general enough to handle:
+       - Different sizes of input than shown in examples
+       - Additional text or annotations in full input
+       - Different parameters or conditions than in examples
+       - Edge cases implied by problem description
 
-Problem Description:
-"""
+    """
         prompt += description
 
-        if test_cases:
+        if test_cases_dict:
             prompt += "\n\nExample test cases:\n"
-            for i, test in enumerate(test_cases, 1):
+            for i, test in enumerate(test_cases_dict, 1):
                 prompt += f"\nTest {i}:\n"
-                prompt += f"Input:\n{test.input_data}\n"
-                prompt += f"Expected output: {test.expected_output}\n"
+                prompt += f"Input:\n{test['input_data']}\n"
+                prompt += f"Expected output: {test['expected_output']}\n"
 
         return prompt
 
@@ -223,14 +224,37 @@ Problem Description:
         """
         result = []
         for i, test in enumerate(test_cases, 1):
+            test_dict = test.to_dict()  # Convert TestCase to dict
             result.extend(
                 [
                     f"Test Case {i}:",
                     "Input:",
-                    test.input_data,
+                    test_dict['input_data'],
                     "Expected Output:",
-                    test.expected_output,
+                    test_dict['expected_output'],
                     "",
                 ]
             )
         return "\n".join(result)
+
+def test_serialization():
+    test_case = TestCase(
+        input_data="199\n200\n208\n210\n200\n207\n240\n269\n260\n263",
+        expected_output="7",
+        description="Example test case for depth measurement."
+    )
+    serialized = test_case.to_dict()
+    print(serialized)
+
+def test_serialization2():
+    test_case = TestCase(
+        input_data="199\n200\n208\n210\n200\n207\n240\n269\n260\n263",
+        expected_output="7",
+        description="Example test case for depth measurement."
+    )
+    serialized = test_case.to_dict()
+    print(serialized)
+
+if __name__ == "__main__":
+    test_serialization()
+    test_serialization2()

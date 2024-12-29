@@ -25,6 +25,14 @@ class TestCase:
     expected_output: str
     description: Optional[str] = None
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert the TestCase instance to a dictionary for JSON serialization."""
+        return {
+            "input_data": self.input_data,
+            "expected_output": self.expected_output,
+            "description": self.description
+        }
+
 
 @dataclass
 class ExecutionResult:
@@ -273,7 +281,7 @@ class SolutionExecutor:
         except Exception as e:
             logger.error("Failed to cleanup temporary files: %s", str(e))
 
-    def extract_test_cases(self, problem_text: str) -> List[TestCase]:
+    def extract_test_cases(self, problem_text: str) -> List[Dict[str, Any]]:
         """Extract test cases from problem text."""
         test_cases = []
         current_example = None
@@ -296,11 +304,12 @@ class SolutionExecutor:
             if current_example:
                 output_match = re.search(r"(?m)(?:answer|output|result).*?[is:]?\s*[*]?(\d+)[*]?", section, re.IGNORECASE)
                 if output_match:
-                    test_cases.append(TestCase(
+                    test_case = TestCase(
                         description=current_example["description"],
                         input_data=current_example["input"],
                         expected_output=output_match.group(1)
-                    ))
+                    )
+                    test_cases.append(test_case.to_dict())
                     current_example = None
 
         return test_cases
