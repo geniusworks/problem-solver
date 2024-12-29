@@ -48,7 +48,7 @@ This project is an exercise in creating problem-solving frameworks and exploring
    ```
 
 4. Copy `.env.example` to `.env` and configure:
-   - Add your AOC_SESSION for problem fetching
+   - Add your PROBLEM_SITE_SESSION for problem fetching
    - Configure model settings
    - Set SUBMIT_SOLUTIONS to true/false
    - Adjust EMBARGO_HOURS if needed

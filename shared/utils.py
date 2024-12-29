@@ -77,9 +77,9 @@ def create_problem_dir(year: int, day: int) -> Path:
 
 def get_session_cookie() -> str:
     """Get the session cookie from environment variables."""
-    if not config.AOC_SESSION:
-        raise SessionError("AOC_SESSION environment variable not set")
-    return config.AOC_SESSION
+    if not config.PROBLEM_SITE_SESSION:
+        raise SessionError("PROBLEM_SITE_SESSION environment variable not set")
+    return config.PROBLEM_SITE_SESSION
 
 
 async def make_request(url: str) -> requests.Response:
@@ -335,10 +335,10 @@ def read_input(year: int, day: int) -> str:
 def download_input(year: int, day: int) -> str:
     """Download input from Advent of Code website."""
     # Get session cookie from environment
-    session = os.getenv("AOC_SESSION")
+    session = os.getenv("PROBLEM_SITE_SESSION")
     if not session:
         raise ValueError(
-            "AOC_SESSION environment variable not set. "
+            "PROBLEM_SITE_SESSION environment variable not set. "
             "Get it from browser cookies at adventofcode.com"
         )
 

@@ -13,9 +13,9 @@ BASE_DIR = Path(__file__).parent.parent
 AOC_BASE_URL = "https://adventofcode.com"
 
 # Session cookie from environment variable
-AOC_SESSION = os.getenv("AOC_SESSION")
-if not AOC_SESSION:
-    raise SessionError("AOC_SESSION environment variable not set")
+PROBLEM_SITE_SESSION = os.getenv("PROBLEM_SITE_SESSION")
+if not PROBLEM_SITE_SESSION:
+    raise SessionError("PROBLEM_SITE_SESSION environment variable not set")
 
 # URLs
 # AOC_BASE_URL = "https://adventofcode.com"
