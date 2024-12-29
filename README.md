@@ -1,6 +1,6 @@
-# Advent of Code Solver
+# Contest Problem Solver
 
-An intelligent code solution generator for Advent of Code challenges, using multiple LLM models for optimal performance and reliability.
+An intelligent code solution generator for contest challenges, using multiple LLM models for optimal performance and reliability.
 
 ## Important Note on AI Usage
 
@@ -8,7 +8,7 @@ This project is an exercise in creating problem-solving frameworks and exploring
 
 1. Compete on global leaderboards (first 100 solvers)
 2. Replace the learning experience of solving puzzles yourself
-3. Circumvent the spirit of Advent of Code challenges
+3. Circumvent the spirit of contest challenges
 
 **Please Note**: 
 - If you're learning programming or problem-solving, we strongly encourage you to attempt the puzzles yourself first

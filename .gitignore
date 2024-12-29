@@ -42,7 +42,7 @@ ehthumbs.db
 *.tmp
 *.log
 
-# Advent of Code specific
+# Problem Solver specific
 .env
 **/input.txt
 **/attempts.log

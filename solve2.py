@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Main script for solving Advent of Code problems with enhanced features."""
+"""Main script for solving problems with enhanced features."""
 
 import argparse
 import asyncio
@@ -22,7 +22,7 @@ def parse_args() -> argparse.Namespace:
         Parsed arguments
     """
     parser = argparse.ArgumentParser(
-        description="Solve Advent of Code problems",
+        description="Solve contest problems",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("--year", type=int, required=True, help="Problem year")

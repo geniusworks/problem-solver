@@ -1,4 +1,4 @@
-"""Configuration settings for Advent of Code solver."""
+"""Configuration settings for problem solver."""
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -36,7 +36,7 @@ TEST_MODE = os.getenv("AOC_TEST_MODE", "false").lower() == "true"
 
 
 class AocError(Exception):
-    """Base exception for Advent of Code solver."""
+    """Base exception for problem solver."""
 
     pass
 

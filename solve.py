@@ -1,4 +1,4 @@
-"""Main script for solving Advent of Code problems."""
+"""Main script for solving problems."""
 
 import argparse
 import asyncio
@@ -34,7 +34,7 @@ async def main() -> int:
         int: Exit code (0 for success, 1 for failure)
     """
     parser = argparse.ArgumentParser(
-        description="Solve Advent of Code problems",
+        description="Solve problems",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("--year", type=int, required=True, help="Problem year")
