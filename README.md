@@ -1,28 +1,28 @@
-# Contest Problem Solver
+# Problem Solver
 
-An intelligent code solution generator for contest challenges, using multiple LLM models for optimal performance and reliability.
+An automated problem-solving system for Advent of Code that:
+1. Fetches problem descriptions and inputs
+2. Analyzes requirements and examples
+3. Generates solutions using LLM models
+4. Tests solutions against examples and full input
+5. Stores successful solutions with metadata
+6. Validates solutions against AoC website
 
-## Important Note on AI Usage
-
-This project is an exercise in creating problem-solving frameworks and exploring how LLMs can assist in coding challenges. It is NOT intended to:
-
-1. Compete on global leaderboards (first 100 solvers)
-2. Replace the learning experience of solving puzzles yourself
-3. Circumvent the spirit of contest challenges
-
-**Please Note**: 
-- If you're learning programming or problem-solving, we strongly encourage you to attempt the puzzles yourself first
-- This tool is best used for learning about AI/LLM frameworks, studying solution patterns, or analyzing different approaches
-- We respect Advent of Code's competition rules and enforce a 2-hour embargo on new puzzles
+## Submission Policy
+This tool strictly adheres to Advent of Code's principles:
+- Solutions are only submitted after verifying the daily leaderboard is complete
+- Leaderboard status is checked at: adventofcode.com/{year}/leaderboard/day/{day}
+- Submission attempts proceed only after all 100 slots are filled
+- Tool polls leaderboard status every minute until completion
+- Full submission history is tracked and logged
 
 ## Features
-
-- **Problem Analysis**: Automatically analyzes problem structure and requirements
-- **Solution Generation**: Uses LLMs to generate and validate solutions
-- **Test Validation**: Comprehensive test case validation
-- **Multi-Model Support**: Designed for consensus-based solution generation
-- **Solution Management**: Records successful solutions and model performance
-- **Competition Rules**: Enforces waiting period for new puzzles
+- Multi-model LLM integration (Claude, GPT-4, Ollama)
+- Hardware-aware resource management
+- Comprehensive solution testing
+- Detailed performance metrics
+- Version-controlled solution storage
+- Rate-limited API interactions
 
 ## Setup
 

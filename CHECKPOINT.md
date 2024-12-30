@@ -17,6 +17,9 @@
      - Anthropic (Claude-3 Sonnet)
      - OpenAI (GPT-4)
      - Ollama (Local models)
+       - Verify required models are installed
+       - Auto-detect available models
+       - Model availability checking
    - Model characteristics registry
    - Async provider interfaces
 
@@ -45,6 +48,14 @@
      - Mypy for type checking
      - Bandit for security
 
+5. Submission Management
+   - Active leaderboard completion verification
+   - Parses daily leaderboard page to confirm Top 100 filled
+   - One-minute polling interval for leaderboard status
+   - Rate-limited submission attempts
+   - Submission history tracking
+   - Retry logic with backoff
+
 ### Recently Completed
 1. Code Infrastructure
    - Successfully merged solve2.py into solve.py
@@ -62,6 +73,10 @@
 
 ### Next Steps Priority Order
 1. Answer Submission System
+   - Implement leaderboard completion checking
+     - Parse leaderboard HTML from adventofcode.com/{year}/leaderboard/day/{day}
+     - Verify all 100 slots are filled
+     - Add one-minute polling interval
    - Complete submission response parsing
    - Implement proper rate limiting
    - Add submission history tracking
@@ -85,6 +100,15 @@
    - Add integration tests
    - Create test fixtures
    - Add performance benchmarks
+
+5. Model Availability System
+   - Implement Ollama model verification
+     - Check for required models (codellama, etc.)
+     - List available models
+     - Provide installation instructions if missing
+   - Add model status tracking
+   - Implement fallback options
+   - Add model health checks
 
 ### Known Issues
 1. Need proper error handling in providers.py
