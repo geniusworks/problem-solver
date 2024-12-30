@@ -1,3 +1,7 @@
+"""
+DEPRECATED: This file has been merged into solve.py as of 2024-12-29.
+Keep this file temporarily for reference only.
+"""
 #!/usr/bin/env python3
 """Main script for solving problems with enhanced features."""
 

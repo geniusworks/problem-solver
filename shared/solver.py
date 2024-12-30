@@ -33,17 +33,7 @@ class BaseSolver:
     async def solve_problem(
         self, year: int, day: int, part: int, force: bool = False
     ) -> Optional[str]:
-        """Solve an Advent of Code problem.
-
-        Args:
-            year: Problem year
-            day: Problem day
-            part: Problem part
-            force: Force new solution even if already solved
-
-        Returns:
-            Optional[str]: Solution if found, None otherwise
-        """
+        """Solve an Advent of Code problem."""
         try:
             # Check embargo period
             is_embargoed, reason = check_embargo_period(year, day)
@@ -51,14 +41,10 @@ class BaseSolver:
                 logging.warning(f"Problem is under embargo: {reason}")
                 return None
 
-            # Create solution directories
+            # Create solution directory (simplified structure)
             day_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}"
             solutions_dir = day_dir / "solutions"
-            example_dir = solutions_dir / "examples"
-            full_dir = solutions_dir / "full"
-            
-            for d in [day_dir, solutions_dir, example_dir, full_dir]:
-                d.mkdir(parents=True, exist_ok=True)
+            solutions_dir.mkdir(parents=True, exist_ok=True)
 
             # Parse and solve
             problem_text = await fetch_problem_text(year, day)
@@ -99,7 +85,10 @@ class BaseSolver:
                 "test_results": {
                     "examples": {
                         "passed": example_passed,
-                        "inputs": problem.examples,
+                        "inputs": [{"input_data": ex.input_data, 
+                                "expected_output": ex.expected_output,
+                                "description": ex.description if hasattr(ex, 'description') else None}
+                                for ex in problem.examples],
                         "expected": [ex.expected_output for ex in problem.examples],
                         "actual": [output.output for output in example_results],
                         "performance": [
@@ -112,6 +101,11 @@ class BaseSolver:
                         "answer": full_answer,
                         "performance": full_result.performance.to_dict() if full_result and full_result.performance else None
                     }
+                },
+                "status": {
+                    "examples_passed": example_passed,
+                    "full_passed": full_passed,
+                    "part": part
                 },
                 "submission": {
                     "submitted": False,
@@ -127,15 +121,13 @@ class BaseSolver:
                 }
             }
             
-            # Save solution based on test results
-            if example_passed:
-                example_file = example_dir / f"solution_{timestamp}.json"
-                with open(example_file, "w") as f:
-                    json.dump(solution_info, f, indent=2)
+            # Save solution (single location)
+            solution_file = solutions_dir / f"solution_{timestamp}.json"
+            with open(solution_file, "w") as f:
+                json.dump(solution_info, f, indent=2)
             
-            result = None
+            # Handle submission if full test passed
             if full_passed:
-                # Update solution info with submission attempt
                 try:
                     success, message = await submit_solution(year, day, part, full_answer)
                     solution_info["submission"].update({
@@ -157,14 +149,11 @@ class BaseSolver:
                     })
                     logging.error(f"Error submitting solution: {e}")
                 
-                # Save full solution
-                full_file = full_dir / f"solution_{timestamp}.json"
-                with open(full_file, "w") as f:
+                # Update solution file with submission results
+                with open(solution_file, "w") as f:
                     json.dump(solution_info, f, indent=2)
-                
-                result = full_answer
 
-            return result
+            return full_answer if full_passed else None
 
         except Exception as e:
             logging.error(f"Error solving problem: {e}")

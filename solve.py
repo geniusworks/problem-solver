@@ -1,40 +1,28 @@
-"""Main script for solving problems."""
+#!/usr/bin/env python3
+"""Main script for solving problems with enhanced features."""
 
 import argparse
 import asyncio
 import logging
 import sys
+from pathlib import Path
 from typing import NoReturn
 
-from dotenv import load_dotenv
-
-from shared.hardware import HardwareManager
-from shared.llm.selection import ModelSelector
 from shared.solver import BaseSolver
 
 
 class ProblemSolver(BaseSolver):
-    """Main class for solving AoC problems."""
-
-    def __init__(self) -> None:
-        """Initialize the problem solver."""
-        super().__init__()
-        load_dotenv()
-
-        self.hardware_manager = HardwareManager(
-            str(self.workspace_dir / "config/hardware.json")
-        )
-        self.model_selector = ModelSelector()
+    """Main class for solving AoC problems with enhanced features."""
 
 
-async def main() -> int:
-    """Main entry point for the solver.
-
+def parse_args() -> argparse.Namespace:
+    """Parse command line arguments.
+    
     Returns:
-        int: Exit code (0 for success, 1 for failure)
+        Parsed arguments
     """
     parser = argparse.ArgumentParser(
-        description="Solve problems",
+        description="Solve contest problems",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("--year", type=int, required=True, help="Problem year")
@@ -43,10 +31,17 @@ async def main() -> int:
     parser.add_argument(
         "--force", action="store_true", help="Force new solution even if already solved"
     )
+    return parser.parse_args()
 
-    args = parser.parse_args()
 
-    solver = ProblemSolver()
+async def async_main() -> int:
+    """Async main entry point for the solver.
+
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+    """
+    args = parse_args()
+    solver = ProblemSolver(Path(__file__).parent)
     solution = await solver.solve_problem(args.year, args.day, args.part, args.force)
 
     if solution:
@@ -57,16 +52,26 @@ async def main() -> int:
     return 1
 
 
-def run() -> NoReturn:
-    """Run the main function and exit."""
+def main() -> NoReturn:
+    """Main entry point that sets up logging and runs the async main function."""
     # Configure logging
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.DEBUG,  # Set to DEBUG for more verbose output
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
-    sys.exit(asyncio.run(main()))
+    # Disable noisy loggers
+    logging.getLogger("asyncio").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("charset_normalizer").setLevel(logging.WARNING)
+
+    if sys.platform == "win32":
+        # Set up proper asyncio event loop policy for Windows
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+    # Run the async main function
+    sys.exit(asyncio.run(async_main()))
 
 
 if __name__ == "__main__":
-    run()
+    main()
