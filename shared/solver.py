@@ -10,12 +10,12 @@ import json
 
 from aiohttp import ClientError
 
-from shared.config import AocError
+from shared.config import ValidationError
 from shared.execution import SolutionExecutor, TestCase
 from shared.llm.local import OllamaProvider
 from shared.parser import parse_problem_text
 from shared.utils import fetch_problem_text, ensure_input_file
-from shared.aoc import check_embargo_period, submit_solution, AocError
+from shared.validator import check_embargo_period, submit_solution, SubmissionError
 
 class BaseSolver:
     """Base class for solving AoC problems."""
@@ -140,7 +140,7 @@ class BaseSolver:
                         logging.info(f"Solution submitted successfully: {message}")
                     else:
                         logging.warning(f"Solution submission failed: {message}")
-                except AocError as e:
+                except ValidationError as e:
                     solution_info["submission"].update({
                         "submitted": True,
                         "success": False,

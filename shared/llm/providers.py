@@ -11,27 +11,25 @@ import aiohttp
 import anthropic
 import openai
 
+from shared.config import ProviderError
+
 logger = logging.getLogger(__name__)
 
 
-class ProviderError(Exception):
-    """Base class for provider-related errors."""
-
-
 class RateLimitError(ProviderError):
-    """Raised when a provider's rate limit is exceeded."""
+    """Rate limit exceeded."""
 
 
 class ProviderTimeoutError(ProviderError):
-    """Raised when a provider request times out."""
+    """Provider timeout."""
 
 
 class AuthenticationError(ProviderError):
-    """Raised when authentication with a provider fails."""
+    """Authentication failed."""
 
 
 class ServiceUnavailableError(ProviderError):
-    """Raised when a provider's service is unavailable."""
+    """Service unavailable."""
 
 
 @dataclass

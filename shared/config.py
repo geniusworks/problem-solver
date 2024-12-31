@@ -35,19 +35,25 @@ REQUEST_DELAY = 1  # seconds between requests to avoid rate limiting
 TEST_MODE = os.getenv("AOC_TEST_MODE", "false").lower() == "true"
 
 
-class AocError(Exception):
-    """Base exception for problem solver."""
-
-    pass
+class BaseError(Exception):
+    """Base class for all custom exceptions."""
 
 
-class SessionError(AocError):
-    """Raised when there are issues with the session cookie."""
-
-    pass
+class ValidationError(BaseError):
+    """Base class for validation errors."""
 
 
-class InputError(AocError):
-    """Raised when there are issues with input data."""
+class SessionError(ValidationError):
+    """Session-related errors."""
 
-    pass
+
+class InputError(ValidationError):
+    """Input-related errors."""
+
+
+class ProviderError(BaseError):
+    """Base class for provider-related errors."""
+
+
+class ConfigurationError(BaseError):
+    """Configuration-related errors."""

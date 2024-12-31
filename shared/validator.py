@@ -1,4 +1,4 @@
-"""Advent of Code interaction module."""
+"""Solution validation and submission module."""
 
 import os
 import logging
@@ -8,11 +8,12 @@ import aiohttp
 from bs4 import BeautifulSoup
 
 from .utils import get_session_cookie
+from shared.config import ValidationError
 
 logger = logging.getLogger(__name__)
 
-class AocError(Exception):
-    """Advent of Code error."""
+class SubmissionError(ValidationError):
+    """Solution submission error."""
 
 def check_embargo_period(year: int, day: int) -> Tuple[bool, str]:
     """Check if a puzzle is within the embargo period.
@@ -53,7 +54,7 @@ def check_embargo_period(year: int, day: int) -> Tuple[bool, str]:
     return False, "Puzzle is past embargo period"
 
 async def submit_solution(year: int, day: int, part: int, answer: str) -> Tuple[bool, str]:
-    """Submit a solution to Advent of Code.
+    """Submit a solution for validation.
     
     Args:
         year: Puzzle year
@@ -65,7 +66,7 @@ async def submit_solution(year: int, day: int, part: int, answer: str) -> Tuple[
         Tuple of (success, message)
         
     Raises:
-        AocError: If there's an error submitting the solution
+        SubmissionError: If there's an error submitting the solution
     """
     # Check if submission is enabled
     if not os.getenv("SUBMIT_SOLUTIONS", "false").lower() == "true":
@@ -89,7 +90,7 @@ async def submit_solution(year: int, day: int, part: int, answer: str) -> Tuple[
         async with aiohttp.ClientSession(cookies=cookies) as session:
             async with session.post(url, data=data) as response:
                 if response.status != 200:
-                    raise AocError(f"Failed to submit solution: {response.status}")
+                    raise SubmissionError(f"Failed to submit solution: {response.status}")
                 
                 html = await response.text()
                 soup = BeautifulSoup(html, "html.parser")
@@ -108,4 +109,4 @@ async def submit_solution(year: int, day: int, part: int, answer: str) -> Tuple[
                     return False, f"Unknown response: {message}"
     
     except Exception as e:
-        raise AocError(f"Error submitting solution: {str(e)}")
+        raise SubmissionError(f"Error submitting solution: {str(e)}")

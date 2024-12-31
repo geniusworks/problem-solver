@@ -5,6 +5,7 @@ import logging
 import os
 from dataclasses import dataclass
 from typing import Dict, List, Set
+from shared.config import ConfigurationError
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +16,6 @@ class HardwareProfile:
 
     max_model_size: int
     concurrent_models: int
-
-
-class ConfigurationError(Exception):
-    """Raised when there is an error in the configuration."""
 
 
 class HardwareManager:

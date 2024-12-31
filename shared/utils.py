@@ -14,7 +14,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from shared import config
-from shared.config import AocError, SessionError, InputError
+from shared.config import ValidationError, SessionError, InputError
 
 # Configure retry strategy
 session = requests.Session()
@@ -100,7 +100,7 @@ async def make_request(url: str) -> requests.Response:
         response.raise_for_status()
         return response
     except requests.exceptions.RequestException as e:
-        raise AocError(f"Failed to fetch {url}: {str(e)}") from e
+        raise ValidationError(f"Failed to fetch {url}: {str(e)}") from e
 
 
 async def fetch_problem_text(year: int, day: int) -> str:
@@ -241,7 +241,7 @@ def fetch_input_data(year: int, day: int) -> str:
     # Find the puzzle input link
     input_link = soup.find("a", string="get your puzzle input")
     if not input_link:
-        raise AocError("Could not find puzzle input link")
+        raise ValidationError("Could not find puzzle input link")
 
     # Get the input data
     input_url = f"{config.AOC_BASE_URL}/{year}/day/{day}/input"

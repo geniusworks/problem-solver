@@ -8,6 +8,10 @@ An automated problem-solving system for Advent of Code that:
 5. Stores successful solutions with metadata
 6. Validates solutions against AoC website
 
+## Installation
+
+To install the required dependencies, run:
+
 ## Submission Policy
 This tool strictly adheres to Advent of Code's principles:
 - Solutions are only submitted after verifying the daily leaderboard is complete
@@ -66,9 +70,9 @@ This tool strictly adheres to Advent of Code's principles:
 
 ## Usage
 
-To solve a problem:
+To run the application for a specific problem, use:
 ```bash
-python solve2.py --year 2021 --day 1 --part 1
+python solve.py --year <year> --day <day> --part <part>
 ```
 
 The solver will:
@@ -122,3 +126,27 @@ See [CHECKPOINT.md](CHECKPOINT.md) for detailed progress and plans.
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Error Handling
+
+This project implements a structured error handling system to manage exceptions effectively. The following error classes are defined:
+
+- **BaseError**: The base class for all custom exceptions.
+- **ValidationError**: Base class for validation-related errors.
+  - **SessionError**: Raised when there are issues with session management.
+  - **InputError**: Raised for errors related to input data.
+  - **SubmissionError**: Raised for errors during solution submission.
+- **ProviderError**: Base class for errors related to model providers.
+  - **RateLimitError**: Raised when a rate limit is exceeded.
+  - **ProviderTimeoutError**: Raised when a provider times out.
+  - **AuthenticationError**: Raised for authentication failures.
+  - **ServiceUnavailableError**: Raised when a service is unavailable.
+- **ConfigurationError**: Raised for errors related to configuration settings.
+
+## Environment Variables
+
+- **SUBMIT_SOLUTIONS**: Set to `true` to enable solution submissions. Default is `false`.
+
+## Contributing
+
+If you would like to contribute to this project, please fork the repository and submit a pull request with your changes.
