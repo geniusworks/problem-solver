@@ -4,7 +4,7 @@
 import ast
 import logging
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
 
 # Third-party imports
@@ -29,8 +29,14 @@ class StyleMetrics:
 class QualityMetrics:
     """Code quality metrics."""
 
-    style_metrics: StyleMetrics = StyleMetrics()
-    complexity_metrics: Dict[str, float] = None
+    style_metrics: StyleMetrics = field(default_factory=StyleMetrics)
+    complexity_metrics: Dict[str, float] = field(
+        default_factory=lambda: {
+            "cyclomatic": 0.0,
+            "cognitive": 0.0,
+            "maintainability": 0.0,
+        }
+    )
     error_count: int = 0
     warning_count: int = 0
     type_issues: int = 0
