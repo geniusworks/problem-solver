@@ -84,7 +84,7 @@ class ModelEnsemble:
             return response
 
         except Exception as e:
-            self.logger.warning(f"Provider {provider.name} failed: {str(e)}")
+            self.logger.warning("Provider %s failed: %s", provider.name, str(e))
             health = self.health[provider.name]
             health.error_count += 1
             health.success_rate = (health.success_rate * 9) / 10
@@ -92,7 +92,7 @@ class ModelEnsemble:
             # Mark as unavailable after repeated failures
             if health.error_count >= 3:
                 health.is_available = False
-                self.logger.error(f"Provider {provider.name} marked as unavailable")
+                self.logger.error("Provider %s marked as unavailable", provider.name)
 
             return None
 
@@ -129,8 +129,9 @@ class ModelEnsemble:
             )
             if len(valid_responses) < required_count:
                 self.logger.warning(
-                    f"Only {len(valid_responses)} responses received, "
-                    f"needed {required_count} for quorum"
+                    "Only %d responses received, needed %d for quorum",
+                    len(valid_responses),
+                    required_count,
                 )
                 # Fall back to majority if we can't reach quorum
                 self.strategy = VotingStrategy.MAJORITY
@@ -154,7 +155,7 @@ class ModelEnsemble:
                 if response and response.content.strip().lower() == "ok":
                     health.is_available = True
                     health.error_count = 0
-                    self.logger.info(f"Provider {provider.name} is available again")
+                    self.logger.info("Provider %s is available again", provider.name)
 
         # Resort providers based on updated health
         self._sort_providers()

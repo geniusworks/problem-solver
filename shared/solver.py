@@ -39,7 +39,7 @@ class BaseSolver:
             # Check embargo period
             is_embargoed, reason = check_embargo_period(year, day)
             if is_embargoed:
-                logging.warning(f"Problem is under embargo: {reason}")
+                logging.warning("Problem is under embargo: %s", reason)
                 return None
 
             # Create solution directory (simplified structure)
@@ -67,9 +67,13 @@ class BaseSolver:
             ).total_seconds() - generation_time
 
             # Unpack test results
-            example_passed, full_passed, example_results, full_result, full_answer = (
-                test_result
-            )
+            (
+                example_passed,
+                full_passed,
+                example_results,
+                full_result,
+                full_answer,
+            ) = test_result
 
             # Prepare solution info
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -155,9 +159,9 @@ class BaseSolver:
                         }
                     )
                     if success:
-                        logging.info(f"Solution submitted successfully: {message}")
+                        logging.info("Solution submitted successfully: %s", message)
                     else:
-                        logging.warning(f"Solution submission failed: {message}")
+                        logging.warning("Solution submission failed: %s", message)
                 except ValidationError as e:
                     solution_info["submission"].update(
                         {
@@ -167,7 +171,7 @@ class BaseSolver:
                             "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
                         }
                     )
-                    logging.error(f"Error submitting solution: {e}")
+                    logging.error("Error submitting solution: %s", str(e))
 
                 # Update solution file with submission results
                 with open(solution_file, "w") as f:
@@ -176,7 +180,7 @@ class BaseSolver:
             return full_answer if full_passed else None
 
         except Exception as e:
-            logging.error(f"Error solving problem: {e}")
+            logging.error("Error solving problem: %s", str(e))
             return None
 
     def _create_prompt(self, description: str, test_cases: List[TestCase]) -> str:

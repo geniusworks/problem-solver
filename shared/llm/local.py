@@ -1,14 +1,10 @@
 """Local LLM providers."""
 
-import json
-import subprocess
-import tempfile
-import os
-import re
+import logging
 import asyncio
 from typing import Dict, List, Optional
-import aiohttp
-import logging
+import re
+import asyncio
 from pathlib import Path
 
 from .base import LLMProvider, LLMResponse
@@ -63,8 +59,6 @@ Please write a solution that passes these test cases. Only output the code, no e
             )
 
         # Add missing imports
-        if "import os" not in code:
-            code = "import os\n\n" + code
         if "import re" not in code and "re." in code:
             code = "import re\n" + code
 

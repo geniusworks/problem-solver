@@ -259,7 +259,7 @@ class ModelSelector:
         candidates = self.tracker.suggest_models(problem_type, max_latency)
 
         if not candidates:
-            self.logger.warning(f"No suitable models found for {problem_type}")
+            self.logger.warning("No suitable models found for %s", problem_type)
             return []
 
         # Ensure diversity in model categories
@@ -275,4 +275,41 @@ class ModelSelector:
                 if len(selected) >= 3:  # Maintain optimal size
                     break
 
+        self.logger.info("Selected models for ensemble: %s", ", ".join(selected))
         return selected
+
+    def get_model_metrics(self, model_name: str) -> Optional[ModelPerformanceMetrics]:
+        """Get performance metrics for a model."""
+        metrics = self.tracker.get_model_metrics(model_name)
+        if metrics:
+            self.logger.debug("Model %s performance metrics: %s", model_name, metrics)
+        return metrics
+
+    def validate_model(self, model_name: str) -> bool:
+        """Validate a model's performance."""
+        try:
+            metrics = self.get_model_metrics(model_name)
+            if metrics:
+                # Validate performance requirements
+                if metrics.success_rate < 0.8:
+                    self.logger.warning(
+                        "Model %s failed to meet performance requirements: %s",
+                        model_name,
+                        "Low success rate",
+                    )
+                    return False
+                if metrics.avg_latency > 10:
+                    self.logger.warning(
+                        "Model %s failed to meet performance requirements: %s",
+                        model_name,
+                        "High latency",
+                    )
+                    return False
+            return True
+        except Exception as e:
+            self.logger.warning(
+                "Model %s failed to meet performance requirements: %s",
+                model_name,
+                str(e),
+            )
+            return False

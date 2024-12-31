@@ -1,18 +1,23 @@
 """Module for executing and validating generated solutions."""
 
-import asyncio
 import importlib.util
 import logging
-import os
 import re
+import subprocess
 import sys
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from shared.quality.code_formatter import format_code
+from shared.config import (
+    ExecutionError,
+    TimeoutError,
+    CompilationError,
+    RuntimeError,
+    ResourceError,
+)
 from shared.performance import PerformanceMonitor, PerformanceMetrics
+from shared.quality.code_formatter import format_code
 
 logger = logging.getLogger(__name__)
 
@@ -75,10 +80,7 @@ class SolutionExecutor:
 
         try:
             # Format the code before validation
-            formatted_code, format_success = format_code(source_code)
-            if not format_success:
-                logger.warning("Code formatting failed, proceeding with original code")
-                formatted_code = source_code
+            formatted_code, _ = format_code(source_code)
 
             # Log the formatted code for debugging
             logger.debug("Formatted code:\n%s", formatted_code)
@@ -91,7 +93,7 @@ class SolutionExecutor:
                 f"solution_{problem_id}", module_path
             )
             if not spec or not spec.loader:
-                return False, "Failed to create module specification"
+                raise CompilationError("Failed to create module specification")
 
             module = importlib.util.module_from_spec(spec)
             sys.modules[spec.name] = module
@@ -99,7 +101,7 @@ class SolutionExecutor:
 
             # Verify it has a solve function
             if not hasattr(module, "solve"):
-                return False, "Solution must contain a solve() function"
+                raise CompilationError("Solution must contain a solve() function")
 
             # Run test cases
             for test_case in test_cases:
@@ -122,10 +124,13 @@ class SolutionExecutor:
                         result.error
                         or result.output.strip() != test_case.expected_output.strip()
                     ):
-                        return (
-                            False,
-                            f"Test case failed: {result.error or 'Output mismatch'}",
+                        raise ExecutionError(
+                            f"Test case failed: {result.error or 'Output mismatch'}"
                         )
+
+                except (IOError, OSError) as e:
+                    logger.error("IO error during test case execution: %s", str(e))
+                    raise ExecutionError(str(e)) from e
 
                 finally:
                     # Restore original content
@@ -136,9 +141,13 @@ class SolutionExecutor:
 
             return True, None
 
+        except (SyntaxError, IndentationError) as e:
+            raise CompilationError(f"Invalid Python syntax: {str(e)}") from e
+        except IOError as e:
+            raise ExecutionError(f"Failed to write solution file: {str(e)}") from e
         except Exception as e:
-            logger.exception("Error preparing solution")
-            return False, str(e)
+            logger.error("Unexpected error preparing solution: %s", str(e))
+            raise ExecutionError(str(e)) from e
 
     async def execute_solution(
         self, module_path: Path, input_file_path: str
@@ -156,11 +165,7 @@ class SolutionExecutor:
             # Import the solution module
             spec = importlib.util.spec_from_file_location("solution", module_path)
             if not spec or not spec.loader:
-                return ExecutionResult(
-                    output="",
-                    performance=None,
-                    error="Failed to create module specification",
-                )
+                raise CompilationError("Failed to create module specification")
 
             module = importlib.util.module_from_spec(spec)
             sys.modules["solution"] = module
@@ -175,9 +180,19 @@ class SolutionExecutor:
 
             return ExecutionResult(output=result, performance=metrics, error=None)
 
+        except subprocess.TimeoutExpired as e:
+            raise TimeoutError("Solution execution timed out") from e
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(
+                f"Solution process failed with exit code {e.returncode}: {str(e)}"
+            ) from e
+        except MemoryError as e:
+            raise ResourceError("Solution exceeded memory limits") from e
+        except IOError as e:
+            raise ExecutionError(f"IO error during execution: {str(e)}") from e
         except Exception as e:
-            logger.exception("Error executing solution")
-            return ExecutionResult(output="", performance=None, error=str(e))
+            logger.error("Unexpected error during execution: %s", str(e))
+            raise ExecutionError(str(e)) from e
 
     async def run_against_full_input(
         self, problem_id: str, year: int, day: int, source_code: str
@@ -294,8 +309,14 @@ class SolutionExecutor:
             for file in self.temp_dir.glob("*"):
                 file.unlink()
             self.temp_dir.rmdir()
+        except FileNotFoundError:
+            pass  # Directory already removed
+        except PermissionError as e:
+            logger.warning(
+                "Permission error cleaning up directory %s: %s", self.temp_dir, str(e)
+            )
         except Exception as e:
-            logger.error("Failed to cleanup temporary files: %s", str(e))
+            logger.error("Error cleaning up directory %s: %s", self.temp_dir, str(e))
 
     def extract_test_cases(self, problem_text: str) -> List[Dict[str, Any]]:
         """Extract test cases from problem text."""

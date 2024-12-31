@@ -21,6 +21,43 @@ class ModelProvider(Enum):
     LLAMACPP = "llamacpp"
 
 
+@dataclass
+class ModelCapabilities:
+    """Model capabilities and limitations."""
+
+    max_context_length: int
+    max_output_length: int
+    supports_streaming: bool = False
+    supports_functions: bool = False
+    supports_vision: bool = False
+
+
+@dataclass
+class ModelPerformance:
+    """Model performance characteristics."""
+
+    tokens_per_second: float
+    cost_per_token: float
+    avg_latency: float = 0.0
+    error_rate: float = 0.0
+    success_rate: float = 1.0
+
+
+@dataclass
+class ModelCharacteristics:
+    """Characteristics of a language model."""
+
+    name: str
+    provider: ModelProvider
+    capabilities: ModelCapabilities
+    performance: ModelPerformance
+    is_local: bool = False
+    last_used: Optional[datetime] = None
+    strengths: Set[str] = set()
+    weaknesses: Set[str] = set()
+    best_roles: Set[str] = set()
+
+
 class ModelRegistry:
     """Registry of available models and their characteristics."""
 
@@ -31,12 +68,13 @@ class ModelRegistry:
             "codellama-7b-instruct": ModelCharacteristics(
                 name="codellama-7b-instruct",
                 provider=ModelProvider.OLLAMA,
+                capabilities=ModelCapabilities(
+                    max_context_length=16384, max_output_length=16384
+                ),
+                performance=ModelPerformance(
+                    tokens_per_second=1000, cost_per_token=0.0
+                ),
                 is_local=True,
-                context_length=16384,
-                cost_per_1k_tokens=0.0,
-                typical_latency=1.0,
-                memory_required=8000,
-                energy_usage=0.7,
                 strengths={"code_generation", "code_completion", "fast_iteration"},
                 weaknesses={"complex_reasoning", "test_generation"},
                 best_roles={"PRIMARY", "VALIDATOR"},
@@ -44,12 +82,13 @@ class ModelRegistry:
             "mistral-7b-instruct": ModelCharacteristics(
                 name="mistral-7b-instruct",
                 provider=ModelProvider.OLLAMA,
+                capabilities=ModelCapabilities(
+                    max_context_length=8192, max_output_length=8192
+                ),
+                performance=ModelPerformance(
+                    tokens_per_second=1000, cost_per_token=0.0
+                ),
                 is_local=True,
-                context_length=8192,
-                cost_per_1k_tokens=0.0,
-                typical_latency=1.0,
-                memory_required=8000,
-                energy_usage=0.7,
                 strengths={"code_generation", "instruction_following", "fast_response"},
                 weaknesses={"long_context", "complex_algorithms"},
                 best_roles={"PRIMARY", "VALIDATOR"},
@@ -58,12 +97,12 @@ class ModelRegistry:
             "claude-3-sonnet": ModelCharacteristics(
                 name="claude-3-sonnet",
                 provider=ModelProvider.ANTHROPIC,
-                is_local=False,
-                context_length=200000,
-                cost_per_1k_tokens=0.003,
-                typical_latency=2.0,
-                memory_required=0,
-                energy_usage=0,
+                capabilities=ModelCapabilities(
+                    max_context_length=200000, max_output_length=200000
+                ),
+                performance=ModelPerformance(
+                    tokens_per_second=100, cost_per_token=0.003
+                ),
                 strengths={
                     "code_generation",
                     "code_review",
@@ -78,12 +117,11 @@ class ModelRegistry:
             "codellama-13b-instruct": ModelCharacteristics(
                 name="codellama-13b-instruct",
                 provider=ModelProvider.OLLAMA,
+                capabilities=ModelCapabilities(
+                    max_context_length=16384, max_output_length=16384
+                ),
+                performance=ModelPerformance(tokens_per_second=500, cost_per_token=0.0),
                 is_local=True,
-                context_length=16384,
-                cost_per_1k_tokens=0.0,
-                typical_latency=1.5,
-                memory_required=14000,
-                energy_usage=1.0,
                 strengths={"code_generation", "problem_solving", "python_expertise"},
                 weaknesses={"complex_tasks", "test_generation"},
                 best_roles={"PRIMARY", "REVIEWER"},
@@ -97,12 +135,13 @@ class ModelRegistry:
                     "codellama-34b-instruct": ModelCharacteristics(
                         name="codellama-34b-instruct",
                         provider=ModelProvider.OLLAMA,
+                        capabilities=ModelCapabilities(
+                            max_context_length=16384, max_output_length=16384
+                        ),
+                        performance=ModelPerformance(
+                            tokens_per_second=200, cost_per_token=0.0
+                        ),
                         is_local=True,
-                        context_length=16384,
-                        cost_per_1k_tokens=0.0,
-                        typical_latency=3.0,
-                        memory_required=35000,
-                        energy_usage=1.5,
                         strengths={
                             "code_generation",
                             "code_completion",
@@ -225,9 +264,9 @@ class ModelManager:
                 continue
 
             # Check constraints
-            if max_cost is not None and chars.cost_per_1k_tokens > max_cost:
+            if max_cost is not None and chars.performance.cost_per_token > max_cost:
                 continue
-            if max_latency is not None and chars.typical_latency > max_latency:
+            if max_latency is not None and chars.performance.avg_latency > max_latency:
                 continue
 
             # Check if model is good for problem type
@@ -237,20 +276,3 @@ class ModelManager:
                 suitable.append(name)
 
         return suitable
-
-
-@dataclass
-class ModelCharacteristics:
-    """Known characteristics of a model."""
-
-    name: str
-    provider: ModelProvider
-    is_local: bool
-    context_length: int
-    cost_per_1k_tokens: float
-    typical_latency: float  # seconds
-    memory_required: int  # MB
-    energy_usage: float  # relative to baseline
-    strengths: Set[str]
-    weaknesses: Set[str]
-    best_roles: Set[str]  # ModelRole names this model excels at

@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Tuple, Dict, Any
 
+import aiohttp
 import requests
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
@@ -83,7 +84,7 @@ def get_session_cookie() -> str:
     return config.PROBLEM_SITE_SESSION
 
 
-async def make_request(url: str) -> requests.Response:
+async def make_request(url: str, timeout: int = 30) -> str:
     """Make a request to Advent of Code with appropriate headers and delay."""
     logger = logging.getLogger(__name__)
     session_cookie = get_session_cookie()
@@ -91,17 +92,14 @@ async def make_request(url: str) -> requests.Response:
     logger.info("Using session cookie: %s...", session_cookie[:10])
 
     # Add session cookie
-    session.cookies.set("session", session_cookie)
-
-    # Respect rate limiting
-    time.sleep(config.REQUEST_DELAY)
-
-    try:
-        response = await asyncio.to_thread(session.get, url)
-        response.raise_for_status()
-        return response
-    except requests.exceptions.RequestException as e:
-        raise ValidationError(f"Failed to fetch {url}: {str(e)}") from e
+    async with aiohttp.ClientSession() as session:
+        headers = {
+            "Cookie": f"session={session_cookie}",
+            "User-Agent": "github.com/your-username/aoc-solver v1.0",
+        }
+        async with session.get(url, headers=headers, timeout=timeout) as response:
+            response.raise_for_status()
+            return await response.text()
 
 
 async def fetch_problem_text(year: int, day: int) -> str:
@@ -110,7 +108,7 @@ async def fetch_problem_text(year: int, day: int) -> str:
     response = await make_request(url)
 
     # Parse with html.parser
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(response, "html.parser")
 
     # Find all problem description articles
     articles = soup.find_all("article", class_="day-desc")
@@ -237,7 +235,7 @@ def fetch_input_data(year: int, day: int) -> str:
     # First get the problem page to find the input link
     problem_url = f"{config.AOC_BASE_URL}/{year}/day/{day}"
     response = asyncio.run(make_request(problem_url))
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(response, "html.parser")
 
     # Find the puzzle input link
     input_link = soup.find("a", string="get your puzzle input")
@@ -247,7 +245,7 @@ def fetch_input_data(year: int, day: int) -> str:
     # Get the input data
     input_url = f"{config.AOC_BASE_URL}/{year}/day/{day}/input"
     response = asyncio.run(make_request(input_url))
-    return response.text.strip()
+    return response.strip()
 
 
 def parse_problem_html(html: str) -> Tuple[str, str]:
@@ -293,7 +291,7 @@ def log_attempt(
         "feedback": feedback,
     }
 
-    with open(log_file, "a") as f:
+    with open(log_file, "a", encoding="utf-8") as f:
         f.write(json.dumps(entry) + "\n")
     logger = logging.getLogger(__name__)
     logger.info(f"Logged {result} attempt for Year {year} Day {day} Part {part}")
@@ -319,7 +317,7 @@ def ensure_input_file(year: int, day: int) -> str:
         response = asyncio.run(make_request(url))
 
         # Save input
-        input_path.write_text(response.text)
+        input_path.write_text(response, encoding="utf-8")
         logger.info(f"Saved input to {input_path}")
 
     return str(input_path)
@@ -330,7 +328,7 @@ def read_input(year: int, day: int) -> str:
     input_path = get_input_path(year, day)
     if not input_path.exists():
         raise InputError(f"Input file not found: {input_path}")
-    return input_path.read_text().strip()
+    return input_path.read_text(encoding="utf-8").strip()
 
 
 def download_input(year: int, day: int) -> str:
@@ -355,8 +353,9 @@ def download_input(year: int, day: int) -> str:
             url,
             cookies={"session": session},
             headers={"User-Agent": "problem-solver v1.0"},
+            timeout=30,
         )
         response.raise_for_status()
-        input_file.write_text(response.text)
+        input_file.write_text(response.text, encoding="utf-8")
 
-    return input_file.read_text()
+    return input_file.read_text(encoding="utf-8")

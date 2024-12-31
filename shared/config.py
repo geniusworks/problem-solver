@@ -1,4 +1,4 @@
-"""Configuration settings for problem solver."""
+"""Configuration and error classes for the problem solver."""
 
 import os
 from pathlib import Path
@@ -39,22 +39,88 @@ TEST_MODE = os.getenv("AOC_TEST_MODE", "false").lower() == "true"
 class BaseError(Exception):
     """Base class for all custom exceptions."""
 
+    pass
+
 
 class ValidationError(BaseError):
-    """Base class for validation errors."""
+    """Base class for validation-related errors."""
+
+    pass
 
 
 class SessionError(ValidationError):
-    """Session-related errors."""
+    """Raised when there are issues with session management."""
+
+    pass
 
 
 class InputError(ValidationError):
-    """Input-related errors."""
+    """Raised for errors related to input data."""
+
+    pass
+
+
+class SubmissionError(ValidationError):
+    """Raised for errors during solution submission."""
+
+    pass
 
 
 class ProviderError(BaseError):
-    """Base class for provider-related errors."""
+    """Base class for errors related to model providers."""
+
+    pass
 
 
-class ConfigurationError(BaseError):
-    """Configuration-related errors."""
+class RateLimitError(ProviderError):
+    """Raised when a rate limit is exceeded."""
+
+    pass
+
+
+class ProviderTimeoutError(ProviderError):
+    """Raised when a provider times out."""
+
+    pass
+
+
+class AuthenticationError(ProviderError):
+    """Raised when authentication fails."""
+
+    pass
+
+
+class ServiceUnavailableError(ProviderError):
+    """Raised when a service is unavailable."""
+
+    pass
+
+
+class ExecutionError(BaseError):
+    """Base class for execution-related errors."""
+
+    pass
+
+
+class TimeoutError(ExecutionError):
+    """Raised when execution exceeds time limit."""
+
+    pass
+
+
+class ResourceError(ExecutionError):
+    """Raised when resource limits are exceeded."""
+
+    pass
+
+
+class CompilationError(ExecutionError):
+    """Raised when code fails to compile."""
+
+    pass
+
+
+class RuntimeError(ExecutionError):
+    """Raised when code fails during execution."""
+
+    pass
