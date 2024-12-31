@@ -17,7 +17,7 @@ class ProblemSolver(BaseSolver):
 
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments.
-    
+
     Returns:
         Parsed arguments
     """

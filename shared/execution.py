@@ -30,7 +30,7 @@ class TestCase:
         return {
             "input_data": self.input_data,
             "expected_output": self.expected_output,
-            "description": self.description
+            "description": self.description,
         }
 
 
@@ -107,7 +107,7 @@ class SolutionExecutor:
                 year, day = re.match(r"(\d+)_day(\d+)", problem_id).groups()
                 input_dir = self.workspace_dir / "years" / year / f"day{int(day):02d}"
                 input_file = input_dir / "input.txt"
-                
+
                 # Temporarily write test input
                 orig_content = None
                 if input_file.exists():
@@ -117,10 +117,16 @@ class SolutionExecutor:
                 try:
                     # Set input file path and execute
                     result = await self.execute_solution(module_path, str(input_file))
-                    
-                    if result.error or result.output.strip() != test_case.expected_output.strip():
-                        return False, f"Test case failed: {result.error or 'Output mismatch'}"
-                        
+
+                    if (
+                        result.error
+                        or result.output.strip() != test_case.expected_output.strip()
+                    ):
+                        return (
+                            False,
+                            f"Test case failed: {result.error or 'Output mismatch'}",
+                        )
+
                 finally:
                     # Restore original content
                     if orig_content is not None:
@@ -153,7 +159,7 @@ class SolutionExecutor:
                 return ExecutionResult(
                     output="",
                     performance=None,
-                    error="Failed to create module specification"
+                    error="Failed to create module specification",
                 )
 
             module = importlib.util.module_from_spec(spec)
@@ -167,19 +173,11 @@ class SolutionExecutor:
             # Get performance metrics
             metrics = self.performance_monitor.get_metrics()
 
-            return ExecutionResult(
-                output=result,
-                performance=metrics,
-                error=None
-            )
+            return ExecutionResult(output=result, performance=metrics, error=None)
 
         except Exception as e:
             logger.exception("Error executing solution")
-            return ExecutionResult(
-                output="",
-                performance=None,
-                error=str(e)
-            )
+            return ExecutionResult(output="", performance=None, error=str(e))
 
     async def run_against_full_input(
         self, problem_id: str, year: int, day: int, source_code: str
@@ -195,7 +193,9 @@ class SolutionExecutor:
         Returns:
             ExecutionResult from running against full input
         """
-        input_file = self.workspace_dir / 'years' / str(year) / f'day{day:02d}' / 'input.txt'
+        input_file = (
+            self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "input.txt"
+        )
 
         if not input_file.exists():
             return ExecutionResult(
@@ -212,16 +212,20 @@ class SolutionExecutor:
         return result
 
     async def test_solution(
-        self, solution_code: str, year: int, day: int, test_cases: Optional[List[TestCase]] = None
+        self,
+        solution_code: str,
+        year: int,
+        day: int,
+        test_cases: Optional[List[TestCase]] = None,
     ) -> Tuple[bool, bool, List[ExecutionResult], ExecutionResult, Optional[str]]:
         """Test a solution against example test cases and full input.
-        
+
         Args:
             solution_code: The solution code to test
             year: Problem year
             day: Problem day
             test_cases: Optional list of test cases. If None, uses default test cases.
-            
+
         Returns:
             Tuple containing:
             - bool: Whether all example test cases passed
@@ -231,39 +235,51 @@ class SolutionExecutor:
             - Optional[str]: Full input answer if successful, None otherwise
         """
         problem_id = f"{year}_day{day}"
-        
+
         # Format and prepare solution
-        success, error = await self.prepare_solution(problem_id, solution_code, test_cases or [])
+        success, error = await self.prepare_solution(
+            problem_id, solution_code, test_cases or []
+        )
         if not success:
             logger.error("Solution preparation failed: %s", error)
             return False, False, [], ExecutionResult("", None), None
-            
+
         # Run example test cases
         example_results = []
         if test_cases:
             for test_case in test_cases:
                 result = await self.execute_solution(
                     self.temp_dir / f"{problem_id}.py",
-                    self._create_test_input(test_case.input_data)
+                    self._create_test_input(test_case.input_data),
                 )
                 example_results.append(result)
-                if result.error or result.output.strip() != test_case.expected_output.strip():
-                    return False, False, example_results, ExecutionResult("", None), None
-                    
+                if (
+                    result.error
+                    or result.output.strip() != test_case.expected_output.strip()
+                ):
+                    return (
+                        False,
+                        False,
+                        example_results,
+                        ExecutionResult("", None),
+                        None,
+                    )
+
         # Run full input test
-        input_file = self.workspace_dir / 'years' / str(year) / f'day{day:02d}' / 'input.txt'
+        input_file = (
+            self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "input.txt"
+        )
         if not input_file.exists():
             logger.error("Full input file not found: %s", input_file)
             return False, False, example_results, ExecutionResult("", None), None
-            
+
         full_result = await self.execute_solution(
-            self.temp_dir / f"{problem_id}.py",
-            str(input_file)
+            self.temp_dir / f"{problem_id}.py", str(input_file)
         )
-        
+
         if full_result.error:
             return True, False, example_results, full_result, None
-            
+
         return True, True, example_results, full_result, full_result.output.strip()
 
     def _create_test_input(self, input_data: str) -> str:
@@ -296,18 +312,22 @@ class SolutionExecutor:
                 if number_block:
                     current_example = {
                         "description": section,
-                        "input": number_block.group(0)
+                        "input": number_block.group(0),
                     }
                     continue
 
             # Look for output
             if current_example:
-                output_match = re.search(r"(?m)(?:answer|output|result).*?[is:]?\s*[*]?(\d+)[*]?", section, re.IGNORECASE)
+                output_match = re.search(
+                    r"(?m)(?:answer|output|result).*?[is:]?\s*[*]?(\d+)[*]?",
+                    section,
+                    re.IGNORECASE,
+                )
                 if output_match:
                     test_case = TestCase(
                         description=current_example["description"],
                         input_data=current_example["input"],
-                        expected_output=output_match.group(1)
+                        expected_output=output_match.group(1),
                     )
                     test_cases.append(test_case.to_dict())
                     current_example = None

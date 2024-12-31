@@ -9,13 +9,15 @@ from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class MemoryStats:
     """Memory statistics for a process."""
+
     initial_rss: int  # Initial Resident Set Size in bytes
-    peak_rss: int    # Peak Resident Set Size in bytes
-    final_rss: int   # Final Resident Set Size in bytes
-    increase: int    # Increase in RSS from initial to final
+    peak_rss: int  # Peak Resident Set Size in bytes
+    final_rss: int  # Final Resident Set Size in bytes
+    increase: int  # Increase in RSS from initial to final
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert stats to dictionary with human-readable values."""
@@ -23,23 +25,26 @@ class MemoryStats:
             "initial_memory_mb": round(self.initial_rss / (1024 * 1024), 2),
             "peak_memory_mb": round(self.peak_rss / (1024 * 1024), 2),
             "final_memory_mb": round(self.final_rss / (1024 * 1024), 2),
-            "memory_increase_mb": round(self.increase / (1024 * 1024), 2)
+            "memory_increase_mb": round(self.increase / (1024 * 1024), 2),
         }
+
 
 @dataclass
 class PerformanceMetrics:
     """Performance metrics for code execution."""
-    execution_time: float      # Total execution time in seconds
+
+    execution_time: float  # Total execution time in seconds
     memory_stats: MemoryStats  # Memory statistics
-    cpu_percent: float        # Average CPU usage percentage
+    cpu_percent: float  # Average CPU usage percentage
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert metrics to dictionary."""
         return {
             "execution_time_sec": round(self.execution_time, 3),
             "memory_stats": self.memory_stats.to_dict(),
-            "cpu_percent": round(self.cpu_percent, 1)
+            "cpu_percent": round(self.cpu_percent, 1),
         }
+
 
 class PerformanceMonitor:
     """Monitors code performance metrics."""
@@ -69,7 +74,7 @@ class PerformanceMonitor:
     @contextmanager
     def monitor(self):
         """Context manager for monitoring code execution.
-        
+
         Usage:
             monitor = PerformanceMonitor()
             with monitor.monitor():
@@ -80,9 +85,9 @@ class PerformanceMonitor:
             self._reset()
             self.start_time = time.time()
             self.initial_memory = self.process.memory_info().rss
-            
+
             yield
-            
+
         finally:
             self.end_time = time.time()
             final_memory = self.process.memory_info().rss
@@ -95,20 +100,22 @@ class PerformanceMonitor:
                 initial_rss=self.initial_memory,
                 peak_rss=self.peak_memory,
                 final_rss=final_memory,
-                increase=final_memory - self.initial_memory
+                increase=final_memory - self.initial_memory,
             )
-            cpu_percent = sum(self.cpu_samples) / len(self.cpu_samples) if self.cpu_samples else 0
+            cpu_percent = (
+                sum(self.cpu_samples) / len(self.cpu_samples) if self.cpu_samples else 0
+            )
 
             self.metrics = PerformanceMetrics(
                 execution_time=execution_time,
                 memory_stats=memory_stats,
-                cpu_percent=cpu_percent
+                cpu_percent=cpu_percent,
             )
 
     def get_metrics(self) -> Optional[PerformanceMetrics]:
         """Get the collected performance metrics.
-        
+
         Returns:
             PerformanceMetrics if monitoring was completed, None otherwise
         """
-        return getattr(self, 'metrics', None)
+        return getattr(self, "metrics", None)

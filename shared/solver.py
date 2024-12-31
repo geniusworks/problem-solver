@@ -17,6 +17,7 @@ from shared.parser import parse_problem_text
 from shared.utils import fetch_problem_text, ensure_input_file
 from shared.validator import check_embargo_period, submit_solution, SubmissionError
 
+
 class BaseSolver:
     """Base class for solving AoC problems."""
 
@@ -49,26 +50,27 @@ class BaseSolver:
             # Parse and solve
             problem_text = await fetch_problem_text(year, day)
             problem = parse_problem_text(problem_text)
-            
+
             # Record start time for performance tracking
             start_time = datetime.now()
-            
+
             # Generate solution
             solution_code = await self.model.generate_solution(problem)
             generation_time = (datetime.now() - start_time).total_seconds()
-            
+
             # Test solution
             test_result = await self.solution_executor.test_solution(
-                solution_code,
-                year,
-                day,
-                problem.examples
+                solution_code, year, day, problem.examples
             )
-            execution_time = (datetime.now() - start_time).total_seconds() - generation_time
-            
+            execution_time = (
+                datetime.now() - start_time
+            ).total_seconds() - generation_time
+
             # Unpack test results
-            example_passed, full_passed, example_results, full_result, full_answer = test_result
-            
+            example_passed, full_passed, example_results, full_result, full_answer = (
+                test_result
+            )
+
             # Prepare solution info
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             solution_info = {
@@ -78,77 +80,95 @@ class BaseSolver:
                     **self.model.model_info,
                     "parameters": {
                         "temperature": float(os.getenv("DEFAULT_TEMPERATURE", "0.1")),
-                        "max_tokens": int(os.getenv("MAX_TOKENS", "2000"))
+                        "max_tokens": int(os.getenv("MAX_TOKENS", "2000")),
                     },
-                    "generation_time": generation_time
+                    "generation_time": generation_time,
                 },
                 "test_results": {
                     "examples": {
                         "passed": example_passed,
-                        "inputs": [{"input_data": ex.input_data, 
+                        "inputs": [
+                            {
+                                "input_data": ex.input_data,
                                 "expected_output": ex.expected_output,
-                                "description": ex.description if hasattr(ex, 'description') else None}
-                                for ex in problem.examples],
+                                "description": (
+                                    ex.description
+                                    if hasattr(ex, "description")
+                                    else None
+                                ),
+                            }
+                            for ex in problem.examples
+                        ],
                         "expected": [ex.expected_output for ex in problem.examples],
                         "actual": [output.output for output in example_results],
                         "performance": [
-                            output.performance.to_dict() if output.performance else None 
+                            output.performance.to_dict() if output.performance else None
                             for output in example_results
-                        ]
+                        ],
                     },
                     "full_input": {
                         "passed": full_passed,
                         "answer": full_answer,
-                        "performance": full_result.performance.to_dict() if full_result and full_result.performance else None
-                    }
+                        "performance": (
+                            full_result.performance.to_dict()
+                            if full_result and full_result.performance
+                            else None
+                        ),
+                    },
                 },
                 "status": {
                     "examples_passed": example_passed,
                     "full_passed": full_passed,
-                    "part": part
+                    "part": part,
                 },
                 "submission": {
                     "submitted": False,
                     "success": None,
                     "message": None,
-                    "timestamp": None
+                    "timestamp": None,
                 },
                 "metadata": {
                     "timestamp": timestamp,
                     "year": year,
                     "day": day,
-                    "part": part
-                }
+                    "part": part,
+                },
             }
-            
+
             # Save solution (single location)
             solution_file = solutions_dir / f"solution_{timestamp}.json"
             with open(solution_file, "w") as f:
                 json.dump(solution_info, f, indent=2)
-            
+
             # Handle submission if full test passed
             if full_passed:
                 try:
-                    success, message = await submit_solution(year, day, part, full_answer)
-                    solution_info["submission"].update({
-                        "submitted": True,
-                        "success": success,
-                        "message": message,
-                        "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
-                    })
+                    success, message = await submit_solution(
+                        year, day, part, full_answer
+                    )
+                    solution_info["submission"].update(
+                        {
+                            "submitted": True,
+                            "success": success,
+                            "message": message,
+                            "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
+                        }
+                    )
                     if success:
                         logging.info(f"Solution submitted successfully: {message}")
                     else:
                         logging.warning(f"Solution submission failed: {message}")
                 except ValidationError as e:
-                    solution_info["submission"].update({
-                        "submitted": True,
-                        "success": False,
-                        "message": str(e),
-                        "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
-                    })
+                    solution_info["submission"].update(
+                        {
+                            "submitted": True,
+                            "success": False,
+                            "message": str(e),
+                            "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
+                        }
+                    )
                     logging.error(f"Error submitting solution: {e}")
-                
+
                 # Update solution file with submission results
                 with open(solution_file, "w") as f:
                     json.dump(solution_info, f, indent=2)
@@ -218,31 +238,34 @@ class BaseSolver:
                 [
                     f"Test Case {i}:",
                     "Input:",
-                    test_dict['input_data'],
+                    test_dict["input_data"],
                     "Expected Output:",
-                    test_dict['expected_output'],
+                    test_dict["expected_output"],
                     "",
                 ]
             )
         return "\n".join(result)
 
+
 def test_serialization():
     test_case = TestCase(
         input_data="199\n200\n208\n210\n200\n207\n240\n269\n260\n263",
         expected_output="7",
-        description="Example test case for depth measurement."
+        description="Example test case for depth measurement.",
     )
     serialized = test_case.to_dict()
     print(serialized)
+
 
 def test_serialization2():
     test_case = TestCase(
         input_data="199\n200\n208\n210\n200\n207\n240\n269\n260\n263",
         expected_output="7",
-        description="Example test case for depth measurement."
+        description="Example test case for depth measurement.",
     )
     serialized = test_case.to_dict()
     print(serialized)
+
 
 if __name__ == "__main__":
     test_serialization()

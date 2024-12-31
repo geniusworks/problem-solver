@@ -124,14 +124,16 @@ class PromptGenerator:
             ),
             "output_format": problem.output_format,
             "final_question": problem.final_question,
-            "key_concepts": ", ".join(problem.key_concepts)
-            if problem.key_concepts
-            else "None identified",
-            "condition_changes": "\n".join(
-                f"- {change}" for change in problem.condition_changes
-            )
-            if problem.condition_changes
-            else "None detected",
+            "key_concepts": (
+                ", ".join(problem.key_concepts)
+                if problem.key_concepts
+                else "None identified"
+            ),
+            "condition_changes": (
+                "\n".join(f"- {change}" for change in problem.condition_changes)
+                if problem.condition_changes
+                else "None detected"
+            ),
         }
 
         # Validate all required variables are present

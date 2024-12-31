@@ -1,4 +1,5 @@
 """Utility functions for Advent of Code solutions."""
+
 import json
 import logging
 import time

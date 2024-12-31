@@ -78,9 +78,11 @@ class ModelSelector:
                         success_rate=metrics["success_rate"],
                         total_attempts=metrics["total_attempts"],
                         successful_attempts=metrics["successful_attempts"],
-                        last_success=datetime.fromisoformat(metrics["last_success"])
-                        if metrics.get("last_success")
-                        else None,
+                        last_success=(
+                            datetime.fromisoformat(metrics["last_success"])
+                            if metrics.get("last_success")
+                            else None
+                        ),
                         cost_per_success=metrics["cost_per_success"],
                     )
         except Exception as e:
@@ -96,9 +98,11 @@ class ModelSelector:
                     "success_rate": metrics.success_rate,
                     "total_attempts": metrics.total_attempts,
                     "successful_attempts": metrics.successful_attempts,
-                    "last_success": metrics.last_success.isoformat()
-                    if metrics.last_success
-                    else None,
+                    "last_success": (
+                        metrics.last_success.isoformat()
+                        if metrics.last_success
+                        else None
+                    ),
                     "cost_per_success": metrics.cost_per_success,
                 }
                 for model_name, metrics in self.metrics.items()

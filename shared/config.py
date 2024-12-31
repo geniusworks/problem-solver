@@ -1,4 +1,5 @@
 """Configuration settings for problem solver."""
+
 import os
 from pathlib import Path
 from dotenv import load_dotenv

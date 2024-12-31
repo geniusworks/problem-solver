@@ -228,7 +228,7 @@ class AdaptiveSolver:
             model=solution.model_name,
             tokens=len(solution.code.split()),  # Simple approximation
             response_time=solution.execution_time,
-            cost=0.0
-            if "local" in solution.model_name.lower()
-            else 0.01,  # Example cost
+            cost=(
+                0.0 if "local" in solution.model_name.lower() else 0.01
+            ),  # Example cost
         )

@@ -22,7 +22,7 @@ class OllamaProvider(LLMProvider):
     def __init__(self, model: str = "codellama:7b", **kwargs):
         super().__init__(**kwargs)
         self.model = model
-        self.model_info = {'name': model, 'description': 'Description of the model.'}
+        self.model_info = {"name": model, "description": "Description of the model."}
         self.last_prompt = None
 
     async def generate_solution(self, problem) -> str:
@@ -58,7 +58,9 @@ Please write a solution that passes these test cases. Only output the code, no e
         """Fix common issues in generated code."""
         # Fix incorrect depth comparison in day 1 solution
         if "zip(depths, depths[1:])" in code:
-            code = code.replace("zip(depths, depths[1:])", "zip(depths[1:], depths[:-1])")
+            code = code.replace(
+                "zip(depths, depths[1:])", "zip(depths[1:], depths[:-1])"
+            )
 
         # Add missing imports
         if "import os" not in code:
@@ -70,7 +72,7 @@ Please write a solution that passes these test cases. Only output the code, no e
         if "def solve(measurements):" in code:
             code = code.replace(
                 "def solve(measurements):",
-                "def solve(input_file_path):\n    with open(input_file_path) as f:\n        measurements = [int(line.strip()) for line in f]"
+                "def solve(input_file_path):\n    with open(input_file_path) as f:\n        measurements = [int(line.strip()) for line in f]",
             )
         elif "def solve():" not in code:
             code = "def solve(input_file_path):\n    with open(input_file_path) as f:\n        measurements = [int(line.strip()) for line in f]\n    prev = measurements[0]\n    count = 0\n    for curr in measurements[1:]:\n        if curr > prev:\n            count += 1\n        prev = curr\n    return count\n\nif __name__ == '__main__':\n    print(solve('input.txt'))"
@@ -105,10 +107,19 @@ Please write a solution that passes these test cases. Only output the code, no e
 
         for line in lines:
             # Start collecting code when we see an import or def
-            if line.startswith("import ") or line.startswith("from ") or line.startswith("def "):
+            if (
+                line.startswith("import ")
+                or line.startswith("from ")
+                or line.startswith("def ")
+            ):
                 in_code = True
             # Stop collecting code if we see a non-code line after we've started
-            elif in_code and line and not line.startswith(" ") and not line.startswith("if "):
+            elif (
+                in_code
+                and line
+                and not line.startswith(" ")
+                and not line.startswith("if ")
+            ):
                 break
             if in_code:
                 code_lines.append(line)
@@ -131,17 +142,18 @@ Please write a solution that passes these test cases. Only output the code, no e
                 self.model,
                 prompt,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
 
             logger.debug("Waiting for Ollama response...")
             stdout, stderr = await process.communicate()
             stdout_text = stdout.decode() if stdout else ""
             stderr_text = stderr.decode() if stderr else ""
-            
+
             # Filter out Ollama spinner messages
             non_spinner_lines = [
-                line for line in stderr_text.splitlines()
+                line
+                for line in stderr_text.splitlines()
                 if line and not any(x in line for x in ["[?25", "[2K", "[1G"])
             ]
             if non_spinner_lines:
@@ -153,7 +165,7 @@ Please write a solution that passes these test cases. Only output the code, no e
                     content="",
                     confidence=0.0,
                     metadata={"model": self.model},
-                    error=f"Ollama failed with return code {process.returncode}"
+                    error=f"Ollama failed with return code {process.returncode}",
                 )
 
             logger.debug("Ollama response received successfully")
@@ -162,16 +174,13 @@ Please write a solution that passes these test cases. Only output the code, no e
                 content=stdout_text,
                 confidence=1.0,
                 metadata={"model": self.model},
-                error=None
+                error=None,
             )
 
         except Exception as e:
             logger.error("Failed to generate using Ollama: %s", str(e))
             return LLMResponse(
-                content="",
-                confidence=0.0,
-                metadata={"model": self.model},
-                error=str(e)
+                content="", confidence=0.0, metadata={"model": self.model}, error=str(e)
             )
 
     async def validate_solution(
