@@ -1,6 +1,7 @@
 # Problem Solver
 
 An automated problem-solving system for Advent of Code that:
+
 1. Fetches problem descriptions and inputs
 2. Analyzes requirements and examples
 3. Generates solutions using LLM models
@@ -8,19 +9,17 @@ An automated problem-solving system for Advent of Code that:
 5. Stores successful solutions with metadata
 6. Validates solutions against AoC website
 
-## Installation
-
-To install the required dependencies, run:
-
 ## Submission Policy
+
 This tool strictly adheres to Advent of Code's principles:
-- Solutions are only submitted after verifying the daily leaderboard is complete
+
+- Solutions are only submitted after top 100 daily leaderboard slots are filled
 - Leaderboard status is checked at: adventofcode.com/{year}/leaderboard/day/{day}
-- Submission attempts proceed only after all 100 slots are filled
 - Tool polls leaderboard status every minute until completion
 - Full submission history is tracked and logged
 
 ## Features
+
 - Multi-model LLM integration (Claude, GPT-4, Ollama)
 - Hardware-aware resource management
 - Comprehensive solution testing
@@ -31,38 +30,40 @@ This tool strictly adheres to Advent of Code's principles:
 ## Setup
 
 1. Ensure you have Python 3.11 installed:
+
    ```bash
    # On macOS with Homebrew
    brew install python@3.11
-   
+
    # Verify installation
    python3.11 --version
    ```
-   Note: Python 3.11 is required as some dependencies don't support newer versions yet.
 
+   Note: Python 3.11 is required as some dependencies don't support newer versions yet.
 2. Clone the repository
 3. Create and activate a virtual environment:
+
    ```bash
    # Create venv with Python 3.11
    python3.11 -m venv venv
-   
+
    # Activate it
    source venv/bin/activate  # On Unix/macOS
    .\venv\Scripts\activate   # On Windows
    ```
-
 4. Copy `.env.example` to `.env` and configure:
+
    - Add your PROBLEM_SITE_SESSION for problem fetching
    - Configure model settings
    - Set SUBMIT_SOLUTIONS to true/false
    - Adjust EMBARGO_HOURS if needed
-
 5. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
-
 6. Install Ollama and required models:
+
    ```bash
    # Install required models
    ollama pull codellama-7b-instruct  # Primary model
@@ -71,11 +72,13 @@ This tool strictly adheres to Advent of Code's principles:
 ## Usage
 
 To run the application for a specific problem, use:
+
 ```bash
 python solve.py --year <year> --day <day> --part <part>
 ```
 
 The solver will:
+
 1. Check if the puzzle is within embargo period
 2. Parse and analyze the problem
 3. Generate a solution using LLM
@@ -86,10 +89,11 @@ The solver will:
 ## Solution Management
 
 Solutions are stored in:
-- `years/<year>/day<XX>/solutions/examples/`: Solutions that passed example tests
-- `years/<year>/day<XX>/solutions/full/`: Solutions that passed both example and full input tests
+
+- `years/<year>/day<XX>/solutions/`: Timestamped files with solution metadata (JSON)
 
 Each solution includes:
+
 - Generated code
 - Prompt used
 - Model metadata
@@ -99,6 +103,7 @@ Each solution includes:
 ## Learning and Development
 
 This project demonstrates:
+
 - LLM integration in software development
 - Problem-solving frameworks
 - Test-driven development
@@ -106,6 +111,7 @@ This project demonstrates:
 - Solution validation techniques
 
 We encourage users to:
+
 1. Study the generated solutions to understand different approaches
 2. Experiment with different models and prompts
 3. Contribute improvements to the framework
