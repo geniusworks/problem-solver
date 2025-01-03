@@ -15,7 +15,7 @@ from shared.execution import SolutionExecutor, TestCase
 from shared.llm.local import OllamaProvider
 from shared.parser import parse_problem_text
 from shared.utils import fetch_problem_text, ensure_input_file
-from shared.validator import check_embargo_period, submit_solution, SubmissionError
+from shared.validator import submit_solution, SubmissionError
 
 
 class BaseSolver:
@@ -36,12 +36,6 @@ class BaseSolver:
     ) -> Optional[str]:
         """Solve an Advent of Code problem."""
         try:
-            # Check embargo period
-            is_embargoed, reason = check_embargo_period(year, day)
-            if is_embargoed:
-                logging.warning("Problem is under embargo: %s", reason)
-                return None
-
             # Create solution directory (simplified structure)
             day_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}"
             solutions_dir = day_dir / "solutions"

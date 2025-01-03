@@ -21,7 +21,7 @@
 
 3. **Functionality Review**
    - Successfully ran the application and confirmed that it fetches problem descriptions, processes solutions, and handles submissions correctly.
-   - Verified that the application respects the embargo period and checks the leaderboard status before submission.
+   - Verified that the application checks the leaderboard status before submission.
 
 ### Next Steps
 1. **Implement Unit Tests**

@@ -56,7 +56,6 @@ This tool strictly adheres to Advent of Code's principles:
    - Add your PROBLEM_SITE_SESSION for problem fetching
    - Configure model settings
    - Set SUBMIT_SOLUTIONS to true/false
-   - Adjust EMBARGO_HOURS if needed
 5. Install dependencies:
 
    ```bash
@@ -79,12 +78,11 @@ python solve.py --year <year> --day <day> --part <part>
 
 The solver will:
 
-1. Check if the puzzle is within embargo period
-2. Parse and analyze the problem
-3. Generate a solution using LLM
-4. Validate against test cases
-5. Run against full input
-6. Optionally submit the solution (if enabled in .env)
+1. Parse and analyze the problem 
+2. Generate a solution using LLM 
+3. Validate against test cases 
+4. Run against full input 
+5. Optionally submit the solution (if enabled in .env)
 
 ## Solution Management
 
