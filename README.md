@@ -20,7 +20,13 @@ This tool strictly adheres to Advent of Code's principles:
 
 ## Features
 
-- Multi-model LLM integration (Claude, GPT-4, Ollama)
+- Multi-model LLM integration:
+  - Local models (using Ollama runner):
+    - Microsoft Phi-4 (fast, efficient inference)
+    - Meta CodeLlama series (7B/13B/34B variants)
+    - Mistral-7B-Instruct
+  - Cloud models:
+    - Anthropic Claude-3-Sonnet
 - Hardware-aware resource management
 - Comprehensive solution testing
 - Detailed performance metrics
