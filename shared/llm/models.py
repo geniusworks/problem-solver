@@ -13,12 +13,20 @@ from .hardware import HardwareManager
 
 
 class ModelProvider(Enum):
-    """Available model providers."""
+    """Original creators/providers of the models."""
+    ANTHROPIC = "anthropic"      # Claude models
+    OPENAI = "openai"           # GPT models
+    META = "meta"               # LLaMA models
+    MICROSOFT = "microsoft"     # Phi models
+    MISTRAL = "mistral"        # Mistral models
 
-    ANTHROPIC = "anthropic"
-    OPENAI = "openai"
-    OLLAMA = "ollama"
-    LLAMACPP = "llamacpp"
+
+class ModelRunner(Enum):
+    """Tools/platforms that run the models."""
+    OLLAMA = "ollama"           # Local model runner with easy model management
+    LLAMACPP = "llamacpp"       # High-performance local inference
+    ANTHROPIC_API = "anthropic"  # Cloud API
+    OPENAI_API = "openai"       # Cloud API
 
 
 @dataclass
@@ -48,7 +56,8 @@ class ModelCharacteristics:
     """Characteristics of a language model."""
 
     name: str
-    provider: ModelProvider
+    provider: ModelProvider     # Who created the model
+    runner: ModelRunner         # What runs the model
     capabilities: ModelCapabilities
     performance: ModelPerformance
     is_local: bool = False
@@ -67,7 +76,8 @@ class ModelRegistry:
             # Smaller, M1-friendly models
             "codellama-7b-instruct": ModelCharacteristics(
                 name="codellama-7b-instruct",
-                provider=ModelProvider.OLLAMA,
+                provider=ModelProvider.META,
+                runner=ModelRunner.OLLAMA,
                 capabilities=ModelCapabilities(
                     max_context_length=16384, max_output_length=16384
                 ),
@@ -81,7 +91,8 @@ class ModelRegistry:
             ),
             "mistral-7b-instruct": ModelCharacteristics(
                 name="mistral-7b-instruct",
-                provider=ModelProvider.OLLAMA,
+                provider=ModelProvider.MISTRAL,
+                runner=ModelRunner.OLLAMA,
                 capabilities=ModelCapabilities(
                     max_context_length=8192, max_output_length=8192
                 ),
@@ -93,10 +104,26 @@ class ModelRegistry:
                 weaknesses={"long_context", "complex_algorithms"},
                 best_roles={"PRIMARY", "VALIDATOR"},
             ),
+            "phi4": ModelCharacteristics(
+                name="phi4",
+                provider=ModelProvider.MICROSOFT,
+                runner=ModelRunner.OLLAMA,
+                capabilities=ModelCapabilities(
+                    max_context_length=4096, max_output_length=4096
+                ),
+                performance=ModelPerformance(
+                    tokens_per_second=1200, cost_per_token=0.0
+                ),
+                is_local=True,
+                strengths={"code_generation", "fast_response", "efficient_inference"},
+                weaknesses={"long_context", "complex_reasoning"},
+                best_roles={"PRIMARY", "VALIDATOR"},
+            ),
             # Cloud models (always available)
             "claude-3-sonnet": ModelCharacteristics(
                 name="claude-3-sonnet",
                 provider=ModelProvider.ANTHROPIC,
+                runner=ModelRunner.ANTHROPIC_API,
                 capabilities=ModelCapabilities(
                     max_context_length=200000, max_output_length=200000
                 ),
@@ -116,7 +143,8 @@ class ModelRegistry:
             # Optional larger models (for M2)
             "codellama-13b-instruct": ModelCharacteristics(
                 name="codellama-13b-instruct",
-                provider=ModelProvider.OLLAMA,
+                provider=ModelProvider.META,
+                runner=ModelRunner.OLLAMA,
                 capabilities=ModelCapabilities(
                     max_context_length=16384, max_output_length=16384
                 ),
@@ -134,7 +162,8 @@ class ModelRegistry:
                 {
                     "codellama-34b-instruct": ModelCharacteristics(
                         name="codellama-34b-instruct",
-                        provider=ModelProvider.OLLAMA,
+                        provider=ModelProvider.META,
+                        runner=ModelRunner.OLLAMA,
                         capabilities=ModelCapabilities(
                             max_context_length=16384, max_output_length=16384
                         ),
@@ -196,10 +225,10 @@ class ModelManager:
             try:
                 if chars.is_local:
                     # Check if Ollama/LlamaCpp model is loaded
-                    available = await self._check_local_model(name, chars.provider)
+                    available = await self._check_local_model(name, chars.runner)
                 else:
                     # Check if we have API keys for cloud models
-                    available = self._check_cloud_model(chars.provider)
+                    available = self._check_cloud_model(chars.runner)
 
                 self.available_models[name] = available
 
@@ -212,32 +241,75 @@ class ModelManager:
                 self.logger.error(f"Error checking {name} availability: {e}")
                 self.available_models[name] = False
 
-    async def _check_local_model(self, name: str, provider: ModelProvider) -> bool:
-        """Check if a local model is available."""
-        if provider == ModelProvider.OLLAMA:
+    async def _check_local_model(self, name: str, runner: ModelRunner) -> bool:
+        """Check if a local model is available and handle installation if needed."""
+        if runner == ModelRunner.OLLAMA:
             try:
                 async with self.session.get(
                     "http://localhost:11434/api/tags"
                 ) as response:
                     if response.status == 200:
                         tags = await response.json()
-                        return any(name in tag["name"] for tag in tags["models"])
-            except:
+                        if any(name in tag["name"] for tag in tags["models"]):
+                            return True
+                        
+                        # Model not found, prompt for installation
+                        self.logger.info(f"Model {name} not found locally. Attempting installation...")
+                        print(f"\nModel {name} is not installed. Would you like to install it? (y/N)")
+                        
+                        # Use asyncio to handle user input without blocking
+                        try:
+                            # Create an event loop for user input
+                            loop = asyncio.get_event_loop()
+                            response = await loop.run_in_executor(None, input)
+                            
+                            if response.lower() == 'y':
+                                self.logger.info(f"Installing model {name}...")
+                                print(f"Installing {name}... This may take a while.")
+                                
+                                # Pull the model
+                                async with self.session.post(
+                                    "http://localhost:11434/api/pull",
+                                    json={"name": name}
+                                ) as pull_response:
+                                    while True:
+                                        line = await pull_response.content.readline()
+                                        if not line:
+                                            break
+                                        status = json.loads(line)
+                                        if "status" in status:
+                                            print(f"Progress: {status.get('status')}")
+                                        
+                                    if pull_response.status == 200:
+                                        self.logger.info(f"Successfully installed {name}")
+                                        print(f"\n{name} has been successfully installed!")
+                                        return True
+                                    else:
+                                        self.logger.error(f"Failed to install {name}")
+                                        print(f"\nFailed to install {name}. Skipping...")
+                            else:
+                                self.logger.info(f"User skipped installation of {name}")
+                                print(f"\nSkipping installation of {name}...")
+                        except Exception as e:
+                            self.logger.error(f"Error during model installation: {str(e)}")
+                            print(f"\nError during model installation: {str(e)}")
+            except Exception as e:
+                self.logger.error(f"Error checking model availability: {str(e)}")
                 return False
 
-        elif provider == ModelProvider.LLAMACPP:
+        elif runner == ModelRunner.LLAMACPP:
             # Implement LlamaCpp availability check
             return False
 
         return False
 
-    def _check_cloud_model(self, provider: ModelProvider) -> bool:
+    def _check_cloud_model(self, runner: ModelRunner) -> bool:
         """Check if we have API keys for cloud models."""
         import os
 
-        if provider == ModelProvider.ANTHROPIC:
+        if runner == ModelRunner.ANTHROPIC_API:
             return bool(os.getenv("ANTHROPIC_API_KEY"))
-        elif provider == ModelProvider.OPENAI:
+        elif runner == ModelRunner.OPENAI_API:
             return bool(os.getenv("OPENAI_API_KEY"))
 
         return False

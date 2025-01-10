@@ -1,5 +1,14 @@
 # Checkpoint History
 
+## 2025-01-10
+### Completed Milestones
+- Added phi4 to local model options with optimized configuration
+- Improved model management architecture:
+  - Separated model providers from model runners
+  - Added automatic model installation
+  - Enhanced error handling
+- Updated model registry with proper provider attributions
+
 ## 2024-12-30
 ### Completed Milestones
 - Refactored error handling system to improve maintainability.
