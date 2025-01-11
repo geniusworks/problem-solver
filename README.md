@@ -125,6 +125,15 @@ We encourage users to:
 
 See [CHECKPOINT.md](CHECKPOINT.md) for detailed progress and plans.
 
+## Environment Variables
+
+Configure the following in your `.env` file:
+
+- `PROBLEM_SITE_SESSION`: Your session token for problem fetching
+- `SUBMIT_SOLUTIONS`: Set to `true` to enable solution submissions (default: `false`)
+- `MODEL_SETTINGS`: Configuration for model providers and runners
+- Additional model-specific settings (see `.env.example` for details)
+
 ## Contributing
 
 1. Fork the repository
@@ -133,30 +142,14 @@ See [CHECKPOINT.md](CHECKPOINT.md) for detailed progress and plans.
 4. Push to the branch
 5. Create a Pull Request
 
+See our [Contributing Guidelines](docs/CONTRIBUTING.md) for more details.
+
+## Documentation
+
+- [Error Handling](docs/error-handling.md)
+- [API Documentation](docs/api.md)
+- [Development Status](CHECKPOINT.md)
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Error Handling
-
-This project implements a structured error handling system to manage exceptions effectively. The following error classes are defined:
-
-- **BaseError**: The base class for all custom exceptions.
-- **ValidationError**: Base class for validation-related errors.
-  - **SessionError**: Raised when there are issues with session management.
-  - **InputError**: Raised for errors related to input data.
-  - **SubmissionError**: Raised for errors during solution submission.
-- **ProviderError**: Base class for errors related to model providers.
-  - **RateLimitError**: Raised when a rate limit is exceeded.
-  - **ProviderTimeoutError**: Raised when a provider times out.
-  - **AuthenticationError**: Raised for authentication failures.
-  - **ServiceUnavailableError**: Raised when a service is unavailable.
-- **ConfigurationError**: Raised for errors related to configuration settings.
-
-## Environment Variables
-
-- **SUBMIT_SOLUTIONS**: Set to `true` to enable solution submissions. Default is `false`.
-
-## Contributing
-
-If you would like to contribute to this project, please fork the repository and submit a pull request with your changes.
