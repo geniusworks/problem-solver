@@ -77,11 +77,48 @@ def create_problem_dir(year: int, day: int) -> Path:
     return problem_dir
 
 
+async def validate_session_cookie(session_cookie: str) -> Tuple[bool, str]:
+    """Validate the session cookie by making a test request.
+    
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    url = f"{config.AOC_BASE_URL}/settings"
+    
+    async with aiohttp.ClientSession() as session:
+        headers = {
+            "Cookie": f"session={session_cookie}",
+            "User-Agent": config.USER_AGENT
+        }
+        async with session.get(url, headers=headers) as response:
+            if response.status == 200:
+                return True, ""
+            elif response.status == 302 or response.status == 401:
+                return False, "Session cookie is invalid or expired. Please update PROBLEM_SITE_SESSION in your .env file with a valid session cookie from adventofcode.com"
+            else:
+                return False, f"Unexpected error validating session cookie: HTTP {response.status}"
+
+
 def get_session_cookie() -> str:
     """Get the session cookie from environment variables."""
-    if not config.PROBLEM_SITE_SESSION:
-        raise SessionError("PROBLEM_SITE_SESSION environment variable not set")
-    return config.PROBLEM_SITE_SESSION
+    session = config.PROBLEM_SITE_SESSION
+    if not session:
+        raise SessionError(
+            "PROBLEM_SITE_SESSION environment variable not set.\n"
+            "To fix this:\n"
+            "1. Go to adventofcode.com and log in\n"
+            "2. Open browser developer tools (F12)\n"
+            "3. Go to Application/Storage > Cookies\n"
+            "4. Find and copy the 'session' cookie value\n"
+            "5. Add it to your .env file as: PROBLEM_SITE_SESSION=your_cookie_here"
+        )
+    
+    # Validate the session cookie
+    is_valid, error_message = asyncio.run(validate_session_cookie(session))
+    if not is_valid:
+        raise SessionError(error_message)
+        
+    return session
 
 
 async def make_request(url: str, timeout: int = 30) -> str:
@@ -333,29 +370,37 @@ def read_input(year: int, day: int) -> str:
 
 def download_input(year: int, day: int) -> str:
     """Download input from Advent of Code website."""
-    # Get session cookie from environment
-    session = os.getenv("PROBLEM_SITE_SESSION")
-    if not session:
-        raise ValueError(
-            "PROBLEM_SITE_SESSION environment variable not set. "
-            "Get it from browser cookies at adventofcode.com"
-        )
+    try:
+        # Get and validate session cookie
+        session = get_session_cookie()
+        
+        # Create directory if it doesn't exist
+        input_dir = Path(f"{year}/day{day:02d}")
+        input_dir.mkdir(parents=True, exist_ok=True)
 
-    # Create directory if it doesn't exist
-    input_dir = Path(f"{year}/day{day:02d}")
-    input_dir.mkdir(parents=True, exist_ok=True)
+        # Download input if it doesn't exist
+        input_file = input_dir / "input.txt"
+        if not input_file.exists():
+            url = f"https://adventofcode.com/{year}/day/{day}/input"
+            response = requests.get(
+                url,
+                cookies={"session": session},
+                headers={"User-Agent": config.USER_AGENT},
+                timeout=30,
+            )
+            
+            if response.status_code == 404:
+                raise InputError(f"Input for year {year} day {day} is not available yet")
+            
+            response.raise_for_status()
+            input_file.write_text(response.text, encoding="utf-8")
 
-    # Download input if it doesn't exist
-    input_file = input_dir / "input.txt"
-    if not input_file.exists():
-        url = f"https://adventofcode.com/{year}/day/{day}/input"
-        response = requests.get(
-            url,
-            cookies={"session": session},
-            headers={"User-Agent": "problem-solver v1.0"},
-            timeout=30,
-        )
-        response.raise_for_status()
-        input_file.write_text(response.text, encoding="utf-8")
-
-    return input_file.read_text(encoding="utf-8")
+        return input_file.read_text(encoding="utf-8")
+        
+    except SessionError as e:
+        # Re-raise SessionError with the detailed message
+        raise
+    except requests.exceptions.RequestException as e:
+        if "404" in str(e):
+            raise InputError(f"Input for year {year} day {day} is not available yet")
+        raise SessionError(f"Failed to download input: {str(e)}")
