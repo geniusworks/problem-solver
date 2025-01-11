@@ -100,9 +100,42 @@ Each solution includes:
 
 - Generated code
 - Prompt used
-- Model metadata
+- Model information
 - Test results
-- Timestamp
+- Performance metrics
+- Validation feedback and analysis
+
+## Solution Validation
+
+The system uses an intelligent validation approach that:
+
+1. Focuses on generating correct solutions rather than trial-and-error
+2. Provides structured feedback to guide solution generation:
+   - Validation of input assumptions
+   - Edge case handling
+   - Arithmetic precision
+   - Loop boundary conditions
+   - Collection processing completeness
+
+3. Stores validation history with:
+   - Error categorization
+   - Suggested improvements
+   - Solution evolution tracking
+
+This approach ensures solutions are:
+- Mathematically correct
+- Handle all edge cases
+- Process input completely
+- Use precise operations
+
+## Performance Tracking
+
+Solutions are tracked with detailed performance metrics, including:
+
+- Execution time
+- Memory usage
+- Model inference time
+- Number of iterations
 
 ## Learning and Development
 
