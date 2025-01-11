@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from .utils import get_session_cookie
 from shared.config import ValidationError, SessionError
 from .submission import SubmissionManager, SubmissionResult
+from .retry import RetryManager
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ class SolutionValidator:
     def __init__(self):
         """Initialize the solution validator."""
         self.submission_manager = SubmissionManager()
+        self.retry_manager = RetryManager()
         self.logger = logging.getLogger(__name__)
 
     def _parse_wait_time(self, message: str) -> int:
@@ -99,7 +101,7 @@ class SolutionValidator:
         )
 
     async def submit_and_validate(
-        self, year: int, day: int, part: int, answer: str
+        self, year: int, day: int, part: int, answer: str, allow_retry: bool = True
     ) -> SubmissionResult:
         """Submit a solution and validate the response.
         
@@ -108,6 +110,7 @@ class SolutionValidator:
             day: Problem day
             part: Problem part (1 or 2)
             answer: Solution to submit
+            allow_retry: Whether to allow automatic retries
             
         Returns:
             SubmissionResult with validation status and details
@@ -124,8 +127,10 @@ class SolutionValidator:
                 error_message="Solution submission is disabled in .env"
             )
 
-        # Check rate limiting
+        # Problem identifier
         problem_id = f"{year}_day{day}_part{part}"
+
+        # Check rate limiting
         can_submit, wait_time = self.submission_manager.can_submit(problem_id)
         if not can_submit:
             return SubmissionResult(
@@ -157,9 +162,63 @@ class SolutionValidator:
                     # Record the submission attempt
                     self.submission_manager.record_submission(problem_id, result)
                     
+                    # Handle retry logic if enabled
+                    if allow_retry and not result.was_correct:
+                        self.retry_manager.record_attempt(problem_id, answer, result)
+                        
+                        # For numeric solutions, try to guess next value
+                        if answer.isdigit():
+                            next_guess = self.retry_manager.get_next_numeric_guess(problem_id)
+                            if next_guess is not None:
+                                # Add hint about next attempt
+                                result.error_message += f"\nNext attempt will try: {next_guess}"
+                        
+                        # Add retry hints to error message
+                        hints = self.retry_manager.get_retry_hints(problem_id)
+                        if hints:
+                            result.error_message += "\nRetry hints:"
+                            if "upper_bound" in hints:
+                                result.error_message += f"\n- Answer is less than {hints['upper_bound']}"
+                            if "lower_bound" in hints:
+                                result.error_message += f"\n- Answer is greater than {hints['lower_bound']}"
+                    
                     return result
 
         except aiohttp.ClientError as e:
             raise SubmissionError(f"Network error submitting solution: {str(e)}")
         except Exception as e:
             raise SubmissionError(f"Error submitting solution: {str(e)}")
+
+    async def retry_with_numeric_guess(
+        self, year: int, day: int, part: int
+    ) -> Optional[SubmissionResult]:
+        """Attempt to retry a solution with a numeric guess based on previous attempts.
+        
+        Args:
+            year: Problem year
+            day: Problem day
+            part: Problem part (1 or 2)
+            
+        Returns:
+            SubmissionResult if a retry was attempted, None otherwise
+        """
+        problem_id = f"{year}_day{day}_part{part}"
+        
+        # Check if we can retry
+        can_retry, wait_time = self.retry_manager.can_retry(problem_id)
+        if not can_retry:
+            if wait_time:
+                self.logger.info(f"Cannot retry yet. Wait {wait_time} before trying again.")
+            else:
+                self.logger.info("Maximum retry attempts reached.")
+            return None
+            
+        # Get next guess
+        next_guess = self.retry_manager.get_next_numeric_guess(problem_id)
+        if next_guess is None:
+            self.logger.info("No numeric guess available for retry.")
+            return None
+            
+        # Try the guess
+        self.logger.info(f"Retrying with numeric guess: {next_guess}")
+        return await self.submit_and_validate(year, day, part, str(next_guess))
