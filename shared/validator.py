@@ -73,20 +73,23 @@ class SolutionValidator:
         if "That's not the right answer" in message:
             # Extract additional info if available
             if "too high" in message.lower():
-                hint = "Answer was too high. Review your solution for:"
-                hint += "\n- Off-by-one errors in loop bounds"
-                hint += "\n- Double-counting in aggregations"
-                hint += "\n- Integer division rounding"
+                hint = "Answer was too high. Solution generation should:"
+                hint += "\n- Verify loop boundary conditions and iteration limits"
+                hint += "\n- Check for duplicate counting in aggregations"
+                hint += "\n- Validate numeric operation precision and rounding"
+                hint += "\n- Review array/sequence access indices"
             elif "too low" in message.lower():
-                hint = "Answer was too low. Review your solution for:"
-                hint += "\n- Missing edge cases"
-                hint += "\n- Incomplete iterations"
-                hint += "\n- Early termination conditions"
+                hint = "Answer was too low. Solution generation should:"
+                hint += "\n- Ensure all valid cases are processed"
+                hint += "\n- Verify early termination conditions"
+                hint += "\n- Check for missing elements in collections"
+                hint += "\n- Validate input parsing completeness"
             else:
-                hint = "Incorrect answer. Review your solution for:"
-                hint += "\n- Logic errors in the core algorithm"
-                hint += "\n- Input parsing assumptions"
-                hint += "\n- Edge cases in the problem description"
+                hint = "Incorrect answer. Solution generation should:"
+                hint += "\n- Verify core algorithm implementation matches problem requirements"
+                hint += "\n- Validate assumptions about input format and constraints"
+                hint += "\n- Check handling of special cases and edge conditions"
+                hint += "\n- Review mathematical operations and their order"
                 
             return SubmissionResult(
                 was_correct=False,
