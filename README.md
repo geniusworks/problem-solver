@@ -137,6 +137,53 @@ Solutions are tracked with detailed performance metrics, including:
 - Model inference time
 - Number of iterations
 
+## Learning System
+
+The solver includes a learning system that improves its strategy selection over time:
+
+### Database Structure
+
+The learning system uses SQLite (stored in `workspace/learning/solver.db`) with three main tables:
+
+1. `strategy_results`: Records each solution attempt
+   - Problem ID (year/day/part)
+   - Strategies used
+   - Success/failure status
+   - Performance metrics
+   - Failure points
+
+2. `strategy_weights`: Tracks strategy effectiveness
+   - Strategy weights
+   - Success rates
+   - Performance metrics
+   - Last updated timestamp
+
+3. `problem_characteristics`: Stores problem patterns
+   - Problem characteristics
+   - Successful strategies
+   - Solution metrics
+   - Attempt history
+
+### Features
+
+- **Strategy Learning**: Learns which strategies work best for different problem types
+- **Performance Tracking**: Records execution time and memory usage
+- **Pattern Recognition**: Identifies similar problems to inform strategy selection
+- **Failure Analysis**: Tracks and analyzes failure patterns
+- **Continuous Improvement**: Updates strategy weights based on success rates
+
+### Directory Structure
+
+```
+workspace/
+├── learning/
+│   └── solver.db       # SQLite database for learning system
+└── years/
+    └── YYYY/
+        └── dayNN/
+            └── solutions/
+```
+
 ## Learning and Development
 
 This project demonstrates:

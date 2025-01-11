@@ -4,7 +4,10 @@ import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Dict, Optional
+from pathlib import Path
+from typing import Dict, Optional, List, Tuple
+
+from .learning import StrategyResult, StrategyOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -12,102 +15,134 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SubmissionResult:
     """Result of a solution submission."""
-
     was_correct: bool
     cooldown_seconds: Optional[int]
     error_message: Optional[str]
+    execution_metrics: Optional[Dict[str, float]] = None
+    strategies_used: Optional[List[str]] = None
 
 
 class SubmissionManager:
-    """Manages solution submissions and rate limiting."""
+    """Manages solution submissions, rate limiting, and learning."""
 
-    def __init__(self, history_file: str = "submission_history.json"):
+    def __init__(self, workspace_dir: Path):
         """Initialize the submission manager.
 
         Args:
-            history_file: Path to the submission history file.
+            workspace_dir: Path to the workspace directory
         """
-        self.history_file = history_file
+        self.workspace_dir = workspace_dir
+        self.history_file = workspace_dir / "submission_history.json"
         self.last_submission: Dict[str, datetime] = {}
         self.cooldown_periods: Dict[str, timedelta] = {}
+        self.strategy_optimizer = StrategyOptimizer(workspace_dir / "learning")
         self._load_history()
 
     def _load_history(self) -> None:
         """Load submission history from storage."""
         try:
-            with open(self.history_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                self.last_submission = {
-                    k: datetime.fromisoformat(v)
-                    for k, v in data.get("last_submission", {}).items()
-                }
-                self.cooldown_periods = {
-                    k: timedelta(seconds=v)
-                    for k, v in data.get("cooldown_periods", {}).items()
-                }
-        except FileNotFoundError:
-            pass
+            if self.history_file.exists():
+                with open(self.history_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    self.last_submission = {
+                        k: datetime.fromisoformat(v)
+                        for k, v in data.get("last_submission", {}).items()
+                    }
+                    self.cooldown_periods = {
+                        k: timedelta(seconds=v)
+                        for k, v in data.get("cooldown_periods", {}).items()
+                    }
         except Exception as e:
             logger.error("Failed to load submission history: %s", str(e))
 
     def _save_history(self) -> None:
         """Save submission history to storage."""
         try:
-            data = {
-                "last_submission": {
-                    k: v.isoformat() for k, v in self.last_submission.items()
-                },
-                "cooldown_periods": {
-                    k: v.total_seconds() for k, v in self.cooldown_periods.items()
-                },
-            }
+            self.history_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self.history_file, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
+                json.dump(
+                    {
+                        "last_submission": {
+                            k: v.isoformat()
+                            for k, v in self.last_submission.items()
+                        },
+                        "cooldown_periods": {
+                            k: v.total_seconds()
+                            for k, v in self.cooldown_periods.items()
+                        },
+                    },
+                    f,
+                    indent=2,
+                )
         except Exception as e:
             logger.error("Failed to save submission history: %s", str(e))
 
-    def can_submit(self, problem_id: str) -> tuple[bool, Optional[timedelta]]:
-        """Check if we can submit a solution for a problem.
-
-        Args:
-            problem_id: Unique identifier for the problem (e.g., "2021_day1_part1")
-
-        Returns:
-            Tuple of (can_submit, time_remaining)
-        """
-        if problem_id not in self.last_submission:
-            return True, None
-
-        cooldown = self.cooldown_periods.get(problem_id, timedelta(seconds=0))
-        time_since_last = datetime.now() - self.last_submission[problem_id]
-
-        if time_since_last < cooldown:
-            return False, cooldown - time_since_last
-        return True, None
-
-    def record_submission(self, problem_id: str, result: SubmissionResult) -> None:
-        """Record a submission attempt and update cooldown if necessary.
-
-        Args:
-            problem_id: Unique identifier for the problem
-            result: Result of the submission
-        """
-        self.last_submission[problem_id] = datetime.now()
-
+    def record_submission(
+        self,
+        year: int,
+        day: int,
+        part: int,
+        result: SubmissionResult,
+        execution_metrics: Optional[Dict[str, float]] = None,
+        strategies_used: Optional[List[str]] = None
+    ) -> None:
+        """Record a submission attempt and update learning system."""
+        problem_key = f"{year}/{day}/{part}"
+        
+        # Update submission history
+        self.last_submission[problem_key] = datetime.now()
         if result.cooldown_seconds:
-            self.cooldown_periods[problem_id] = timedelta(
-                seconds=result.cooldown_seconds
-            )
-
+            self.cooldown_periods[problem_key] = timedelta(seconds=result.cooldown_seconds)
         self._save_history()
 
-    def get_cooldown_period(self, problem_id: str) -> Optional[timedelta]:
-        """Get the current cooldown period for a problem.
+        # Record strategy result if metrics available
+        if execution_metrics and strategies_used:
+            strategy_result = StrategyResult(
+                problem_id=problem_key,
+                strategies_used=strategies_used,
+                success=result.was_correct,
+                execution_time=execution_metrics.get('execution_time', 0.0),
+                memory_usage=execution_metrics.get('memory_usage', 0.0),
+                attempts=self._get_attempt_count(problem_key),
+                failure_points=[result.error_message] if result.error_message else []
+            )
+            self.strategy_optimizer.record_result(strategy_result)
 
+    def get_recommended_strategies(
+        self,
+        problem_text: str,
+        characteristics: Dict[str, float]
+    ) -> Tuple[List[str], Dict[str, float]]:
+        """Get recommended strategies for a problem.
+        
         Args:
-            problem_id: Unique identifier for the problem
-
+            problem_text: The problem description
+            characteristics: Problem characteristics (e.g., input size, complexity)
+            
         Returns:
-            Current cooldown period or None if not set
+            Tuple of (recommended strategies, strategy weights)
         """
-        return self.cooldown_periods.get(problem_id)
+        strategies = self.strategy_optimizer.get_recommended_strategies(characteristics)
+        effectiveness = self.strategy_optimizer.get_strategy_effectiveness()
+        return strategies, effectiveness
+
+    def _get_attempt_count(self, problem_key: str) -> int:
+        """Get the number of submission attempts for a problem."""
+        return sum(1 for result in self.strategy_optimizer.results 
+                  if result.problem_id == problem_key)
+
+    def can_submit(self, year: int, day: int, part: int) -> Tuple[bool, Optional[int]]:
+        """Check if we can submit a solution now."""
+        problem_key = f"{year}/{day}/{part}"
+        
+        if problem_key not in self.last_submission:
+            return True, None
+            
+        last_time = self.last_submission[problem_key]
+        cooldown = self.cooldown_periods.get(problem_key, timedelta(seconds=0))
+        
+        if datetime.now() - last_time < cooldown:
+            wait_seconds = int((cooldown - (datetime.now() - last_time)).total_seconds())
+            return False, wait_seconds
+            
+        return True, None

@@ -4,13 +4,10 @@ import logging
 import asyncio
 from typing import Dict, List, Optional
 import re
-import asyncio
 from pathlib import Path
-
-from .base import LLMProvider, LLMResponse
+from shared.strategies import get_strategies_for_problem, create_strategy_prompt, ProblemCategory
 
 logger = logging.getLogger(__name__)
-
 
 class OllamaProvider(LLMProvider):
     """Provider for Ollama local models."""
@@ -23,22 +20,70 @@ class OllamaProvider(LLMProvider):
 
     async def generate_solution(self, problem) -> str:
         """Generate a solution for the given problem."""
-        prompt = f"""You are solving an Advent of Code problem. Here is the problem description:
+        # Phase 1: Problem Analysis
+        analysis_prompt = f"""Analyze this problem:
 
 {problem.description}
 
-Write a Python function called solve(input_file_path) that solves this problem. The function should read input from the input_file_path argument and return the answer.
-Here are some example test cases:
+Consider:
+1. Input format and constraints
+2. Expected output format
+3. Key problem characteristics
+4. Potential edge cases"""
 
+        analysis = await self.generate(analysis_prompt)
+        
+        # Phase 2: Strategy Selection
+        strategies = get_strategies_for_problem(problem.description)
+        strategy_prompt = create_strategy_prompt(strategies)
+        
+        # Phase 3: Implementation Planning
+        implementation_prompt = f"""Based on the analysis and recommended strategies, let's solve this problem step by step.
+
+Analysis:
+{analysis.content}
+
+Recommended Strategies:
+{strategy_prompt}
+
+Test Cases:
 {self._format_test_cases(problem.examples)}
 
-Please write a solution that passes these test cases. Only output the code, no explanation needed."""
+Write a Python function called solve(input_file_path) that implements this solution.
+Consider:
+1. Input parsing efficiency
+2. Core algorithm implementation
+3. Memory management
+4. Performance optimization
+5. Edge case handling"""
 
-        self.last_prompt = prompt
-        response = await self.generate(self.last_prompt)
+        self.last_prompt = implementation_prompt
+        response = await self.generate(implementation_prompt)
         code = self._extract_code(response.content)
+        
+        # Phase 4: Optimization Review
+        if code:
+            optimization_prompt = f"""Review this implementation for optimization opportunities:
+
+{code}
+
+Consider:
+1. Time complexity
+2. Memory usage
+3. Input/output efficiency
+4. Edge case handling
+5. Code clarity
+
+Suggest any improvements while maintaining correctness."""
+
+            optimization_response = await self.generate(optimization_prompt)
+            final_code = self._extract_code(optimization_response.content)
+            if final_code:
+                code = final_code
+
         if code is None:
-            code = "def solve(input_file_path):\n    with open(input_file_path) as f:\n        measurements = [int(line.strip()) for line in f]\n    prev = measurements[0]\n    count = 0\n    for curr in measurements[1:]:\n        if curr > prev:\n            count += 1\n        prev = curr\n    return count\n\nif __name__ == '__main__':\n    print(solve('input.txt'))"
+            code = "def solve(input_file_path):\n    with open(input_file_path) as f:\n        data = [line.strip() for line in f]\n    return len(data)  # Default implementation"
+            
         return self._fix_generated_code(code)
 
     def _format_test_cases(self, test_cases) -> str:
@@ -47,7 +92,10 @@ Please write a solution that passes these test cases. Only output the code, no e
         for i, test_case in enumerate(test_cases, 1):
             result += f"Example {i}:\n"
             result += f"Input:\n{test_case.input_data}\n"
-            result += f"Expected output: {test_case.expected_output}\n\n"
+            result += f"Expected output: {test_case.expected_output}\n"
+            if hasattr(test_case, 'description') and test_case.description:
+                result += f"Description: {test_case.description}\n"
+            result += "\n"
         return result
 
     def _fix_generated_code(self, code: str) -> str:
