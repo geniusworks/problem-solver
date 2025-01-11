@@ -124,6 +124,7 @@ class BaseSolver:
                     "success": None,
                     "message": None,
                     "timestamp": None,
+                    "validation_feedback": None,
                 },
                 "metadata": {
                     "timestamp": timestamp,
@@ -150,6 +151,10 @@ class BaseSolver:
                             "success": success,
                             "message": message,
                             "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
+                            "validation_feedback": {
+                                "error_type": message.split('.')[0] if not success else None,
+                                "suggested_checks": message.split('\n')[1:] if not success else None
+                            }
                         }
                     )
                     if success:
@@ -163,6 +168,10 @@ class BaseSolver:
                             "success": False,
                             "message": str(e),
                             "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
+                            "validation_feedback": {
+                                "error_type": str(e).split('.')[0],
+                                "suggested_checks": str(e).split('\n')[1:]
+                            }
                         }
                     )
                     logging.error("Error submitting solution: %s", str(e))
@@ -191,24 +200,27 @@ class BaseSolver:
         test_cases_dict = [test_case.to_dict() for test_case in test_cases]
         prompt = """You are a Python code generator for Advent of Code solutions. Follow these rules exactly:
 
-    1. Output ONLY Python code, no markdown, no comments, no explanations
-    2. Code MUST start with necessary imports (always include 're' for parsing)
-    3. Code MUST define a solve() function that:
-       - Reads input from os.environ["AOC_INPUT_FILE"]
-       - Handles variations between example and full input format
-       - Extracts numbers/data robustly using regex where needed
-       - Returns the final answer as a single number or string
-    4. No print statements except in __main__ block
-    5. No test cases or examples in the code
-    6. No docstrings or comments
-    7. Use proper indentation (4 spaces)
-    8. Make solution general enough to handle:
-       - Different sizes of input than shown in examples
-       - Additional text or annotations in full input
-       - Different parameters or conditions than in examples
-       - Edge cases implied by problem description
-
-    """
+1. Output ONLY Python code, no markdown, no comments, no explanations
+2. Code MUST start with necessary imports (always include 're' for parsing)
+3. Code MUST define a solve() function that:
+   - Reads input from os.environ["AOC_INPUT_FILE"]
+   - Handles variations between example and full input format
+   - Extracts numbers/data robustly using regex where needed
+   - Returns the final answer as a single number or string
+4. Ensure your solution:
+   - Validates all input assumptions
+   - Handles edge cases explicitly
+   - Uses precise arithmetic operations
+   - Processes ALL valid cases in the input
+   - Verifies loop boundary conditions
+5. Common pitfalls to avoid:
+   - Missing elements in collections
+   - Incorrect sequence/array indices
+   - Imprecise floating point operations
+   - Incomplete input parsing
+   - Early termination conditions
+6. No print statements except in __main__ block
+"""
         prompt += description
 
         if test_cases_dict:
