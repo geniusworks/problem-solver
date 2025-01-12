@@ -110,6 +110,52 @@ class SolutionValidator:
             error_message=f"Unknown response: {message}"
         )
 
+    async def get_previous_answer(self, year: int, day: int, part: int) -> Optional[str]:
+        """Get previously successful answer if problem was already solved.
+        
+        Args:
+            year: Problem year
+            day: Problem day
+            part: Problem part (1 or 2)
+            
+        Returns:
+            Previously successful answer if found, None otherwise
+        """
+        url = f"https://adventofcode.com/{year}/day/{day}"
+        
+        try:
+            session_cookie = get_session_cookie()
+            cookies = {"session": session_cookie}
+
+            async with aiohttp.ClientSession(cookies=cookies) as session:
+                async with session.get(url) as response:
+                    if response.status != 200:
+                        if response.status in (302, 401):
+                            raise SessionError("Session is invalid or expired")
+                        return None
+
+                    html = await response.text()
+                    soup = BeautifulSoup(html, "html.parser")
+                    
+                    # Find all <p> elements with class "day-success"
+                    success_elements = soup.find_all("p", class_="day-success")
+                    
+                    for elem in success_elements:
+                        text = elem.text.strip()
+                        # Look for text like "Your puzzle answer was 1234."
+                        if "Your puzzle answer was" in text:
+                            # Extract the answer
+                            answer = re.search(r"Your puzzle answer was ([^.]+)", text)
+                            if answer:
+                                return answer.group(1).strip()
+                    
+                    return None
+
+        except aiohttp.ClientError:
+            return None
+        except Exception:
+            return None
+
     async def submit_and_validate(
         self,
         year: int,
@@ -132,6 +178,23 @@ class SolutionValidator:
             SubmissionError: If there's an error submitting the solution
             SessionError: If there's an issue with the session
         """
+        # First check if we have a previous answer
+        previous_answer = await self.get_previous_answer(year, day, part)
+        if previous_answer is not None:
+            # Compare with our generated answer
+            if answer == previous_answer:
+                return SubmissionResult(
+                    was_correct=True,
+                    cooldown_seconds=None,
+                    error_message="Matches previously successful answer"
+                )
+            else:
+                return SubmissionResult(
+                    was_correct=False,
+                    cooldown_seconds=None,
+                    error_message=f"Does not match previously successful answer: {previous_answer}"
+                )
+
         # Check if submission is enabled
         if not os.getenv("SUBMIT_SOLUTIONS", "false").lower() == "true":
             return SubmissionResult(

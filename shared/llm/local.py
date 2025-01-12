@@ -2,7 +2,7 @@
 
 import logging
 import asyncio
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 import re
 from pathlib import Path
 from shared.strategies import get_strategies_for_problem, create_strategy_prompt, ProblemCategory
@@ -18,7 +18,7 @@ class OllamaProvider(LLMProvider):
         self.model_info = {"name": model, "description": "Description of the model."}
         self.last_prompt = None
 
-    async def generate_solution(self, problem) -> str:
+    async def generate_solution(self, problem) -> Dict[str, Any]:
         """Generate a solution for the given problem."""
         # Phase 1: Problem Analysis
         analysis_prompt = f"""Analyze this problem:
@@ -84,7 +84,24 @@ Suggest any improvements while maintaining correctness."""
         if code is None:
             code = "def solve(input_file_path):\n    with open(input_file_path) as f:\n        data = [line.strip() for line in f]\n    return len(data)  # Default implementation"
             
-        return self._fix_generated_code(code)
+        # Return both code and strategy information
+        return {
+            "code": self._fix_generated_code(code),
+            "strategies": [
+                {
+                    "category": str(strategy.category),
+                    "name": strategy.name,
+                    "description": strategy.description,
+                    "key_techniques": strategy.key_techniques,
+                    "optimization_tips": strategy.optimization_tips
+                }
+                for strategy in strategies
+            ],
+            "analysis": {
+                "problem_characteristics": analysis.content,
+                "optimization_suggestions": optimization_response.content if code else None
+            }
+        }
 
     def _format_test_cases(self, test_cases) -> str:
         """Format test cases for the prompt."""
