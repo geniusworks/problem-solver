@@ -27,11 +27,69 @@ This tool strictly adheres to Advent of Code's principles:
     - Mistral-7B-Instruct
   - Cloud models:
     - Anthropic Claude-3-Sonnet
-- Hardware-aware resource management
-- Comprehensive solution testing
-- Detailed performance metrics
-- Version-controlled solution storage
-- Rate-limited API interactions
+- Intelligent Model Selection:
+  - Performance-based model ranking
+  - Problem-type specialization
+  - Cold-start capability with pre-defined weights
+  - Hardware-aware resource management
+- Consensus Voting System:
+  - Multi-model validation for solution verification
+  - Dynamic consensus size based on problem complexity
+  - Weighted voting based on model performance
+  - Role-based participation (PRIMARY, VALIDATOR)
+  - Performance tracking for consensus participation
+- Comprehensive Testing:
+  - Automated test case extraction
+  - Full input validation
+  - Performance benchmarking
+- Solution Management:
+  - Version-controlled storage
+  - Detailed metadata and metrics
+  - Success rate tracking
+  - Problem-type categorization
+
+## Consensus Voting Process
+
+The system uses a sophisticated consensus voting mechanism to validate solutions:
+
+1. **Solution Generation**
+   - Primary model generates initial solution
+   - Solution is tested against example cases
+   - If successful, enters consensus voting
+
+2. **Validator Selection**
+   - System selects validator models based on:
+     - Historical performance
+     - Problem type specialization
+     - Hardware availability
+     - Current workload
+
+3. **Voting Process**
+   - Validators independently verify the solution
+   - Each validator:
+     - Reviews solution correctness
+     - Tests against examples
+     - Provides confidence score
+   - Votes are weighted by:
+     - Model's historical accuracy
+     - Success rate in problem type
+     - Consensus participation history
+
+4. **Consensus Resolution**
+   - Solution is accepted if:
+     - Majority of validators agree
+     - Combined confidence exceeds threshold
+     - No critical issues identified
+   - On disagreement:
+     - System may request additional validators
+     - Alternative solutions may be generated
+     - Process repeats until consensus or timeout
+
+5. **Performance Updates**
+   - All participating models' metrics are updated
+   - Successful consensus participation improves ranking
+   - Models gain problem-type specialization
+   - System adapts weights for future selections
 
 ## Setup
 
