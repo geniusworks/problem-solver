@@ -242,6 +242,86 @@ workspace/
             └── solutions/
 ```
 
+## Strategy Patterns
+
+The system employs sophisticated strategy patterns for continuous improvement and adaptation:
+
+### Strategy Optimization
+
+The strategy optimizer uses a weighted scoring system to evaluate and adjust strategies:
+
+- **Weight Distribution**
+  - 60% Success rate (prioritizing correctness)
+  - 20% Execution time optimization
+  - 20% Memory usage efficiency
+
+- **Failure Response**
+  - Records specific failure points
+  - Groups failures by strategy combinations
+  - Analyzes patterns to identify problematic approaches
+  - Updates strategy weights based on performance metrics
+
+### Model Selection and Adaptation
+
+Models are continuously evaluated and re-ranked based on:
+
+- **Performance Metrics**
+  - Average response time
+  - Code quality scores
+  - Success rate per problem type
+  - Cost per successful solution
+  - Resource utilization
+
+- **Selection Criteria**
+  - Historical performance on similar problems
+  - Current success rate and trend
+  - Resource availability and constraints
+  - Balance between local and cloud models
+
+### Corrective Learning
+
+The system makes intelligent adjustments after incorrect solutions:
+
+1. **Strategy Adjustment**
+   - Analyzes failure patterns
+   - Updates strategy weights
+   - Prioritizes successful strategies from similar problems
+   - Maintains historical performance data
+
+2. **Model Re-ranking**
+   - Recalculates success rates
+   - Updates running averages for quality metrics
+   - Adjusts model selection preferences
+   - Optimizes resource allocation
+
+3. **Pattern Recognition**
+   - Identifies similar problem patterns
+   - Tracks strategy effectiveness by problem type
+   - Builds knowledge base of successful approaches
+   - Applies transfer learning between related problems
+
+### Adaptive Architecture
+
+The system's architecture ensures continuous improvement through:
+
+- **Multiple Feedback Loops**
+  - Strategy effectiveness tracking
+  - Model performance monitoring
+  - Resource usage optimization
+  - Solution quality assessment
+
+- **Data-Driven Evolution**
+  - Starts with reasonable defaults
+  - Improves with real-world usage
+  - Maintains explainability
+  - Adapts to changing conditions
+
+This design allows the system to:
+- Learn from both successes and failures
+- Optimize resource utilization
+- Improve solution quality over time
+- Maintain robust performance across different problem types
+
 ## Learning and Development
 
 This project demonstrates:
