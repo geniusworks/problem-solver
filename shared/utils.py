@@ -100,25 +100,46 @@ async def validate_session_cookie(session_cookie: str) -> Tuple[bool, str]:
 
 
 def get_session_cookie() -> str:
-    """Get the session cookie from environment variables."""
+    """Get the session cookie from environment variables. If invalid, prompt for a new one."""
     session = config.PROBLEM_SITE_SESSION
     if not session:
-        raise SessionError(
-            "PROBLEM_SITE_SESSION environment variable not set.\n"
-            "To fix this:\n"
-            "1. Go to adventofcode.com and log in\n"
-            "2. Open browser developer tools (F12)\n"
-            "3. Go to Application/Storage > Cookies\n"
-            "4. Find and copy the 'session' cookie value\n"
-            "5. Add it to your .env file as: PROBLEM_SITE_SESSION=your_cookie_here"
-        )
+        print("\nPROBLEM_SITE_SESSION environment variable not set.")
+        return _prompt_for_session()
     
     # Validate the session cookie
     is_valid, error_message = asyncio.run(validate_session_cookie(session))
     if not is_valid:
-        raise SessionError(error_message)
+        print(f"\n{error_message}")
+        return _prompt_for_session()
         
     return session
+
+def _prompt_for_session() -> str:
+    """Prompt the user for a new session cookie and update .env file."""
+    print("\nTo get your session cookie:")
+    print("1. Go to adventofcode.com and log in")
+    print("2. Open browser developer tools (F12)")
+    print("3. Go to Application/Storage > Cookies")
+    print("4. Find and copy the 'session' cookie value")
+    
+    while True:
+        session = input("\nEnter your session cookie (or 'q' to quit): ").strip()
+        if session.lower() == 'q':
+            raise SessionError("Session cookie required to continue")
+            
+        is_valid, error_message = asyncio.run(validate_session_cookie(session))
+        if is_valid:
+            # Update .env file
+            env_path = Path(__file__).parent.parent / '.env'
+            if env_path.exists():
+                from dotenv import set_key
+                set_key(str(env_path), 'PROBLEM_SITE_SESSION', session)
+                os.environ['PROBLEM_SITE_SESSION'] = session
+                print("\nSession cookie validated and saved to .env file")
+            return session
+        else:
+            print(f"\nInvalid session cookie: {error_message}")
+            print("Please try again")
 
 
 async def make_request(url: str, timeout: int = 30) -> str:
