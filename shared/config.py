@@ -19,10 +19,13 @@ WORKSPACE_DIR = BASE_DIR / "workspace"
 LEARNING_DIR = BASE_DIR / "learning"
 
 # Base URL for problem site API
-PROBLEM_SITE_BASE_URL = "https://adventofcode.com"
+AOC_BASE_URL = "https://adventofcode.com"
+PROBLEM_URL_TEMPLATE = f"{AOC_BASE_URL}/{{year}}/day/{{day}}"
+LEADERBOARD_URL_TEMPLATE = f"{AOC_BASE_URL}/{{year}}/leaderboard/day/{{day}}"
+INPUT_URL_TEMPLATE = f"{AOC_BASE_URL}/{{year}}/day/{{day}}/input"
 
 # Session cookie from environment variable
-PROBLEM_SITE_SESSION = os.getenv("PROBLEM_SITE_SESSION")
+AOC_SESSION = os.getenv("AOC_SESSION")
 
 def load_hardware_config() -> Dict[str, Any]:
     """Load hardware configuration from JSON file."""
