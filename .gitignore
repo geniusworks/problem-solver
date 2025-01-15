@@ -44,8 +44,15 @@ ehthumbs.db
 
 # Problem Solver specific
 .env
-**/input.txt
-**/attempts.log
+.problem-solver/     # User-specific data directory
 
-# Keep templates
-!.env.template
+# Exclude all AoC data except example structure
+years/*                # All year directories
+!years/example/       # Except the example structure
+!years/example/**     # And its contents
+
+# Learning database
+*.db                  # All database files
+
+# Keep example config
+!.env.example

@@ -121,40 +121,9 @@ class SolutionValidator:
         Returns:
             Previously successful answer if found, None otherwise
         """
-        url = f"https://adventofcode.com/{year}/day/{day}"
-        
-        try:
-            session_cookie = get_session_cookie()
-            cookies = {"session": session_cookie}
-
-            async with aiohttp.ClientSession(cookies=cookies) as session:
-                async with session.get(url) as response:
-                    if response.status != 200:
-                        if response.status in (302, 401):
-                            raise SessionError("Session is invalid or expired")
-                        return None
-
-                    html = await response.text()
-                    soup = BeautifulSoup(html, "html.parser")
-                    
-                    # Find all <p> elements with class "day-success"
-                    success_elements = soup.find_all("p", class_="day-success")
-                    
-                    for elem in success_elements:
-                        text = elem.text.strip()
-                        # Look for text like "Your puzzle answer was 1234."
-                        if "Your puzzle answer was" in text:
-                            # Extract the answer
-                            answer = re.search(r"Your puzzle answer was ([^.]+)", text)
-                            if answer:
-                                return answer.group(1).strip()
-                    
-                    return None
-
-        except aiohttp.ClientError:
-            return None
-        except Exception:
-            return None
+        # Reuse the problem text fetch to check for previous answers
+        _, _, previous_answer = await fetch_problem_text(year, day, part)
+        return previous_answer
 
     async def submit_and_validate(
         self,

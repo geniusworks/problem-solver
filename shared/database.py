@@ -1,180 +1,231 @@
-"""Database module for storing learning and strategy data."""
+"""Database management for the learning system."""
 
+import logging
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any
-import json
+from typing import Any, Dict, Generator, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
+
+SCHEMA_SQL = """
+-- Strategy results for each solution attempt
+CREATE TABLE IF NOT EXISTS strategy_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    problem_id TEXT NOT NULL,  -- Format: YYYY_dayDD_partN
+    timestamp TEXT NOT NULL,   -- ISO format
+    strategies_used TEXT NOT NULL,  -- JSON array of strategy names
+    success BOOLEAN NOT NULL,
+    execution_time REAL,       -- In seconds
+    memory_usage INTEGER,      -- In bytes
+    attempts INTEGER,          -- Number of attempts before success/giving up
+    failure_points TEXT,       -- JSON array of failure descriptions
+    generation_time REAL,      -- Time to generate solution
+    code_size INTEGER,         -- Size of solution in bytes
+    UNIQUE(problem_id, timestamp)
+);
+
+-- Strategy weights and effectiveness
+CREATE TABLE IF NOT EXISTS strategy_weights (
+    strategy_name TEXT PRIMARY KEY,
+    success_rate REAL NOT NULL,      -- 0.0 to 1.0
+    avg_execution_time REAL,         -- In seconds
+    avg_memory_usage INTEGER,        -- In bytes
+    avg_attempts INTEGER,            -- Average attempts when this strategy is used
+    total_uses INTEGER NOT NULL,     -- Total times this strategy was used
+    last_updated TEXT NOT NULL,      -- ISO timestamp
+    problem_types TEXT               -- JSON array of problem types this works well for
+);
+
+-- Problem characteristics and patterns
+CREATE TABLE IF NOT EXISTS problem_characteristics (
+    problem_id TEXT PRIMARY KEY,     -- Format: YYYY_dayDD_partN
+    characteristics TEXT NOT NULL,    -- JSON object of problem features
+    successful_strategies TEXT,       -- JSON array of strategies that worked
+    solution_metrics TEXT,           -- JSON object with solution metrics
+    attempt_history TEXT,            -- JSON array of attempt summaries
+    last_updated TEXT NOT NULL       -- ISO timestamp
+);
+
+-- Create indexes for common queries
+CREATE INDEX IF NOT EXISTS idx_strategy_results_problem 
+ON strategy_results(problem_id);
+
+CREATE INDEX IF NOT EXISTS idx_strategy_results_success 
+ON strategy_results(success);
+"""
 
 
 class LearningDatabase:
-    """Database for storing and retrieving learning data."""
-
-    def __init__(self, workspace_dir: Path):
-        """Initialize the database."""
-        self.db_path = workspace_dir / "learning" / "solver.db"
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._init_db()
-
+    """Manages database connections and operations for the learning system."""
+    
+    def __init__(self, workspace_dir: Optional[Path] = None) -> None:
+        """Initialize the database manager.
+        
+        Args:
+            workspace_dir: Directory containing the database. If None, uses current directory.
+        """
+        if workspace_dir is None:
+            workspace_dir = Path.cwd()
+        
+        self.db_dir = workspace_dir / "learning"
+        self.db_dir.mkdir(parents=True, exist_ok=True)
+        self.db_path = self.db_dir / "solver.db"
+        
+        # Initialize if needed
+        if not self.db_path.exists():
+            logger.info("Database not found. Initializing at %s", self.db_path)
+            self._init_db()
+    
     def _init_db(self) -> None:
-        """Initialize database tables."""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS strategy_results (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    problem_id TEXT NOT NULL,
-                    timestamp TEXT NOT NULL,
-                    strategies_used TEXT NOT NULL,
-                    success INTEGER NOT NULL,
-                    execution_time REAL,
-                    memory_usage REAL,
-                    attempts INTEGER,
-                    failure_points TEXT,
-                    generation_time REAL,
-                    code_size INTEGER
-                )
-            """)
-
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS strategy_weights (
-                    strategy TEXT PRIMARY KEY,
-                    weight REAL NOT NULL,
-                    success_rate REAL,
-                    avg_execution_time REAL,
-                    avg_memory_usage REAL,
-                    last_updated TEXT NOT NULL
-                )
-            """)
-
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS problem_characteristics (
-                    problem_id TEXT PRIMARY KEY,
-                    characteristics TEXT NOT NULL,
-                    successful_strategies TEXT,
-                    avg_solution_time REAL,
-                    attempts INTEGER,
-                    last_updated TEXT NOT NULL
-                )
-            """)
-
-    def store_result(self, 
-                    problem_id: str,
-                    strategies_used: List[str],
-                    success: bool,
-                    execution_metrics: Dict[str, float],
-                    attempts: int,
-                    failure_points: List[str]) -> None:
-        """Store a strategy result."""
-        with sqlite3.connect(self.db_path) as conn:
+        """Initialize the database with the schema."""
+        with self.connect() as conn:
+            conn.executescript(SCHEMA_SQL)
+            conn.commit()
+    
+    @contextmanager
+    def connect(self) -> Generator[sqlite3.Connection, None, None]:
+        """Get a database connection with automatic cleanup."""
+        conn = sqlite3.connect(self.db_path)
+        try:
+            yield conn
+        finally:
+            conn.close()
+    
+    def store_result(
+        self,
+        problem_id: str,
+        strategies: List[str],
+        success: bool,
+        metrics: Dict[str, float],
+        attempts: int,
+        failure_points: List[str]
+    ) -> None:
+        """Store a problem-solving attempt result."""
+        with self.connect() as conn:
+            # Store strategy result
             conn.execute(
                 """
                 INSERT INTO strategy_results (
                     problem_id, timestamp, strategies_used, success,
-                    execution_time, memory_usage, attempts, failure_points,
-                    generation_time, code_size
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    execution_time, memory_usage, attempts,
+                    failure_points
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     problem_id,
                     datetime.now().isoformat(),
-                    json.dumps(strategies_used),
-                    1 if success else 0,
-                    execution_metrics.get('execution_time', 0.0),
-                    execution_metrics.get('memory_usage', 0.0),
+                    str(strategies),
+                    success,
+                    metrics.get("execution_time"),
+                    metrics.get("memory_usage"),
                     attempts,
-                    json.dumps(failure_points),
-                    execution_metrics.get('generation_time', 0.0),
-                    execution_metrics.get('code_size', 0)
-                )
+                    str(failure_points),
+                ),
             )
-
-    def update_strategy_weights(self, weights: Dict[str, Dict[str, float]]) -> None:
-        """Update strategy weights."""
-        with sqlite3.connect(self.db_path) as conn:
-            for strategy, metrics in weights.items():
-                conn.execute(
-                    """
-                    INSERT OR REPLACE INTO strategy_weights (
-                        strategy, weight, success_rate, avg_execution_time,
-                        avg_memory_usage, last_updated
-                    ) VALUES (?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        strategy,
-                        metrics['weight'],
-                        metrics.get('success_rate', 0.0),
-                        metrics.get('avg_execution_time', 0.0),
-                        metrics.get('avg_memory_usage', 0.0),
-                        datetime.now().isoformat()
-                    )
-                )
-
-    def store_problem_characteristics(self,
-                                   problem_id: str,
-                                   characteristics: Dict[str, float],
-                                   successful_strategies: Optional[List[str]] = None) -> None:
-        """Store problem characteristics and successful strategies."""
-        with sqlite3.connect(self.db_path) as conn:
+            
+            # Update strategy weights
+            for strategy in strategies:
+                self._update_strategy_weight(conn, strategy, success, metrics)
+            
+            conn.commit()
+    
+    def _update_strategy_weight(
+        self,
+        conn: sqlite3.Connection,
+        strategy: str,
+        success: bool,
+        metrics: Dict[str, float]
+    ) -> None:
+        """Update weights for a strategy based on results."""
+        # Get current stats
+        cur = conn.execute(
+            "SELECT * FROM strategy_weights WHERE strategy_name = ?",
+            (strategy,)
+        )
+        row = cur.fetchone()
+        
+        if row:
+            # Update existing stats
+            total_uses = row[5] + 1
+            success_rate = (row[1] * row[5] + (1 if success else 0)) / total_uses
+            avg_exec_time = (row[2] * row[5] + metrics.get("execution_time", 0)) / total_uses
+            avg_memory = (row[3] * row[5] + metrics.get("memory_usage", 0)) / total_uses
+            
             conn.execute(
                 """
-                INSERT OR REPLACE INTO problem_characteristics (
-                    problem_id, characteristics, successful_strategies,
-                    avg_solution_time, attempts, last_updated
+                UPDATE strategy_weights
+                SET success_rate = ?,
+                    avg_execution_time = ?,
+                    avg_memory_usage = ?,
+                    total_uses = ?,
+                    last_updated = ?
+                WHERE strategy_name = ?
+                """,
+                (
+                    success_rate,
+                    avg_exec_time,
+                    avg_memory,
+                    total_uses,
+                    datetime.now().isoformat(),
+                    strategy,
+                ),
+            )
+        else:
+            # Insert new strategy
+            conn.execute(
+                """
+                INSERT INTO strategy_weights (
+                    strategy_name, success_rate, avg_execution_time,
+                    avg_memory_usage, total_uses, last_updated
                 ) VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 (
-                    problem_id,
-                    json.dumps(characteristics),
-                    json.dumps(successful_strategies) if successful_strategies else None,
-                    0.0,  # Will be updated with actual metrics
-                    1,    # Initial attempt
-                    datetime.now().isoformat()
-                )
+                    strategy,
+                    1.0 if success else 0.0,
+                    metrics.get("execution_time", 0),
+                    metrics.get("memory_usage", 0),
+                    1,
+                    datetime.now().isoformat(),
+                ),
             )
-
+    
     def get_strategy_weights(self) -> Dict[str, Dict[str, float]]:
-        """Get current strategy weights and metrics."""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.execute(
-                "SELECT strategy, weight, success_rate, avg_execution_time, avg_memory_usage FROM strategy_weights"
-            )
+        """Get current weights and metrics for all strategies."""
+        with self.connect() as conn:
+            cur = conn.execute("SELECT * FROM strategy_weights")
             return {
                 row[0]: {
-                    'weight': row[1],
-                    'success_rate': row[2],
-                    'avg_execution_time': row[3],
-                    'avg_memory_usage': row[4]
+                    "weight": row[1],  # success_rate
+                    "avg_execution_time": row[2],
+                    "avg_memory_usage": row[3],
+                    "avg_attempts": row[4],
+                    "total_uses": row[5]
                 }
-                for row in cursor.fetchall()
+                for row in cur.fetchall()
             }
-
-    def get_similar_problems(self, characteristics: Dict[str, float], limit: int = 5) -> List[Dict[str, Any]]:
-        """Find similar problems based on characteristics."""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.execute(
-                "SELECT problem_id, characteristics, successful_strategies FROM problem_characteristics"
+    
+    def get_similar_problems(
+        self, characteristics: Dict[str, float]
+    ) -> List[Dict[str, Any]]:
+        """Find problems with similar characteristics."""
+        with self.connect() as conn:
+            # For now, just return successful problems
+            # TODO: Implement actual similarity scoring
+            cur = conn.execute(
+                """
+                SELECT problem_id, characteristics, successful_strategies
+                FROM problem_characteristics
+                WHERE successful_strategies IS NOT NULL
+                """
             )
-            
-            # Calculate similarity scores
-            similar_problems = []
-            for row in cursor.fetchall():
-                problem_chars = json.loads(row[1])
-                similarity = self._calculate_similarity(characteristics, problem_chars)
-                similar_problems.append({
-                    'problem_id': row[0],
-                    'characteristics': problem_chars,
-                    'successful_strategies': json.loads(row[2]) if row[2] else None,
-                    'similarity': similarity
-                })
-            
-            # Return top N similar problems
-            similar_problems.sort(key=lambda x: x['similarity'], reverse=True)
-            return similar_problems[:limit]
-
-    def _calculate_similarity(self, chars1: Dict[str, float], chars2: Dict[str, float]) -> float:
-        """Calculate similarity score between two sets of characteristics."""
-        # Simple Euclidean distance for now
-        score = 0.0
-        for key in set(chars1.keys()) & set(chars2.keys()):
-            score += (chars1[key] - chars2[key]) ** 2
-        return 1.0 / (1.0 + score ** 0.5)  # Convert distance to similarity
+            return [
+                {
+                    "problem_id": row[0],
+                    "characteristics": row[1],
+                    "successful_strategies": row[2],
+                    "similarity": 0.5  # Placeholder similarity score
+                }
+                for row in cur.fetchall()
+            ]

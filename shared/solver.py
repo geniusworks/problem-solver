@@ -11,7 +11,7 @@ from shared.config import ValidationError
 from shared.execution import SolutionExecutor, TestCase
 from shared.llm.local import OllamaProvider
 from shared.parser import parse_problem_text
-from shared.utils import fetch_problem_text, ensure_input_file
+from shared.utils import fetch_problem_text, ensure_input_file, ensure_problem_files
 from shared.validator import SubmissionError
 from shared.strategies import get_strategies_for_problem, create_strategy_prompt
 from shared.submission import SubmissionManager, SubmissionResult
@@ -36,11 +36,25 @@ class BaseSolver:
     ) -> Optional[str]:
         """Solve an Advent of Code problem."""
         try:
+            # Validate year and day against current time
+            current_date = datetime.now()
+            if year > current_date.year or (
+                year == current_date.year
+                and (
+                    current_date.month < 12  # Not December yet
+                    or (current_date.month == 12 and day > current_date.day)  # Future day in December
+                )
+            ):
+                raise ValueError(f"Problem for year {year} day {day} is not available yet")
+
             # Create solution directory
             day_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}"
             solutions_dir = day_dir / "solutions"
             solutions_dir.mkdir(parents=True, exist_ok=True)
 
+            # Ensure all problem files exist
+            problem_files = await ensure_problem_files(year, day)
+            
             # Check for existing successful solution unless force=True
             if not force:
                 existing_solution = await self._get_existing_solution(year, day, part)
@@ -50,16 +64,12 @@ class BaseSolver:
                         existing_solution, year, day
                     )
 
-            # Parse problem
-            problem_text = await fetch_problem_text(year, day)
-            if not problem_text:
-                logging.error("Failed to fetch problem text")
-                return None
-            
-            problem = parse_problem_text(problem_text)
+            # Get problem text and parse it
+            problem_text, _ = await fetch_problem_text(year, day, part)
+            parsed_problem = parse_problem_text(problem_text)
 
             # Analyze problem characteristics
-            characteristics = self._analyze_problem_characteristics(problem)
+            characteristics = self._analyze_problem_characteristics(parsed_problem)
             
             # Get recommended strategies
             strategies, effectiveness = self.submission_manager.get_recommended_strategies(
@@ -71,7 +81,7 @@ class BaseSolver:
 
             # Generate solution with strategic guidance
             solution_code = await self.model.generate_solution(
-                problem,
+                parsed_problem,
                 strategies=strategies,
                 strategy_effectiveness=effectiveness
             )
@@ -79,7 +89,7 @@ class BaseSolver:
 
             # Test solution
             test_result = await self.solution_executor.test_solution(
-                solution_code, year, day, problem.examples
+                solution_code, year, day, parsed_problem.examples
             )
             execution_time = (
                 datetime.now() - start_time
@@ -129,7 +139,7 @@ class BaseSolver:
                     # Save solution details
                     await self._save_solution(
                         solution_code,
-                        create_strategy_prompt(problem, strategies),
+                        create_strategy_prompt(parsed_problem, strategies),
                         self.model.get_model_info(),
                         {
                             "examples": {
@@ -139,7 +149,9 @@ class BaseSolver:
                             "full_input": {
                                 "passed": full_passed,
                                 "result": full_result
-                            }
+                            },
+                            "execution_time": execution_time,
+                            "memory_usage": full_result.performance.max_memory if full_result and full_result.performance else 0.0
                         },
                         {
                             "success": success,
@@ -154,6 +166,25 @@ class BaseSolver:
                             "optimization_suggestions": []
                         }
                     )
+
+                    if submission_result and submission_result.get("success"):
+                        solutions_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "solutions"
+                        solutions_dir.mkdir(exist_ok=True)
+                        
+                        solution_file = solutions_dir / f"part{part}.py"
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        with open(solution_file, "w") as f:
+                            f.write(f'''"""
+Solution for Advent of Code {year} Day {day} Part {part}
+Created by Martin Diekhoff
+https://github.com/geniusworks
+
+Generated and verified by the Advent of Code solver.
+Timestamp: {timestamp}
+"""
+
+{solution_code}
+''')
 
                     if success:
                         return full_answer
@@ -188,16 +219,27 @@ class BaseSolver:
         if not solutions_dir.exists():
             return None
             
-        # Check all solution files
-        for solution_file in solutions_dir.glob("solution_*.json"):
+        # First check for final solution
+        solution_file = solutions_dir / f"part{part}.py"
+        if solution_file.exists():
+            with open(solution_file, "r") as f:
+                return f.read()
+                
+        # If no final solution, check attempts
+        attempts_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "attempts"
+        if not attempts_dir.exists():
+            return None
+            
+        # Check all attempt files
+        for attempt_file in attempts_dir.glob("attempt_*.json"):
             try:
-                with open(solution_file, "r") as f:
-                    solution_data = json.load(f)
+                with open(attempt_file, "r") as f:
+                    attempt_data = json.load(f)
                     
                 # Check if this is for the right part and was successful
-                if (solution_data["metadata"]["part"] == part and
-                    solution_data["submission"]["success"]):
-                    return solution_data["code"]
+                if (attempt_data["metadata"]["part"] == part and
+                    attempt_data["submission"]["success"]):
+                    return attempt_data["code"]
             except (json.JSONDecodeError, KeyError):
                 continue
                 
@@ -227,7 +269,8 @@ class BaseSolver:
             "status": {
                 "examples_passed": test_results["examples"]["passed"],
                 "full_passed": test_results["full_input"]["passed"],
-                "part": part
+                "part": part,
+                "attempt_number": len(list(self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "attempts".glob("attempt_*.json"))) + 1
             },
             "submission": {
                 "submitted": submission_result is not None,
@@ -239,23 +282,59 @@ class BaseSolver:
                 "timestamp": timestamp,
                 "year": year,
                 "day": day,
-                "part": part
+                "part": part,
+                "execution_time": test_results.get("execution_time"),
+                "memory_usage": test_results.get("memory_usage")
             },
             "strategy_analysis": {
                 "applied_strategies": strategies,
                 "problem_analysis": analysis["problem_characteristics"],
-                "optimization_notes": analysis["optimization_suggestions"]
+                "optimization_notes": analysis["optimization_suggestions"],
+                "improvements_made": [],  # List of improvements made in this attempt
+                "known_issues": [],       # List of known issues with this attempt
+                "next_steps": []          # Suggested next steps if this attempt failed
             }
         }
         
-        # Create solutions directory if it doesn't exist
-        solutions_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "solutions"
-        solutions_dir.mkdir(parents=True, exist_ok=True)
+        # Create attempts directory if it doesn't exist
+        attempts_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "attempts"
+        attempts_dir.mkdir(parents=True, exist_ok=True)
         
-        # Save solution file
-        solution_file = solutions_dir / f"solution_{timestamp}.json"
-        with open(solution_file, "w") as f:
+        # Save attempt file
+        attempt_file = attempts_dir / f"attempt_{timestamp}.json"
+        with open(attempt_file, "w") as f:
             json.dump(solution_data, f, indent=2)
+            
+        # If the solution was successful, also save it to solutions/
+        if solution_data["submission"]["success"]:
+            solutions_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "solutions"
+            solutions_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Create the final solution file
+            part_num = solution_data["metadata"]["part"]
+            solution_file = solutions_dir / f"part{part_num}.py"
+            
+            # Add documentation to the solution code
+            solution_code = f'''"""
+Solution for Part {part_num}
+
+Generated on: {timestamp}
+Model used: {model_info["name"]}
+Performance:
+- Example cases: {"✓" if test_results["examples"]["passed"] else "✗"}
+- Full input: {"✓" if test_results["full_input"]["passed"] else "✗"}
+
+Problem characteristics:
+{json.dumps(analysis["problem_characteristics"], indent=2)}
+
+Strategy analysis:
+{json.dumps(strategies, indent=2)}
+"""
+
+{code}
+'''
+            with open(solution_file, "w") as f:
+                f.write(solution_code)
 
     def _analyze_problem_characteristics(self, problem: Any) -> Dict[str, float]:
         """Analyze problem characteristics for strategy selection."""

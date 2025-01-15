@@ -21,10 +21,11 @@ PROBLEM_SITE_SESSION = os.getenv("PROBLEM_SITE_SESSION")
 
 # File patterns
 INPUT_FILE = "input.txt"
-EXAMPLE_FILE = "example.txt"
+EXAMPLES_DIR = "examples"  # Directory to store example files
 PROBLEM_FILE = "problem.txt"
 LOGIC_FILE = "logic.txt"
-ATTEMPTS_LOG = "attempts.log"
+HTML_FILE = "problem.html"  # Cached HTML response
+META_FILE = "problem_meta.json"  # Cache metadata including state
 
 # HTTP settings
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15"

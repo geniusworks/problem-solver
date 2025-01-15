@@ -3,6 +3,7 @@
 import json
 import logging
 import re
+from bs4 import BeautifulSoup
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -174,58 +175,77 @@ def _extract_examples(text: str) -> List[TestCase]:
     logger.debug("Starting example extraction...")
     examples = []
 
-    # First split the text into sections based on example indicators
-    sections = re.split(r"(?:For example|Here\'s a|Consider this|Example)", text)[
-        1:
-    ]  # Skip intro
-    if not sections:
-        logger.debug("No example sections found")
+    # Parse HTML
+    soup = BeautifulSoup(text, "html.parser")
+    
+    # Get the full article content first
+    article = soup.find("article", class_="day-desc")
+    if not article:
+        logger.warning("No article found in problem text")
         return examples
-
-    for i, section in enumerate(sections):
-        logger.debug(f"Processing example section {i+1}")
+        
+    article_text = article.get_text()
+    
+    # Find all pre blocks
+    pre_blocks = article.find_all("pre")
+    logger.debug("Found %d pre blocks", len(pre_blocks))
+    
+    for i, pre_block in enumerate(pre_blocks):
         try:
-            # Find the description (text before the numbers)
-            description = section[: section.find("\n\n")].strip()
-
-            # Find the block of numbers
-            number_block = re.search(r"(?:\d+[^\n]*\n)+", section)
-            if not number_block:
-                logger.debug(f"No number block found in section {i+1}")
+            # Get the code content
+            code_block = pre_block.find("code")
+            if not code_block:
                 continue
-
-            input_data = number_block.group().strip()
-
-            # Find the expected output after the number block
-            remaining_text = section[number_block.end() :]
-            output_match = re.search(
-                r"(?:In this example|the result is|answer is)[^\n]*?(\d+)",
-                remaining_text,
-                re.IGNORECASE,
-            )
-            if not output_match:
-                logger.debug(f"No output found in section {i+1}")
+                
+            code_content = code_block.get_text().strip()
+            logger.debug("Pre block %d content length: %d", i+1, len(code_content))
+            
+            # Find where this example occurs in the full article text
+            example_pos = article_text.find(code_content)
+            if example_pos == -1:
                 continue
-
-            expected_output = output_match.group(1)
-
-            logger.debug(f"Example {i+1} parsed successfully:")
-            logger.debug(f"  Description: {description[:50]}...")
-            logger.debug(f"  Input data: {input_data[:50]}...")
-            logger.debug(f"  Expected output: {expected_output}")
-
+                
+            # Get all text before this example in the article
+            context_before = article_text[:example_pos].strip()
+            
+            # Get all text after this example until the next example or end
+            next_pos = len(article_text)
+            for next_block in pre_blocks[i+1:]:
+                next_content = next_block.find("code")
+                if next_content:
+                    pos = article_text.find(next_content.get_text())
+                    if pos != -1:
+                        next_pos = pos
+                        break
+            
+            context_after = article_text[example_pos + len(code_content):next_pos].strip()
+            
+            # Look for numbers in the context after that could be answers
+            answer = None
+            context_text = context_after
+            
+            # First try to find a number after "answer:" or similar
+            answer_match = re.search(r'(?:answer|output|result)[: ]+(\d+)', context_text.lower())
+            if answer_match:
+                answer = answer_match.group(1)
+            
+            # Clean up input data - split into lines and remove extra whitespace
+            input_lines = [line.strip() for line in code_content.split('\n') if line.strip()]
             examples.append(
                 TestCase(
-                    input_data=input_data,
-                    expected_output=expected_output,
-                    description=description,
-                    order=i,
-                    demonstrates=set(),  # Will be filled by analysis
-                    referenced_by=[],  # Will be filled by analysis
+                    input_data='\n'.join(input_lines),
+                    expected_output=answer if answer else "",  # Allow empty expected output
+                    description=f"{context_before}\n\n{context_after}",  # Include full article context
+                    order=len(examples),
+                    demonstrates=set(),
+                    referenced_by=[],
                 )
             )
+            logger.debug("Added example with input:\n%s\nand output: %s", code_content, answer)
+            
         except Exception as e:
-            logger.error(f"Error processing section {i+1}: {e}")
+            logger.error(f"Error processing pre block {i+1}: {e}")
+            continue
 
     logger.debug(f"Extracted {len(examples)} examples")
     return examples

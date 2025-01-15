@@ -49,27 +49,23 @@ SOLUTION_STRATEGIES: Dict[ProblemCategory, List[Strategy]] = {
             key_techniques=[
                 "Direction vectors",
                 "Boundary checking",
-                "Grid state tracking",
+                "BFS/DFS traversal",
                 "Flood fill",
-                "Connected components",
-                "Manhattan distance"
+                "State tracking"
             ],
             optimization_tips=[
-                "Use arrays instead of string operations",
-                "Pre-calculate grid dimensions",
-                "Cache frequently accessed positions",
-                "Use sets for visited tracking",
-                "Consider sparse matrix for large grids"
+                "Use sets for visited positions",
+                "Cache boundary calculations",
+                "Use array slicing for bulk operations",
+                "Consider using numpy for large grids"
             ],
             example_patterns=[
                 "directions = [(0,1), (1,0), (0,-1), (-1,0)]",
-                "grid = [list(row) for row in input_data]",
-                "visited = set()",
-                "def in_bounds(x, y): return 0 <= x < width and 0 <= y < height"
+                "grid[row][col] = new_value",
+                "if 0 <= x < width and 0 <= y < height:"
             ]
         )
     ],
-    
     ProblemCategory.PATHFINDING: [
         Strategy(
             name="Graph Traversal",
@@ -104,7 +100,63 @@ SOLUTION_STRATEGIES: Dict[ProblemCategory, List[Strategy]] = {
             ]
         )
     ],
-
+    ProblemCategory.PATTERN_MATCHING: [
+        Strategy(
+            name="String Pattern Matching",
+            description="Find and manipulate patterns in text or sequences",
+            when_to_use=[
+                "Need to find specific patterns",
+                "Text processing required",
+                "Regular expressions might help",
+                "Sequence matching needed"
+            ],
+            key_techniques=[
+                "Regular expressions",
+                "String slicing",
+                "Character counting",
+                "State tracking",
+                "Pattern recognition"
+            ],
+            optimization_tips=[
+                "Use regex for complex patterns",
+                "Consider using string methods like split()",
+                "Build lookup tables for patterns",
+                "Cache intermediate results"
+            ],
+            example_patterns=[
+                "pattern = re.compile(r'\\d+')",
+                "text.split('delimiter')",
+                "Counter(sequence)"
+            ]
+        ),
+        Strategy(
+            name="Sequence Analysis",
+            description="Analyze and process sequences of data",
+            when_to_use=[
+                "Need to find patterns in sequences",
+                "Data comes in ordered lists",
+                "Need to track changes or trends",
+                "Looking for repetition"
+            ],
+            key_techniques=[
+                "Sliding window",
+                "Two pointers",
+                "State machines",
+                "Pattern recognition"
+            ],
+            optimization_tips=[
+                "Use generators for large sequences",
+                "Cache repeated calculations",
+                "Use built-in functions like map()",
+                "Consider using numpy for numerical sequences"
+            ],
+            example_patterns=[
+                "for i in range(len(seq)-1):",
+                "left, right = 0, len(seq)-1",
+                "window = deque(maxlen=k)"
+            ]
+        )
+    ],
     ProblemCategory.DYNAMIC_PROGRAMMING: [
         Strategy(
             name="State-Based Solutions",
@@ -139,7 +191,6 @@ SOLUTION_STRATEGIES: Dict[ProblemCategory, List[Strategy]] = {
             ]
         )
     ],
-
     ProblemCategory.BIT_MANIPULATION: [
         Strategy(
             name="Bitwise Operations",
@@ -173,7 +224,6 @@ SOLUTION_STRATEGIES: Dict[ProblemCategory, List[Strategy]] = {
             ]
         )
     ],
-
     ProblemCategory.DATA_STRUCTURES: [
         Strategy(
             name="Specialized Data Structures",
@@ -208,42 +258,35 @@ SOLUTION_STRATEGIES: Dict[ProblemCategory, List[Strategy]] = {
             ]
         )
     ],
-
     ProblemCategory.MATH: [
         Strategy(
-            name="Mathematical Solutions",
-            description="Leverage mathematical properties and algorithms",
+            name="Mathematical Operations",
+            description="Handle mathematical calculations and formulas",
             when_to_use=[
+                "Need to perform calculations",
+                "Mathematical patterns involved",
                 "Number theory problems",
-                "Geometric calculations",
-                "Pattern recognition",
-                "Optimization problems",
-                "Sequence analysis"
+                "Geometric calculations"
             ],
             key_techniques=[
-                "GCD/LCM calculations",
-                "Prime factorization",
+                "Basic arithmetic",
+                "Number theory",
                 "Modular arithmetic",
-                "Matrix operations",
-                "Geometric algorithms",
-                "Combinatorics"
+                "Mathematical formulas"
             ],
             optimization_tips=[
-                "Use mathematical shortcuts",
-                "Consider modular arithmetic",
-                "Pre-compute common values",
-                "Use bit operations for math",
-                "Cache calculated results"
+                "Use math module functions",
+                "Cache expensive calculations",
+                "Consider numerical stability",
+                "Use appropriate data types"
             ],
             example_patterns=[
                 "math.gcd(a, b)",
-                "pow(base, exp, mod)",
-                "combinations = math.comb(n, r)",
-                "matrix_multiply(a, b)"
+                "sum(numbers)",
+                "x % modulus"
             ]
         )
     ],
-
     ProblemCategory.SIMULATION: [
         Strategy(
             name="State Evolution",
@@ -277,7 +320,6 @@ SOLUTION_STRATEGIES: Dict[ProblemCategory, List[Strategy]] = {
             ]
         )
     ],
-
     ProblemCategory.PERFORMANCE: [
         Strategy(
             name="Memory Optimization",
@@ -371,9 +413,18 @@ def get_strategies_for_problem(problem_text: str) -> List[str]:
     
     # Find relevant categories based on keywords
     problem_text = problem_text.lower()
+    matching_categories = []
     for category, words in keywords.items():
         if any(word in problem_text for word in words):
-            strategies.extend(strategy.name for strategy in SOLUTION_STRATEGIES[category])
+            matching_categories.append(category)
+            
+    # If no categories match, default to PATTERN_MATCHING and MATH
+    if not matching_categories:
+        matching_categories = [ProblemCategory.PATTERN_MATCHING, ProblemCategory.MATH]
+            
+    # Get strategies for each matching category
+    for category in matching_categories:
+        strategies.extend(strategy.name for strategy in SOLUTION_STRATEGIES[category])
     
     return strategies
 

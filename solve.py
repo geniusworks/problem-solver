@@ -4,11 +4,13 @@
 import argparse
 import asyncio
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import NoReturn
 
 from shared.solver import BaseSolver
+from shared.utils import setup_logging
 
 
 class ProblemSolver(BaseSolver):
@@ -55,10 +57,8 @@ async def async_main() -> int:
 def main() -> NoReturn:
     """Main entry point that sets up logging and runs the async main function."""
     # Configure logging
-    logging.basicConfig(
-        level=logging.DEBUG,  # Set to DEBUG for more verbose output
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
+    args = parse_args()
+    setup_logging(args.year, args.day)
 
     # Disable noisy loggers
     logging.getLogger("asyncio").setLevel(logging.WARNING)

@@ -37,7 +37,7 @@ class OllamaProvider(LLMProvider):
         problem,
         strategies: Optional[List[str]] = None,
         strategy_effectiveness: Optional[Dict[str, float]] = None
-    ) -> Dict[str, Any]:
+    ) -> str:
         """Generate a solution for the given problem."""
         # Phase 1: Problem Analysis
         analysis_prompt = f"""Analyze this problem:
@@ -63,141 +63,101 @@ Consider:
         strategy_prompt = create_strategy_prompt(strategy_objects)
         
         # Phase 3: Implementation Planning
-        implementation_prompt = f"""Based on the analysis and recommended strategies, let's solve this problem step by step.
-
-Analysis:
-{analysis.content}
-
-Recommended Strategies:
-{strategy_prompt}
+        implementation_prompt = f"""Here's the problem description:
+{problem.description}
 
 Test Cases:
 {self._format_test_cases(problem.examples)}
 
-Write a Python function called solve(input_file_path) that implements this solution.
-Consider:
-1. Input parsing efficiency
-2. Core algorithm implementation
-3. Memory management
-4. Performance optimization
-5. Edge case handling"""
+Write a Python function called solve(input_file_path) that reads the input file and solves this problem.
+
+IMPORTANT:
+1. First inspect the raw input:
+   - Log a few lines to understand the format
+   - Common AoC input patterns include:
+     * Space/tab-separated values
+     * Grid/matrix layouts
+     * Lists of integers or strings
+     * Key-value pairs
+     * Tree/graph structures
+
+2. Parse thoughtfully:
+   - Choose appropriate parsing based on the input structure
+   - Build data structures that match the problem's needs
+   - Handle edge cases (empty lines, malformed input)
+
+3. Validate assumptions:
+   - Test your parsing with the example input
+   - Log intermediate steps to help debugging
+   - Verify your solution matches example outputs
+
+The solution should handle the input format as described in the problem."""
 
         self.last_prompt = implementation_prompt
+        logger.debug("Implementation prompt:\n%s", implementation_prompt)
         response = await self.generate(implementation_prompt)
         code = self._extract_code(response.content)
         
-        # Phase 4: Optimization Review
-        if code:
-            optimization_prompt = f"""Review this implementation for optimization opportunities:
-
-{code}
-
-Consider:
-1. Time complexity
-2. Memory usage
-3. Input/output efficiency
-4. Edge case handling
-5. Code clarity
-
-Suggest any improvements while maintaining correctness."""
-
-            optimization_response = await self.generate(optimization_prompt)
-            final_code = self._extract_code(optimization_response.content)
-            if final_code:
-                code = final_code
-
+        logger.debug("Generated code before fixes:\n%s", code)
+        
         if code is None:
             code = "def solve(input_file_path):\n    with open(input_file_path) as f:\n        data = [line.strip() for line in f]\n    return len(data)  # Default implementation"
             
-        # Return both code and strategy information
-        return {
-            "code": self._fix_generated_code(code),
-            "strategies": [
-                {
-                    "category": str(strategy.category),
-                    "name": strategy.name,
-                    "description": strategy.description,
-                    "key_techniques": strategy.key_techniques,
-                    "optimization_tips": strategy.optimization_tips
-                }
-                for strategy in strategy_objects
-            ],
-            "analysis": {
-                "problem_characteristics": analysis.content,
-                "optimization_suggestions": optimization_response.content if code else None
-            }
-        }
+        logger.debug("Generated code after fixes:\n%s", code)
+        
+        fixed_code = self._fix_generated_code(code)
+        logger.debug("Generated code after fixes:\n%s", fixed_code)
+        return fixed_code
 
     def _format_test_cases(self, test_cases) -> str:
         """Format test cases for the prompt."""
-        result = ""
-        for i, test_case in enumerate(test_cases, 1):
-            result += f"Example {i}:\n"
-            result += f"Input:\n{test_case.input_data}\n"
-            result += f"Expected output: {test_case.expected_output}\n"
-            if hasattr(test_case, 'description') and test_case.description:
-                result += f"Description: {test_case.description}\n"
-            result += "\n"
-        return result
+        if not test_cases:
+            return "No example test cases provided."
+            
+        formatted = []
+        for i, test in enumerate(test_cases, 1):
+            case = [f"Example {i}:"]
+            
+            # Show raw input format
+            case.append("Raw Input Format:")
+            case.append(f"```\n{test.input_data}\n```")
+            
+            # Show description if available
+            if test.description:
+                case.append(f"Context: {test.description}")
+            
+            # Show expected output if available
+            if test.expected_output:
+                case.append(f"Expected Output: {test.expected_output}")
+                
+            formatted.append("\n".join(case))
+            
+        return "\n\n".join(formatted)
 
     def _fix_generated_code(self, code: str) -> str:
         """Fix common issues in generated code."""
-        # Fix incorrect depth comparison in day 1 solution
-        if "zip(depths, depths[1:])" in code:
-            code = code.replace(
-                "zip(depths, depths[1:])", "zip(depths[1:], depths[:-1])"
-            )
-
-        # Add missing imports
-        if "import re" not in code and "re." in code:
-            code = "import re\n" + code
-
-        # Fix solve function to read from file
-        if "def solve(measurements):" in code:
-            code = code.replace(
-                "def solve(measurements):",
-                "def solve(input_file_path):\n    with open(input_file_path) as f:\n        measurements = [int(line.strip()) for line in f]",
-            )
-        elif "def solve():" not in code:
-            code = "def solve(input_file_path):\n    with open(input_file_path) as f:\n        measurements = [int(line.strip()) for line in f]\n    prev = measurements[0]\n    count = 0\n    for curr in measurements[1:]:\n        if curr > prev:\n            count += 1\n        prev = curr\n    return count\n\nif __name__ == '__main__':\n    print(solve('input.txt'))"
-
-        # Add missing main block
+        # Add missing main block if needed
         if "__main__" not in code:
-            code += "\n\nif __name__ == '__main__':\n    input_file = self.workspace_dir / 'years' / str(year) / f'day{int(day):02d}' / 'input.txt'\n    print(solve(str(input_file)))"
-
+            code += "\n\nif __name__ == '__main__':\n    print(solve('input.txt'))"
         return code
 
     def _extract_code(self, text: str) -> Optional[str]:
         """Extract Python code from response text."""
-        # Try to find code between ```python and ``` markers
-        logger.debug("Looking for code between ```python markers...")
-        code_match = re.search(r"```python\n(.*?)\n```", text, re.DOTALL)
-        if code_match:
+        logger.debug("Looking for code between python markers...")
+        
+        # First try to find code between ```python markers
+        pattern = r"```python\s*(.*?)\s*```"
+        matches = re.findall(pattern, text, re.DOTALL)
+        if matches:
             logger.debug("Found code between markers")
-            return code_match.group(1).strip()
-
-        # Try to find code between ``` markers
-        logger.debug("Looking for code between ``` markers...")
-        code_match = re.search(r"```\n(.*?)\n```", text, re.DOTALL)
-        if code_match:
-            logger.debug("Found code between markers")
-            return code_match.group(1).strip()
-
-        # If no markers, try to extract code based on Python syntax
-        logger.debug("No markers found, trying to extract based on Python syntax...")
-        lines = text.split("\n")
+            return matches[0].strip()
+            
+        # If no markers, try to find indented code blocks
         code_lines = []
         in_code = False
-
-        for line in lines:
-            # Start collecting code when we see an import or def
-            if (
-                line.startswith("import ")
-                or line.startswith("from ")
-                or line.startswith("def ")
-            ):
+        for line in text.split("\n"):
+            if line.strip().startswith("def "):
                 in_code = True
-            # Stop collecting code if we see a non-code line after we've started
             elif (
                 in_code
                 and line

@@ -83,7 +83,7 @@ class SolutionExecutor:
             formatted_code, _ = format_code(source_code)
 
             # Log the formatted code for debugging
-            logger.debug("Formatted code:\n%s", formatted_code)
+            logger.debug("Generated solution code:\n%s", formatted_code)
 
             # Write the solution to a temporary file
             module_path.write_text(formatted_code)

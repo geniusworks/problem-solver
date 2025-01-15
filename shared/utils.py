@@ -5,9 +5,12 @@ import logging
 import time
 import os
 import asyncio
+import re
 from datetime import datetime
 from pathlib import Path
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, Any, Optional, List
+from dataclasses import dataclass
+from enum import Enum, auto
 
 import aiohttp
 import requests
@@ -45,12 +48,19 @@ session.mount("https://", adapter)
 session.mount("http://", adapter)
 
 
-def setup_logging():
+def setup_logging(year: Optional[int] = None, day: Optional[int] = None):
     """Configure logging for the application."""
+    # Configure basic logging with stream handler only
     logging.basicConfig(
-        level=logging.INFO,
+        level=os.getenv("LOG_LEVEL", "INFO"),
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[logging.StreamHandler()]
     )
+    
+    # Set specific logger levels
+    logging.getLogger("blib2to3").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.INFO)
+    logging.getLogger("asyncio").setLevel(logging.INFO)
 
 
 def get_problem_year_day() -> Tuple[int, int]:
@@ -111,9 +121,12 @@ def get_session_cookie() -> str:
 async def get_session_cookie_async() -> str:
     """Async version of get_session_cookie that validates the session."""
     session = get_session_cookie()
+    logger = logging.getLogger(__name__)
+    logger.debug("Got session cookie: %s", session[:10] if session else None)
     
     # Validate the session cookie
     is_valid, error_message = await validate_session_cookie(session)
+    logger.debug("Session validation result: %s, %s", is_valid, error_message)
     if not is_valid:
         print(f"\n{error_message}")
         return _prompt_for_session()
@@ -152,85 +165,241 @@ async def make_request(url: str, timeout: int = 30) -> str:
     """Make a request to Advent of Code with appropriate headers and delay."""
     logger = logging.getLogger(__name__)
     session_cookie = await get_session_cookie_async()
-    logger.info("Making request to %s", url)
-    logger.info("Using session cookie: %s...", session_cookie[:10])
+    logger.debug("Making request to %s", url)
+    logger.debug("Session cookie length: %d", len(session_cookie) if session_cookie else 0)
 
     # Add session cookie
     async with aiohttp.ClientSession() as session:
         headers = {
             "Cookie": f"session={session_cookie}",
-            "User-Agent": "github.com/your-username/aoc-solver v1.0",
+            "User-Agent": config.USER_AGENT,
         }
+        logger.debug("Request headers: %s", headers)
         async with session.get(url, headers=headers, timeout=timeout) as response:
+            logger.debug("Response status: %d", response.status)
             response.raise_for_status()
-            return await response.text()
+            text = await response.text()
+            logger.debug("Response text length: %d", len(text))
+            return text
 
 
-async def fetch_problem_text(year: int, day: int) -> str:
-    """Fetch the problem text from Advent of Code website."""
+class ProblemState(Enum):
+    """State of a problem page."""
+    INITIAL = auto()  # Only part 1 visible
+    PART1_SOLVED = auto()  # Part 1 solved, part 2 visible
+    COMPLETE = auto()  # Both parts solved
+
+@dataclass
+class CacheMetadata:
+    """Metadata for cached HTML response."""
+    state: ProblemState
+    timestamp: str
+    part1_answer: Optional[str] = None
+    part2_answer: Optional[str] = None
+
+async def _get_problem_state(soup: BeautifulSoup) -> Tuple[ProblemState, Optional[str], Optional[str]]:
+    """Determine problem state from HTML.
+    
+    Returns:
+        Tuple of (state, part1_answer, part2_answer)
+    """
+    part1_answer = None
+    part2_answer = None
+    
+    # Check for successful answers
+    success_elements = soup.find_all("p", class_="day-success")
+    for elem in success_elements:
+        text = elem.text.strip()
+        if "Your puzzle answer was" in text:
+            answer = re.search(r"Your puzzle answer was ([^.]+)", text)
+            if answer:
+                # If part 2 exists, first success is part 1
+                if part1_answer is None:
+                    part1_answer = answer.group(1).strip()
+                else:
+                    part2_answer = answer.group(1).strip()
+    
+    # Determine state
+    if part2_answer is not None:
+        return ProblemState.COMPLETE, part1_answer, part2_answer
+    elif part1_answer is not None:
+        return ProblemState.PART1_SOLVED, part1_answer, None
+    else:
+        return ProblemState.INITIAL, None, None
+
+async def _load_cache(year: int, day: int) -> Tuple[Optional[str], Optional[CacheMetadata]]:
+    """Load cached HTML and metadata if available."""
+    problem_dir = get_problem_dir(year, day)
+    html_path = problem_dir / config.HTML_FILE
+    meta_path = problem_dir / config.META_FILE
+    
+    if not (html_path.exists() and meta_path.exists()):
+        return None, None
+        
+    try:
+        with open(html_path, "r", encoding="utf-8") as f:
+            html = f.read()
+        with open(meta_path, "r", encoding="utf-8") as f:
+            meta_dict = json.load(f)
+            meta = CacheMetadata(
+                state=ProblemState[meta_dict["state"]],
+                timestamp=meta_dict["timestamp"],
+                part1_answer=meta_dict.get("part1_answer"),
+                part2_answer=meta_dict.get("part2_answer")
+            )
+        return html, meta
+    except (IOError, json.JSONDecodeError, KeyError):
+        return None, None
+
+async def _save_cache(year: int, day: int, html: str, meta: CacheMetadata) -> None:
+    """Save HTML and metadata to cache."""
+    problem_dir = get_problem_dir(year, day)
+    
+    html_path = problem_dir / config.HTML_FILE
+    meta_path = problem_dir / config.META_FILE
+    
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(html)
+    with open(meta_path, "w", encoding="utf-8") as f:
+        json.dump({
+            "state": meta.state.name,
+            "timestamp": meta.timestamp,
+            "part1_answer": meta.part1_answer,
+            "part2_answer": meta.part2_answer
+        }, f, indent=2)
+
+async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, BeautifulSoup, Optional[str]]:
+    """Fetch the problem text from Advent of Code website.
+    
+    Returns:
+        Tuple of (problem_text, soup_object, previous_answer)
+        where previous_answer is None if part hasn't been solved
+        
+    Note:
+        To be a good web citizen, we aggressively cache problem text and only
+        fetch new content when absolutely necessary (i.e., after successfully
+        solving a part). Multiple solution attempts for the same part will
+        use cached data.
+    """
+    # Try to load from cache first
+    cached_html, meta = await _load_cache(year, day)
+    logger = logging.getLogger(__name__)
+    
+    if cached_html is not None and meta is not None:
+        soup = BeautifulSoup(cached_html, "html.parser")
+        
+        # For part 1: Always use cache if we have it
+        if part == 1:
+            logger.debug("Using cached data for part 1")
+            return _extract_problem_text(soup), soup, meta.part1_answer
+            
+        # For part 2: Use cache if part 1 was solved
+        if part == 2 and meta.state >= ProblemState.PART1_SOLVED:
+            logger.debug("Using cached data for part 2")
+            return _extract_problem_text(soup), soup, meta.part2_answer
+            
+        # If we're here for part 2 but haven't solved part 1,
+        # return empty since part 2 isn't available yet
+        if part == 2:
+            logger.debug("Part 2 not available yet - part 1 unsolved")
+            return "", soup, None
+    
+    # No cache or invalid state - need to fetch
+    # This should only happen:
+    # 1. First time accessing the problem
+    # 2. After successfully solving part 1 (to get part 2)
+    # 3. After successfully solving part 2 (to get final state)
+    logger.info(f"Fetching fresh problem text for year {year} day {day} part {part}")
     url = f"{config.AOC_BASE_URL}/{year}/day/{day}"
     response = await make_request(url)
-
-    # Parse with html.parser
     soup = BeautifulSoup(response, "html.parser")
+    
+    # Get current state and answers
+    state, part1_answer, part2_answer = await _get_problem_state(soup)
+    
+    # Cache the response
+    await _save_cache(year, day, response, CacheMetadata(
+        state=state,
+        timestamp=datetime.now().isoformat(),
+        part1_answer=part1_answer,
+        part2_answer=part2_answer
+    ))
+    
+    # Return appropriate answer based on part
+    previous_answer = part2_answer if part == 2 else part1_answer
+    return _extract_problem_text(soup), soup, previous_answer
 
-    # Find all problem description articles
-    articles = soup.find_all("article", class_="day-desc")
-    if not articles:
-        logger = logging.getLogger(__name__)
-        logger.error("No articles found in HTML")
-        return ""
+async def fetch_input_data(year: int, day: int, soup: Optional[BeautifulSoup] = None) -> str:
+    """Fetch the input data from Advent of Code website."""
+    # Get the input data directly - no need to fetch problem page again
+    input_url = f"{config.AOC_BASE_URL}/{year}/day/{day}/input"
+    response = await make_request(input_url)
+    return response.strip()
 
-    # Extract text from each article
-    texts = []
-    for article in articles:
-        # Get the title
-        title = article.find("h2")
-        if title:
-            texts.append(title.get_text().strip())
-            texts.append("")  # Add blank line after title
 
-        # Process each element in the article
-        for elem in article.children:
-            if elem.name == "p":
-                # Handle paragraphs
-                text = ""
-                for child in elem.children:
-                    if isinstance(child, str):
-                        text += child
-                    elif child.name == "code":
-                        text += f"`{child.get_text()}`"
-                    elif child.name == "em":
-                        text += f"*{child.get_text()}*"
-                    elif child.name == "span":
-                        if child.get("title"):
-                            text += f"{child.get_text()} ({child['title']})"
-                        else:
-                            text += child.get_text()
-                    else:
-                        text += child.get_text()
-                texts.append(text.strip())
-                texts.append("")  # Add blank line after paragraph
-            elif elem.name == "pre":
-                # Handle code blocks
-                code = elem.find("code")
-                if code:
-                    texts.append("Example:")
-                    # Clean up the code text
-                    code_lines = []
-                    for line in code.get_text().strip().split("\n"):
-                        # Remove any emphasized text markers but keep the text
-                        line = line.replace("(increased)", "")
-                        line = line.replace("(decreased)", "")
-                        line = line.replace("(N/A - no previous measurement)", "")
-                        # Clean up whitespace but preserve indentation
-                        line = line.strip()
-                        code_lines.append(line)
-                    texts.append("\n".join(code_lines))
-                    texts.append("")  # Add blank line after code block
+async def ensure_problem_files(year: int, day: int) -> Dict[str, Path]:
+    """
+    Ensure all problem-related files exist and return their paths.
+    """
+    # Create problem directory if it doesn't exist
+    problem_dir = create_problem_dir(year, day)
 
-    # Join all text with proper spacing
-    return "\n".join(texts).strip()
+    # Fetch problem text and examples
+    problem_text, soup, _ = await fetch_problem_text(year, day)
+    save_to_file(config.PROBLEM_FILE, problem_text, problem_dir)
+
+    # Extract and save examples from problem text
+    parsed_problem = parse_problem_text(problem_text)
+    save_examples(parsed_problem.examples, problem_dir)
+
+    # Fetch input data using the same soup object
+    input_data = await fetch_input_data(year, day, soup)
+    save_to_file(config.INPUT_FILE, input_data, problem_dir)
+
+    return {
+        "problem": problem_dir / config.PROBLEM_FILE,
+        "examples": problem_dir / config.EXAMPLES_DIR,
+        "input": problem_dir / config.INPUT_FILE,
+    }
+
+
+def parse_problem_text(problem_text: str) -> Any:
+    """Parse problem text into structured data."""
+    # Implement parsing logic here
+    pass
+
+
+def save_examples(examples: List[Any], problem_dir: Path) -> None:
+    """Save examples to individual files in the examples directory."""
+    examples_dir = problem_dir / config.EXAMPLES_DIR
+    examples_dir.mkdir(parents=True, exist_ok=True)
+    
+    # First save the metadata about all examples
+    metadata = {
+        "count": len(examples),
+        "examples": [
+            {
+                "order": ex.order,
+                "demonstrates": list(ex.demonstrates),
+                "referenced_by": ex.referenced_by,
+                "purpose": ex.purpose.name if ex.purpose else None,
+                "description": ex.description
+            }
+            for ex in examples
+        ]
+    }
+    
+    with open(examples_dir / "metadata.json", "w") as f:
+        json.dump(metadata, f, indent=2)
+    
+    # Then save each example's input/output
+    for i, example in enumerate(examples):
+        example_data = {
+            "input": example.input_data,
+            "expected_output": example.expected_output
+        }
+        with open(examples_dir / f"example_{i+1}.json", "w") as f:
+            json.dump(example_data, f, indent=2)
 
 
 def save_to_file(filename: str, content: str, problem_dir: Path) -> None:
@@ -240,125 +409,6 @@ def save_to_file(filename: str, content: str, problem_dir: Path) -> None:
         f.write(content)
     logger = logging.getLogger(__name__)
     logger.info(f"Saved content to {filename}")
-
-
-def ensure_problem_files(year: int, day: int) -> Dict[str, Path]:
-    """
-    Ensure all problem-related files exist and return their paths.
-    """
-    # Create problem directory if it doesn't exist
-    problem_dir = create_problem_dir(year, day)
-
-    # Fetch problem text and example
-    problem_text = asyncio.run(fetch_problem_text(year, day))
-    save_to_file(config.PROBLEM_FILE, problem_text, problem_dir)
-
-    # Extract example from problem text
-    example = parse_example_from_html(problem_text)
-    save_to_file(config.EXAMPLE_FILE, example, problem_dir)
-
-    # Fetch input data
-    input_data = fetch_input_data(year, day)
-    save_to_file(config.INPUT_FILE, input_data, problem_dir)
-
-    return {
-        "problem": problem_dir / config.PROBLEM_FILE,
-        "example": problem_dir / config.EXAMPLE_FILE,
-        "input": problem_dir / config.INPUT_FILE,
-    }
-
-
-def parse_example_from_html(problem_text: str) -> str:
-    """Extract example data from problem text."""
-    # Look for the example section
-    if "Example:" not in problem_text:
-        return ""
-
-    # Get everything after "Example:"
-    example_section = problem_text.split("Example:")[1]
-
-    # Get the first block of numbers
-    lines = example_section.strip().split("\n")
-    example_lines = []
-    for line in lines:
-        # Skip empty lines and lines with explanatory text
-        if not line.strip() or any(
-            x in line.lower() for x in ["increased", "decreased", "n/a"]
-        ):
-            continue
-        # Clean up any remaining text and keep only numbers
-        numbers = "".join(c for c in line if c.isdigit() or c.isspace())
-        if numbers.strip():
-            example_lines.append(numbers.strip())
-
-    return "\n".join(example_lines)
-
-
-def fetch_input_data(year: int, day: int) -> str:
-    """Fetch the input data from Advent of Code website."""
-    # First get the problem page to find the input link
-    problem_url = f"{config.AOC_BASE_URL}/{year}/day/{day}"
-    response = asyncio.run(make_request(problem_url))
-    soup = BeautifulSoup(response, "html.parser")
-
-    # Find the puzzle input link
-    input_link = soup.find("a", string="get your puzzle input")
-    if not input_link:
-        raise ValidationError("Could not find puzzle input link")
-
-    # Get the input data
-    input_url = f"{config.AOC_BASE_URL}/{year}/day/{day}/input"
-    response = asyncio.run(make_request(input_url))
-    return response.strip()
-
-
-def parse_problem_html(html: str) -> Tuple[str, str]:
-    """Parse problem HTML to extract problem text and example."""
-    soup = BeautifulSoup(html, "html.parser")
-
-    # Extract problem text
-    article = soup.find("article")
-    if not article:
-        raise InputError("Could not find problem description in HTML")
-    problem_text = article.get_text().strip()
-
-    # Extract example
-    code = soup.find("pre")
-    example = code.text.strip() if code else ""
-
-    return problem_text, example
-
-
-def log_attempt(
-    year: int, day: int, part: int, solution: Any, result: str, feedback: str = ""
-) -> None:
-    """
-    Log a solution attempt.
-
-    Args:
-        year: Problem year
-        day: Problem day
-        part: Problem part (1 or 2)
-        solution: The attempted solution
-        result: 'accepted' or 'rejected'
-        feedback: Any feedback received about the attempt
-    """
-    problem_dir = get_problem_dir(year, day)
-    log_file = problem_dir / config.ATTEMPTS_LOG
-
-    timestamp = datetime.now().isoformat()
-    entry = {
-        "timestamp": timestamp,
-        "part": part,
-        "solution": str(solution),
-        "result": result,
-        "feedback": feedback,
-    }
-
-    with open(log_file, "a", encoding="utf-8") as f:
-        f.write(json.dumps(entry) + "\n")
-    logger = logging.getLogger(__name__)
-    logger.info(f"Logged {result} attempt for Year {year} Day {day} Part {part}")
 
 
 def get_input_path(year: int, day: int) -> Path:
@@ -431,3 +481,11 @@ def download_input(year: int, day: int) -> str:
         if "404" in str(e):
             raise InputError(f"Input for year {year} day {day} is not available yet")
         raise SessionError(f"Failed to download input: {str(e)}")
+
+
+def _extract_problem_text(soup: BeautifulSoup) -> str:
+    """Extract problem text from BeautifulSoup object."""
+    article = soup.find("article", class_="day-desc")
+    if article:
+        return article.get_text()
+    return ""

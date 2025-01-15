@@ -6,11 +6,11 @@ python-dotenv>=0.19.0
 psutil>=5.9.0
 requests==2.31.0
 anthropic>=0.7.4  # For Claude API
-pytest>=7.4.3     # For testing framework
-pytest-asyncio==0.21.1  # For async tests
+openai-python>=0.1.0  # For OpenAI API
 pydantic==2.5.2   # For data validation
 rich==13.7.0      # For beautiful console output
 openai>=1.3.7
+httpx>=0.25.2
 
 # Code Quality Tools
 mypy>=1.7.1       # Type checking

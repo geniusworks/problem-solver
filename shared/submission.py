@@ -5,9 +5,9 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional, List, Tuple, Any
 
-from .learning import StrategyResult, StrategyOptimizer
+from .learning import StrategyResult, StrategyOptimizer, Strategy, ProblemCategory, SOLUTION_STRATEGIES, get_strategies_for_problem
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,10 @@ class SubmissionManager:
         self.history_file = workspace_dir / "submission_history.json"
         self.last_submission: Dict[str, datetime] = {}
         self.cooldown_periods: Dict[str, timedelta] = {}
-        self.strategy_optimizer = StrategyOptimizer(workspace_dir / "learning")
+        self.strategy_optimizer = StrategyOptimizer(
+            workspace_dir / "learning",
+            workspace_dir
+        )
         self._load_history()
 
     def _load_history(self) -> None:
@@ -109,21 +112,33 @@ class SubmissionManager:
             self.strategy_optimizer.record_result(strategy_result)
 
     def get_recommended_strategies(
-        self,
-        problem_text: str,
-        characteristics: Dict[str, float]
-    ) -> Tuple[List[str], Dict[str, float]]:
-        """Get recommended strategies for a problem.
+        self, problem_text: str, characteristics: Dict[str, Any]
+    ) -> Tuple[List[Strategy], Dict[str, float]]:
+        """Get recommended strategies based on problem characteristics.
         
         Args:
-            problem_text: The problem description
-            characteristics: Problem characteristics (e.g., input size, complexity)
+            problem_text: The problem description text
+            characteristics: Problem characteristics from analysis
             
         Returns:
-            Tuple of (recommended strategies, strategy weights)
+            Tuple of (list of strategies, dict of strategy effectiveness scores)
         """
-        strategies = self.strategy_optimizer.get_recommended_strategies(characteristics)
-        effectiveness = self.strategy_optimizer.get_strategy_effectiveness()
+        # Get strategy names from problem text
+        strategy_names = get_strategies_for_problem(problem_text)
+        
+        # Look up the actual Strategy objects
+        strategies = []
+        for category in ProblemCategory:
+            if category in SOLUTION_STRATEGIES:
+                for strategy in SOLUTION_STRATEGIES[category]:
+                    if strategy.name in strategy_names:
+                        strategies.append(strategy)
+        
+        # Get effectiveness scores from optimizer
+        effectiveness = self.strategy_optimizer.get_strategy_effectiveness(
+            characteristics, [s.name for s in strategies]
+        )
+        
         return strategies, effectiveness
 
     def _get_attempt_count(self, problem_key: str) -> int:

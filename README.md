@@ -1,13 +1,73 @@
 # Problem Solver
 
-An automated problem-solving system for Advent of Code that:
+An intelligent problem solver for Advent of Code challenges.
 
-1. Fetches problem descriptions and inputs
-2. Analyzes requirements and examples
-3. Generates solutions using LLM models
-4. Tests solutions against examples and full input
-5. Stores successful solutions with metadata
-6. Validates solutions against AoC website
+## Features
+
+- **Automated Problem Solving**: Uses AI to analyze and solve AoC problems
+- **Strategy Learning**: Learns from past solutions to improve future attempts
+- **Smart Caching**: Efficiently caches problem data and responses
+- **Progress Tracking**: Tracks your progress through AoC challenges
+
+## Project Structure
+
+```
+problem-solver/
+├── learning/            # Learning system for strategy optimization
+│   ├── schema.sql      # Database schema definition
+│   └── solver.db       # Learning database (not tracked in git)
+├── shared/             # Shared utilities and core functionality
+│   ├── database.py     # Database management
+│   ├── learning.py     # Learning system implementation
+│   ├── solver.py       # Core solver implementation
+│   └── strategies.py   # Problem-solving strategies
+├── years/              # Problem data and solutions by year
+│   └── example/        # Example problem structure
+└── .problem-solver/    # User-specific data (not tracked in git)
+    └── temp/           # Temporary files
+```
+
+## Getting Started
+
+1. Clone the repository
+2. Copy `.env.example` to `.env` and fill in your settings
+3. Install dependencies: `pip install -r requirements.txt`
+4. Run the solver: `python solve.py --year YEAR --day DAY --part PART`
+
+## Learning System
+
+The solver includes a learning system that:
+1. Tracks which strategies work best for different problems
+2. Records solution performance metrics
+3. Uses past experience to guide future attempts
+
+See [learning/README.md](learning/README.md) for details on the learning system.
+
+## Configuration
+
+- `.env`: Environment variables (API keys, session cookies)
+- `shared/config.py`: General configuration settings
+- `learning/schema.sql`: Database schema definition
+
+## Development
+
+### Adding New Strategies
+
+1. Add strategy definition to `shared/strategies.py`
+2. Update strategy weights in learning database
+3. Test with various problem types
+
+### Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
+
+## Notes
+
+- Be a responsible AoC participant - minimize requests and cache data
+- Personal progress data is not tracked in git
+- The learning database is local to your machine
 
 ## Submission Policy
 
@@ -17,79 +77,6 @@ This tool strictly adheres to Advent of Code's principles:
 - Leaderboard status is checked at: adventofcode.com/{year}/leaderboard/day/{day}
 - Tool polls leaderboard status every minute until completion
 - Full submission history is tracked and logged
-
-## Features
-
-- Multi-model LLM integration:
-  - Local models (using Ollama runner):
-    - Microsoft Phi-4 (fast, efficient inference)
-    - Meta CodeLlama series (7B/13B/34B variants)
-    - Mistral-7B-Instruct
-  - Cloud models:
-    - Anthropic Claude-3-Sonnet
-- Intelligent Model Selection:
-  - Performance-based model ranking
-  - Problem-type specialization
-  - Cold-start capability with pre-defined weights
-  - Hardware-aware resource management
-- Consensus Voting System:
-  - Multi-model validation for solution verification
-  - Dynamic consensus size based on problem complexity
-  - Weighted voting based on model performance
-  - Role-based participation (PRIMARY, VALIDATOR)
-  - Performance tracking for consensus participation
-- Comprehensive Testing:
-  - Automated test case extraction
-  - Full input validation
-  - Performance benchmarking
-- Solution Management:
-  - Version-controlled storage
-  - Detailed metadata and metrics
-  - Success rate tracking
-  - Problem-type categorization
-
-## Consensus Voting Process
-
-The system uses a sophisticated consensus voting mechanism to validate solutions:
-
-1. **Solution Generation**
-   - Primary model generates initial solution
-   - Solution is tested against example cases
-   - If successful, enters consensus voting
-
-2. **Validator Selection**
-   - System selects validator models based on:
-     - Historical performance
-     - Problem type specialization
-     - Hardware availability
-     - Current workload
-
-3. **Voting Process**
-   - Validators independently verify the solution
-   - Each validator:
-     - Reviews solution correctness
-     - Tests against examples
-     - Provides confidence score
-   - Votes are weighted by:
-     - Model's historical accuracy
-     - Success rate in problem type
-     - Consensus participation history
-
-4. **Consensus Resolution**
-   - Solution is accepted if:
-     - Majority of validators agree
-     - Combined confidence exceeds threshold
-     - No critical issues identified
-   - On disagreement:
-     - System may request additional validators
-     - Alternative solutions may be generated
-     - Process repeats until consensus or timeout
-
-5. **Performance Updates**
-   - All participating models' metrics are updated
-   - Successful consensus participation improves ranking
-   - Models gain problem-type specialization
-   - System adapts weights for future selections
 
 ## Setup
 
@@ -246,6 +233,50 @@ workspace/
         └── dayNN/
             └── solutions/
 ```
+
+## Directory Structure
+
+```
+years/
+├── YYYY/                   # Year (e.g., 2024)
+│   ├── dayNN/             # Day folder (e.g., day01)
+│   │   ├── attempts/      # Solution attempts
+│   │   │   └── attempt_YYYYMMDD_HHMMSS.json  # Attempt metadata
+│   │   ├── examples/      # Example test cases
+│   │   │   ├── metadata.json          # Example metadata
+│   │   │   └── example_N.json         # Individual examples
+│   │   ├── solutions/     # Final solutions
+│   │   │   ├── part1.py  # Working solution for part 1
+│   │   │   └── part2.py  # Working solution for part 2
+│   │   ├── input.txt     # Puzzle input
+│   │   └── problem.txt   # Problem description
+```
+
+### File Purposes
+
+#### Example Files (`examples/*.json`)
+Problem definition files that contain:
+- Input data for each example
+- Expected output
+- Description and purpose
+- What concepts it demonstrates
+- References to it in the problem text
+
+Example files are created when a problem is first fetched and parsed. They define the test cases that solutions must pass.
+
+#### Attempt Files (`attempts/*.json`)
+Solution attempt records that track:
+- The code that was tried
+- Which model generated it
+- Whether it passed the examples
+- Whether it passed the full input
+- What strategies were used
+- Performance metrics
+
+Attempt files are created each time a model tries to solve the problem. They help track model performance and solution evolution.
+
+#### Solution Files (`solutions/*.py`)
+Clean, documented Python files containing working solutions. Only created when an attempt successfully passes all tests and is submitted.
 
 ## Strategy Patterns
 
