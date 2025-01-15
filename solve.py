@@ -9,11 +9,11 @@ import sys
 from pathlib import Path
 from typing import NoReturn
 
-from shared.solver import BaseSolver
+from shared.solver import solve_problem
 from shared.utils import setup_logging
 
 
-class ProblemSolver(BaseSolver):
+class ProblemSolver:
     """Main class for solving AoC problems with enhanced features."""
 
 
@@ -43,15 +43,14 @@ async def async_main() -> int:
         int: Exit code (0 for success, 1 for failure)
     """
     args = parse_args()
-    solver = ProblemSolver(Path(__file__).parent)
-    solution = await solver.solve_problem(args.year, args.day, args.part, args.force)
-
-    if solution:
+    try:
+        solution = await solve_problem(args.year, args.day, args.part, args.force)
         print(f"\nSolution: {solution}")
         return 0
-
-    print("\nFailed to find solution")
-    return 1
+    except Exception as e:
+        logging.error(f"Error solving problem: {e}")
+        print("\nFailed to find solution")
+        return 1
 
 
 def main() -> NoReturn:
