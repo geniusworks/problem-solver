@@ -294,12 +294,12 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, B
         # For part 1: Always use cache if we have it
         if part == 1:
             logger.debug("Using cached data for part 1")
-            return _extract_problem_text(soup), soup, meta.part1_answer
+            return cached_html, soup, meta.part1_answer
             
         # For part 2: Use cache if part 1 was solved
         if part == 2 and meta.state >= ProblemState.PART1_SOLVED:
             logger.debug("Using cached data for part 2")
-            return _extract_problem_text(soup), soup, meta.part2_answer
+            return cached_html, soup, meta.part2_answer
             
         # If we're here for part 2 but haven't solved part 1,
         # return empty since part 2 isn't available yet
@@ -320,17 +320,19 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, B
     # Get current state and answers
     state, part1_answer, part2_answer = await _get_problem_state(soup)
     
-    # Cache the response
-    await _save_cache(year, day, response, CacheMetadata(
+    # Save to cache
+    meta = CacheMetadata(
         state=state,
         timestamp=datetime.now().isoformat(),
         part1_answer=part1_answer,
-        part2_answer=part2_answer
-    ))
+        part2_answer=part2_answer,
+    )
+    await _save_cache(year, day, response, meta)
     
-    # Return appropriate answer based on part
-    previous_answer = part2_answer if part == 2 else part1_answer
-    return _extract_problem_text(soup), soup, previous_answer
+    # Return appropriate data based on part
+    if part == 2:
+        return response, soup, part2_answer
+    return response, soup, part1_answer
 
 async def fetch_input_data(year: int, day: int, soup: Optional[BeautifulSoup] = None) -> str:
     """Fetch the input data from Advent of Code website."""
@@ -348,7 +350,8 @@ async def ensure_problem_files(year: int, day: int) -> Dict[str, Path]:
     problem_dir = create_problem_dir(year, day)
 
     # Fetch problem text and examples
-    problem_text, soup, _ = await fetch_problem_text(year, day)
+    html_text, soup, _ = await fetch_problem_text(year, day)
+    problem_text = _extract_problem_text(soup)
     save_to_file(config.PROBLEM_FILE, problem_text, problem_dir)
 
     # Extract and save examples from problem text
