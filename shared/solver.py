@@ -4,7 +4,7 @@ import logging
 import os
 import json
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
 
 from shared.errors import ValidationError
@@ -355,3 +355,25 @@ Strategy analysis:
         })
         
         return characteristics
+
+
+def solve_problem(year: int, day: int, part: int) -> Union[str, int]:
+    """Solve the specified Advent of Code problem.
+    
+    Args:
+        year: The year of the problem
+        day: The day of the problem
+        part: The part of the problem (1 or 2)
+        
+    Returns:
+        The solution to the problem
+        
+    Raises:
+        ValidationError: If the problem parameters are invalid
+        SessionError: If there is an issue with the session
+        InputError: If there is an issue with the input
+        SubmissionError: If there is an issue with submission
+        ExecutionError: If there is an issue executing the solution
+    """
+    solver = BaseSolver(Path.cwd())
+    return solver.solve_problem(year, day, part)
