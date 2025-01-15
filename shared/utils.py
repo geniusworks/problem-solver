@@ -181,8 +181,8 @@ async def make_request(url: str, timeout: int = 30) -> str:
         async with session.get(url, headers=headers, timeout=timeout) as response:
             logger.debug("Response status: %d", response.status)
             text = await response.text()
-            logger.debug("Response text: %s", text[:500])  # Log first 500 chars
-            logger.debug("Response text length: %d", len(text))
+            logger.debug("Response text length: %d characters", len(text))
+            response.raise_for_status()
             return text
 
 

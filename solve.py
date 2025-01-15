@@ -33,6 +33,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--force", action="store_true", help="Force new solution even if already solved"
     )
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable debug logging"
+    )
     return parser.parse_args()
 
 
@@ -43,33 +46,40 @@ async def async_main() -> int:
         int: Exit code (0 for success, 1 for failure)
     """
     args = parse_args()
+    
+    # Set up logging
+    if args.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger("shared").setLevel(logging.DEBUG)
+    
     try:
         solution = await solve_problem(args.year, args.day, args.part)
         print(f"\nSolution: {solution}")
         return 0
     except Exception as e:
         logging.error(f"Error solving problem: {e}")
-        print("\nFailed to find solution")
         return 1
 
 
 def main() -> NoReturn:
     """Main entry point that sets up logging and runs the async main function."""
-    # Configure logging
-    args = parse_args()
-    setup_logging(args.year, args.day)
-
+    # Set up logging
+    setup_logging()
+    
     # Disable noisy loggers
     logging.getLogger("asyncio").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("charset_normalizer").setLevel(logging.WARNING)
 
+    # Run async main
     if sys.platform == "win32":
-        # Set up proper asyncio event loop policy for Windows
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
-    # Run the async main function
-    sys.exit(asyncio.run(async_main()))
+    try:
+        exit_code = asyncio.run(async_main())
+        sys.exit(exit_code)
+    except KeyboardInterrupt:
+        print("\nOperation cancelled by user")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
