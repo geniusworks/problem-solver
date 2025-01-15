@@ -106,8 +106,14 @@ def get_session_cookie() -> str:
         print("\nPROBLEM_SITE_SESSION environment variable not set.")
         return _prompt_for_session()
     
+    return session
+
+async def get_session_cookie_async() -> str:
+    """Async version of get_session_cookie that validates the session."""
+    session = get_session_cookie()
+    
     # Validate the session cookie
-    is_valid, error_message = asyncio.run(validate_session_cookie(session))
+    is_valid, error_message = await validate_session_cookie(session)
     if not is_valid:
         print(f"\n{error_message}")
         return _prompt_for_session()
@@ -145,7 +151,7 @@ def _prompt_for_session() -> str:
 async def make_request(url: str, timeout: int = 30) -> str:
     """Make a request to Advent of Code with appropriate headers and delay."""
     logger = logging.getLogger(__name__)
-    session_cookie = get_session_cookie()
+    session_cookie = await get_session_cookie_async()
     logger.info("Making request to %s", url)
     logger.info("Using session cookie: %s...", session_cookie[:10])
 

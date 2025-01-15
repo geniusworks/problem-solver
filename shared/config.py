@@ -15,8 +15,6 @@ AOC_BASE_URL = "https://adventofcode.com"
 
 # Session cookie from environment variable
 PROBLEM_SITE_SESSION = os.getenv("PROBLEM_SITE_SESSION")
-if not PROBLEM_SITE_SESSION:
-    raise SessionError("PROBLEM_SITE_SESSION environment variable not set")
 
 # URLs
 # AOC_BASE_URL = "https://adventofcode.com"

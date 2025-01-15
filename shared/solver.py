@@ -12,7 +12,7 @@ from shared.execution import SolutionExecutor, TestCase
 from shared.llm.local import OllamaProvider
 from shared.parser import parse_problem_text
 from shared.utils import fetch_problem_text, ensure_input_file
-from shared.validator import submit_solution, SubmissionError
+from shared.validator import SubmissionError
 from shared.strategies import get_strategies_for_problem, create_strategy_prompt
 from shared.submission import SubmissionManager, SubmissionResult
 
@@ -52,6 +52,10 @@ class BaseSolver:
 
             # Parse problem
             problem_text = await fetch_problem_text(year, day)
+            if not problem_text:
+                logging.error("Failed to fetch problem text")
+                return None
+            
             problem = parse_problem_text(problem_text)
 
             # Analyze problem characteristics
@@ -105,7 +109,7 @@ class BaseSolver:
                     return None
 
                 try:
-                    success, message = await submit_solution(year, day, part, full_answer)
+                    success, message = await self.submission_manager.submit_solution(year, day, part, full_answer)
                     submission_result = SubmissionResult(
                         was_correct=success,
                         cooldown_seconds=wait_time if not success else None,
