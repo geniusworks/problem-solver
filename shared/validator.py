@@ -4,7 +4,7 @@ import os
 import re
 import logging
 from datetime import datetime, timedelta
-from typing import Optional, Dict
+from typing import Optional, Dict, Union
 import aiohttp
 from bs4 import BeautifulSoup
 
@@ -213,3 +213,23 @@ class SolutionValidator:
             raise SubmissionError(f"Network error submitting solution: {str(e)}")
         except Exception as e:
             raise SubmissionError(f"Error submitting solution: {str(e)}")
+
+async def validate_solution(year: int, day: int, part: int, solution: Union[str, int]) -> bool:
+    """Validate and submit a solution for an Advent of Code problem.
+    
+    Args:
+        year: The year of the problem
+        day: The day of the problem
+        part: The part of the problem (1 or 2)
+        solution: The solution to validate
+        
+    Returns:
+        bool: True if the solution is correct, False otherwise
+        
+    Raises:
+        ValidationError: If there is an issue validating the solution
+        SessionError: If there is an issue with the session
+    """
+    validator = SolutionValidator()
+    result = await validator.submit_and_validate(year, day, part, str(solution))
+    return result.was_correct
