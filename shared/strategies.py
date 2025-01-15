@@ -346,14 +346,14 @@ SOLUTION_STRATEGIES: Dict[ProblemCategory, List[Strategy]] = {
     ]
 }
 
-def get_strategies_for_problem(problem_text: str) -> List[Strategy]:
-    """Analyze problem text and return relevant strategies.
+def get_strategies_for_problem(problem_text: str) -> List[str]:
+    """Analyze problem text and return relevant strategy names.
     
     Args:
         problem_text: The problem description
         
     Returns:
-        List of potentially applicable strategies
+        List of potentially applicable strategy names
     """
     strategies = []
     
@@ -373,7 +373,7 @@ def get_strategies_for_problem(problem_text: str) -> List[Strategy]:
     problem_text = problem_text.lower()
     for category, words in keywords.items():
         if any(word in problem_text for word in words):
-            strategies.extend(SOLUTION_STRATEGIES[category])
+            strategies.extend(strategy.name for strategy in SOLUTION_STRATEGIES[category])
     
     return strategies
 

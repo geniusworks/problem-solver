@@ -5,7 +5,8 @@ import asyncio
 from typing import Dict, List, Optional, Any
 import re
 from pathlib import Path
-from shared.strategies import get_strategies_for_problem, create_strategy_prompt, ProblemCategory
+from shared.strategies import get_strategies_for_problem, create_strategy_prompt, ProblemCategory, Strategy, SOLUTION_STRATEGIES
+from shared.llm.base import LLMProvider, LLMResponse
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,25 @@ class OllamaProvider(LLMProvider):
         self.model_info = {"name": model, "description": "Description of the model."}
         self.last_prompt = None
 
-    async def generate_solution(self, problem) -> Dict[str, Any]:
+    def _convert_to_strategy_objects(
+        self, 
+        strategy_names: List[str],
+        strategy_effectiveness: Optional[Dict[str, float]] = None
+    ) -> List[Strategy]:
+        """Convert strategy names to Strategy objects."""
+        strategies = []
+        for category in SOLUTION_STRATEGIES.values():
+            for strategy in category:
+                if strategy.name in strategy_names:
+                    strategies.append(strategy)
+        return strategies
+
+    async def generate_solution(
+        self, 
+        problem,
+        strategies: Optional[List[str]] = None,
+        strategy_effectiveness: Optional[Dict[str, float]] = None
+    ) -> Dict[str, Any]:
         """Generate a solution for the given problem."""
         # Phase 1: Problem Analysis
         analysis_prompt = f"""Analyze this problem:
@@ -34,8 +53,14 @@ Consider:
         analysis = await self.generate(analysis_prompt)
         
         # Phase 2: Strategy Selection
-        strategies = get_strategies_for_problem(problem.description)
-        strategy_prompt = create_strategy_prompt(strategies)
+        if not strategies:
+            # If no strategies provided, get them from problem analysis
+            strategy_objects = get_strategies_for_problem(problem.description)
+        else:
+            # Convert provided strategy names to Strategy objects
+            strategy_objects = self._convert_to_strategy_objects(strategies, strategy_effectiveness)
+        
+        strategy_prompt = create_strategy_prompt(strategy_objects)
         
         # Phase 3: Implementation Planning
         implementation_prompt = f"""Based on the analysis and recommended strategies, let's solve this problem step by step.
@@ -95,7 +120,7 @@ Suggest any improvements while maintaining correctness."""
                     "key_techniques": strategy.key_techniques,
                     "optimization_tips": strategy.optimization_tips
                 }
-                for strategy in strategies
+                for strategy in strategy_objects
             ],
             "analysis": {
                 "problem_characteristics": analysis.content,
