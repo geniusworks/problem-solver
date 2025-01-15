@@ -15,7 +15,8 @@ from .config import (
     CONFIG_DIR,
     WORKSPACE_DIR,
     LEARNING_DIR,
-    PROBLEM_SITE_SESSION,
+    AOC_SESSION,
+    AOC_BASE_URL,
     HARDWARE_CONFIG,
 )
 from .errors import (
@@ -37,7 +38,8 @@ __all__ = [
     'CONFIG_DIR',
     'WORKSPACE_DIR',
     'LEARNING_DIR',
-    'PROBLEM_SITE_SESSION',
+    'AOC_SESSION',
+    'AOC_BASE_URL',
     'HARDWARE_CONFIG',
     
     # Error classes
