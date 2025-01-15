@@ -134,9 +134,14 @@ The system uses a sophisticated consensus voting mechanism to validate solutions
 
 ## Usage
 
-To run the application for a specific problem, use:
+To run the application for a specific problem:
 
 ```bash
+# First activate the virtual environment
+source venv/bin/activate  # On Unix/macOS
+.\venv\Scripts\activate   # On Windows
+
+# Then run the solver
 python solve.py --year <year> --day <day> --part <part>
 ```
 
