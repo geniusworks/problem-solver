@@ -42,3 +42,17 @@ DEFAULT_PROVIDER_TIMEOUT = 30   # seconds
 # Rate limiting
 MAX_REQUESTS_PER_MINUTE = 20
 REQUEST_COOLDOWN = 3  # seconds
+
+# HTTP settings
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15"
+
+# File patterns
+INPUT_FILE = "input.txt"
+EXAMPLES_DIR = "examples"  # Directory to store example files
+PROBLEM_FILE = "problem.txt"
+LOGIC_FILE = "logic.txt"
+HTML_FILE = "problem.html"  # Cached HTML response
+META_FILE = "problem_meta.json"  # Cache metadata including state
+
+# Testing
+TEST_MODE = os.getenv("AOC_TEST_MODE", "false").lower() == "true"
