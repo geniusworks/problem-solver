@@ -65,7 +65,7 @@ class BaseSolver:
                     )
 
             # Get problem text and parse it
-            problem_text, _ = await fetch_problem_text(year, day, part)
+            problem_text, _, previous_answer = await fetch_problem_text(year, day, part)
             parsed_problem = parse_problem_text(problem_text)
 
             # Analyze problem characteristics
