@@ -48,13 +48,13 @@ ehthumbs.db
 debug_response.html  # Cached AoC responses
 
 # Exclude all AoC data except example structure
-years/*                # All year directories
-!years/example/       # Except the example structure
-!years/example/**     # And its contents
+/years/20[0-9][0-9]/       # All year directories
+!/years/example/           # Except the example structure
+!/years/example/**         # And its contents
 
 # Learning database
 *.db                  # All database files
-learning/solver.db    # Learning system database
+/learning/solver.db    # Learning system database
 
 # Keep example config
 !.env.example
