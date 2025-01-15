@@ -20,6 +20,7 @@ from urllib3.util.retry import Retry
 
 from shared import config
 from shared.errors import ValidationError, SessionError, InputError
+from shared.parser import parse_problem_text as _parse_problem_text
 
 logger = logging.getLogger(__name__)
 
@@ -367,8 +368,7 @@ async def ensure_problem_files(year: int, day: int) -> Dict[str, Path]:
 
 def parse_problem_text(problem_text: str) -> Any:
     """Parse problem text into structured data."""
-    # Implement parsing logic here
-    pass
+    return _parse_problem_text(problem_text)
 
 
 def save_examples(examples: List[Any], problem_dir: Path) -> None:
