@@ -21,6 +21,8 @@ from urllib3.util.retry import Retry
 from shared import config
 from shared.errors import ValidationError, SessionError, InputError
 
+logger = logging.getLogger(__name__)
+
 # Configure retry strategy
 session = requests.Session()
 session.headers.update(
@@ -104,34 +106,34 @@ async def validate_session_cookie(session_cookie: str) -> Tuple[bool, str]:
             if response.status == 200:
                 return True, ""
             elif response.status == 302 or response.status == 401:
-                return False, "Session cookie is invalid or expired. Please update PROBLEM_SITE_SESSION in your .env file with a valid session cookie from adventofcode.com"
+                return False, "Session cookie is invalid or expired. Please update AOC_SESSION in your .env file with a valid session cookie from adventofcode.com"
             else:
                 return False, f"Unexpected error validating session cookie: HTTP {response.status}"
 
 
 def get_session_cookie() -> str:
     """Get the session cookie from environment variables. If invalid, prompt for a new one."""
-    session = config.PROBLEM_SITE_SESSION
-    if not session:
-        print("\nPROBLEM_SITE_SESSION environment variable not set.")
+    session_cookie = config.AOC_SESSION
+    if not session_cookie:
+        print("\nAOC_SESSION environment variable not set.")
         return _prompt_for_session()
     
-    return session
+    return session_cookie
 
 async def get_session_cookie_async() -> str:
     """Async version of get_session_cookie that validates the session."""
-    session = get_session_cookie()
+    session_cookie = get_session_cookie()
     logger = logging.getLogger(__name__)
-    logger.debug("Got session cookie: %s", session[:10] if session else None)
+    logger.debug("Got session cookie: %s", session_cookie[:10] if session_cookie else None)
     
     # Validate the session cookie
-    is_valid, error_message = await validate_session_cookie(session)
+    is_valid, error_message = await validate_session_cookie(session_cookie)
     logger.debug("Session validation result: %s, %s", is_valid, error_message)
     if not is_valid:
         print(f"\n{error_message}")
         return _prompt_for_session()
         
-    return session
+    return session_cookie
 
 def _prompt_for_session() -> str:
     """Prompt the user for a new session cookie and update .env file."""
@@ -142,20 +144,20 @@ def _prompt_for_session() -> str:
     print("4. Find and copy the 'session' cookie value")
     
     while True:
-        session = input("\nEnter your session cookie (or 'q' to quit): ").strip()
-        if session.lower() == 'q':
+        session_cookie = input("\nEnter your session cookie (or 'q' to quit): ").strip()
+        if session_cookie.lower() == 'q':
             raise SessionError("Session cookie required to continue")
             
-        is_valid, error_message = asyncio.run(validate_session_cookie(session))
+        is_valid, error_message = asyncio.run(validate_session_cookie(session_cookie))
         if is_valid:
             # Update .env file
             env_path = Path(__file__).parent.parent / '.env'
             if env_path.exists():
                 from dotenv import set_key
-                set_key(str(env_path), 'PROBLEM_SITE_SESSION', session)
-                os.environ['PROBLEM_SITE_SESSION'] = session
+                set_key(str(env_path), 'AOC_SESSION', session_cookie)
+                os.environ['AOC_SESSION'] = session_cookie
                 print("\nSession cookie validated and saved to .env file")
-            return session
+            return session_cookie
         else:
             print(f"\nInvalid session cookie: {error_message}")
             print("Please try again")
@@ -449,7 +451,7 @@ def download_input(year: int, day: int) -> str:
     """Download input from Advent of Code website."""
     try:
         # Get and validate session cookie
-        session = get_session_cookie()
+        session_cookie = get_session_cookie()
         
         # Create directory if it doesn't exist
         input_dir = Path(f"{year}/day{day:02d}")
@@ -461,7 +463,7 @@ def download_input(year: int, day: int) -> str:
             url = f"https://adventofcode.com/{year}/day/{day}/input"
             response = requests.get(
                 url,
-                cookies={"session": session},
+                cookies={"session": session_cookie},
                 headers={"User-Agent": config.USER_AGENT},
                 timeout=30,
             )
