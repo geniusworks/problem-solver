@@ -45,6 +45,7 @@ ehthumbs.db
 # Problem Solver specific
 .env
 .problem-solver/     # User-specific data directory
+debug_response.html  # Cached AoC responses
 
 # Exclude all AoC data except example structure
 years/*                # All year directories
@@ -53,6 +54,7 @@ years/*                # All year directories
 
 # Learning database
 *.db                  # All database files
+learning/solver.db    # Learning system database
 
 # Keep example config
 !.env.example
