@@ -44,7 +44,7 @@ async def async_main() -> int:
     """
     args = parse_args()
     try:
-        solution = await solve_problem(args.year, args.day, args.part, args.force)
+        solution = await solve_problem(args.year, args.day, args.part)
         print(f"\nSolution: {solution}")
         return 0
     except Exception as e:

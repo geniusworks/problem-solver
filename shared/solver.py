@@ -357,7 +357,7 @@ Strategy analysis:
         return characteristics
 
 
-def solve_problem(year: int, day: int, part: int) -> Union[str, int]:
+async def solve_problem(year: int, day: int, part: int) -> Union[str, int]:
     """Solve the specified Advent of Code problem.
     
     Args:
@@ -376,4 +376,4 @@ def solve_problem(year: int, day: int, part: int) -> Union[str, int]:
         ExecutionError: If there is an issue executing the solution
     """
     solver = BaseSolver(Path.cwd())
-    return solver.solve_problem(year, day, part)
+    return await solver.solve_problem(year, day, part)
