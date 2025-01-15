@@ -11,7 +11,7 @@ import aiohttp
 import anthropic
 import openai
 
-from shared.config import ProviderError
+from shared.errors import ProviderError
 
 logger = logging.getLogger(__name__)
 

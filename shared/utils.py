@@ -19,7 +19,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from shared import config
-from shared.config import ValidationError, SessionError, InputError
+from shared.errors import ValidationError, SessionError, InputError
 
 # Configure retry strategy
 session = requests.Session()

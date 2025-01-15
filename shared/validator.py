@@ -9,7 +9,7 @@ import aiohttp
 from bs4 import BeautifulSoup
 
 from .utils import get_session_cookie
-from shared.config import ValidationError, SessionError
+from shared.errors import ValidationError, SessionError
 from .submission import SubmissionManager, SubmissionResult
 
 logger = logging.getLogger(__name__)

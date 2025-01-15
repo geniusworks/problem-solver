@@ -1,6 +1,80 @@
-# API Documentation
+# Problem Solver API Documentation
 
-This document describes the key APIs and interfaces of the Problem Solver project.
+## Project Structure
+
+The project is organized into several key components:
+
+### Core Components
+
+- `shared/`: Core functionality shared across the project
+  - `config.py`: Configuration management
+  - `errors.py`: Error class definitions
+  - `database.py`: Database operations
+  - `execution.py`: Code execution handling
+  - `solver.py`: Main problem-solving logic
+  - `validator.py`: Solution validation
+  - `utils.py`: Utility functions
+  - `llm/`: Language model integration
+    - `models.py`: Model definitions
+    - `ensemble.py`: Model ensemble management
+    - `providers.py`: Model provider interfaces
+    - `hardware.py`: Hardware capability management
+
+- `learning/`: Learning system for strategy optimization
+  - `database.py`: Learning database operations
+  - `optimizer.py`: Strategy optimization logic
+  - `init_db.py`: Database initialization
+  - `schema.sql`: Database schema
+
+### Configuration
+
+Configuration is managed through several mechanisms:
+
+1. Environment Variables (`.env`):
+   - Problem site session token
+   - Model API keys
+   - Hardware capabilities
+
+2. JSON Configuration (`config/`):
+   - `hardware.json`: Hardware capability configuration
+
+3. Python Configuration (`shared/config.py`):
+   - Path configurations
+   - Default timeouts
+   - Rate limiting settings
+
+### Error Handling
+
+Error handling is centralized in `shared/errors.py` with a hierarchy of custom exceptions:
+
+- `BaseError`
+  - `ValidationError`
+    - `SessionError`
+    - `InputError`
+    - `SubmissionError`
+  - `ProviderError`
+    - `RateLimitError`
+    - `ProviderTimeoutError`
+    - `AuthenticationError`
+    - `ServiceUnavailableError`
+  - `ExecutionError`
+    - `TimeoutError`
+    - `ResourceError`
+    - `CompilationError`
+    - `RuntimeError`
+
+### Learning System
+
+The learning system (`learning/`) manages strategy optimization and feedback:
+
+- Strategy effectiveness tracking
+- Problem pattern recognition
+- Performance metrics collection
+- Database persistence
+
+## Usage
+
+For detailed usage instructions, refer to the README.md file in the project root.
 
 ## Core Components
 
@@ -75,26 +149,6 @@ class ProblemInput:
     constraints: List[str]  # Problem constraints
 ```
 
-## Error Handling
-
-See [error-handling.md](error-handling.md) for detailed error class documentation.
-
-## Configuration
-
-### Environment Variables
-
-See the main [README.md](../README.md) for environment variable documentation.
-
-### Model Configuration
-
-Models can be configured in `.env` with the following format:
-```
-MODEL_<name>_PROVIDER=provider_name
-MODEL_<name>_RUNNER=runner_name
-MODEL_<name>_CONTEXT_LENGTH=8192
-MODEL_<name>_TEMPERATURE=0.7
-```
-
 ## Usage Examples
 
 ### Basic Usage
@@ -125,4 +179,3 @@ from problem_solver import SolutionManager
 manager = SolutionManager()
 manager.save_solution(solution)
 previous_solution = manager.get_solution(2024, 1, 1)
-```

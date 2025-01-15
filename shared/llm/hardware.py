@@ -3,9 +3,12 @@
 import json
 import logging
 import os
+import platform
 from dataclasses import dataclass
-from typing import Dict, List, Set
-from shared.config import ConfigurationError
+from typing import Dict, List, Set, Optional
+
+from shared.config import HARDWARE_CONFIG
+from shared.errors import BaseError
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +16,6 @@ logger = logging.getLogger(__name__)
 @dataclass
 class HardwareProfile:
     """Hardware profile configuration."""
-
     max_model_size: int
     concurrent_models: int
 
@@ -21,80 +23,88 @@ class HardwareProfile:
 class HardwareManager:
     """Manages hardware capabilities and model registration."""
 
-    def __init__(self, config_path: str):
-        """Initialize the hardware manager.
-
-        Args:
-            config_path: Path to the hardware configuration file.
-        """
-        self.config_path = config_path
+    def __init__(self):
+        """Initialize the hardware manager."""
         self.capabilities = self._load_capabilities()
         self.registered_models: Dict[str, int] = {}
         self.active_models: Set[str] = set()
 
-    def _load_capabilities(self) -> HardwareProfile:
-        """Load hardware capabilities from environment variables or config file.
+    def _detect_hardware_profile(self) -> Optional[str]:
+        """Detect the current hardware profile based on system information.
+        
+        Returns:
+            str: Profile name if detected, None otherwise
+        """
+        if platform.system() != "Darwin" or not platform.machine() == "arm64":
+            return None
+            
+        # Get memory in GB
+        mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
+        mem_gb = mem_bytes / (1024.**3)
+        
+        # Detect M1/M2
+        cpu_info = platform.processor()
+        is_m2 = "M2" in cpu_info
+        
+        if mem_gb <= 17:  # 16GB
+            return "m2_16gb" if is_m2 else "m1_16gb"
+        else:  # 32GB
+            return "m2_32gb" if is_m2 else "m1_32gb"
 
+    def _load_capabilities(self) -> HardwareProfile:
+        """Load hardware capabilities from config or detect from system.
+        
         Returns:
             HardwareProfile: Hardware capabilities configuration.
-
+        
         Raises:
-            ConfigurationError: If there is an error loading the configuration.
+            BaseError: If there is an error loading the configuration.
         """
-        try:
-            max_model_size = int(os.getenv("MAX_MODEL_SIZE", "0"))
-            concurrent_models = int(os.getenv("CONCURRENT_MODELS", "0"))
-
-            if not max_model_size or not concurrent_models:
-                if not os.path.exists(self.config_path):
-                    raise ConfigurationError(
-                        "No hardware configuration found. Please set environment variables "
-                        "or provide a config file."
-                    )
-
-                with open(self.config_path, "r", encoding="utf-8") as f:
-                    config = json.load(f)
-                    try:
-                        max_model_size = int(config.get("max_model_size", 0))
-                    except ValueError as exc:
-                        raise ConfigurationError(
-                            "MAX_MODEL_SIZE must be an integer"
-                        ) from exc
-
-                    try:
-                        concurrent_models = int(config.get("concurrent_models", 0))
-                    except ValueError as exc:
-                        raise ConfigurationError(
-                            "CONCURRENT_MODELS must be an integer"
-                        ) from exc
-
-            if max_model_size <= 0:
-                raise ConfigurationError("MAX_MODEL_SIZE must be positive")
-            if concurrent_models <= 0:
-                raise ConfigurationError("CONCURRENT_MODELS must be positive")
-
+        # Try environment variables first
+        max_model_size = int(os.getenv("MAX_MODEL_SIZE", "0"))
+        concurrent_models = int(os.getenv("CONCURRENT_MODELS", "0"))
+        
+        if max_model_size and concurrent_models:
             return HardwareProfile(
                 max_model_size=max_model_size,
-                concurrent_models=concurrent_models,
+                concurrent_models=concurrent_models
             )
-
-        except json.JSONDecodeError as exc:
-            raise ConfigurationError(f"Invalid JSON in config file: {exc}") from exc
-        except OSError as exc:
-            raise ConfigurationError(f"Error reading config file: {exc}") from exc
+            
+        # Try to detect hardware profile
+        profile_name = self._detect_hardware_profile()
+        if profile_name and "profiles" in HARDWARE_CONFIG:
+            profile = HARDWARE_CONFIG["profiles"].get(profile_name)
+            if profile:
+                logger.info(f"Using hardware profile: {profile_name}")
+                return HardwareProfile(
+                    max_model_size=profile["max_model_size"],
+                    concurrent_models=profile["concurrent_models"]
+                )
+        
+        # Fall back to default config
+        if "max_model_size" in HARDWARE_CONFIG and "concurrent_models" in HARDWARE_CONFIG:
+            return HardwareProfile(
+                max_model_size=HARDWARE_CONFIG["max_model_size"],
+                concurrent_models=HARDWARE_CONFIG["concurrent_models"]
+            )
+            
+        raise BaseError(
+            "No hardware configuration found. Please set environment variables, "
+            "provide a config file, or ensure system information is available."
+        )
 
     def register_model(self, model_name: str, model_size: int) -> None:
         """Register a model with its size.
-
+        
         Args:
-            model_name: Name of the model.
-            model_size: Size of the model in billions of parameters.
-
+            model_name: Name of the model to register
+            model_size: Size of the model in billions of parameters
+            
         Raises:
-            ConfigurationError: If the model is too large for the hardware.
+            BaseError: If the model is too large for the hardware
         """
         if model_size > self.capabilities.max_model_size:
-            raise ConfigurationError(
+            raise BaseError(
                 f"Model {model_name} ({model_size}B parameters) exceeds "
                 f"maximum supported size ({self.capabilities.max_model_size}B)"
             )
@@ -102,29 +112,28 @@ class HardwareManager:
 
     def activate_model(self, model_name: str) -> None:
         """Activate a model for use.
-
+        
         Args:
-            model_name: Name of the model to activate.
-
+            model_name: Name of the model to activate
+            
         Raises:
-            ConfigurationError: If the model cannot be activated.
+            BaseError: If the model cannot be activated
         """
         if model_name not in self.registered_models:
-            raise ConfigurationError(f"Model {model_name} is not registered")
+            raise BaseError(f"Model {model_name} is not registered")
 
         if len(self.active_models) >= self.capabilities.concurrent_models:
-            raise ConfigurationError(
+            raise BaseError(
                 f"Cannot activate more than {self.capabilities.concurrent_models} "
                 "models concurrently"
             )
-
         self.active_models.add(model_name)
 
     def deactivate_model(self, model_name: str) -> None:
         """Deactivate a model.
-
+        
         Args:
-            model_name: Name of the model to deactivate.
+            model_name: Name of the model to deactivate
         """
         self.active_models.discard(model_name)
 

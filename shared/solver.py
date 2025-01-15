@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
-from shared.config import ValidationError
+from shared.errors import ValidationError
 from shared.execution import SolutionExecutor, TestCase
 from shared.llm.local import OllamaProvider
 from shared.parser import parse_problem_text

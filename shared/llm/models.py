@@ -9,7 +9,7 @@ import json
 import aiohttp
 import asyncio
 from datetime import datetime
-from .hardware import HardwareManager
+from .hardware import HardwareManager, BaseError
 
 
 class ModelProvider(Enum):
@@ -71,10 +71,23 @@ class ModelRegistry:
     """Registry of available models and their characteristics."""
 
     def __init__(self):
+        """Initialize the model registry."""
         self.hardware = HardwareManager()
-        self.models: Dict[str, ModelCharacteristics] = {
-            # Smaller, M1-friendly models
-            "codellama-7b-instruct": ModelCharacteristics(
+        self.models: Dict[str, ModelCharacteristics] = {}
+        self.logger = logging.getLogger(__name__)
+        
+        # Register base models (always available)
+        self._register_base_models()
+        
+        # Register additional models based on hardware capabilities
+        self._register_hardware_dependent_models()
+        
+        self._load_custom_characteristics()
+
+    def _register_base_models(self):
+        """Register models that are always available."""
+        base_models = {
+            "codellama-7b-instruct": (7, ModelCharacteristics(
                 name="codellama-7b-instruct",
                 provider=ModelProvider.META,
                 runner=ModelRunner.OLLAMA,
@@ -88,8 +101,8 @@ class ModelRegistry:
                 strengths={"code_generation", "code_completion", "fast_iteration"},
                 weaknesses={"complex_reasoning", "test_generation"},
                 best_roles={"PRIMARY", "VALIDATOR"},
-            ),
-            "mistral-7b-instruct": ModelCharacteristics(
+            )),
+            "mistral-7b-instruct": (7, ModelCharacteristics(
                 name="mistral-7b-instruct",
                 provider=ModelProvider.MISTRAL,
                 runner=ModelRunner.OLLAMA,
@@ -103,8 +116,8 @@ class ModelRegistry:
                 strengths={"code_generation", "instruction_following", "fast_response"},
                 weaknesses={"long_context", "complex_algorithms"},
                 best_roles={"PRIMARY", "VALIDATOR"},
-            ),
-            "phi4": ModelCharacteristics(
+            )),
+            "phi4": (4, ModelCharacteristics(
                 name="phi4",
                 provider=ModelProvider.MICROSOFT,
                 runner=ModelRunner.OLLAMA,
@@ -118,9 +131,8 @@ class ModelRegistry:
                 strengths={"code_generation", "fast_response", "efficient_inference"},
                 weaknesses={"long_context", "complex_reasoning"},
                 best_roles={"PRIMARY", "VALIDATOR"},
-            ),
-            # Cloud models (always available)
-            "claude-3-sonnet": ModelCharacteristics(
+            )),
+            "claude-3-sonnet": (0, ModelCharacteristics(  # Cloud model, size doesn't matter
                 name="claude-3-sonnet",
                 provider=ModelProvider.ANTHROPIC,
                 runner=ModelRunner.ANTHROPIC_API,
@@ -139,9 +151,20 @@ class ModelRegistry:
                 },
                 weaknesses={"very_long_context", "mathematical_proofs"},
                 best_roles={"PRIMARY", "REVIEWER"},
-            ),
-            # Optional larger models (for M2)
-            "codellama-13b-instruct": ModelCharacteristics(
+            )),
+        }
+        
+        for name, (size, characteristics) in base_models.items():
+            try:
+                self.hardware.register_model(name, size)
+                self.models[name] = characteristics
+            except BaseError as e:
+                self.logger.warning(f"Could not register model {name}: {e}")
+    
+    def _register_hardware_dependent_models(self):
+        """Register models that depend on hardware capabilities."""
+        dependent_models = {
+            "codellama-13b-instruct": (13, ModelCharacteristics(
                 name="codellama-13b-instruct",
                 provider=ModelProvider.META,
                 runner=ModelRunner.OLLAMA,
@@ -153,38 +176,36 @@ class ModelRegistry:
                 strengths={"code_generation", "problem_solving", "python_expertise"},
                 weaknesses={"complex_tasks", "test_generation"},
                 best_roles={"PRIMARY", "REVIEWER"},
-            ),
+            )),
+            "codellama-34b-instruct": (34, ModelCharacteristics(
+                name="codellama-34b-instruct",
+                provider=ModelProvider.META,
+                runner=ModelRunner.OLLAMA,
+                capabilities=ModelCapabilities(
+                    max_context_length=16384, max_output_length=16384
+                ),
+                performance=ModelPerformance(
+                    tokens_per_second=200, cost_per_token=0.0
+                ),
+                is_local=True,
+                strengths={
+                    "code_generation",
+                    "code_completion",
+                    "problem_solving",
+                    "python_expertise",
+                },
+                weaknesses={"long_context", "response_time"},
+                best_roles={"PRIMARY", "REVIEWER"},
+            )),
         }
-
-        # Add larger models only if hardware supports them
-        if self.hardware.capabilities.max_model_size >= 34:
-            self.models.update(
-                {
-                    "codellama-34b-instruct": ModelCharacteristics(
-                        name="codellama-34b-instruct",
-                        provider=ModelProvider.META,
-                        runner=ModelRunner.OLLAMA,
-                        capabilities=ModelCapabilities(
-                            max_context_length=16384, max_output_length=16384
-                        ),
-                        performance=ModelPerformance(
-                            tokens_per_second=200, cost_per_token=0.0
-                        ),
-                        is_local=True,
-                        strengths={
-                            "code_generation",
-                            "code_completion",
-                            "problem_solving",
-                            "python_expertise",
-                        },
-                        weaknesses={"long_context", "response_time"},
-                        best_roles={"PRIMARY", "REVIEWER"},
-                    )
-                }
-            )
-
-        self.logger = logging.getLogger(__name__)
-        self._load_custom_characteristics()
+        
+        for name, (size, characteristics) in dependent_models.items():
+            try:
+                self.hardware.register_model(name, size)
+                self.models[name] = characteristics
+                self.logger.info(f"Successfully registered model {name} ({size}B parameters)")
+            except BaseError as e:
+                self.logger.info(f"Skipping model {name} ({size}B parameters): {e}")
 
     def _load_custom_characteristics(self):
         """Load any custom model characteristics from config."""
