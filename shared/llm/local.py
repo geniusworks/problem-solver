@@ -46,18 +46,23 @@ class OllamaProvider(LLMProvider):
         strategy_effectiveness: Optional[Dict[str, float]] = None
     ) -> str:
         """Generate a solution for the given problem."""
+        if self.debug:
+            logger.info("Analyzing problem...")
+        
         # Phase 1: Problem Analysis
-        analysis_prompt = f"""Analyze this problem:
-
-{problem.description}
-
-Consider:
+        analysis = await self.generate(f"""Consider:
 1. Input format and constraints
 2. Expected output format
 3. Key problem characteristics
-4. Potential edge cases"""
+4. Potential edge cases
 
-        analysis = await self.generate(analysis_prompt)
+{problem.title}
+{problem.description}
+
+Examples:
+{self._format_test_cases(problem.examples)}
+
+Final Question: {problem.final_question}""")
         
         # Phase 2: Strategy Selection
         if not strategies:
@@ -70,45 +75,32 @@ Consider:
         strategy_prompt = create_strategy_prompt(strategy_objects)
         
         # Phase 3: Implementation Planning
-        implementation_prompt = f"""Here's the problem description:
+        implementation_prompt = f"""Consider:
+1. Input format and constraints
+2. Expected output format
+3. Key problem characteristics
+4. Potential edge cases
+
 {problem.description}
 
 Test Cases:
 {self._format_test_cases(problem.examples)}
 
-Write a Python function called solve(input_file_path) that reads the input file and solves this problem.
+Final Question: {problem.final_question}
 
-Note to Model:
--------------
-
-1. Analyze Input Structure:
-   - Always inspect example input format first
-   - Print first few lines of actual input to verify format matches example
-   - Look for consistent patterns:
-     * Delimiters (spaces, commas, tabs)
-     * Line structure (single/multiple values)
-     * Data types (numbers, strings, mixed)
-   - Verify assumptions with example data before proceeding
-
-2. Parse Thoughtfully:
-   - Start with minimal parsing that matches example format
-   - Validate parsed data matches expected structure
-   - Handle edge cases:
-     * Empty lines
-     * Leading/trailing whitespace
-     * Unexpected characters
-   - Log parsed structure to verify correctness
-
-3. Test Your Understanding:
-   - Compare parsed example data with given example output
-   - Verify your interpretation matches problem description
-   - Test edge cases in example data
-   - Print intermediate results to validate logic
-
-The solution should handle the input format exactly as shown in the example."""
+Requirements:
+1. The solution MUST contain a function named 'solve' that takes an input_file_path parameter
+2. The solution should handle the input format exactly as shown in the example
+3. The solve function MUST return only the numeric answer with no additional text or formatting
+4. Return type should match the example output (integer or float)
+5. After reading and parsing the input data, print the first 5 parsed elements showing their types and values
+   Example debug output:
+   Parsed elements:
+   1: [type: int, value: 1], [type: str, value: "abc"], [type: int, value: 2]
+   2: [type: str, value: "pqr"], [type: int, value: 3], [type: str, value: "stu"]
+   This will help verify the parsing logic"""
 
         self.last_prompt = implementation_prompt
-        logger.debug("Implementation prompt:\n%s", implementation_prompt)
         response = await self.generate(implementation_prompt)
         code = self._extract_code(response.content)
         
@@ -117,7 +109,18 @@ The solution should handle the input format exactly as shown in the example."""
             logger.debug("Raw generated code:\n%s", code)
             
         if code is None:
-            code = "def solve(input_file_path):\n    with open(input_file_path) as f:\n        data = [line.strip() for line in f]\n    return len(data)  # Default implementation"
+            code = """def solve(input_file_path):
+    \"\"\"Solve the problem.
+    
+    Args:
+        input_file_path: Path to the input file
+        
+    Returns:
+        The answer as an integer or float
+    \"\"\"
+    with open(input_file_path) as f:
+        data = [line.strip() for line in f]
+    return len(data)  # Default implementation"""
             
         # Apply code formatting
         formatted_code = self._fix_generated_code(code)
@@ -145,7 +148,8 @@ The solution should handle the input format exactly as shown in the example."""
             
             # Show expected output if available
             if test.expected_output:
-                case.append(f"Expected Output: {test.expected_output}")
+                type_str = f" ({test.expected_type})" if test.expected_type else ""
+                case.append(f"Expected Output{type_str}: {test.expected_output}")
                 
             formatted.append("\n".join(case))
             

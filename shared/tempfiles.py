@@ -37,6 +37,19 @@ class TempFileManager:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return self.temp_dir / f"{prefix}_{timestamp}{suffix}"
     
+    def create_temp_file(self, filename: str) -> Path:
+        """Create a temporary file with the given name.
+        
+        Args:
+            filename: Name for the temporary file
+            
+        Returns:
+            Path to the created temporary file
+        """
+        path = self.temp_dir / filename
+        path.touch()  # Create the file if it doesn't exist
+        return path
+    
     def cleanup(self, older_than_hours: Optional[int] = None) -> None:
         """Clean up temporary files.
         

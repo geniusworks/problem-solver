@@ -52,6 +52,10 @@ class BaseSolver:
             ):
                 raise ValueError(f"Problem for year {year} day {day} is not available yet")
 
+            logging.info("")
+            logging.info(f"Attempting solution for {year}, day {day:02d}, part {part}")
+            logging.info("")
+
             # Create standard directory structure
             dirs = ensure_problem_directory_structure(self.workspace_dir, year, day)
             
@@ -83,20 +87,18 @@ class BaseSolver:
             answers = {}
             failures = []
             if self.debug:
+                logging.info("")
                 logging.info(f"Attempting solution with {len(self.models)} models")
-
             for model_name, model in self.models.items():
                 if self.debug:
-                    logging.info(f"\nTrying model: {model_name}")
+                    logging.info("")
+                    logging.info(f"Trying model: {model_name}")
                     logging.info("-" * 40)
-
                 try:
                     # Record start time for performance tracking
                     start_time = datetime.now()
 
                     # Generate solution with strategic guidance
-                    if self.debug:
-                        logging.info("Generating solution...")
                     solution_code = await model.generate_solution(
                         parsed_problem,
                         strategies=strategies,
@@ -120,32 +122,20 @@ Status: Testing
 ''')
 
                     # Test solution
-                    if self.debug:
-                        logging.info("Testing solution...")
-                    
-                    # Create a unique problem ID for this attempt
-                    problem_id = f"{year}_day{day}_part{part}"
-                    
-                    test_result = await self.solution_executor.test_solution(
-                        solution_code, year, day, parsed_problem.examples,
+                    examples_passed, full_passed, example_results, full_result, full_answer = await self.solution_executor.test_solution(
+                        solution_code,
+                        year,
+                        day,
+                        test_cases=parsed_problem.examples,
                         model_name=model_name
                     )
-                    execution_time = (
-                        datetime.now() - start_time
-                    ).total_seconds() - generation_time
 
-                    # Unpack test results
-                    (
-                        example_passed,
-                        full_passed,
-                        example_results,
-                        full_result,
-                        full_answer,
-                    ) = test_result
+                    generation_time = (datetime.now() - start_time).total_seconds()
+                    execution_time = (
+                        full_result.performance.execution_time if full_result and full_result.performance else 0.0
+                    )
 
                     if self.debug:
-                        logging.info(f"Example tests passed: {example_passed}")
-                        logging.info(f"Full input passed: {full_passed}")
                         if full_passed:
                             logging.info(f"Answer: {full_answer}")
 
@@ -179,7 +169,8 @@ Status: Testing
                         attempt_file.write_text(content)
 
             if self.debug:
-                logging.info("\nConsensus Summary:")
+                logging.info("")
+                logging.info("Consensus Summary:")
                 logging.info("-" * 40)
                 logging.info(f"Successful models: {list(answers.keys())}")
                 logging.info(f"Failed models: {failures}")
@@ -202,14 +193,16 @@ Status: Testing
                     break
 
             if self.debug:
+                logging.info("")
                 if consensus_answer:
-                    logging.info(f"\nConsensus reached! Answer: {consensus_answer}")
+                    logging.info(f"Consensus reached! Answer: {consensus_answer}")
                     logging.info(f"Agreeing models: {consensus_models}")
                 else:
-                    logging.info("\nNo consensus reached")
+                    logging.info("No consensus reached")
                     logging.info("Model answers:")
                     for model, data in answers.items():
                         logging.info(f"  {model}: {data['answer']}")
+                logging.info("")
 
             if consensus_answer:
                 # Use the fastest successful solution for submission
@@ -220,8 +213,7 @@ Status: Testing
                 best_solution = answers[best_model]
 
                 if self.debug:
-                    logging.info(f"\nUsing solution from {best_model} for submission")
-
+                    logging.info(f"Using solution from {best_model} for submission")
                 # Handle submission
                 can_submit, wait_time = self.submission_manager.can_submit(year, day, part)
                 if not can_submit:

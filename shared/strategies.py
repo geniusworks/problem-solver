@@ -325,32 +325,32 @@ SOLUTION_STRATEGIES: Dict[ProblemCategory, List[Strategy]] = {
             name="Input Structure Analysis",
             description="Systematically analyze and validate input format before parsing",
             when_to_use=[
-                "Complex or ambiguous input formats",
-                "Multiple data points per line",
-                "Mixed data types",
-                "When example input is provided",
-                "When input format affects solution strategy"
+                "Input format needs to be determined from examples",
+                "Multiple values per line need parsing",
+                "Data needs to be grouped or paired",
+                "Order of values is significant",
+                "Values need sorting or ranking"
             ],
             key_techniques=[
-                "Example-first validation",
-                "Pattern recognition",
-                "Delimiter analysis",
-                "Data type inference",
-                "Structure verification"
+                "Identify exact delimiters (spaces, commas, etc.)",
+                "Handle values individually vs. in pairs/groups",
+                "Determine if original order matters",
+                "Check if sorting is needed",
+                "Validate expected number of values"
             ],
             optimization_tips=[
-                "Print and verify first few lines",
-                "Start with minimal parsing matching example",
-                "Log parsed structure",
-                "Validate against example output",
-                "Handle edge cases explicitly"
+                "Parse and store values in their final required form",
+                "Sort only when needed",
+                "Use appropriate data structures for required operations",
+                "Handle edge cases (empty lines, missing values)",
+                "Validate input matches example format"
             ],
             example_patterns=[
-                "Space/tab-separated values",
-                "CSV or delimiter-based formats",
-                "Fixed-width fields",
-                "Mixed numeric and text data",
-                "Hierarchical structures"
+                "left, right = line.split(delimiter)",
+                "values = [parse_value(v) for v in line.split()]",
+                "sorted_values = sorted(values)",
+                "pairs = list(zip(left_list, right_list))",
+                "validate_format(line, expected_parts=2)"
             ]
         ),
         Strategy(
@@ -515,6 +515,174 @@ SOLUTION_STRATEGIES: Dict[ProblemCategory, List[Strategy]] = {
                 "precomputed = [calc(i) for i in range(n)]"
             ]
         )
+    ],
+    ProblemCategory.SEQUENCE: [
+        Strategy(
+            name="Sequence Processing",
+            description="Process, transform, and compare sequences of values",
+            when_to_use=[
+                "Need to pair values from different lists",
+                "Values need sorting before comparison",
+                "Need to calculate differences between pairs",
+                "Order matters for matching values",
+                "Need to align or correspond elements"
+            ],
+            key_techniques=[
+                "Sort lists independently",
+                "Pair corresponding elements",
+                "Calculate differences or distances",
+                "Handle lists of equal/unequal length",
+                "Track original vs sorted positions"
+            ],
+            optimization_tips=[
+                "Sort once at the start",
+                "Use zip() for pairing elements",
+                "Pre-calculate values when possible",
+                "Handle edge cases (empty lists, single element)",
+                "Validate list lengths match"
+            ],
+            example_patterns=[
+                "sorted_left = sorted(left_values)",
+                "for x, y in zip(sorted_left, sorted_right)",
+                "differences = [abs(a - b) for a, b in pairs]",
+                "if len(left) != len(right): handle_error()",
+                "total = sum(abs(x - y) for x, y in pairs)"
+            ]
+        )
+    ],
+    ProblemCategory.COMBINATORICS: [
+        Strategy(
+            name="Combinatorial Calculations",
+            description="Calculate combinations, permutations, and arrangements",
+            when_to_use=[
+                "Counting problems",
+                "Arrangement problems",
+                "Selection problems",
+                "Need to generate all combinations",
+                "Need to calculate permutations"
+            ],
+            key_techniques=[
+                "Factorial calculations",
+                "Combination formulas",
+                "Permutation formulas",
+                "Recursion",
+                "Dynamic programming"
+            ],
+            optimization_tips=[
+                "Use math.comb() for combinations",
+                "Use math.perm() for permutations",
+                "Cache intermediate results",
+                "Use dynamic programming for large inputs",
+                "Consider using itertools"
+            ],
+            example_patterns=[
+                "math.comb(n, k)",
+                "math.perm(n, k)",
+                "cache = {}",
+                "dp = [[0] * n for _ in range(k)]",
+                "import itertools"
+            ]
+        )
+    ],
+    ProblemCategory.GEOMETRY: [
+        Strategy(
+            name="Geometric Calculations",
+            description="Calculate distances, areas, and volumes",
+            when_to_use=[
+                "Need to calculate distances",
+                "Need to calculate areas",
+                "Need to calculate volumes",
+                "Need to calculate angles",
+                "Need to calculate shapes"
+            ],
+            key_techniques=[
+                "Distance formulas",
+                "Area formulas",
+                "Volume formulas",
+                "Angle calculations",
+                "Shape recognition"
+            ],
+            optimization_tips=[
+                "Use math.hypot() for distances",
+                "Use math.pi for area/volume calculations",
+                "Cache intermediate results",
+                "Consider using numpy for vector calculations",
+                "Use geometric libraries when possible"
+            ],
+            example_patterns=[
+                "math.hypot(x, y)",
+                "math.pi * r ** 2",
+                "4/3 * math.pi * r ** 3",
+                "math.atan2(y, x)",
+                "import numpy as np"
+            ]
+        )
+    ],
+    ProblemCategory.PERFORMANCE: [
+        Strategy(
+            name="Memory Optimization",
+            description="Optimize memory usage and allocation patterns",
+            when_to_use=[
+                "Large input sizes",
+                "Memory constraints",
+                "Complex data structures",
+                "String processing",
+                "Grid/Matrix operations"
+            ],
+            key_techniques=[
+                "Pre-allocation",
+                "Primitive types over objects",
+                "Efficient data structures",
+                "String handling optimization",
+                "Sparse matrix representation"
+            ],
+            optimization_tips=[
+                "Pre-allocate arrays when size is known",
+                "Use primitive types when possible",
+                "Choose appropriate data structures",
+                "Use string functions over regex",
+                "Consider sparse representations"
+            ],
+            example_patterns=[
+                "grid = [[0] * width for _ in range(height)]",
+                "visited = set()  # O(1) lookup",
+                "queue = collections.deque()",
+                "str.find() instead of re.search()",
+                "{(i,j): val} for sparse matrix"
+            ]
+        ),
+        Strategy(
+            name="Computational Optimization",
+            description="Optimize computation time and algorithm efficiency",
+            when_to_use=[
+                "Time-critical operations",
+                "Complex calculations",
+                "Repeated operations",
+                "Large search spaces",
+                "Pattern matching"
+            ],
+            key_techniques=[
+                "Early termination",
+                "Pre-calculation",
+                "Caching/Memoization",
+                "Search space pruning",
+                "Bit manipulation"
+            ],
+            optimization_tips=[
+                "Add early exit conditions",
+                "Pre-calculate frequent values",
+                "Cache expensive computations",
+                "Prune search space early",
+                "Use bit operations for sets"
+            ],
+            example_patterns=[
+                "@functools.lru_cache(maxsize=None)",
+                "if condition: return early",
+                "seen = set() for O(1) lookup",
+                "mask = 1 << n  # bit manipulation",
+                "precomputed = [calc(i) for i in range(n)]"
+            ]
+        )
     ]
 }
 
@@ -524,13 +692,21 @@ CATEGORY_KEYWORDS = {
     ProblemCategory.PATHFINDING: ['path', 'route', 'distance', 'shortest', 'steps'],
     ProblemCategory.SIMULATION: ['simulate', 'process', 'steps', 'change', 'time'],
     ProblemCategory.PATTERN_MATCHING: ['match', 'find', 'pattern', 'repeat', 'sequence'],
-    ProblemCategory.STATE_MACHINE: ['state', 'transition', 'rules', 'change', 'follow'],
-    ProblemCategory.OPTIMIZATION: ['minimize', 'maximize', 'optimal', 'best', 'efficient'],
+    ProblemCategory.STATE_MACHINE: [
+        'transition_rules', 'state_change', 'state_machine', 'automaton', 'state_diagram',
+        'finite_states', 'state_transitions', 'current_state', 'next_state', 'valid_transitions'
+    ],
+    ProblemCategory.OPTIMIZATION: [
+        'minimize', 'maximize', 'optimal', 'best', 'efficient',
+        'least_cost', 'most_efficient', 'optimize_for', 'minimum_cost', 'maximum_value',
+        'best_possible', 'fewest_steps', 'lowest_cost', 'highest_score'
+    ],
     ProblemCategory.PARSING: [
         # Basic parsing keywords
         'input', 'parse', 'format', 'read', 'line',
         # Structure analysis keywords
         'structure', 'pattern', 'delimiter', 'separated', 'split',
+        'space-separated', 'line-by-line', 'tab-separated', 'comma-separated',
         # Transformation keywords
         'convert', 'transform', 'arrange', 'order', 'sort',
         # Validation keywords
@@ -538,11 +714,21 @@ CATEGORY_KEYWORDS = {
         # Example-related keywords
         'example', 'shown', 'following', 'like', 'format',
         # Data organization keywords
-        'pair', 'group', 'list', 'sequence', 'series'
+        'pair', 'group', 'list', 'sequence', 'series',
+        'columns', 'rows', 'fields', 'values', 'entries'
     ],
     ProblemCategory.MATH: ['calculate', 'number', 'formula', 'sequence', 'count'],
     ProblemCategory.GRAPH: ['connect', 'node', 'edge', 'network', 'path'],
-    ProblemCategory.SEQUENCE: ['series', 'order', 'next', 'previous', 'pattern'],
+    ProblemCategory.SEQUENCE: [
+        # Ordering and comparison
+        'series', 'order', 'next', 'previous', 'pattern',
+        'smallest', 'largest', 'ascending', 'descending', 'sorted',
+        'minimum', 'maximum', 'increasing', 'decreasing', 'rank',
+        'first', 'last', 'nth', 'position', 'index',
+        # Pairing and matching
+        'pair_up', 'match_up', 'corresponding', 'align', 'compare',
+        'difference_between', 'distance_between', 'gap', 'spacing'
+    ],
     ProblemCategory.COMBINATORICS: ['combine', 'arrange', 'possible', 'ways', 'permutation'],
     ProblemCategory.GEOMETRY: ['area', 'distance', 'point', 'line', 'shape'],
     ProblemCategory.PERFORMANCE: ['optimize', 'fast', 'efficient', 'improve', 'speed'],
@@ -564,14 +750,21 @@ def get_strategies_for_problem(problem_text: str) -> List[str]:
     
     # Find relevant categories based on keywords
     problem_text = problem_text.lower()
-    matching_categories = []
+    category_scores = {}
+    
+    # Score each category based on keyword matches
     for category, words in CATEGORY_KEYWORDS.items():
-        if any(word in problem_text for word in words):
-            matching_categories.append(category)
+        score = sum(problem_text.count(word) for word in words)
+        if score > 0:
+            category_scores[category] = score
             
     # If no categories match, default to PATTERN_MATCHING and MATH
-    if not matching_categories:
+    if not category_scores:
         matching_categories = [ProblemCategory.PATTERN_MATCHING, ProblemCategory.MATH]
+    else:
+        # Get the top 2 scoring categories
+        matching_categories = sorted(category_scores.items(), key=lambda x: x[1], reverse=True)[:2]
+        matching_categories = [cat for cat, _ in matching_categories]
             
     # Get strategies for each matching category
     for category in matching_categories:

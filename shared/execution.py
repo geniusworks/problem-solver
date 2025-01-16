@@ -238,7 +238,8 @@ class SolutionExecutor:
         year: int,
         day: int,
         test_cases: Optional[List[TestCase]] = None,
-        model_name: str = ""
+        model_name: str = "",
+        debug: bool = False
     ) -> Tuple[bool, bool, List[ExecutionResult], ExecutionResult, Optional[str]]:
         """Test a solution against example test cases and full input.
 
@@ -248,6 +249,7 @@ class SolutionExecutor:
             day: Problem day
             test_cases: Optional list of test cases. If None, uses default test cases.
             model_name: Name of the model that generated this solution
+            debug: Whether to enable debug output
 
         Returns:
             Tuple containing:
@@ -275,7 +277,7 @@ class SolutionExecutor:
             for test_case in test_cases or []:
                 result = await self.execute_solution(
                     self.temp_manager.create_temp_file(f"{problem_id}.py"),
-                    self._create_test_input(test_case.input_data),
+                    self._create_test_input(test_case.input_data)
                 )
                 example_results.append(result)
                 if (

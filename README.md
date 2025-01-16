@@ -99,6 +99,13 @@ The system includes various solution strategies:
 
 See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 
+## Recent Updates
+
+### 2025-01-16
+- Enhanced model debugging with parsed data structure display
+- Improved visibility into input data interpretation
+- Simplified debugging approach
+
 ## Notes
 
 - Be a responsible AoC participant - minimize requests and cache data

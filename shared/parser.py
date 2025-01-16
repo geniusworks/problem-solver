@@ -27,6 +27,7 @@ class TestCase:
 
     input_data: str
     expected_output: str
+    expected_type: Optional[str] = None
     description: Optional[str] = None
     order: int = 0  # Order in which example appears
     demonstrates: Set[str] = field(
@@ -85,6 +86,7 @@ class ParsedProblem:
                 {
                     "input_data": ex.input_data,
                     "expected_output": ex.expected_output,
+                    "expected_type": ex.expected_type,
                     "description": ex.description,
                     "order": ex.order,
                     "demonstrates": list(ex.demonstrates),
@@ -130,6 +132,7 @@ class ParsedProblem:
             TestCase(
                 input_data=ex["input_data"],
                 expected_output=ex["expected_output"],
+                expected_type=ex["expected_type"],
                 description=ex["description"],
                 order=ex["order"],
                 demonstrates=set(ex["demonstrates"]),
@@ -222,26 +225,35 @@ def _extract_examples(text: str) -> List[TestCase]:
             
             # Look for numbers in the context after that could be answers
             answer = None
+            answer_type = None
             context_text = context_after
             
             # First try to find a number after "answer:" or similar
-            answer_match = re.search(r'(?:answer|output|result)[: ]+(\d+)', context_text.lower())
+            answer_match = re.search(r'(?:answer|output|result)[: ]+([-+]?[0-9]*\.?[0-9]+)', context_text.lower())
             if answer_match:
-                answer = answer_match.group(1)
+                answer_str = answer_match.group(1)
+                # Determine if it's an integer or float
+                if '.' in answer_str:
+                    answer = float(answer_str)
+                    answer_type = 'float'
+                else:
+                    answer = int(answer_str)
+                    answer_type = 'integer'
             
             # Clean up input data - split into lines and remove extra whitespace
             input_lines = [line.strip() for line in code_content.split('\n') if line.strip()]
             examples.append(
                 TestCase(
                     input_data='\n'.join(input_lines),
-                    expected_output=answer if answer else "",  # Allow empty expected output
+                    expected_output=answer if answer is not None else "",  # Allow empty expected output
+                    expected_type=answer_type,  # Store the type
                     description=f"{context_before}\n\n{context_after}",  # Include full article context
                     order=len(examples),
                     demonstrates=set(),
                     referenced_by=[],
                 )
             )
-            logger.debug("Added example with input:\n%s\nand output: %s", code_content, answer)
+            logger.debug("Added example with input and output")
             
         except Exception as e:
             logger.error(f"Error processing pre block {i+1}: {e}")

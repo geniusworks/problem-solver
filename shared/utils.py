@@ -289,6 +289,10 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, A
         logger.debug("Using cached problem text from %s", cache_file)
         with open(cache_file, "r", encoding="utf-8") as f:
             html = f.read()
+        
+        # Get state and answers from cached HTML
+        soup = BeautifulSoup(html, "html.parser")
+        state, part1_answer, part2_answer = await _get_problem_state(soup)
     else:
         logger.info(f"Fetching fresh problem text for year {year} day {day} part {part}")
         url = f"{config.AOC_BASE_URL}/{year}/day/{day}"
@@ -307,8 +311,6 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, A
             part2_answer=part2_answer,
         )
         await _save_cache(year, day, html, meta)
-    
-    soup = BeautifulSoup(html, "html.parser")
     
     # Return appropriate data based on part
     if part == 2:
@@ -394,7 +396,7 @@ def save_to_file(filename: str, content: str, problem_dir: Path) -> None:
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(content)
     logger = logging.getLogger(__name__)
-    logger.info(f"Saved content to {filename}")
+    logger.info(f"Saved {filename}")
 
 
 def get_input_path(year: int, day: int) -> Path:
