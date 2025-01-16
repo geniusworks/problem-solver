@@ -517,3 +517,133 @@ def ensure_problem_directory_structure(workspace_dir: Path, year: int, day: int)
         "attempts": attempts_dir,
         "examples": examples_dir
     }
+
+import subprocess
+from datetime import datetime, timezone
+import re
+
+def get_github_username() -> str:
+    """Attempt to get the user's GitHub username through various methods."""
+    try:
+        # First try GitHub CLI
+        result = subprocess.run(
+            ["gh", "auth", "status"],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode == 0:
+            # Extract username from gh output
+            match = re.search(r"Logged in to github.com as (\w+)", result.stdout)
+            if match:
+                return match.group(1)
+    except FileNotFoundError:
+        pass  # gh CLI not installed
+        
+    try:
+        # Try getting GitHub email
+        email = subprocess.check_output(
+            ["git", "config", "user.email"],
+            text=True
+        ).strip()
+        
+        # If it's a GitHub email, extract username
+        match = re.match(r"(.+)@users.noreply.github.com", email)
+        if match:
+            return match.group(1)
+    except subprocess.CalledProcessError:
+        pass
+        
+    try:
+        # Fall back to git user.name
+        return subprocess.check_output(
+            ["git", "config", "user.name"],
+            text=True
+        ).strip()
+    except subprocess.CalledProcessError:
+        return "unknown"
+
+def get_repository_state() -> Tuple[str, bool]:
+    """Get the current repository state including uncommitted changes.
+    
+    Returns:
+        Tuple of (commit_hash, has_local_changes)
+    """
+    try:
+        # Get current commit hash
+        commit_hash = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            text=True
+        ).strip()
+        
+        # Check for uncommitted changes
+        status = subprocess.check_output(
+            ["git", "status", "--porcelain"],
+            text=True
+        )
+        has_local_changes = bool(status.strip())
+        
+        return commit_hash, has_local_changes
+    except subprocess.CalledProcessError:
+        return "unknown", False
+
+def record_solution(year: int, day: int, part: int, model_name: str) -> None:
+    """Record a successful solution in SOLUTIONS.md.
+    
+    This function is called automatically by the solver when a solution is validated.
+    It should never be called manually. The SOLUTIONS.md file is maintained
+    automatically as a historical record of validated solutions.
+    
+    Args:
+        year: Problem year
+        day: Problem day
+        part: Problem part (1 or 2)
+        model_name: Name of the model that generated the solution
+        
+    Note:
+        This function will only record a solution once per year/day/part combination.
+        It is safe to call multiple times as it will ignore duplicate entries.
+    """
+    solutions_file = Path(__file__).parent.parent / "SOLUTIONS.md"
+    if not solutions_file.exists():
+        logger = logging.getLogger(__name__)
+        logger.error("SOLUTIONS.md not found - solution recording skipped")
+        return
+        
+    # Read existing solutions
+    content = solutions_file.read_text()
+    
+    # Check if this year/day/part already has a solution
+    pattern = fr"\|{year}\s*\|{day}\s*\|{part}\s*\|"
+    if re.search(pattern, content):
+        return  # Already recorded
+        
+    # Get repository state and GitHub username
+    commit_hash, has_local_changes = get_repository_state()
+    repo_hash = f"{commit_hash} {'(modified)' if has_local_changes else ''}"
+    github_user = get_github_username()
+        
+    # Format current time in UTC
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    
+    # Add new solution entry
+    table_start = content.find("|Year")
+    table_end = content.find("\n\n", table_start)
+    if table_end == -1:
+        table_end = len(content)
+        
+    new_entry = f"\n|{year}|{day}|{part}|{repo_hash}|{model_name}|{timestamp}|{github_user}|"
+    
+    # Insert new entry after header
+    header_end = content.find("\n", table_start) + 1
+    updated_content = (
+        content[:header_end] +
+        content[header_end:content.find("\n", header_end)] +  # Separator line
+        new_entry +
+        content[table_end:]
+    )
+    
+    # Write updated content
+    solutions_file.write_text(updated_content)
+    
+    logger = logging.getLogger(__name__)
+    logger.info(f"Recorded validated solution for year {year} day {day} part {part}")

@@ -11,7 +11,7 @@ from shared.errors import ValidationError
 from shared.execution import SolutionExecutor, TestCase
 from shared.llm.local import OllamaProvider
 from shared.parser import parse_problem_text
-from shared.utils import fetch_problem_text, ensure_input_file, ensure_problem_files, ensure_problem_directory_structure
+from shared.utils import fetch_problem_text, ensure_input_file, ensure_problem_files, ensure_problem_directory_structure, record_solution
 from shared.validator import SubmissionError
 from shared.strategies import get_strategies_for_problem, create_strategy_prompt
 from shared.submission import SubmissionManager, SubmissionResult
@@ -149,6 +149,17 @@ Status: Testing
                                 'memory_usage': full_result.performance.max_memory if full_result and full_result.performance else 0.0
                             }
                         }
+                        # Automatically record this validated solution
+                        record_solution(year, day, part, model_name)
+                        return SolveResult(
+                            answer=full_answer,
+                            code=solution_code,
+                            metrics={
+                                'generation_time': generation_time,
+                                'execution_time': execution_time,
+                                'memory_usage': full_result.performance.max_memory if full_result and full_result.performance else 0.0
+                            }
+                        )
                     else:
                         failures.append(model_name)
                         # Update attempt file status to Failed

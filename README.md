@@ -40,6 +40,10 @@ problem-solver/
     └── temp/        # Temporary files
 ```
 
+## Project Status
+
+For a log of successful solutions and project progress, see [SOLUTIONS.md](SOLUTIONS.md).
+
 ## Getting Started
 
 1. Clone the repository
@@ -102,6 +106,10 @@ See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 ## Recent Updates
 
 ### 2025-01-16
+- Added automatic solution tracking in SOLUTIONS.md
+- Enhanced GitHub username detection and repository state handling
+- Improved handling of uncommitted changes in solution records
+- Added parsed data structure display for debugging
 - Enhanced model debugging with parsed data structure display
 - Improved visibility into input data interpretation
 - Simplified debugging approach
