@@ -586,7 +586,40 @@ def get_repository_state() -> Tuple[str, bool]:
     except subprocess.CalledProcessError:
         return "unknown", False
 
-def record_solution(year: int, day: int, part: int, model_name: str) -> None:
+def save_solution_file(year: int, day: int, part: int, model_name: str, solution_code: str) -> str:
+    """Save a successful solution to both the year directory and solutions directory.
+    
+    Args:
+        year: Problem year
+        day: Problem day
+        part: Problem part
+        model_name: Name of the model that generated the solution
+        solution_code: The solution code to save
+        
+    Returns:
+        Path to the solution file in the solutions directory (relative to repo root)
+    """
+    # Clean up model name for filename
+    safe_model_name = re.sub(r'[^\w\-]', '_', model_name.lower())
+    
+    # Create solution filename
+    solution_filename = f"{year}_day{day:02d}_part{part}_{safe_model_name}.py"
+    
+    # Save to year directory
+    year_dir = get_problem_dir(year, day)
+    year_path = year_dir / solution_filename
+    year_path.write_text(solution_code)
+    
+    # Save to solutions directory
+    root_dir = Path(__file__).parent.parent
+    solutions_dir = root_dir / "solutions"
+    solutions_dir.mkdir(exist_ok=True)
+    solution_path = solutions_dir / solution_filename
+    solution_path.write_text(solution_code)
+    
+    return f"solutions/{solution_filename}"
+
+def record_solution(year: int, day: int, part: int, model_name: str, solution_code: str) -> None:
     """Record a successful solution in SOLUTIONS.md.
     
     This function is called automatically by the solver when a solution is validated.
@@ -598,6 +631,7 @@ def record_solution(year: int, day: int, part: int, model_name: str) -> None:
         day: Problem day
         part: Problem part (1 or 2)
         model_name: Name of the model that generated the solution
+        solution_code: The solution code to save
         
     Note:
         This function will only record a solution once per year/day/part combination.
@@ -617,6 +651,9 @@ def record_solution(year: int, day: int, part: int, model_name: str) -> None:
     if re.search(pattern, content):
         return  # Already recorded
         
+    # Save solution file and get path
+    solution_path = save_solution_file(year, day, part, model_name, solution_code)
+        
     # Get repository state and GitHub username
     commit_hash, has_local_changes = get_repository_state()
     repo_hash = f"{commit_hash} {'(modified)' if has_local_changes else ''}"
@@ -631,7 +668,7 @@ def record_solution(year: int, day: int, part: int, model_name: str) -> None:
     if table_end == -1:
         table_end = len(content)
         
-    new_entry = f"\n|{year}|{day}|{part}|{repo_hash}|{model_name}|{timestamp}|{github_user}|"
+    new_entry = f"\n|{year}|{day}|{part}|{repo_hash}|{model_name}|{timestamp}|{github_user}|{solution_path}|"
     
     # Insert new entry after header
     header_end = content.find("\n", table_start) + 1

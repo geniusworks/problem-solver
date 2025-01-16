@@ -2,27 +2,27 @@
 
 ## 2025-01-16
 ### Changes
-- Enhanced implementation prompt to require models to display parsed data structure
-- Updated OllamaProvider to require showing types and values of first 5 parsed elements
-- Simplified debugging approach by removing conditional debug flag system
-- Focused on direct visibility of model's input interpretation
+- Added Solution File column to SOLUTIONS.md for direct links
+- Created central solutions directory at repo root
+- Implemented dual-saving of solutions (year dir and solutions dir)
+- Enhanced solution filename format with year, day, part, and model info
+- Updated .gitignore to properly track solutions directory
 - Created SOLUTIONS.md for automatic solution tracking
 - Implemented smart GitHub username detection using multiple methods
 - Added handling for repository state with uncommitted changes
 - Enhanced documentation about automatic file maintenance
 
 ### Impact
-- Improved visibility into how models interpret and structure input data
-- Better debugging capabilities for input parsing issues
-- Cleaner codebase by removing unnecessary debug flag system
+- Solutions are now easily accessible in a central location
+- Better organization and tracking of successful solutions
+- Improved reproducibility with direct file links
 - Solutions are now automatically tracked with full reproducibility info
 - Better GitHub identity detection through CLI, email, and fallbacks
 - Clear indication when solutions are validated with uncommitted changes
 - Improved documentation clarity about automated processes
 
 ### Next Steps
-- Explore alternative approaches to improving model output and debugging
-- Return to evaluate effectiveness of parsed data structure display
+- Test solution recording with actual validated solutions
 - Monitor effectiveness of solution tracking
 - Continue improving model prompting and debugging capabilities
 

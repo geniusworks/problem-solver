@@ -150,7 +150,7 @@ Status: Testing
                             }
                         }
                         # Automatically record this validated solution
-                        record_solution(year, day, part, model_name)
+                        record_solution(year, day, part, model_name, solution_code)
                         return SolveResult(
                             answer=full_answer,
                             code=solution_code,

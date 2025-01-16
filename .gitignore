@@ -59,6 +59,10 @@ debug_response.html
 years/*
 !years/example/
 !years/example/**
+!years/example/**/*.db
+
+# Keep solutions directory
+!/solutions/
 
 # Keep example config
 !.env.example

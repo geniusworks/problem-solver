@@ -26,11 +26,13 @@ problem-solver/
 │   └── quality/     # Code quality tools
 │   └── strategies/  # Solution strategies
 ├── solve.py         # Main solver script
+├── solutions/        # Centralized solutions directory
+│   └── YYYY/        # Year-specific solutions
+│       └── dayXX/   # Day-specific solutions
+│           └── partX.py  # Solution file
 └── years/           # Problem data by year
     └── YYYY/        # Year-specific data
         └── dayXX/   # Day-specific data
-            ├── solutions/  # Successful solutions
-            ├── attempts/   # Failed attempts
             ├── examples/   # Example inputs and outputs
             ├── input.txt   # Problem input
             ├── problem.txt   # Problem description in text format
@@ -106,9 +108,11 @@ See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 ## Recent Updates
 
 ### 2025-01-16
+- Enhanced solution tracking with direct file links
+- Added centralized solutions directory
+- Improved solution file organization and accessibility
 - Added automatic solution tracking in SOLUTIONS.md
 - Enhanced GitHub username detection and repository state handling
-- Improved handling of uncommitted changes in solution records
 - Added parsed data structure display for debugging
 - Enhanced model debugging with parsed data structure display
 - Improved visibility into input data interpretation
