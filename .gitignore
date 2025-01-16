@@ -48,8 +48,8 @@ ehthumbs.db
 
 # Problem Solver specific
 .env
-tmp/               # Temporary files directory
-debug_response.html # Cached AoC responses
+tmp/
+debug_response.html
 
 # Learning database
 *.db
