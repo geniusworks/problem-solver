@@ -320,6 +320,136 @@ SOLUTION_STRATEGIES: Dict[ProblemCategory, List[Strategy]] = {
             ]
         )
     ],
+    ProblemCategory.PARSING: [
+        Strategy(
+            name="Input Structure Analysis",
+            description="Systematically analyze and validate input format before parsing",
+            when_to_use=[
+                "Complex or ambiguous input formats",
+                "Multiple data points per line",
+                "Mixed data types",
+                "When example input is provided",
+                "When input format affects solution strategy"
+            ],
+            key_techniques=[
+                "Example-first validation",
+                "Pattern recognition",
+                "Delimiter analysis",
+                "Data type inference",
+                "Structure verification"
+            ],
+            optimization_tips=[
+                "Print and verify first few lines",
+                "Start with minimal parsing matching example",
+                "Log parsed structure",
+                "Validate against example output",
+                "Handle edge cases explicitly"
+            ],
+            example_patterns=[
+                "Space/tab-separated values",
+                "CSV or delimiter-based formats",
+                "Fixed-width fields",
+                "Mixed numeric and text data",
+                "Hierarchical structures"
+            ]
+        ),
+        Strategy(
+            name="Robust Input Parsing",
+            description="Handle various edge cases and potential input variations",
+            when_to_use=[
+                "Input may contain empty lines",
+                "Whitespace variations possible",
+                "Need to handle malformed input",
+                "Multiple input formats possible",
+                "Data cleaning required"
+            ],
+            key_techniques=[
+                "Strip whitespace consistently",
+                "Type conversion with validation",
+                "Error handling for malformed input",
+                "Line-by-line processing",
+                "Format validation checks"
+            ],
+            optimization_tips=[
+                "Use string methods over regex for simple cases",
+                "Validate data types early",
+                "Keep original data for debugging",
+                "Log parsing errors clearly",
+                "Build parsing pipeline incrementally"
+            ],
+            example_patterns=[
+                "Leading/trailing whitespace",
+                "Empty or comment lines",
+                "Mixed number formats",
+                "Escaped characters",
+                "Multi-line records"
+            ]
+        ),
+        Strategy(
+            name="Input-Output Correlation",
+            description="Analyze relationship between input structure and expected output",
+            when_to_use=[
+                "Example input/output pairs provided",
+                "Output structure differs from input",
+                "Input requires reordering/grouping",
+                "When transformation rules are implicit",
+                "Multiple valid interpretations possible"
+            ],
+            key_techniques=[
+                "Map example input to output steps",
+                "Identify transformation rules",
+                "Validate interpretation with examples",
+                "Document assumptions explicitly",
+                "Test edge cases in examples"
+            ],
+            optimization_tips=[
+                "Draw data flow diagrams",
+                "Test interpretation on minimal example",
+                "Log intermediate transformations",
+                "Verify each transformation step",
+                "Compare final structure with example"
+            ],
+            example_patterns=[
+                "Sorting/reordering requirements",
+                "Grouping/aggregation needs",
+                "Multi-step transformations",
+                "State-dependent processing",
+                "Implicit rules in examples"
+            ]
+        ),
+        Strategy(
+            name="Data Transformation Patterns",
+            description="Identify and implement common data transformation patterns",
+            when_to_use=[
+                "Data needs restructuring",
+                "Multiple processing stages",
+                "Complex transformations needed",
+                "When maintaining data integrity",
+                "Processing order matters"
+            ],
+            key_techniques=[
+                "Pipeline processing",
+                "Staged transformations",
+                "Data structure conversion",
+                "State tracking",
+                "Validation checkpoints"
+            ],
+            optimization_tips=[
+                "Separate parsing from processing",
+                "Use intermediate representations",
+                "Validate at transformation boundaries",
+                "Keep transformation steps atomic",
+                "Document transformation chain"
+            ],
+            example_patterns=[
+                "List/matrix conversions",
+                "Sorting with dependencies",
+                "State machine transitions",
+                "Accumulator patterns",
+                "Filter-map-reduce chains"
+            ]
+        )
+    ],
     ProblemCategory.PERFORMANCE: [
         Strategy(
             name="Memory Optimization",
@@ -388,6 +518,39 @@ SOLUTION_STRATEGIES: Dict[ProblemCategory, List[Strategy]] = {
     ]
 }
 
+# Keywords that suggest different problem categories
+CATEGORY_KEYWORDS = {
+    ProblemCategory.GRID_TRAVERSAL: ['grid', 'matrix', 'map', 'adjacent', '2d'],
+    ProblemCategory.PATHFINDING: ['path', 'route', 'distance', 'shortest', 'steps'],
+    ProblemCategory.SIMULATION: ['simulate', 'process', 'steps', 'change', 'time'],
+    ProblemCategory.PATTERN_MATCHING: ['match', 'find', 'pattern', 'repeat', 'sequence'],
+    ProblemCategory.STATE_MACHINE: ['state', 'transition', 'rules', 'change', 'follow'],
+    ProblemCategory.OPTIMIZATION: ['minimize', 'maximize', 'optimal', 'best', 'efficient'],
+    ProblemCategory.PARSING: [
+        # Basic parsing keywords
+        'input', 'parse', 'format', 'read', 'line',
+        # Structure analysis keywords
+        'structure', 'pattern', 'delimiter', 'separated', 'split',
+        # Transformation keywords
+        'convert', 'transform', 'arrange', 'order', 'sort',
+        # Validation keywords
+        'validate', 'verify', 'check', 'ensure', 'match',
+        # Example-related keywords
+        'example', 'shown', 'following', 'like', 'format',
+        # Data organization keywords
+        'pair', 'group', 'list', 'sequence', 'series'
+    ],
+    ProblemCategory.MATH: ['calculate', 'number', 'formula', 'sequence', 'count'],
+    ProblemCategory.GRAPH: ['connect', 'node', 'edge', 'network', 'path'],
+    ProblemCategory.SEQUENCE: ['series', 'order', 'next', 'previous', 'pattern'],
+    ProblemCategory.COMBINATORICS: ['combine', 'arrange', 'possible', 'ways', 'permutation'],
+    ProblemCategory.GEOMETRY: ['area', 'distance', 'point', 'line', 'shape'],
+    ProblemCategory.PERFORMANCE: ['optimize', 'fast', 'efficient', 'improve', 'speed'],
+    ProblemCategory.DYNAMIC_PROGRAMMING: ['optimal', 'minimum', 'maximum', 'count', 'ways'],
+    ProblemCategory.BIT_MANIPULATION: ['bit', 'binary', 'mask', 'power', 'state'],
+    ProblemCategory.DATA_STRUCTURES: ['store', 'retrieve', 'order', 'structure', 'collection']
+}
+
 def get_strategies_for_problem(problem_text: str) -> List[str]:
     """Analyze problem text and return relevant strategy names.
     
@@ -399,22 +562,10 @@ def get_strategies_for_problem(problem_text: str) -> List[str]:
     """
     strategies = []
     
-    # Keywords indicating problem types
-    keywords = {
-        ProblemCategory.GRID_TRAVERSAL: ['grid', 'matrix', 'map', '2d', 'adjacent'],
-        ProblemCategory.PATHFINDING: ['path', 'route', 'shortest', 'graph', 'maze'],
-        ProblemCategory.SIMULATION: ['simulate', 'step', 'change', 'evolve', 'rule'],
-        ProblemCategory.PATTERN_MATCHING: ['pattern', 'match', 'find', 'string', 'text'],
-        ProblemCategory.MATH: ['calculate', 'number', 'formula', 'sequence', 'count'],
-        ProblemCategory.DYNAMIC_PROGRAMMING: ['optimal', 'minimum', 'maximum', 'count', 'ways'],
-        ProblemCategory.BIT_MANIPULATION: ['bit', 'binary', 'mask', 'power', 'state'],
-        ProblemCategory.DATA_STRUCTURES: ['store', 'retrieve', 'order', 'structure', 'collection']
-    }
-    
     # Find relevant categories based on keywords
     problem_text = problem_text.lower()
     matching_categories = []
-    for category, words in keywords.items():
+    for category, words in CATEGORY_KEYWORDS.items():
         if any(word in problem_text for word in words):
             matching_categories.append(category)
             

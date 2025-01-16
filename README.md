@@ -11,6 +11,8 @@ An intelligent problem solver for Advent of Code challenges, featuring a learnin
 - **Temporary File Management**: Centralized temporary file handling in `tmp/` directory.
 - **Smart Caching**: Efficiently caches problem data and responses
 - **Progress Tracking**: Tracks your progress through AoC challenges
+- **Input Analysis**: Advanced strategies for parsing and validating input formats
+- **Transformation Patterns**: Systematic approach to data transformation and validation
 
 ## Project Structure
 
@@ -22,6 +24,7 @@ problem-solver/
 ├── shared/           # Shared modules
 │   ├── llm/         # LLM integration
 │   └── quality/     # Code quality tools
+│   └── strategies/  # Solution strategies
 ├── solve.py         # Main solver script
 └── years/           # Problem data by year
     └── YYYY/        # Year-specific data
@@ -49,10 +52,30 @@ problem-solver/
 
 The solver includes a learning system that:
 1. Tracks which strategies work best for different problems
-2. Records solution performance metrics
-3. Uses past experience to guide future attempts
+2. Analyzes input formats and transformation patterns
+3. Improves parsing accuracy through example validation
+4. Maintains a knowledge base of common patterns
 
-See [learning/README.md](learning/README.md) for details on the learning system.
+## Solution Strategies
+
+The system includes various solution strategies:
+
+### Input Processing
+- **Input Structure Analysis**: Systematic approach to understanding input formats
+- **Robust Input Parsing**: Handling edge cases and variations
+- **Input-Output Correlation**: Mapping input structure to expected output
+- **Data Transformation Patterns**: Common patterns for data restructuring
+
+### Algorithm Categories
+- Grid Traversal
+- Pathfinding
+- Simulation
+- Pattern Matching
+- State Machine
+- Optimization
+- Math
+- Graph
+- Dynamic Programming
 
 ## Configuration
 

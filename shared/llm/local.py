@@ -78,43 +78,53 @@ Test Cases:
 
 Write a Python function called solve(input_file_path) that reads the input file and solves this problem.
 
-IMPORTANT:
-1. First inspect the raw input:
-   - Log a few lines to understand the format
-   - Common AoC input patterns include:
-     * Space/tab-separated values
-     * Grid/matrix layouts
-     * Lists of integers or strings
-     * Key-value pairs
-     * Tree/graph structures
+Note to Model:
+-------------
 
-2. Parse thoughtfully:
-   - Choose appropriate parsing based on the input structure
-   - Build data structures that match the problem's needs
-   - Handle edge cases (empty lines, malformed input)
+1. Analyze Input Structure:
+   - Always inspect example input format first
+   - Print first few lines of actual input to verify format matches example
+   - Look for consistent patterns:
+     * Delimiters (spaces, commas, tabs)
+     * Line structure (single/multiple values)
+     * Data types (numbers, strings, mixed)
+   - Verify assumptions with example data before proceeding
 
-3. Validate assumptions:
-   - Test your parsing with the example input
-   - Log intermediate steps to help debugging
-   - Verify your solution matches example outputs
+2. Parse Thoughtfully:
+   - Start with minimal parsing that matches example format
+   - Validate parsed data matches expected structure
+   - Handle edge cases:
+     * Empty lines
+     * Leading/trailing whitespace
+     * Unexpected characters
+   - Log parsed structure to verify correctness
 
-The solution should handle the input format as described in the problem."""
+3. Test Your Understanding:
+   - Compare parsed example data with given example output
+   - Verify your interpretation matches problem description
+   - Test edge cases in example data
+   - Print intermediate results to validate logic
+
+The solution should handle the input format exactly as shown in the example."""
 
         self.last_prompt = implementation_prompt
         logger.debug("Implementation prompt:\n%s", implementation_prompt)
         response = await self.generate(implementation_prompt)
         code = self._extract_code(response.content)
         
-        logger.debug("Generated code before fixes:\n%s", code)
-        
+        # Log the generated code
+        if self.debug:
+            logger.debug("Raw generated code:\n%s", code)
+            
         if code is None:
             code = "def solve(input_file_path):\n    with open(input_file_path) as f:\n        data = [line.strip() for line in f]\n    return len(data)  # Default implementation"
             
-        logger.debug("Generated code after fixes:\n%s", code)
+        # Apply code formatting
+        formatted_code = self._fix_generated_code(code)
+        if self.debug:
+            logger.debug("Formatted code:\n%s", formatted_code)
         
-        fixed_code = self._fix_generated_code(code)
-        logger.debug("Generated code after fixes:\n%s", fixed_code)
-        return fixed_code
+        return formatted_code
 
     def _format_test_cases(self, test_cases) -> str:
         """Format test cases for the prompt."""
