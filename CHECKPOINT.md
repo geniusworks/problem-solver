@@ -140,3 +140,32 @@ None at present, new system needs testing with real problems.
 - Strategy selection time: < 100ms
 - Database query time: < 50ms
 - Learning update time: < 200ms
+
+# Session Checkpoint: 2025-01-15 20:34 PST
+
+## Changes Made
+1. **Temporary File Management**
+   - Moved from `.temp/` to `tmp/` directory at repo root
+   - Updated `TempFileManager` to use repo root's `tmp/` directory consistently
+   - Removed old `.temp` directory
+   - Added proper Git ignore patterns for `tmp/`
+
+2. **Code Updates**
+   - Updated `TempFileManager` to use a single constructor parameter `repo_root`
+   - Modified `SolutionExecutor` to use `TempFileManager` for all temp file operations
+   - Improved cleanup handling in both classes
+
+3. **Documentation**
+   - Updated README.md to reflect new directory structure
+   - Removed duplicate entries in directory tree
+   - Clarified temporary file handling
+
+## Next Steps
+1. Finalize Git ignore patterns for `tmp/` directory
+2. Consider adding automated cleanup of old temporary files
+3. Test temporary file handling with actual problem solutions
+
+## Notes
+- All temporary files are now centralized in `tmp/` at repo root
+- Improved consistency in temporary file management across the codebase
+- Simplified constructor parameters for better usability

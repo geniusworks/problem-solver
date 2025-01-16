@@ -13,9 +13,16 @@ logger = logging.getLogger(__name__)
 class OllamaProvider(LLMProvider):
     """Provider for Ollama local models."""
 
-    def __init__(self, model: str = "codellama:7b", **kwargs):
+    AVAILABLE_MODELS = [
+        "codellama:7b",
+        "phi:latest",
+        "mistral:latest"
+    ]
+
+    def __init__(self, model: str = "codellama:7b", debug: bool = False, **kwargs):
         super().__init__(**kwargs)
         self.model = model
+        self.debug = debug
         self.model_info = {"name": model, "description": "Description of the model."}
         self.last_prompt = None
 

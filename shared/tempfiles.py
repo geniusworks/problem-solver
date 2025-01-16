@@ -12,20 +12,17 @@ logger = logging.getLogger(__name__)
 class TempFileManager:
     """Manages temporary files for solution development and testing."""
     
-    def __init__(self, base_dir: Optional[Path] = None) -> None:
-        """Initialize the temp file manager.
-        
+    def __init__(self, repo_root: Path) -> None:
+        """Initialize the temporary file manager.
+
         Args:
-            base_dir: Base directory for temp files. If None, uses system temp dir.
+            repo_root: Repository root directory path
         """
-        if base_dir is None:
-            base_dir = Path.home() / ".problem-solver" / "temp"
-        
-        self.temp_dir = base_dir
+        self.temp_dir = repo_root / "tmp"
         self.temp_dir.mkdir(parents=True, exist_ok=True)
         
         # Register cleanup on exit
-        atexit.register(self.cleanup_old_files)
+        atexit.register(self.cleanup)
     
     def get_temp_file(self, prefix: str, suffix: str = ".py") -> Path:
         """Get a path for a temporary file.
@@ -40,20 +37,26 @@ class TempFileManager:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return self.temp_dir / f"{prefix}_{timestamp}{suffix}"
     
-    def cleanup_old_files(self, max_age: timedelta = timedelta(days=1)) -> None:
-        """Remove old temporary files.
+    def cleanup(self, older_than_hours: Optional[int] = None) -> None:
+        """Clean up temporary files.
         
         Args:
-            max_age: Maximum age for temp files
+            older_than_hours: Only remove files older than this many hours
         """
-        now = datetime.now()
         try:
             for path in self.temp_dir.iterdir():
-                if path.is_file():
-                    mtime = datetime.fromtimestamp(path.stat().st_mtime)
-                    if now - mtime > max_age:
-                        path.unlink()
-                        logger.debug("Removed old temp file: %s", path)
+                if older_than_hours:
+                    # Only remove old files
+                    age = datetime.now().timestamp() - path.stat().st_mtime
+                    if age < older_than_hours * 3600:
+                        continue
+                path.unlink()
+            
+            # Try to remove the directory and recreate it
+            shutil.rmtree(self.temp_dir)
+            self.temp_dir.mkdir(parents=True)
+        except PermissionError as e:
+            raise PermissionError(f"Permission error cleaning up directory {self.temp_dir}: {str(e)}")
         except Exception as e:
             logger.warning("Error cleaning up temp files: %s", e)
     

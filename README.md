@@ -4,8 +4,11 @@ An intelligent problem solver for Advent of Code challenges, featuring a learnin
 
 ## Features
 
-- **Automated Problem Solving**: Uses AI to analyze and solve AoC problems
-- **Strategy Learning**: Learns from past solutions to improve future attempts
+- **Automated Problem Solving**: Uses LLMs to generate solutions for Advent of Code problems.
+- **Multi-Model Support**: Can use multiple LLM models and implement consensus mechanisms.
+- **Learning System**: Tracks successful and failed attempts to improve future solutions.
+- **Code Quality**: Includes tools for code formatting and validation.
+- **Temporary File Management**: Centralized temporary file handling in `tmp/` directory.
 - **Smart Caching**: Efficiently caches problem data and responses
 - **Progress Tracking**: Tracks your progress through AoC challenges
 
@@ -13,36 +16,24 @@ An intelligent problem solver for Advent of Code challenges, featuring a learnin
 
 ```
 problem-solver/
-├── config/             # Configuration files
-│   └── hardware.json   # Hardware capability configuration
-├── docs/              # Documentation
-│   ├── api.md         # API documentation
-│   ├── CONTRIBUTING.md # Contributing guidelines
-│   └── error-handling.md # Error handling documentation
-├── learning/          # Learning system for strategy optimization
-│   ├── README.md      # Learning system documentation
-│   ├── database.py    # Learning database operations
-│   ├── optimizer.py   # Strategy optimization logic
-│   ├── init_db.py     # Database initialization
-│   ├── schema.sql     # Database schema definition
-│   └── solver.db      # Learning database (not tracked in git)
-├── shared/            # Shared utilities and core functionality
-│   ├── config.py      # Configuration management
-│   ├── errors.py      # Error class definitions
-│   ├── database.py    # Database operations
-│   ├── execution.py   # Code execution handling
-│   ├── solver.py      # Core solver implementation
-│   ├── validator.py   # Solution validation
-│   ├── utils.py       # Utility functions
-│   └── llm/          # Language model integration
-│       ├── models.py  # Model definitions
-│       ├── ensemble.py # Model ensemble management
-│       ├── providers.py # Model provider interfaces
-│       └── hardware.py # Hardware capability management
-├── years/            # Problem data and solutions by year
-│   ├── example/      # Example problem structure (tracked)
-│   └── 20XX/        # Your solutions (not tracked)
-└── .problem-solver/  # User-specific data (not tracked)
+├── config/            # Configuration files
+├── docs/             # Documentation
+├── learning/         # Learning-related files
+├── shared/           # Shared modules
+│   ├── llm/         # LLM integration
+│   └── quality/     # Code quality tools
+├── solve.py         # Main solver script
+└── years/           # Problem data by year
+    └── YYYY/        # Year-specific data
+        └── dayXX/   # Day-specific data
+            ├── solutions/  # Successful solutions
+            ├── attempts/   # Failed attempts
+            ├── examples/   # Example inputs and outputs
+            ├── input.txt   # Problem input
+            ├── problem.txt   # Problem description in text format
+            ├── problem.html  # Problem description in HTML format
+            └── problem_meta.json  # Problem metadata
+└── tmp/               # Temporary files (not tracked)
     └── temp/        # Temporary files
 ```
 

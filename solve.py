@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import NoReturn
 
-from shared.solver import solve_problem
+from shared.solver import BaseSolver
 from shared.utils import setup_logging
 
 
@@ -53,9 +53,15 @@ async def async_main() -> int:
         logging.getLogger("shared").setLevel(logging.DEBUG)
     
     try:
-        solution = await solve_problem(args.year, args.day, args.part)
-        print(f"\nSolution: {solution}")
-        return 0
+        workspace_dir = Path(__file__).parent
+        solver = BaseSolver(workspace_dir, debug=args.debug)
+        solution = await solver.solve_problem(args.year, args.day, args.part, force=args.force)
+        if solution:
+            print(f"\nSolution: {solution}")
+            return 0
+        else:
+            logging.error("No solution found")
+            return 1
     except Exception as e:
         logging.error(f"Error solving problem: {e}")
         return 1
