@@ -18,7 +18,7 @@ from shared.errors import (
 )
 from shared.performance import PerformanceMonitor, PerformanceMetrics
 from shared.quality.code_formatter import format_code
-from shared.utils import TempFileManager
+from shared.tempfiles import TempFileManager
 
 logger = logging.getLogger(__name__)
 

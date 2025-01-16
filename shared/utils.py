@@ -271,7 +271,7 @@ async def _save_cache(year: int, day: int, html: str, meta: CacheMetadata) -> No
             "part2_answer": meta.part2_answer
         }, f, indent=2)
 
-async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, BeautifulSoup, Optional[str]]:
+async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, Any, Optional[str]]:
     """Fetch the problem text from Advent of Code website.
     
     Returns:
@@ -284,55 +284,36 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, B
         solving a part). Multiple solution attempts for the same part will
         use cached data.
     """
-    # Try to load from cache first
-    cached_html, meta = await _load_cache(year, day)
-    logger = logging.getLogger(__name__)
-    
-    if cached_html is not None and meta is not None:
-        soup = BeautifulSoup(cached_html, "html.parser")
+    cache_file = Path(f"years/{year}/day{day:02d}/problem.html")
+    if cache_file.exists():
+        logger.debug("Using cached problem text from %s", cache_file)
+        with open(cache_file, "r", encoding="utf-8") as f:
+            html = f.read()
+    else:
+        logger.info(f"Fetching fresh problem text for year {year} day {day} part {part}")
+        url = f"{config.AOC_BASE_URL}/{year}/day/{day}"
+        response = await make_request(url)
+        html = response
         
-        # For part 1: Always use cache if we have it
-        if part == 1:
-            logger.debug("Using cached data for part 1")
-            return cached_html, soup, meta.part1_answer
-            
-        # For part 2: Use cache if part 1 was solved
-        if part == 2 and meta.state >= ProblemState.PART1_SOLVED:
-            logger.debug("Using cached data for part 2")
-            return cached_html, soup, meta.part2_answer
-            
-        # If we're here for part 2 but haven't solved part 1,
-        # return empty since part 2 isn't available yet
-        if part == 2:
-            logger.debug("Part 2 not available yet - part 1 unsolved")
-            return "", soup, None
+        # Get current state and answers
+        soup = BeautifulSoup(html, "html.parser")
+        state, part1_answer, part2_answer = await _get_problem_state(soup)
+        
+        # Save to cache
+        meta = CacheMetadata(
+            state=state,
+            timestamp=datetime.now().isoformat(),
+            part1_answer=part1_answer,
+            part2_answer=part2_answer,
+        )
+        await _save_cache(year, day, html, meta)
     
-    # No cache or invalid state - need to fetch
-    # This should only happen:
-    # 1. First time accessing the problem
-    # 2. After successfully solving part 1 (to get part 2)
-    # 3. After successfully solving part 2 (to get final state)
-    logger.info(f"Fetching fresh problem text for year {year} day {day} part {part}")
-    url = f"{config.AOC_BASE_URL}/{year}/day/{day}"
-    response = await make_request(url)
-    soup = BeautifulSoup(response, "html.parser")
-    
-    # Get current state and answers
-    state, part1_answer, part2_answer = await _get_problem_state(soup)
-    
-    # Save to cache
-    meta = CacheMetadata(
-        state=state,
-        timestamp=datetime.now().isoformat(),
-        part1_answer=part1_answer,
-        part2_answer=part2_answer,
-    )
-    await _save_cache(year, day, response, meta)
+    soup = BeautifulSoup(html, "html.parser")
     
     # Return appropriate data based on part
     if part == 2:
-        return response, soup, part2_answer
-    return response, soup, part1_answer
+        return html, soup, part2_answer
+    return html, soup, part1_answer
 
 async def fetch_input_data(year: int, day: int, soup: Optional[BeautifulSoup] = None) -> str:
     """Fetch the input data from Advent of Code website."""
