@@ -29,6 +29,11 @@ problem-solver/
 ├── learning/         # Learning-related files
 ├── shared/           # Shared modules
 │   ├── llm/         # LLM integration
+│   │   ├── models.py     # Model definitions
+│   │   ├── ensemble.py   # Model ensemble management
+│   │   ├── providers.py  # Model provider interfaces
+│   │   ├── prompts.py    # Prompt generation and management
+│   │   └── hardware.py   # Hardware capability management
 │   └── quality/     # Code quality tools
 │   └── strategies/  # Solution strategies
 ├── solve.py         # Main solver script
