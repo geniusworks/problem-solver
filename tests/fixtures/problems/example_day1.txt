@@ -1,0 +1,9 @@
+--- Day 1: Sample Problem ---
+
+You are given a list of numbers. Your task is to find their sum.
+
+For example:
+1,2,3 => 6
+4,5,6 => 15
+
+What is the sum of all numbers in your input?
