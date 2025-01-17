@@ -21,10 +21,11 @@ problem-solver/
 ├── config/            # Configuration files
 ├── dev/              # Development documentation and tracking
 │   ├── api.md         # API documentation
-│   ├── checkpoint.md  # Development checkpoint
 │   ├── contributing.md # Contribution guidelines
-│   └── error-handling.md # Error handling documentation
-├── docs/             # Documentation
+│   ├── error-handling.md # Error handling documentation
+│   └── progress/      # Development progress tracking
+│       ├── checkpoint.md        # Current development state
+│       └── checkpoint-history.md # Historical development records
 ├── learning/         # Learning-related files
 ├── shared/           # Shared modules
 │   ├── llm/         # LLM integration
