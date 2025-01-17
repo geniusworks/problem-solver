@@ -37,17 +37,18 @@ problem-solver/
 │   └── quality/     # Code quality tools
 │   └── strategies/  # Solution strategies
 ├── solve.py         # Main solver script
-├── solutions/        # Centralized solutions directory
-│   └── YYYY/        # Year-specific solutions
-│       └── dayXX/   # Day-specific solutions
-│           └── partX.py  # Solution file
-└── years/           # Problem data by year
-    └── YYYY/        # Year-specific data
-        └── dayXX/   # Day-specific data
-            ├── examples/   # Example inputs and outputs
-            ├── input.txt   # Problem input
-            ├── problem.txt   # Problem description in text format
-            ├── problem.html  # Problem description in HTML format
+├── solutions/       # Successfully validated solutions
+│   ├── README.md    # Solution history and records
+│   └── *.py         # Solution files
+├── tmp/            # Temporary files for solution attempts
+└── years/          # Problem data by year
+    └── YYYY/       # Year-specific data
+        └── dayXX/  # Day-specific data
+            ├── attempts/  # JSON records of all solution attempts
+            ├── examples/  # Example inputs and outputs
+            ├── input.txt  # Problem input
+            ├── problem.txt  # Problem description
+            ├── problem.html  # Problem description in HTML
             └── problem_meta.json  # Problem metadata
 └── tmp/               # Temporary files (not tracked)
     └── temp/        # Temporary files
@@ -107,6 +108,28 @@ The system includes various solution strategies:
 1. Add strategy definition to `shared/strategies.py`
 2. Update strategy weights in learning database
 3. Test with various problem types
+
+### Testing
+The project uses pytest for testing. Install development dependencies:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Run tests:
+```bash
+pytest
+```
+
+Tests are organized into:
+- Unit tests (`tests/unit/`)
+- Integration tests (`tests/integration/`)
+- Test fixtures (`tests/fixtures/`)
+
+### Documentation
+- System architecture documentation in `dev/architecture.md`
+- Configuration guide in `.env.example`
+- YAML configuration files in `config/`
 
 ### Contributing
 
