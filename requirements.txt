@@ -11,6 +11,7 @@ pydantic==2.5.2   # For data validation
 rich==13.7.0      # For beautiful console output
 openai>=1.3.7
 httpx>=0.25.2
+pyyaml>=6.0.1
 
 # Code Quality Tools
 mypy>=1.7.1       # Type checking
