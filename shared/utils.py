@@ -620,10 +620,10 @@ def save_solution_file(year: int, day: int, part: int, model_name: str, solution
     return f"solutions/{solution_filename}"
 
 def record_solution(year: int, day: int, part: int, model_name: str, solution_code: str) -> None:
-    """Record a successful solution in SOLUTIONS.md.
+    """Record a successful solution in solutions/README.md.
     
     This function is called automatically by the solver when a solution is validated.
-    It should never be called manually. The SOLUTIONS.md file is maintained
+    It should never be called manually. The solutions/README.md file is maintained
     automatically as a historical record of validated solutions.
     
     Args:
@@ -637,10 +637,10 @@ def record_solution(year: int, day: int, part: int, model_name: str, solution_co
         This function will only record a solution once per year/day/part combination.
         It is safe to call multiple times as it will ignore duplicate entries.
     """
-    solutions_file = Path(__file__).parent.parent / "SOLUTIONS.md"
+    solutions_file = Path(__file__).parent.parent / "solutions" / "README.md"
     if not solutions_file.exists():
         logger = logging.getLogger(__name__)
-        logger.error("SOLUTIONS.md not found - solution recording skipped")
+        logger.error("solutions/README.md not found - solution recording skipped")
         return
         
     # Read existing solutions
