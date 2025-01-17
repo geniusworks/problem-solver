@@ -7,6 +7,8 @@ import re
 from pathlib import Path
 from shared.strategies import get_strategies_for_problem, create_strategy_prompt, ProblemCategory, Strategy, SOLUTION_STRATEGIES
 from shared.llm.base import LLMProvider, LLMResponse
+from shared.llm.prompts import generate_implementation_prompt
+from shared.problem_analysis import ProblemAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -26,19 +28,6 @@ class OllamaProvider(LLMProvider):
         self.model_info = {"name": model, "description": "Description of the model."}
         self.last_prompt = None
 
-    def _convert_to_strategy_objects(
-        self, 
-        strategy_names: List[str],
-        strategy_effectiveness: Optional[Dict[str, float]] = None
-    ) -> List[Strategy]:
-        """Convert strategy names to Strategy objects."""
-        strategies = []
-        for category in SOLUTION_STRATEGIES.values():
-            for strategy in category:
-                if strategy.name in strategy_names:
-                    strategies.append(strategy)
-        return strategies
-
     async def generate_solution(
         self, 
         problem,
@@ -48,6 +37,9 @@ class OllamaProvider(LLMProvider):
         """Generate a solution for the given problem."""
         if self.debug:
             logger.info("Analyzing problem...")
+        
+        # Create analyzer
+        analyzer = ProblemAnalyzer()
         
         # Phase 1: Problem Analysis
         analysis = await self.generate(f"""Consider:
@@ -60,7 +52,7 @@ class OllamaProvider(LLMProvider):
 {problem.description}
 
 Examples:
-{self._format_test_cases(problem.examples)}
+{format_test_cases(problem.examples)}
 
 Final Question: {problem.final_question}""")
         
@@ -74,32 +66,9 @@ Final Question: {problem.final_question}""")
         
         strategy_prompt = create_strategy_prompt(strategy_objects)
         
-        # Phase 3: Implementation Planning
-        implementation_prompt = f"""Consider:
-1. Input format and constraints
-2. Expected output format
-3. Key problem characteristics
-4. Potential edge cases
-
-{problem.description}
-
-Test Cases:
-{self._format_test_cases(problem.examples)}
-
-Final Question: {problem.final_question}
-
-Requirements:
-1. The solution MUST contain a function named 'solve' that takes an input_file_path parameter
-2. The solution should handle the input format exactly as shown in the example
-3. The solve function MUST return only the numeric answer with no additional text or formatting
-4. Return type should match the example output (integer or float)
-5. After reading and parsing the input data, print the first 5 parsed elements showing their types and values
-   Example debug output:
-   Parsed elements:
-   1: [type: int, value: 1], [type: str, value: "abc"], [type: int, value: 2]
-   2: [type: str, value: "pqr"], [type: int, value: 3], [type: str, value: "stu"]
-   This will help verify the parsing logic"""
-
+        # Phase 3: Implementation
+        implementation_prompt = generate_implementation_prompt(problem, analyzer)
+        
         self.last_prompt = implementation_prompt
         response = await self.generate(implementation_prompt)
         code = self._extract_code(response.content)
@@ -128,32 +97,6 @@ Requirements:
             logger.debug("Formatted code:\n%s", formatted_code)
         
         return formatted_code
-
-    def _format_test_cases(self, test_cases) -> str:
-        """Format test cases for the prompt."""
-        if not test_cases:
-            return "No example test cases provided."
-            
-        formatted = []
-        for i, test in enumerate(test_cases, 1):
-            case = [f"Example {i}:"]
-            
-            # Show raw input format
-            case.append("Raw Input Format:")
-            case.append(f"```\n{test.input_data}\n```")
-            
-            # Show description if available
-            if test.description:
-                case.append(f"Context: {test.description}")
-            
-            # Show expected output if available
-            if test.expected_output:
-                type_str = f" ({test.expected_type})" if test.expected_type else ""
-                case.append(f"Expected Output{type_str}: {test.expected_output}")
-                
-            formatted.append("\n".join(case))
-            
-        return "\n\n".join(formatted)
 
     def _fix_generated_code(self, code: str) -> str:
         """Fix common issues in generated code."""

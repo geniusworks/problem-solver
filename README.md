@@ -1,240 +1,117 @@
 # Problem Solver
 
-An intelligent problem solver for Advent of Code challenges, featuring a learning system that improves over time.
+An intelligent system for solving algorithmic programming problems using LLMs and strategic problem analysis.
 
 ## Features
 
-- **Automated Problem Solving**: Uses LLMs to generate solutions for Advent of Code problems.
-- **Multi-Model Support**: Can use multiple LLM models and implement consensus mechanisms.
-- **Learning System**: Tracks successful and failed attempts to improve future solutions.
-- **Code Quality**: Includes tools for code formatting and validation.
-- **Temporary File Management**: Centralized temporary file handling in `tmp/` directory.
-- **Smart Caching**: Efficiently caches problem data and responses
-- **Progress Tracking**: Tracks your progress through AoC challenges
-- **Input Analysis**: Advanced strategies for parsing and validating input formats
-- **Transformation Patterns**: Systematic approach to data transformation and validation
-- **Pattern Recognition**: Smart detection and handling of common input patterns:
-  - Multi-column data
-  - Grid/matrix structures
-  - Graph-like relationships
-  - Sorting requirements
-  - Paired data
-- **Solution Templates**: Comprehensive templates with:
-  - Problem analysis guidance
-  - Input parsing strategies
-  - Data structure selection
-  - Performance considerations
+### Core Capabilities
+- Automated problem parsing and analysis
+- Strategic solution generation
+- Input format validation and handling
+- Performance optimization guidance
 
-## Project Structure
+### Enhanced LLM Integration
+- Dynamic prompt generation based on problem type
+- Strategy-specific solution guidance
+- Modular prompt architecture
+- Adaptive parsing templates
 
-```
-problem-solver/
-├── config/            # Configuration files
-├── dev/              # Development documentation and tracking
-│   ├── api.md         # API documentation
-│   ├── contributing.md # Contribution guidelines
-│   ├── error-handling.md # Error handling documentation
-│   └── progress/      # Development progress tracking
-│       ├── checkpoint.md        # Current development state
-│       └── checkpoint-history.md # Historical development records
-├── learning/         # Learning-related files
-├── shared/          # Shared modules
-│   ├── llm/         # LLM integration
-│   │   ├── models.py     # Model definitions
-│   │   ├── ensemble.py   # Model ensemble management
-│   │   ├── providers.py  # Model provider interfaces
-│   │   ├── prompts.py    # Solution templates and prompts
-│   │   └── hardware.py   # Hardware capability management
-│   ├── quality/     # Code quality tools
-│   └── strategies/  # Solution strategies
-├── solve.py         # Main solver script
-├── solutions/       # Successfully validated solutions
-│   ├── README.md    # Solution history and records
-│   └── *.py         # Solution files
-├── tmp/            # Temporary files for solution attempts
-└── years/          # Problem data by year
-    └── YYYY/       # Year-specific data
-        └── dayXX/  # Day-specific data
-            ├── attempts/  # JSON records of all solution attempts
-            ├── examples/  # Example inputs and outputs
-            ├── input.txt  # Problem input
-            ├── problem.txt  # Problem description
-            ├── problem.html  # Problem description in HTML
-            └── problem_meta.json  # Problem metadata
-└── tmp/               # Temporary files (not tracked)
-    └── temp/        # Temporary files
+### Problem Analysis
+- Automatic strategy identification
+- Pattern recognition
+- Input format analysis
+- Solution validation
 
-## Project Status
+### Solution Generation
+- Strategy-based implementation
+- Input parsing optimization
+- Performance consideration
+- Debug output generation
 
-For a log of successful solutions and project progress, see [SOLUTIONS.md](SOLUTIONS.md).
+## Components
+
+### Problem Analysis
+- `parser.py`: Problem parsing and structure analysis
+- `problem_analysis.py`: Deep problem understanding and categorization
+- `strategies.py`: Solution strategy identification and application
+
+### LLM Integration
+- `llm/base.py`: Base LLM provider interface
+- `llm/local.py`: Local LLM implementation (Ollama)
+- `llm/prompts.py`: Dynamic prompt generation and management
+
+### Solution Management
+- `solutions/`: Generated solution implementations
+- `quality/`: Code quality and validation tools
+- `tempfiles.py`: Temporary file management
 
 ## Getting Started
 
-1. Clone the repository
-2. Copy `.env.example` to `.env` and fill in your settings
-3. Install dependencies: `pip install -r requirements.txt`
-4. Initialize the learning database: `python learning/init_db.py`
-5. Run the solver: `python solve.py --year YEAR --day DAY --part PART`
-
-## Learning System
-
-The solver includes a learning system that:
-1. Tracks which strategies work best for different problems
-2. Analyzes input formats and transformation patterns
-3. Improves parsing accuracy through example validation
-4. Maintains a knowledge base of common patterns
-
-## Solution Strategies
-
-The system includes various solution strategies:
-
-### Input Processing
-- **Input Structure Analysis**: Systematic approach to understanding input formats
-- **Robust Input Parsing**: Handling edge cases and variations
-- **Input-Output Correlation**: Mapping input structure to expected output
-- **Data Transformation Patterns**: Common patterns for data restructuring
-
-### Algorithm Categories
-- Grid Traversal
-- Pathfinding
-- Simulation
-- Pattern Matching
-- State Machine
-- Optimization
-- Math
-- Graph
-- Dynamic Programming
-
-## Configuration
-
-- `.env`: Environment variables (API keys, session cookies)
-- `shared/config.py`: General configuration settings
-- `learning/schema.sql`: Database schema definition
-
-## Development
-
-### Adding New Strategies
-
-1. Add strategy definition to `shared/strategies.py`
-2. Update strategy weights in learning database
-3. Test with various problem types
-
-### Testing
-The project uses pytest for testing. Install development dependencies:
-
-```bash
-pip install -r requirements-dev.txt
-```
-
-Run tests:
-```bash
-pytest
-```
-
-Tests are organized into:
-- Unit tests (`tests/unit/`)
-- Integration tests (`tests/integration/`)
-- Test fixtures (`tests/fixtures/`)
-
-### Documentation
-- System architecture documentation in `dev/architecture.md`
-- Configuration guide in `.env.example`
-- YAML configuration files in `config/`
-
-### Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request
-
-See [dev/contributing.md](dev/contributing.md) for detailed guidelines.
-
-## Recent Updates
-
-### 2025-01-16
-- Enhanced solution tracking with direct file links
-- Added centralized solutions directory
-- Improved solution file organization and accessibility
-- Added automatic solution tracking in SOLUTIONS.md
-- Enhanced GitHub username detection and repository state handling
-- Added parsed data structure display for debugging
-- Enhanced model debugging with parsed data structure display
-- Improved visibility into input data interpretation
-- Simplified debugging approach
-
-## Notes
-
-- Be a responsible AoC participant - minimize requests and cache data
-- Personal progress data is not tracked in git
-- The learning database is local to your machine
-
-## Submission Policy
-
-This tool strictly adheres to Advent of Code's principles:
-
-- Solutions are only submitted after top 100 daily leaderboard slots are filled
-- Leaderboard status is checked at: adventofcode.com/{year}/leaderboard/day/{day}
-- Tool polls leaderboard status every minute until completion
-- Full submission history is tracked and logged
-
-## Setup
-
-1. Ensure you have Python 3.11 installed:
-
-   ```bash
-   # On macOS with Homebrew
-   brew install python@3.11
-
-   # Verify installation
-   python3.11 --version
-   ```
-
-   Note: Python 3.11 is required as some dependencies don't support newer versions yet.
-
-2. Create and activate a virtual environment:
-
-   ```bash
-   # Create venv with Python 3.11
-   python3.11 -m venv venv
-
-   # Activate it
-   source venv/bin/activate
-   ```
-
-3. Install dependencies:
-
+1. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-4. Initialize the learning system:
+2. Set up Ollama:
+   - Install Ollama from [ollama.ai](https://ollama.ai)
+   - Pull required models:
+     ```bash
+     ollama pull codellama:7b
+     ```
 
+3. Run the solver:
    ```bash
-   python learning/init_db.py
+   python main.py [problem_file]
    ```
 
-## Usage
+## Development
 
-Basic usage:
-
-```bash
-python solve.py --year 2024 --day 1 --part 1
+### Project Structure
+```
+problem-solver/
+├── shared/           # Core shared components
+│   ├── llm/         # LLM integration
+│   ├── parser/      # Problem parsing
+│   └── quality/     # Code quality tools
+├── solutions/       # Generated solutions
+├── tests/          # Test suite
+└── years/          # Problem files by year
 ```
 
-Options:
-- `--force`: Force regenerate solution even if one exists
-- `--debug`: Enable debug logging
-- `--no-submit`: Generate solution but don't submit
+### Key Files
+- `main.py`: Main entry point
+- `shared/llm/prompts.py`: Dynamic prompt generation
+- `shared/strategies.py`: Solution strategies
+- `shared/parser.py`: Problem parsing
 
-## Error Handling
+## Features in Development
 
-The system uses a structured error handling system:
-- ValidationError: Input/session validation issues
-- ProviderError: Model provider issues
-- ConfigurationError: Setup/config problems
+### Meta-Learning
+- Learning from past solutions
+- Pattern recognition across problems
+- Common pitfall detection
+- Success pattern library
 
-See [dev/error-handling.md](dev/error-handling.md) for details.
+### Enhanced Validation
+- Comprehensive test coverage
+- Performance validation
+- Input assumption verification
+- Solution correctness checks
 
-## API Documentation
+### Progressive Problem Solving
+- Solution progress tracking
+- Knowledge base building
+- Cross-problem pattern recognition
+- Strategy effectiveness analysis
 
-See [dev/api.md](dev/api.md) for detailed API documentation.
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
+- Code style
+- Pull requests
+- Testing requirements
+- Documentation
+
+## License
+
+This project is licensed under the MIT License - see [LICENSE](LICENSE) for details.
