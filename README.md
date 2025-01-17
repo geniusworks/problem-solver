@@ -19,6 +19,11 @@ An intelligent problem solver for Advent of Code challenges, featuring a learnin
 ```
 problem-solver/
 ├── config/            # Configuration files
+├── dev/              # Development documentation and tracking
+│   ├── api.md         # API documentation
+│   ├── checkpoint.md  # Development checkpoint
+│   ├── contributing.md # Contribution guidelines
+│   └── error-handling.md # Error handling documentation
 ├── docs/             # Documentation
 ├── learning/         # Learning-related files
 ├── shared/           # Shared modules
@@ -103,7 +108,7 @@ The system includes various solution strategies:
 2. Create a feature branch
 3. Submit a pull request
 
-See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
+See [dev/contributing.md](dev/contributing.md) for detailed guidelines.
 
 ## Recent Updates
 
@@ -189,8 +194,8 @@ The system uses a structured error handling system:
 - ProviderError: Model provider issues
 - ConfigurationError: Setup/config problems
 
-See [docs/error-handling.md](docs/error-handling.md) for details.
+See [dev/error-handling.md](dev/error-handling.md) for details.
 
 ## API Documentation
 
-See [docs/api.md](docs/api.md) for detailed API documentation.
+See [dev/api.md](dev/api.md) for detailed API documentation.
