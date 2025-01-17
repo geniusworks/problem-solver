@@ -171,7 +171,7 @@ None at present, new system needs testing with real problems.
 2. When code changes are made during a session:
    - Update the date in "Current Development Status" to today's date
    - Update README.md with significant changes
-   - Add new entries to checkpoint-history.md
+   - Add new entries to dev/progress/checkpoint-history.md
    - Ensure all dates are consistent across files
    - Commit all changes together
 
