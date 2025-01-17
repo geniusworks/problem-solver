@@ -57,21 +57,38 @@ class TempFileManager:
             older_than_hours: Only remove files older than this many hours
         """
         try:
+            # First clean up regular files
             for path in self.temp_dir.iterdir():
+                if path.name == "__pycache__":
+                    continue  # Skip __pycache__ directory for now
                 if older_than_hours:
                     # Only remove old files
                     age = datetime.now().timestamp() - path.stat().st_mtime
                     if age < older_than_hours * 3600:
                         continue
-                path.unlink()
+                try:
+                    if path.is_file():
+                        path.unlink()
+                except (PermissionError, OSError) as e:
+                    logger.warning(f"Could not remove file {path}: {e}")
             
-            # Try to remove the directory and recreate it
-            shutil.rmtree(self.temp_dir)
-            self.temp_dir.mkdir(parents=True)
-        except PermissionError as e:
-            raise PermissionError(f"Permission error cleaning up directory {self.temp_dir}: {str(e)}")
+            # Try to clean up __pycache__ directory if it exists
+            pycache_dir = self.temp_dir / "__pycache__"
+            if pycache_dir.exists():
+                try:
+                    # Try to remove individual files first
+                    for cache_file in pycache_dir.iterdir():
+                        try:
+                            cache_file.unlink()
+                        except (PermissionError, OSError) as e:
+                            logger.warning(f"Could not remove cache file {cache_file}: {e}")
+                    # Try to remove the empty directory
+                    pycache_dir.rmdir()
+                except (PermissionError, OSError) as e:
+                    logger.warning(f"Could not fully clean __pycache__ directory: {e}")
+                    
         except Exception as e:
-            logger.warning("Error cleaning up temp files: %s", e)
+            logger.warning("Error during cleanup: %s", e)
     
     def clear_all(self) -> None:
         """Remove all temporary files."""

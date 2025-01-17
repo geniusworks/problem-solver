@@ -48,6 +48,7 @@ DEFAULT_MAX_TOKENS = int(MODELS_CONFIG.get("defaults", {}).get("max_tokens", 200
 DEFAULT_TIMEOUT = int(MODELS_CONFIG.get("defaults", {}).get("timeout_seconds", 60))
 
 # Environment-based configuration (overrides)
+SUBMIT_SOLUTIONS = os.getenv("SUBMIT_SOLUTIONS", "").lower() == "true" if os.getenv("SUBMIT_SOLUTIONS") else RESOURCES_CONFIG.get("submission", {}).get("enabled", False)
 DEFAULT_EXECUTION_TIMEOUT = int(os.getenv("EXECUTION_TIMEOUT", 
     RESOURCES_CONFIG.get("execution", {}).get("timeout_seconds", 60)))
 DEFAULT_PROVIDER_TIMEOUT = int(os.getenv("PROVIDER_TIMEOUT", 

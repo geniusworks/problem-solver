@@ -16,3 +16,6 @@ cache:
   solution_cache:
     enabled: true
     max_attempts: 100
+
+submission:
+  enabled: false  # Default submission behavior, can be overridden by SUBMIT_SOLUTIONS env var

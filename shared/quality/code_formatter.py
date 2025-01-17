@@ -53,6 +53,46 @@ def format_code(source_code: str) -> Tuple[str, bool]:
         # Fix common issues
         code = code.replace("\\n", "\n")  # Fix escaped newlines
         code = code.replace('\\"', '"')  # Fix escaped quotes
+        
+        # Remove debug prints
+        code_lines = code.split('\n')
+        filtered_lines = []
+        in_solve_function = False
+        debug_print = False
+        
+        for line in code_lines:
+            # Track if we're in the solve function
+            if line.startswith('def solve('):
+                in_solve_function = True
+            elif in_solve_function and line and not line[0].isspace():
+                in_solve_function = False
+                
+            # Skip debug prints inside solve function
+            if in_solve_function and 'print(' in line and 'return' not in line:
+                debug_print = True
+                continue
+                
+            # If this was a multi-line debug print block, skip until we're out
+            if debug_print:
+                if line.strip() and not line.strip().startswith(('print', 'for', 'if')):
+                    debug_print = False
+                else:
+                    continue
+                    
+            filtered_lines.append(line)
+            
+        code = '\n'.join(filtered_lines)
+        
+        # Fix f-strings with assignment expressions
+        def fix_fstring_assignments(match):
+            """Fix f-string that contains assignment expressions."""
+            content = match.group(1)
+            # Replace value=var with str(var)
+            content = re.sub(r'value=(\w+)', r'str(\1)', content)
+            return f"f'{content}'"
+            
+        code = re.sub(r'f"([^"]*)"', fix_fstring_assignments, code)
+        code = re.sub(r"f'([^']*)'", fix_fstring_assignments, code)
 
         # Try to fix basic syntax with autopep8
         try:
@@ -60,6 +100,13 @@ def format_code(source_code: str) -> Tuple[str, bool]:
         except Exception as e:
             logger.warning("autopep8 failed: %s", str(e))
             fixed_code = code
+
+        # Validate syntax before black formatting
+        try:
+            compile(fixed_code, '<string>', 'exec')
+        except SyntaxError as e:
+            logger.warning("Syntax error in code: %s", str(e))
+            return code, False
 
         try:
             # Then try to format with black
