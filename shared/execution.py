@@ -19,6 +19,8 @@ from shared.errors import (
 from shared.performance import PerformanceMonitor, PerformanceMetrics
 from shared.quality.code_formatter import format_code
 from shared.tempfiles import TempFileManager
+from shared.config import RESOURCES_CONFIG, DEFAULT_EXECUTION_TIMEOUT
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +114,7 @@ class SolutionExecutor:
             # Run test cases
             for test_case in test_cases:
                 # Create test input file in the same directory as the real input
-                year, day = re.match(r"(\d+)_day(\d+)", problem_id).groups()
+                year, day, part = re.match(r"(\d+)_day(\d+)_part(\d)", problem_id).groups()
                 input_dir = self.workspace_dir / "years" / year / f"day{int(day):02d}"
                 input_file = input_dir / "input.txt"
 
@@ -156,52 +158,55 @@ class SolutionExecutor:
             raise ExecutionError(str(e)) from e
 
     async def execute_solution(
-        self, module_path: Path, input_file_path: str
+        self, module_path: Path, input_path: str
     ) -> ExecutionResult:
-        """Execute a solution with the given input.
-
+        """Execute a solution module with input data.
+        
         Args:
-            module_path: Path to the solution module
-            input_file_path: Path to the input file
-
+            module_path: Path to solution module
+            input_path: Path to input data file
+            
         Returns:
             ExecutionResult containing output and performance metrics
         """
         try:
-            # Import the solution module
-            spec = importlib.util.spec_from_file_location("solution", module_path)
-            if not spec or not spec.loader:
-                raise CompilationError("Failed to create module specification")
-
-            module = importlib.util.module_from_spec(spec)
-            sys.modules["solution"] = module
-            spec.loader.exec_module(module)
-
-            # Execute the solution with performance monitoring
-            with self.performance_monitor.monitor():
-                result = str(module.solve(input_file_path))
-
-            # Get performance metrics
-            metrics = self.performance_monitor.get_metrics()
-
-            return ExecutionResult(output=result, performance=metrics, error=None)
-
-        except subprocess.TimeoutExpired as e:
-            raise TimeoutError("Solution execution timed out") from e
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(
-                f"Solution process failed with exit code {e.returncode}: {str(e)}"
-            ) from e
-        except MemoryError as e:
-            raise ResourceError("Solution exceeded memory limits") from e
-        except IOError as e:
-            raise ExecutionError(f"IO error during execution: {str(e)}") from e
+            # Get resource limits from config
+            timeout = RESOURCES_CONFIG.get("execution", {}).get("timeout_seconds", DEFAULT_EXECUTION_TIMEOUT)
+            max_memory = RESOURCES_CONFIG.get("execution", {}).get("max_memory_mb", 512)
+            max_processes = RESOURCES_CONFIG.get("execution", {}).get("max_processes", 1)
+            
+            # Create subprocess with resource limits
+            process = await asyncio.create_subprocess_exec(
+                sys.executable,
+                str(module_path),
+                input_path,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                limit=max_memory * 1024 * 1024,  # Convert MB to bytes
+            )
+            
+            try:
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(), timeout=timeout
+                )
+                
+                if process.returncode != 0:
+                    error_msg = stderr.decode() if stderr else "Unknown error"
+                    return ExecutionResult("", error=f"Process failed: {error_msg}")
+                    
+                return ExecutionResult(stdout.decode())
+                
+            except asyncio.TimeoutError:
+                process.terminate()
+                return ExecutionResult(
+                    "", error=f"Solution timed out after {timeout} seconds"
+                )
+                
         except Exception as e:
-            logger.error("Unexpected error during execution: %s", str(e))
-            raise ExecutionError(str(e)) from e
+            return ExecutionResult("", error=str(e))
 
     async def run_against_full_input(
-        self, problem_id: str, year: int, day: int, source_code: str
+        self, problem_id: str, year: int, day: int, part: int, source_code: str
     ) -> ExecutionResult:
         """Run a solution against the full input data.
 
@@ -209,6 +214,7 @@ class SolutionExecutor:
             problem_id: Unique identifier for the problem
             year: Problem year
             day: Problem day
+            part: Problem part
             source_code: Solution source code
 
         Returns:
@@ -237,83 +243,86 @@ class SolutionExecutor:
         solution_code: str,
         year: int,
         day: int,
+        part: int,
         test_cases: Optional[List[TestCase]] = None,
         model_name: str = "",
         debug: bool = False
-    ) -> Tuple[bool, bool, List[ExecutionResult], ExecutionResult, Optional[str]]:
-        """Test a solution against example test cases and full input.
+    ) -> Tuple[List[ExecutionResult], Optional[ExecutionResult], Optional[str]]:
+        """Test a solution against example cases and full input.
 
         Args:
             solution_code: The solution code to test
             year: Problem year
             day: Problem day
+            part: Problem part
             test_cases: Optional list of test cases. If None, uses default test cases.
             model_name: Name of the model that generated this solution
             debug: Whether to enable debug output
 
         Returns:
             Tuple containing:
-            - bool: Whether all example test cases passed
-            - bool: Whether full input test passed
-            - List[ExecutionResult]: Results from example test cases
-            - ExecutionResult: Result from full input test
+            - List[ExecutionResult]: Results from example tests
+            - Optional[ExecutionResult]: Result from full input test (None if examples failed)
             - Optional[str]: Full input answer if successful, None otherwise
         """
-        problem_id = f"{year}_day{day}"
-        example_results = []
-        full_result = None
-        full_answer = None
-
         try:
-            # First run against example test cases
+            problem_id = f"{year}_day{day:02d}_part{part}"
+            example_results = []
+            full_result = None
+            full_answer = None
+
+            # Validate the solution code
             is_valid, error = await self.prepare_solution(
                 problem_id, solution_code, test_cases or [], model_name=model_name
             )
             if not is_valid:
-                logger.error("Solution preparation failed: %s", error)
-                return False, False, [], ExecutionResult("", None), None
+                return [], None, None
 
-            # Run example test cases
-            for test_case in test_cases or []:
-                result = await self.execute_solution(
-                    self.temp_manager.create_temp_file(f"{problem_id}.py"),
-                    self._create_test_input(test_case.input_data)
-                )
-                example_results.append(result)
-                if (
-                    result.error
-                    or result.output.strip() != test_case.expected_output.strip()
-                ):
-                    return (
-                        False,
-                        False,
-                        example_results,
-                        ExecutionResult("", None),
-                        None,
+            # Run example tests
+            for i, test_case in enumerate(test_cases or [], 1):
+                try:
+                    result = await self._run_test_case(
+                        problem_id, solution_code, test_case, year, day, i
+                    )
+                    example_results.append(result)
+                except Exception as e:
+                    example_results.append(
+                        ExecutionResult(output="", error=f"Test case {i} error: {str(e)}")
                     )
 
-            # Run full input test
-            input_file = (
-                self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "input.txt"
-            )
-            if not input_file.exists():
-                logger.error("Full input file not found: %s", input_file)
-                return False, False, example_results, ExecutionResult("", None), None
+            # Run against full input if examples pass
+            if all(result.error is None for result in example_results):
+                try:
+                    full_result = await self.run_against_full_input(
+                        problem_id, year, day, part, solution_code
+                    )
+                    if full_result.error is None:
+                        full_answer = full_result.output.strip()
+                except Exception as e:
+                    full_result = ExecutionResult(
+                        output="", error=f"Error running against full input: {str(e)}"
+                    )
 
-            full_result = await self.execute_solution(
-                self.temp_manager.create_temp_file(f"{problem_id}.py"), str(input_file)
-            )
-
-            if full_result.error:
-                return True, False, example_results, full_result, None
-
-            full_answer = full_result.output.strip()
-
-            return True, True, example_results, full_result, full_answer
+            return example_results, full_result, full_answer
 
         except Exception as e:
             logger.error("Unexpected error testing solution: %s", str(e))
-            return False, False, example_results, full_result, None
+            return [], None, None
+
+    async def _run_test_case(
+        self, problem_id: str, solution_code: str, test_case: TestCase, year: int, day: int, test_case_index: int
+    ) -> ExecutionResult:
+        # Create solution module
+        module_path = self.temp_manager.create_temp_file(f"{problem_id}.py")
+        module_path.write_text(solution_code)
+
+        # Create test input file
+        input_file = self._create_test_input(test_case.input_data)
+
+        # Execute the solution
+        result = await self.execute_solution(module_path, str(input_file))
+
+        return result
 
     def _create_test_input(self, input_data: str) -> str:
         # Create a temporary file for input data

@@ -9,14 +9,11 @@ import aiohttp
 from bs4 import BeautifulSoup
 
 from .utils import get_session_cookie
-from shared.errors import ValidationError, SessionError
+from shared.errors import ValidationError, SessionError, SubmissionError
+from shared.config import RESOURCES_CONFIG, SUBMIT_SOLUTIONS
 from .submission import SubmissionManager, SubmissionResult
 
 logger = logging.getLogger(__name__)
-
-
-class SubmissionError(ValidationError):
-    """Solution submission error."""
 
 
 class SolutionValidator:
@@ -164,12 +161,12 @@ class SolutionValidator:
                     error_message=f"Does not match previously successful answer: {previous_answer}"
                 )
 
-        # Check if submission is enabled
-        if not os.getenv("SUBMIT_SOLUTIONS", "false").lower() == "true":
+        # Check if solution submission is enabled
+        if not SUBMIT_SOLUTIONS:
             return SubmissionResult(
                 was_correct=False,
                 cooldown_seconds=None,
-                error_message="Solution submission is disabled in .env"
+                error_message="Solution submission is disabled. Set SUBMIT_SOLUTIONS=true in .env to enable."
             )
 
         # Problem identifier
@@ -214,22 +211,26 @@ class SolutionValidator:
         except Exception as e:
             raise SubmissionError(f"Error submitting solution: {str(e)}")
 
-async def validate_solution(year: int, day: int, part: int, solution: Union[str, int]) -> bool:
-    """Validate and submit a solution for an Advent of Code problem.
+async def validate_solution(year: int, day: int, part: int, answer: str) -> None:
+    """Validate a solution before submission.
     
     Args:
-        year: The year of the problem
-        day: The day of the problem
-        part: The part of the problem (1 or 2)
-        solution: The solution to validate
-        
-    Returns:
-        bool: True if the solution is correct, False otherwise
+        year: Problem year
+        day: Problem day
+        part: Problem part (1 or 2)
+        answer: Solution to validate
         
     Raises:
-        ValidationError: If there is an issue validating the solution
-        SessionError: If there is an issue with the session
+        ValidationError: If the solution is invalid
+        SubmissionError: If solution submission is disabled
     """
+    # Check if solution submission is enabled
+    if not SUBMIT_SOLUTIONS:
+        raise SubmissionError(
+            "Solution submission is disabled. Set SUBMIT_SOLUTIONS=true in .env to enable."
+        )
+
     validator = SolutionValidator()
-    result = await validator.submit_and_validate(year, day, part, str(solution))
-    return result.was_correct
+    result = await validator.submit_and_validate(year, day, part, answer)
+    if not result.was_correct:
+        raise ValidationError(result.error_message)

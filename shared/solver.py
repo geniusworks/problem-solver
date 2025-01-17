@@ -122,12 +122,14 @@ Status: Testing
 ''')
 
                     # Test solution
-                    examples_passed, full_passed, example_results, full_result, full_answer = await self.solution_executor.test_solution(
+                    example_results, full_result, full_answer = await self.solution_executor.test_solution(
                         solution_code,
                         year,
                         day,
+                        part,
                         test_cases=parsed_problem.examples,
-                        model_name=model_name
+                        model_name=model_name,
+                        debug=self.debug,
                     )
 
                     generation_time = (datetime.now() - start_time).total_seconds()
@@ -136,10 +138,10 @@ Status: Testing
                     )
 
                     if self.debug:
-                        if full_passed:
+                        if full_result:
                             logging.info(f"Answer: {full_answer}")
 
-                    if full_passed:
+                    if full_result:
                         answers[model_name] = {
                             'answer': full_answer,
                             'code': solution_code,
@@ -151,15 +153,15 @@ Status: Testing
                         }
                         # Automatically record this validated solution
                         record_solution(year, day, part, model_name, solution_code)
-                        return SolveResult(
-                            answer=full_answer,
-                            code=solution_code,
-                            metrics={
+                        return {
+                            'answer': full_answer,
+                            'code': solution_code,
+                            'metrics': {
                                 'generation_time': generation_time,
                                 'execution_time': execution_time,
                                 'memory_usage': full_result.performance.max_memory if full_result and full_result.performance else 0.0
                             }
-                        )
+                        }
                     else:
                         failures.append(model_name)
                         # Update attempt file status to Failed
@@ -258,11 +260,11 @@ Status: Testing
                         self.models[best_model].get_model_info(),
                         {
                             "examples": {
-                                "passed": example_passed,
+                                "passed": example_results,
                                 "results": example_results
                             },
                             "full_input": {
-                                "passed": full_passed,
+                                "passed": full_result,
                                 "result": full_result
                             },
                             "execution_time": execution_time,

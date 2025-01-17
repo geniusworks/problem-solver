@@ -6,6 +6,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Set, Tuple
+from shared.config import RESOURCES_CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ class ModelSelector:
         """
         self.metrics_file = metrics_file
         self.metrics: Dict[str, ModelPerformanceMetrics] = {}
-        self.cloud_timeout = int(os.getenv("CLOUD_TIMEOUT_SECONDS", "300"))
+        self.cloud_timeout = RESOURCES_CONFIG.get("consensus", {}).get("timeout_seconds", 300)
         self.min_code_quality = float(os.getenv("MIN_CODE_QUALITY", "7.0"))
         self.consensus_timeout = consensus_timeout
         self._load_metrics()

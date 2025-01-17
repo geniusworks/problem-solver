@@ -2,6 +2,7 @@
 
 import json
 import logging
+import yaml
 from abc import ABC
 from dataclasses import dataclass
 from time import time
@@ -11,6 +12,9 @@ import aiohttp
 import anthropic
 import openai
 
+from shared.config import (
+    MODELS_CONFIG, DEFAULT_TEMPERATURE, DEFAULT_MAX_TOKENS, DEFAULT_TIMEOUT
+)
 from shared.errors import ProviderError
 
 logger = logging.getLogger(__name__)
@@ -49,7 +53,7 @@ class ModelProvider(ABC):
         *,
         system_prompt: Optional[str] = None,
         max_tokens: Optional[int] = None,
-        temperature: float = 0.7,
+        temperature: Optional[float] = None,
         top_p: float = 1.0,
     ) -> GenerationResult:
         """Generate text from the model."""
@@ -61,7 +65,7 @@ class ModelProvider(ABC):
         *,
         system_prompt: Optional[str] = None,
         max_tokens: Optional[int] = None,
-        temperature: float = 0.7,
+        temperature: Optional[float] = None,
         top_p: float = 1.0,
     ) -> AsyncGenerator[str, None]:
         """Stream text from the model."""
@@ -97,7 +101,7 @@ class AnthropicProvider(ModelProvider):
         *,
         system_prompt: Optional[str] = None,
         max_tokens: Optional[int] = None,
-        temperature: float = 0.7,
+        temperature: Optional[float] = None,
         top_p: float = 1.0,
     ) -> GenerationResult:
         """Generate text using Claude."""
@@ -128,7 +132,7 @@ class AnthropicProvider(ModelProvider):
         *,
         system_prompt: Optional[str] = None,
         max_tokens: Optional[int] = None,
-        temperature: float = 0.7,
+        temperature: Optional[float] = None,
         top_p: float = 1.0,
     ) -> AsyncGenerator[str, None]:
         """Stream text using Claude."""
@@ -171,7 +175,7 @@ class OpenAIProvider(ModelProvider):
         *,
         system_prompt: Optional[str] = None,
         max_tokens: Optional[int] = None,
-        temperature: float = 0.7,
+        temperature: Optional[float] = None,
         top_p: float = 1.0,
     ) -> GenerationResult:
         """Generate text using OpenAI."""
@@ -202,7 +206,7 @@ class OpenAIProvider(ModelProvider):
         *,
         system_prompt: Optional[str] = None,
         max_tokens: Optional[int] = None,
-        temperature: float = 0.7,
+        temperature: Optional[float] = None,
         top_p: float = 1.0,
     ) -> AsyncGenerator[str, None]:
         """Stream text using OpenAI."""
@@ -234,10 +238,27 @@ class OpenAIProvider(ModelProvider):
 class OllamaProvider(ModelProvider):
     """Provider for Ollama models."""
 
-    def __init__(self, model_name: str, base_url: str = "http://localhost:11434"):
-        """Initialize the provider."""
-        self.model_name = model_name
-        self.base_url = base_url
+    def __init__(self, model: str, debug: bool = False) -> None:
+        """Initialize the provider.
+        
+        Args:
+            model: Model name
+            debug: Enable debug output
+        """
+        super().__init__()
+        self.model = model
+        self.debug = debug
+        
+        # Load model config
+        model_key = model.split(":")[0]  # Extract base name (e.g., 'codellama' from 'codellama:7b')
+        self.config = self.get_model_config(model_key)
+        
+        # Set defaults from config
+        self.temperature = self.config.get("temperature", DEFAULT_TEMPERATURE)
+        self.max_tokens = self.config.get("max_tokens", DEFAULT_MAX_TOKENS)
+        self.context_length = self.config.get("context_length", 4096)
+        
+        self.base_url = "http://localhost:11434"
         self.session: Optional[aiohttp.ClientSession] = None
 
     async def _ensure_session(self) -> None:
@@ -253,13 +274,13 @@ class OllamaProvider(ModelProvider):
         *,
         system_prompt: Optional[str] = None,
         max_tokens: Optional[int] = None,
-        temperature: float = 0.7,
+        temperature: Optional[float] = None,
         top_p: float = 1.0,
     ) -> GenerationResult:
         """Generate text using Ollama."""
         await self._ensure_session()
         data = {
-            "model": self.model_name,
+            "model": self.model,
             "prompt": prompt,
             "system": system_prompt or "",
             "temperature": temperature,
@@ -274,10 +295,10 @@ class OllamaProvider(ModelProvider):
             async with self.session.post(
                 f"{self.base_url}/api/generate",
                 json=data,
-                timeout=aiohttp.ClientTimeout(total=60),
+                timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT),
             ) as response:
                 if response.status == 404:
-                    raise ServiceUnavailableError(f"Model {self.model_name} not found")
+                    raise ServiceUnavailableError(f"Model {self.model} not found")
 
                 response_text = ""
                 async for line in response.content:
@@ -293,9 +314,9 @@ class OllamaProvider(ModelProvider):
                     total_tokens=0,  # Ollama doesn't provide token count
                 )
         except aiohttp.ClientError as e:
-            if time() - start_time >= 60:
+            if time() - start_time >= DEFAULT_TIMEOUT:
                 raise ProviderTimeoutError(
-                    f"Request timed out for {self.model_name}"
+                    f"Request timed out for {self.model}"
                 ) from e
             raise ServiceUnavailableError(
                 f"Failed to connect to Ollama server: {str(e)}"
@@ -307,13 +328,13 @@ class OllamaProvider(ModelProvider):
         *,
         system_prompt: Optional[str] = None,
         max_tokens: Optional[int] = None,
-        temperature: float = 0.7,
+        temperature: Optional[float] = None,
         top_p: float = 1.0,
     ) -> AsyncGenerator[str, None]:
         """Stream text using Ollama."""
         await self._ensure_session()
         data = {
-            "model": self.model_name,
+            "model": self.model,
             "prompt": prompt,
             "system": system_prompt or "",
             "temperature": temperature,
@@ -328,10 +349,10 @@ class OllamaProvider(ModelProvider):
             async with self.session.post(
                 f"{self.base_url}/api/generate",
                 json=data,
-                timeout=aiohttp.ClientTimeout(total=60),
+                timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT),
             ) as response:
                 if response.status == 404:
-                    raise ServiceUnavailableError(f"Model {self.model_name} not found")
+                    raise ServiceUnavailableError(f"Model {self.model} not found")
                 async for line in response.content:
                     if line:
                         try:
@@ -341,9 +362,9 @@ class OllamaProvider(ModelProvider):
                         except json.JSONDecodeError:
                             continue
         except aiohttp.ClientError as e:
-            if time() - start_time >= 60:
+            if time() - start_time >= DEFAULT_TIMEOUT:
                 raise ProviderTimeoutError(
-                    f"Request timed out for {self.model_name}"
+                    f"Request timed out for {self.model}"
                 ) from e
             raise ServiceUnavailableError(
                 f"Failed to connect to Ollama server: {str(e)}"
@@ -354,6 +375,13 @@ class OllamaProvider(ModelProvider):
         if self.session:
             await self.session.close()
             self.session = None
+
+    @staticmethod
+    def get_model_config(model_key: str) -> Dict[str, str]:
+        """Get model config from config/models.yaml"""
+        with open("config/models.yaml", "r") as f:
+            config = yaml.safe_load(f)
+        return config.get(model_key, {})
 
 
 class ProviderFactory:

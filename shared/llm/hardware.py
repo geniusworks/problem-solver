@@ -52,7 +52,7 @@ class HardwareManager:
             return "m2_32gb" if is_m2 else "m1_32gb"
 
     def _load_capabilities(self) -> HardwareProfile:
-        """Load hardware capabilities from config or detect from system.
+        """Load hardware capabilities from config.
         
         Returns:
             HardwareProfile: Hardware capabilities configuration.
@@ -60,16 +60,6 @@ class HardwareManager:
         Raises:
             BaseError: If there is an error loading the configuration.
         """
-        # Try environment variables first
-        max_model_size = int(os.getenv("MAX_MODEL_SIZE", "0"))
-        concurrent_models = int(os.getenv("CONCURRENT_MODELS", "0"))
-        
-        if max_model_size and concurrent_models:
-            return HardwareProfile(
-                max_model_size=max_model_size,
-                concurrent_models=concurrent_models
-            )
-            
         # Try to detect hardware profile
         profile_name = self._detect_hardware_profile()
         if profile_name and "profiles" in HARDWARE_CONFIG:
@@ -89,8 +79,7 @@ class HardwareManager:
             )
             
         raise BaseError(
-            "No hardware configuration found. Please set environment variables, "
-            "provide a config file, or ensure system information is available."
+            "No hardware configuration found. Please provide a config file."
         )
 
     def register_model(self, model_name: str, model_size: int) -> None:

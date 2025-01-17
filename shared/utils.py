@@ -486,13 +486,15 @@ def ensure_problem_directory_structure(workspace_dir: Path, year: int, day: int)
     years/
       YYYY/
         dayXX/
-          solutions/     # Successful, verified solutions
-          attempts/      # Failed attempts and work in progress
+          attempts/      # JSON records of all solution attempts
           examples/      # Example inputs and outputs with metadata.json
           input.txt     # Full problem input
           problem.txt   # Problem description in text format
           problem.html  # Problem description in HTML format
           problem_meta.json  # Problem metadata
+    
+    Note: The actual Python files for attempts are stored in the tmp/ directory
+    at the root of the workspace.
     
     Args:
         workspace_dir: Root workspace directory
@@ -503,17 +505,15 @@ def ensure_problem_directory_structure(workspace_dir: Path, year: int, day: int)
         Dictionary containing paths to each directory
     """
     day_dir = workspace_dir / "years" / str(year) / f"day{day:02d}"
-    solutions_dir = day_dir / "solutions"
     attempts_dir = day_dir / "attempts"
     examples_dir = day_dir / "examples"
     
     # Create all directories
-    for directory in [solutions_dir, attempts_dir, examples_dir]:
+    for directory in [attempts_dir, examples_dir]:
         directory.mkdir(parents=True, exist_ok=True)
         
     return {
         "day": day_dir,
-        "solutions": solutions_dir,
         "attempts": attempts_dir,
         "examples": examples_dir
     }
