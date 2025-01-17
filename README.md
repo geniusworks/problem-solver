@@ -13,6 +13,17 @@ An intelligent problem solver for Advent of Code challenges, featuring a learnin
 - **Progress Tracking**: Tracks your progress through AoC challenges
 - **Input Analysis**: Advanced strategies for parsing and validating input formats
 - **Transformation Patterns**: Systematic approach to data transformation and validation
+- **Pattern Recognition**: Smart detection and handling of common input patterns:
+  - Multi-column data
+  - Grid/matrix structures
+  - Graph-like relationships
+  - Sorting requirements
+  - Paired data
+- **Solution Templates**: Comprehensive templates with:
+  - Problem analysis guidance
+  - Input parsing strategies
+  - Data structure selection
+  - Performance considerations
 
 ## Project Structure
 
@@ -27,14 +38,14 @@ problem-solver/
 │       ├── checkpoint.md        # Current development state
 │       └── checkpoint-history.md # Historical development records
 ├── learning/         # Learning-related files
-├── shared/           # Shared modules
+├── shared/          # Shared modules
 │   ├── llm/         # LLM integration
 │   │   ├── models.py     # Model definitions
 │   │   ├── ensemble.py   # Model ensemble management
 │   │   ├── providers.py  # Model provider interfaces
-│   │   ├── prompts.py    # Prompt generation and management
+│   │   ├── prompts.py    # Solution templates and prompts
 │   │   └── hardware.py   # Hardware capability management
-│   └── quality/     # Code quality tools
+│   ├── quality/     # Code quality tools
 │   └── strategies/  # Solution strategies
 ├── solve.py         # Main solver script
 ├── solutions/       # Successfully validated solutions
@@ -52,7 +63,6 @@ problem-solver/
             └── problem_meta.json  # Problem metadata
 └── tmp/               # Temporary files (not tracked)
     └── temp/        # Temporary files
-```
 
 ## Project Status
 

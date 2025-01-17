@@ -239,19 +239,123 @@ DEFAULT_TEMPLATES = {
     "basic_solution": PromptTemplate(
         name="basic_solution",
         template="""
-        Problem: {title}
-
-        {description}
-
-        {examples}
-
-        Constraints:
-        {constraints}
-
-        Question: {final_question}
-
+        Please analyze the problem carefully:
+        1. Input Format Analysis:
+           - Look for explicit format descriptions
+           - Study the example input structure
+           - Note relationships between values (pairs, groups, sequences)
+           - Identify if order/position matters
+        
+        2. Example Analysis:
+           - Trace how examples are processed step by step
+           - Note any sorting, grouping, or matching operations
+           - Identify what needs to be tracked or maintained
+           - Look for edge cases in examples
+        
+        3. Solution Requirements:
+           - Determine if order matters
+           - Note any sorting or matching requirements
+           - Identify what relationships must be preserved
+           - Consider performance implications
+        
         Please provide a solution in Python that correctly solves this problem.
+        Your solution MUST:
+        1. Take the input file path as a command-line argument
+        2. Define a solve(input_file_path: str) -> int function that:
+           - Reads input from the given file path
+           - Parses input according to the identified format
+           - Maintains necessary relationships
+           - Returns the answer as an integer
+        3. Include a __main__ block that:
+           - Gets the input file path from sys.argv[1]
+           - Calls solve() with the file path
+           - Prints the result
+        
         Focus on correctness first, then optimize if needed.
+        
+        Example solution structure:
+        def solve(input_file_path: str) -> int:
+            """Solve the problem.
+            
+            Args:
+                input_file_path: Path to input file
+                
+            Returns:
+                Solution to the problem
+                
+            Common input patterns to handle:
+            1. Multi-column data:
+               - Split lines on consistent delimiters (spaces, commas, etc.)
+               - Consider using zip() for parallel column processing
+               - Keep columns separate if they represent different things
+               
+            2. Grid/Matrix data:
+               - Use nested lists or dict with (x,y) keys
+               - Parse each cell with appropriate type
+               - Consider using complex numbers for 2D operations
+               
+            3. Graph-like data:
+               - Build adjacency lists or matrices
+               - Use dict/set for efficient lookups
+               - Consider using defaultdict for automatic initialization
+               
+            4. Data requiring sorting/ordering:
+               - Sort before processing if order matters
+               - Keep original order if needed
+               - Consider using sorted() with key function
+               
+            5. Paired/grouped data:
+               - Use zip() for parallel iteration
+               - Consider using namedtuple for clarity
+               - Keep relationships between data intact
+               
+            Analysis steps:
+            1. Identify the core pattern in the problem
+            2. Choose appropriate data structures
+            3. Determine what relationships to maintain
+            4. Plan how to process the data efficiently
+            """
+            # Step 1: Read input
+            with open(input_file_path, "r") as f:
+                lines = [line.strip() for line in f.readlines()]
+            
+            # Step 2: Parse input - adapt this section based on input format
+            # Example approaches:
+            
+            # For single-column numbers:
+            # data = [int(line) for line in lines if line]
+            
+            # For multi-column space-separated data:
+            # columns = [line.split() for line in lines if line]
+            # data = [[int(x) for x in row] for row in columns]
+            
+            # For grid/matrix data:
+            # grid = [[cell for cell in line] for line in lines if line]
+            # or: grid = {(x,y): val for y, row in enumerate(lines) 
+            #             for x, val in enumerate(row) if row}
+            
+            # For graph-like data:
+            # from collections import defaultdict
+            # graph = defaultdict(list)
+            # for line in lines:
+            #     src, dst = line.split()
+            #     graph[src].append(dst)
+            
+            # Step 3: Process data - implement solution logic here
+            # Consider:
+            # - Time complexity requirements
+            # - Memory constraints
+            # - Edge cases from problem description
+            
+            # Step 4: Return solution
+            return 0  # TODO: Replace with actual solution
+
+        if __name__ == "__main__":
+            import sys
+            if len(sys.argv) < 2:
+                print("Usage: python script.py <input_file>")
+                sys.exit(1)
+            print(solve(sys.argv[1]))
         """,
         description="Basic template for solution generation",
         variables=["title", "description", "examples", "constraints", "final_question"],
