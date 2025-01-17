@@ -1,0 +1,18 @@
+# Default resource limits - can be overridden by environment variables
+execution:
+  timeout_seconds: 60  # Default execution timeout
+  max_memory_mb: 512  # Default memory limit
+  max_processes: 1    # Default process limit
+
+requests:
+  timeout_seconds: 60  # Default API request timeout
+  max_retries: 3      # Default retry count
+  rate_limit_delay: 1 # Default delay between requests in seconds
+
+cache:
+  problem_cache:
+    enabled: true
+    max_age_days: 7
+  solution_cache:
+    enabled: true
+    max_attempts: 100

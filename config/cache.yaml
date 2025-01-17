@@ -1,0 +1,12 @@
+problem_cache:
+  enabled: true
+  max_age_days: 7
+
+solution_cache:
+  enabled: true
+  max_attempts: 100
+  
+model_metrics:
+  enabled: true
+  file: "model_metrics.json"
+  max_entries: 1000
