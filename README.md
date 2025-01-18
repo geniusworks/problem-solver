@@ -60,27 +60,29 @@ An intelligent system for solving algorithmic programming problems using LLMs an
 ## Components
 
 ### Problem Analysis
-- `parser.py`: Problem parsing and structure analysis
-- `problem_analysis.py`: Deep problem understanding and categorization
-- `strategies.py`: Solution strategy identification and application
+- `shared/parser/problem.py`: Problem parsing and structure analysis
+- `shared/parser/analysis.py`: Deep problem understanding
+- `shared/strategies/base.py`: Solution strategy framework
+- `shared/strategies/patterns.py`: Pattern recognition and application
 
 ### LLM Integration
-- `llm/base.py`: Base LLM provider interface
-- `llm/local.py`: Local LLM implementation (Ollama)
-- `llm/prompts.py`: Dynamic prompt generation and management
+- `shared/llm/base.py`: Base LLM provider interface
+- `shared/llm/local.py`: Local LLM implementation (Ollama)
+- `shared/llm/prompts.py`: Dynamic prompt generation
+- `shared/llm/models.py`: Model management and selection
 
 ### Solution Management
 - `solutions/`: Generated solution implementations
-- `quality/`: Code quality and validation tools
-- `tempfiles.py`: Temporary file management
-- `execution.py`: Solution execution and monitoring
-- `attempts/`: Attempt history and metrics
+- `shared/quality/`: Code quality and validation tools
+- `shared/execution.py`: Solution execution and monitoring
+- `shared/attempts/`: Attempt history and metrics
 
 ## Getting Started
 
 1. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   pip install -r requirements.txt        # Core dependencies
+   pip install -r requirements-dev.txt    # Development tools
    ```
 
 2. Set up Ollama:
@@ -92,7 +94,7 @@ An intelligent system for solving algorithmic programming problems using LLMs an
 
 3. Run the solver:
    ```bash
-   python main.py [problem_file]
+   python solve.py [problem_file]
    ```
 
 ## Solution File Structure
@@ -118,8 +120,9 @@ The project uses a structured development process:
 problem-solver/
 ├── config/          # Configuration files
 ├── dev/            # Development resources
-│   ├── progress/   # Progress tracking
-│   └── *.mmd      # Mermaid diagrams
+│   ├── docs/       # Core development documentation
+│   ├── diagrams/   # System flow diagrams
+│   └── progress/   # Progress tracking
 ├── learning/       # Learning and optimization
 ├── shared/         # Core shared components
 │   ├── llm/       # LLM integration
@@ -136,6 +139,7 @@ problem-solver/
 - `shared/strategies.py`: Solution strategies
 - `shared/parser.py`: Problem parsing
 - `dev/progress/checkpoint.md`: Development tracking
+- `dev/docs/architecture.md`: System architecture
 
 ## Features in Development
 

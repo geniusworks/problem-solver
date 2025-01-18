@@ -21,8 +21,8 @@ SESSION WRAP-UP steps:
 
    - [ ] Update "Documentation":
        - Update README.md for significant changes
-       - Update Mermaid diagrams if flows changed
-       - Update dev/architecture.md if architecture changed
+       - Update dev/diagrams/*.mmd for related changes
+       - Update dev/docs/architecture.md if architecture changed
        - Require user approval to apply objective/roadmap updates:
            - Prepare "Strategic Objectives" changes (README.md → checkpoint.md)
            - Prepare "Roadmap" changes (checkpoint.md → README.md)

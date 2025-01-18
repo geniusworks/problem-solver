@@ -8,25 +8,29 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
 
 ### Problem Solving Pipeline
 
-1. **Problem Fetching & Parsing** (`shared/utils.py`, `shared/parser.py`)
-   - Fetches problem text and input from Advent of Code
-   - Parses problem descriptions into structured format
-   - Extracts test cases and requirements
+1. **Problem Fetching & Parsing** (`shared/parser/`)
+   - Problem text and input parsing (`problem.py`)
+   - Problem analysis and understanding (`analysis.py`)
+   - Test case extraction and validation (`tests.py`)
 
 2. **Solution Generation** (`shared/llm/`)
-   - Model Management (`models.py`, `providers.py`)
-   - Hardware Capability Management (`hardware.py`)
-   - Model Selection & Ensemble (`selection.py`)
+   - Model Management (`models.py`)
+   - Provider Integration (`local.py`, `remote.py`)
+   - Dynamic Prompt Generation (`prompts.py`)
+   - Strategy Selection (`strategies/`)
 
 3. **Solution Execution** (`shared/execution.py`)
    - Safe code execution environment
    - Resource monitoring and limits
    - Performance metrics collection
+   - Attempt tracking and analysis
 
 4. **Learning System** (`learning/`)
-   - Strategy optimization based on past performance
-   - Performance metrics database
-   - Failure analysis and adaptation
+   - Strategy effectiveness tracking
+   - Solution pattern library
+   - Cross-problem pattern recognition
+   - Performance optimization system
+   - Model selection optimization
 
 ## Configuration Management
 
@@ -54,12 +58,10 @@ See `.env.example` for available environment variables.
 - Loads and merges configuration from all sources
 - Provides access to settings throughout the system
 
-#### Error Handling (`errors.py`)
-Base error hierarchy:
-- `BaseError`
-  - `ValidationError`
-  - `ExecutionError`
-  - `ProviderError`
+#### Error System (`errors.py`)
+- Structured error hierarchy
+- Provider-specific error handling
+- Validation error types
 
 #### Utilities (`utils.py`)
 Core functionality including:
