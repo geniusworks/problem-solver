@@ -161,3 +161,22 @@ class SubmissionManager:
             return False, wait_seconds
             
         return True, None
+
+    async def submit_solution(
+        self, year: int, day: int, part: int, answer: str
+    ) -> Tuple[bool, str]:
+        """Submit a solution to Advent of Code.
+
+        Args:
+            year: Problem year
+            day: Problem day
+            part: Problem part
+            answer: Solution answer
+
+        Returns:
+            Tuple of (success, message)
+        """
+        # TODO: Implement actual submission to AoC
+        # For now, just simulate submission
+        logging.info(f"Would submit answer '{answer}' for {year} day {day} part {part}")
+        return True, "Submission successful (simulated)"
