@@ -32,7 +32,7 @@ sequenceDiagram
     Note over Generator: For each strategy:<br/>1. Purpose<br/>2. Key Techniques<br/>3. Optimization Tips
 
     Generator->>Generator: get_implementation_requirements()
-    Note over Generator: Requirements:<br/>1. Function signature<br/>2. Input handling<br/>3. Return value<br/>4. Debug output<br/>5. Error handling
+    Note over Generator: Requirements:<br/>1. Input handling ('input.txt')<br/>2. Data type handling<br/>3. Return value format<br/>4. Error handling<br/>5. Required imports
 
     Generator->>Generator: Prioritize and combine sections
 
@@ -40,5 +40,5 @@ sequenceDiagram
         Generator-->>LLM: Final structured prompt
         LLM->>LLM: Generate solution
         LLM->>Attempts: Record attempt immediately
-        Note over Attempts: Attempt includes:<br/>1. Generated code<br/>2. Prompt used<br/>3. Model info<br/>4. Generation metrics<br/>5. Raw response<br/>6. Applied strategies
+        Note over Attempts: Attempt includes:<br/>1. Model code (portable)<br/>2. Runtime code (local paths)<br/>3. Prompt used<br/>4. Model info<br/>5. Generation metrics<br/>6. Raw response<br/>7. Applied strategies
     end
