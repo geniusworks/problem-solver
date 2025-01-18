@@ -1,0 +1,26 @@
+graph TD
+    subgraph Project Documentation
+        README[README.md]
+        Checkpoint[checkpoint.md]
+        History[checkpoint-history.md]
+        Mermaid[Mermaid Diagrams]
+    end
+
+    subgraph Authority Flow
+        README -->|Strategic Objectives| Checkpoint
+        Checkpoint -->|Roadmap & Progress| README
+        Checkpoint -->|Older Items| History
+        Checkpoint -->|Flow Changes| Mermaid
+    end
+
+    subgraph Update Process
+        UserApproval{User Approval}
+        Changes[Prepared Changes]
+        Changes -->|Strategic/Roadmap| UserApproval
+        UserApproval -->|Approved| README & Checkpoint
+    end
+
+    style README fill:#f9f,stroke:#333,stroke-width:2px
+    style Checkpoint fill:#bbf,stroke:#333,stroke-width:2px
+    style History fill:#ddd,stroke:#333,stroke-width:2px
+    style UserApproval fill:#ffd,stroke:#333,stroke-width:2px
