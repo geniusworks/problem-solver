@@ -26,7 +26,7 @@ SESSION WRAP-UP steps:
            - Prepare "Strategic Objectives" changes (README.md → checkpoint.md)
            - Prepare "Roadmap" changes (checkpoint.md → README.md)
 
-   - [ ] Commit logically grouped changes
+   - [ ] Commit logically grouped changes and push to repository
 
 Note: Execute the above steps only on explicit wrap-up request.
 
