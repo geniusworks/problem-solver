@@ -7,8 +7,11 @@ import re
 from pathlib import Path
 from shared.strategies import get_strategies_for_problem, create_strategy_prompt, ProblemCategory, Strategy, SOLUTION_STRATEGIES
 from shared.llm.base import LLMProvider, LLMResponse
-from shared.llm.prompts import generate_implementation_prompt
+from shared.llm.prompts import generate_implementation_prompt, format_test_cases
 from shared.problem_analysis import ProblemAnalyzer
+import json
+from datetime import datetime
+from shared.utils import ensure_problem_directory_structure
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +34,8 @@ class OllamaProvider(LLMProvider):
     async def generate_solution(
         self, 
         problem,
+        year: int,
+        day: int,
         strategies: Optional[List[str]] = None,
         strategy_effectiveness: Optional[Dict[str, float]] = None
     ) -> str:
@@ -70,15 +75,49 @@ Final Question: {problem.final_question}""")
         implementation_prompt = generate_implementation_prompt(problem, analyzer)
         
         self.last_prompt = implementation_prompt
-        response = await self.generate(implementation_prompt)
-        code = self._extract_code(response.content)
         
-        # Log the generated code
-        if self.debug:
-            logger.debug("Raw generated code:\n%s", code)
+        start_time = datetime.now()
+        try:
+            response = await self.generate(implementation_prompt)
+            generation_time = (datetime.now() - start_time).total_seconds()
             
-        if code is None:
-            code = """def solve(input_file_path):
+            # Extract the code from the response
+            code = self._extract_code(response.content)
+            
+            # Save attempt data
+            # Create directory structure
+            dirs = ensure_problem_directory_structure(Path.cwd(), year, day)
+            attempts_dir = dirs["attempts"]
+            
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            attempt_data = {
+                "code": code,
+                "prompt": implementation_prompt,
+                "model": self.get_model_info(),
+                "metadata": {
+                    "timestamp": timestamp,
+                    "generation_time": generation_time,
+                    "error": None,
+                    "year": year,
+                    "day": day,
+                    "part": problem.part
+                },
+                "strategy_analysis": {
+                    "applied_strategies": [s.name for s in strategy_objects],
+                },
+                "raw_response": response.content
+            }
+            
+            attempt_file = attempts_dir / f"attempt_{self.model}_{timestamp}.json"
+            with open(attempt_file, "w") as f:
+                json.dump(attempt_data, f, indent=2)
+            
+            # Log the generated code
+            if self.debug:
+                logger.debug("Raw generated code:\n%s", code)
+                
+            if code is None:
+                code = """def solve(input_file_path):
     \"\"\"Solve the problem.
     
     Args:
@@ -90,19 +129,50 @@ Final Question: {problem.final_question}""")
     with open(input_file_path) as f:
         data = [line.strip() for line in f]
     return len(data)  # Default implementation"""
+                
+            # Apply code formatting
+            formatted_code = self._fix_generated_code(code)
+            if self.debug:
+                logger.debug("Formatted code:\n%s", formatted_code)
             
-        # Apply code formatting
-        formatted_code = self._fix_generated_code(code)
-        if self.debug:
-            logger.debug("Formatted code:\n%s", formatted_code)
-        
-        return formatted_code
+            return formatted_code
+            
+        except Exception as e:
+            generation_time = (datetime.now() - start_time).total_seconds()
+            
+            # Record the failed attempt
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            attempt_data = {
+                "code": "",
+                "prompt": implementation_prompt,
+                "model": self.get_model_info(),
+                "metadata": {
+                    "timestamp": timestamp,
+                    "generation_time": generation_time,
+                    "error": str(e)
+                },
+                "strategy_analysis": {
+                    "applied_strategies": [s.name for s in strategy_objects],
+                },
+                "raw_response": None
+            }
+            
+            # Save the failed attempt
+            # Create directory structure
+            dirs = ensure_problem_directory_structure(Path.cwd(), year, day)
+            attempts_dir = dirs["attempts"]
+            
+            attempt_file = attempts_dir / f"attempt_{self.model}_{timestamp}.json"
+            with open(attempt_file, "w") as f:
+                json.dump(attempt_data, f, indent=2)
+            
+            raise
 
     def _fix_generated_code(self, code: str) -> str:
         """Fix common issues in generated code."""
         # Add missing main block if needed
-        if "__main__" not in code:
-            code += "\n\nif __name__ == '__main__':\n    print(solve('input.txt'))"
+        if not re.search(r'if\s+__name__\s*==\s*[\'"]__main__[\'"]\s*:', code):
+            code += '\n\nif __name__ == "__main__":\n    import sys\n    print(solve(sys.argv[1]))'
         return code
 
     def _extract_code(self, text: str) -> Optional[str]:
@@ -139,6 +209,28 @@ Final Question: {problem.final_question}""")
         logger.debug("No code found in response")
         return None
 
+    def _convert_to_strategy_objects(self, strategy_names: List[str], effectiveness: Optional[Dict[str, float]] = None) -> List[Strategy]:
+        """Convert strategy names to Strategy objects.
+        
+        Args:
+            strategy_names: List of strategy names to convert
+            effectiveness: Optional dictionary mapping strategy names to their effectiveness scores
+            
+        Returns:
+            List of Strategy objects
+        """
+        strategies = []
+        for name in strategy_names:
+            # Search through all categories for the strategy
+            for category_strategies in SOLUTION_STRATEGIES.values():
+                for strategy in category_strategies:
+                    if strategy.name == name:
+                        if effectiveness and name in effectiveness:
+                            strategy.effectiveness = effectiveness[name]
+                        strategies.append(strategy)
+                        break
+        return strategies
+
     async def generate(self, prompt: str) -> LLMResponse:
         """Generate using Ollama API."""
         try:
@@ -158,38 +250,35 @@ Final Question: {problem.final_question}""")
             stdout_text = stdout.decode() if stdout else ""
             stderr_text = stderr.decode() if stderr else ""
 
+            # Log raw response for debugging
+            logger.debug("Raw Ollama response:")
+            logger.debug(stdout_text)
+
             # Filter out Ollama spinner messages
             non_spinner_lines = [
                 line
                 for line in stderr_text.splitlines()
-                if line and not any(x in line for x in ["[?25", "[2K", "[1G"])
+                if not line.startswith("\r") and line.strip()
             ]
-            if non_spinner_lines:
-                logger.warning("Ollama stderr: %s", "\n".join(non_spinner_lines))
 
             if process.returncode != 0:
+                logger.warning("Ollama stderr: %s", "\n".join(non_spinner_lines))
                 logger.error("Ollama failed with return code %d", process.returncode)
-                return LLMResponse(
-                    content="",
-                    confidence=0.0,
-                    metadata={"model": self.model},
-                    error=f"Ollama failed with return code {process.returncode}",
-                )
+                raise Exception(f"Ollama failed: {stderr_text}")
 
-            logger.debug("Ollama response received successfully")
-            logger.debug("Response content:\n%s", stdout_text)
             return LLMResponse(
                 content=stdout_text,
-                confidence=1.0,
-                metadata={"model": self.model},
-                error=None,
+                confidence=1.0,  # Local models don't provide confidence scores
+                metadata={
+                    "model": self.model,
+                    "provider": "ollama",
+                    "timestamp": datetime.now().isoformat()
+                }
             )
 
         except Exception as e:
-            logger.error("Failed to generate using Ollama: %s", str(e))
-            return LLMResponse(
-                content="", confidence=0.0, metadata={"model": self.model}, error=str(e)
-            )
+            logger.error("Error running Ollama: %s", str(e))
+            raise
 
     async def validate_solution(
         self, solution: str, test_cases: List[Dict[str, str]]
@@ -197,6 +286,20 @@ Final Question: {problem.final_question}""")
         """Validate solution using Ollama."""
         # TODO: Implement validation logic
         return True
+
+    def get_model_info(self) -> Dict[str, Any]:
+        """Get information about the model."""
+        return {
+            "name": self.model,
+            "type": "local",
+            "provider": "ollama",
+            "description": "Local Ollama model",
+            "capabilities": {
+                "code_generation": True,
+                "code_explanation": True,
+                "strategy_analysis": True
+            }
+        }
 
     @property
     def cost_per_token(self) -> float:
@@ -214,22 +317,26 @@ class LMStudioProvider(LLMProvider):
         super().__init__(**kwargs)
         self.model_path = model_path
 
+    async def generate_solution(
+        self, 
+        problem,
+        year: int,
+        day: int,
+        strategies: Optional[List[str]] = None,
+        strategy_effectiveness: Optional[Dict[str, float]] = None
+    ) -> str:
+        """Generate a solution for the given problem."""
+        raise NotImplementedError("LMStudio provider is not fully implemented yet")
+
     async def generate(self, prompt: str) -> LLMResponse:
         """Generate using LM Studio."""
-        # TODO: Implement LM Studio generation
-        return LLMResponse(
-            content="",
-            confidence=0.0,
-            metadata={},
-            error="LM Studio not implemented yet",
-        )
+        raise NotImplementedError("LM Studio provider is not fully implemented yet")
 
     def validate_solution(
         self, solution: str, test_cases: List[Dict[str, str]]
     ) -> bool:
         """Validate solution using LM Studio."""
-        # TODO: Implement validation logic
-        return True
+        raise NotImplementedError("LM Studio provider is not fully implemented yet")
 
     @property
     def cost_per_token(self) -> float:

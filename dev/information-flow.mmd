@@ -1,0 +1,44 @@
+sequenceDiagram
+    participant AoC as Advent of Code Website
+    participant Cache as Local Cache
+    participant Parser as Problem Parser
+    participant Strategy as Strategy Analyzer
+    participant LLM as LLM Provider
+    participant Attempts as Attempts Directory
+    participant Executor as Solution Executor
+    participant Submit as Submission Manager
+
+    Note over Cache: Problem Directory Structure:<br/>years/YYYY/dayXX/<br/>- attempts/<br/>- examples/<br/>- input.txt<br/>- problem.txt<br/>- problem.html<br/>- problem_meta.json
+
+    alt Cache exists
+        Cache->>Parser: Load cached problem.html
+    else No cache
+        AoC->>Cache: Fetch problem text
+        Cache->>Cache: Save HTML & metadata
+        Cache->>Parser: Pass HTML
+    end
+
+    Parser->>Parser: parse_problem_text()
+    Parser->>Strategy: Analyze problem characteristics
+    Strategy->>Strategy: get_strategies_for_problem()
+    Strategy->>Strategy: create_strategy_prompt()
+
+    Strategy->>LLM: Generate implementation prompt with:
+    Note over LLM: Prompt includes:<br/>1. Problem description<br/>2. Examples<br/>3. Parsing guidance<br/>4. Strategy guidance<br/>5. Implementation requirements<br/>6. Final question
+
+    loop For each model
+        LLM->>LLM: Generate solution
+        LLM->>Attempts: Record attempt immediately
+        Note over Attempts: Attempt includes:<br/>1. Generated code<br/>2. Prompt used<br/>3. Model info<br/>4. Generation metrics<br/>5. Raw response
+    end
+
+    LLM-->>Executor: All generated solutions
+    
+    alt Consensus reached
+        Executor->>Executor: Run tests
+        alt Tests pass
+            Executor->>Submit: Submit solution
+            Submit->>AoC: Submit answer
+            AoC-->>Submit: Response
+        end
+    end

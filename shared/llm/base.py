@@ -23,6 +23,18 @@ class LLMProvider(ABC):
         self.name = self.__class__.__name__
 
     @abstractmethod
+    async def generate_solution(
+        self, 
+        problem,
+        year: int,
+        day: int,
+        strategies: Optional[List[str]] = None,
+        strategy_effectiveness: Optional[Dict[str, float]] = None
+    ) -> str:
+        """Generate a solution for the given problem."""
+        pass
+
+    @abstractmethod
     async def generate(self, prompt: str) -> LLMResponse:
         """Generate a response from the LLM."""
         pass

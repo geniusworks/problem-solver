@@ -1,0 +1,44 @@
+sequenceDiagram
+    participant Problem as Problem Text
+    participant Analyzer as Problem Analyzer
+    participant Categories as Category Matcher
+    participant Strategies as Strategy Registry
+    participant Generator as Prompt Generator
+    participant LLM as LLM Provider
+    participant Attempts as Attempts Directory
+
+    Note over Categories: ProblemCategory Enum:<br/>- GRID_TRAVERSAL<br/>- PATHFINDING<br/>- SIMULATION<br/>- PATTERN_MATCHING<br/>- STATE_MACHINE<br/>etc...
+
+    Problem->>Analyzer: Problem description
+    Analyzer->>Categories: Analyze text for keywords
+    
+    loop For each category
+        Categories->>Categories: Match against CATEGORY_KEYWORDS
+    end
+
+    Categories-->>Strategies: Matched categories
+    
+    loop For each category
+        Strategies->>Strategies: Lookup in SOLUTION_STRATEGIES
+        Note over Strategies: Strategy contains:<br/>- name<br/>- description<br/>- when_to_use<br/>- key_techniques<br/>- optimization_tips<br/>- example_patterns
+    end
+
+    Strategies-->>Generator: Relevant strategies
+
+    Generator->>Generator: get_parsing_guidance()
+    Note over Generator: Parsing Guidance:<br/>1. Structure Analysis<br/>2. Data Structure Selection<br/>3. Advanced Parsing (if needed)
+
+    Generator->>Generator: get_strategy_guidance()
+    Note over Generator: For each strategy:<br/>1. Purpose<br/>2. Key Techniques<br/>3. Optimization Tips
+
+    Generator->>Generator: get_implementation_requirements()
+    Note over Generator: Requirements:<br/>1. Function signature<br/>2. Input handling<br/>3. Return value<br/>4. Debug output<br/>5. Error handling
+
+    Generator->>Generator: Prioritize and combine sections
+
+    loop For each model
+        Generator-->>LLM: Final structured prompt
+        LLM->>LLM: Generate solution
+        LLM->>Attempts: Record attempt immediately
+        Note over Attempts: Attempt includes:<br/>1. Generated code<br/>2. Prompt used<br/>3. Model info<br/>4. Generation metrics<br/>5. Raw response<br/>6. Applied strategies
+    end

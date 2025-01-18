@@ -95,6 +95,13 @@
       - Added dynamic prompt sections based on problem analysis
       - Cleaned up unused template/JSON loading code
 
+    - Updated Attempt Recording Process
+      - Added year and day parameters to generate_solution method
+      - Fixed solution execution to properly handle input file paths
+      - Improved logging with better spacing and readability
+      - Enhanced error handling in solution execution
+      - Fixed consensus system to properly track solutions and metrics
+
     - Key Improvements
       - Better strategy-specific guidance in prompts
       - Enhanced parsing guidance based on problem type
@@ -240,6 +247,32 @@ None at present, new system needs testing with real problems.
 - Strategy selection time: < 100ms
 - Database query time: < 50ms
 - Learning update time: < 200ms
+
+### Documentation Maintenance Requirements
+
+The following files must be reviewed and potentially updated whenever significant changes are made to the codebase:
+
+1. **Core Documentation**
+   - `README.md`: Update when project features, setup, or usage changes
+   - `dev/progress/checkpoint.md`: Record all significant changes and progress
+   - `dev/progress/checkpoint-history.md`: Archive older checkpoints
+
+2. **System Architecture Documentation**
+   - `dev/information-flow.mmd`: Update when the information flow between components changes
+   - `dev/strategy-guidance.mmd`: Update when strategy handling or prompt generation flow changes
+
+3. **Update Triggers**
+   - Information flow changes (data paths, caching, storage)
+   - Strategy system modifications
+   - Prompt generation changes
+   - Model interaction changes
+   - Core architecture changes
+
+When making updates:
+1. Ensure diagrams accurately reflect current code behavior
+2. Keep documentation in sync across all files
+3. Archive outdated information appropriately
+4. Add new diagrams if new subsystems are introduced
 
 # Project Checkpoint
 

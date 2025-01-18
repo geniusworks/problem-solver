@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
 
-from shared.errors import ValidationError
+from shared.errors import ValidationError, ExecutionError
 from shared.execution import SolutionExecutor, TestCase
 from shared.llm.local import OllamaProvider
 from shared.parser import parse_problem_text
@@ -86,107 +86,66 @@ class BaseSolver:
             # Try each model and collect answers
             answers = {}
             failures = []
-            if self.debug:
-                logging.info("")
-                logging.info(f"Attempting solution with {len(self.models)} models")
+            logging.info("")
+            logging.info(f"Attempting solution with {len(self.models)} models")
+            logging.info("")
             for model_name, model in self.models.items():
-                if self.debug:
-                    logging.info("")
-                    logging.info(f"Trying model: {model_name}")
-                    logging.info("-" * 40)
                 try:
+                    # Log which model we're trying
+                    logging.info(f"Trying model: {model_name}")
+                    logging.info("")  # Add blank line after model name
+
                     # Record start time for performance tracking
                     start_time = datetime.now()
 
                     # Generate solution with strategic guidance
                     solution_code = await model.generate_solution(
                         parsed_problem,
+                        year=year,
+                        day=day,
                         strategies=strategies,
                         strategy_effectiveness=effectiveness
                     )
                     generation_time = (datetime.now() - start_time).total_seconds()
 
-                    # Save attempt to attempts directory
-                    attempt_file = dirs["attempts"] / f"part{part}_{model_name.replace(':', '_')}.py"
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    with open(attempt_file, "w") as f:
-                        f.write(f'''"""
-Attempt for Advent of Code {year} Day {day} Part {part}
-Model: {model_name}
-Generation time: {generation_time:.2f}s
-Timestamp: {timestamp}
-Status: Testing
-"""
-
-{solution_code}
-''')
-
-                    # Test solution
-                    example_results, full_result, full_answer = await self.solution_executor.test_solution(
-                        solution_code,
-                        year,
-                        day,
-                        part,
-                        test_cases=parsed_problem.examples,
-                        model_name=model_name,
-                        debug=self.debug,
+                    # Save solution to temp file and execute it
+                    temp_file = self.solution_executor.temp_manager.create_temp_file(
+                        f"solution_{year}_day{day}_part{part}_{model_name.replace(':', '_')}.py"
                     )
-
-                    generation_time = (datetime.now() - start_time).total_seconds()
-                    execution_time = (
-                        full_result.performance.execution_time if full_result and full_result.performance else 0.0
-                    )
-
-                    if self.debug:
-                        if full_result:
-                            logging.info(f"Answer: {full_answer}")
-
-                    if full_result:
+                    temp_file.write_text(solution_code)
+                    
+                    # Try executing the solution
+                    try:
+                        answer = await self.solution_executor.execute_solution(
+                            temp_file,
+                            str(self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "input.txt")
+                        )
+                        if answer.error:
+                            raise ExecutionError(answer.error)
                         answers[model_name] = {
-                            'answer': full_answer,
                             'code': solution_code,
+                            'answer': answer.output.strip(),
                             'metrics': {
                                 'generation_time': generation_time,
-                                'execution_time': execution_time,
-                                'memory_usage': full_result.performance.max_memory if full_result and full_result.performance else 0.0
+                                'execution_time': answer.performance.execution_time if answer.performance else 0,
+                                'memory_usage': answer.performance.memory_usage if answer.performance else 0
                             }
                         }
-                        # Automatically record this validated solution
-                        record_solution(year, day, part, model_name, solution_code)
-                        return {
-                            'answer': full_answer,
-                            'code': solution_code,
-                            'metrics': {
-                                'generation_time': generation_time,
-                                'execution_time': execution_time,
-                                'memory_usage': full_result.performance.max_memory if full_result and full_result.performance else 0.0
-                            }
-                        }
-                    else:
-                        failures.append(model_name)
-                        # Update attempt file status to Failed
-                        if attempt_file.exists():
-                            content = attempt_file.read_text()
-                            content = content.replace("Status: Testing", "Status: Failed - Tests did not pass")
-                            attempt_file.write_text(content)
+                    except Exception as e:
+                        logging.error(f"Solution execution failed: {str(e)}")
+                        raise
 
                 except Exception as e:
-                    if self.debug:
-                        logging.error(f"Model {model_name} failed: {str(e)}")
+                    logging.error(f"Model {model_name} failed: {str(e)}")
                     failures.append(model_name)
-                    # Update attempt file status to Failed
-                    attempt_file = dirs["attempts"] / f"part{part}_{model_name.replace(':', '_')}.py"
-                    if attempt_file.exists():
-                        content = attempt_file.read_text()
-                        content = content.replace("Status: Testing", f"Status: Failed - {str(e)}")
-                        attempt_file.write_text(content)
+                    continue
 
-            if self.debug:
-                logging.info("")
-                logging.info("Consensus Summary:")
-                logging.info("-" * 40)
-                logging.info(f"Successful models: {list(answers.keys())}")
-                logging.info(f"Failed models: {failures}")
+            logging.info("")
+            logging.info("Consensus Summary:")
+            logging.info("-" * 40)
+            logging.info(f"Successful models: {list(answers.keys())}")
+            logging.info(f"Failed models: {failures}")
+            logging.info("")
 
             # Check for consensus (2 or more matching answers)
             answer_counts = {}
@@ -205,17 +164,16 @@ Status: Testing
                     ]
                     break
 
-            if self.debug:
-                logging.info("")
-                if consensus_answer:
-                    logging.info(f"Consensus reached! Answer: {consensus_answer}")
-                    logging.info(f"Agreeing models: {consensus_models}")
-                else:
-                    logging.info("No consensus reached")
-                    logging.info("Model answers:")
-                    for model, data in answers.items():
-                        logging.info(f"  {model}: {data['answer']}")
-                logging.info("")
+            logging.info("")
+            if consensus_answer:
+                logging.info(f"Consensus reached! Answer: {consensus_answer}")
+                logging.info(f"Agreeing models: {consensus_models}")
+            else:
+                logging.info("No consensus reached")
+                logging.info("Model answers:")
+                for model, data in answers.items():
+                    logging.info(f"  {model}: {data['answer']}")
+            logging.info("")
 
             if consensus_answer:
                 # Use the fastest successful solution for submission
@@ -225,8 +183,7 @@ Status: Testing
                 )
                 best_solution = answers[best_model]
 
-                if self.debug:
-                    logging.info(f"Using solution from {best_model} for submission")
+                logging.info(f"Using solution from {best_model} for submission")
                 # Handle submission
                 can_submit, wait_time = self.submission_manager.can_submit(year, day, part)
                 if not can_submit:
@@ -258,18 +215,7 @@ Status: Testing
                         best_solution['code'],
                         create_strategy_prompt(parsed_problem, strategies),
                         self.models[best_model].get_model_info(),
-                        {
-                            "examples": {
-                                "passed": example_results,
-                                "results": example_results
-                            },
-                            "full_input": {
-                                "passed": full_result,
-                                "result": full_result
-                            },
-                            "execution_time": execution_time,
-                            "memory_usage": full_result.performance.max_memory if full_result and full_result.performance else 0.0
-                        },
+                        self.solution_executor.get_test_results(best_solution['code'], year, day),
                         {
                             "success": success,
                             "message": message
@@ -278,38 +224,27 @@ Status: Testing
                         day,
                         part,
                         strategies,
-                        {
-                            "problem_characteristics": characteristics,
-                            "optimization_suggestions": []
-                        }
+                        {"problem_characteristics": characteristics, "optimization_suggestions": []}
                     )
-
-                    if submission_result and submission_result.get("success"):
-                        solutions_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "solutions"
-                        solutions_dir.mkdir(exist_ok=True)
-                        
-                        solution_file = solutions_dir / f"part{part}.py"
-                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                        with open(solution_file, "w") as f:
-                            f.write(f'''"""
-Solution for Advent of Code {year} Day {day} Part {part}
-Created by Martin Diekhoff
-https://github.com/geniusworks
-
-Generated and verified by the Advent of Code solver.
-Model: {best_model}
-Consensus models: {', '.join(consensus_models)}
-Failed models: {', '.join(failures)}
-Generation metrics:
-- Generation time: {best_solution['metrics']['generation_time']:.2f}s
-- Execution time: {best_solution['metrics']['execution_time']:.2f}s
-- Memory usage: {best_solution['metrics']['memory_usage']:.2f}MB
-
-Timestamp: {timestamp}
-"""
-
-{best_solution['code']}
-''')
+                    # Save successful attempt
+                    await self._save_attempt(
+                        best_solution['code'],
+                        self.models[best_model].last_prompt,
+                        self.models[best_model].get_model_info(),
+                        self.solution_executor.get_test_results(best_solution['code'], year, day),
+                        {
+                            "submitted": True,
+                            "success": success,
+                            "message": message,
+                            "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
+                        },
+                        year,
+                        day,
+                        part,
+                        strategies,
+                        {"problem_characteristics": characteristics, "optimization_suggestions": []},
+                        "submitted"
+                    )
 
                     if success:
                         return consensus_answer
@@ -321,7 +256,23 @@ Timestamp: {timestamp}
                     logging.error(f"Submission error: {str(e)}")
                     return None
 
-            return None
+            else:
+                # Save the no-consensus state
+                for model_name, data in answers.items():
+                    await self._save_attempt(
+                        data['code'],
+                        self.models[model_name].last_prompt,
+                        self.models[model_name].get_model_info(),
+                        self.solution_executor.get_test_results(data['code'], year, day),
+                        None,
+                        year,
+                        day,
+                        part,
+                        strategies,
+                        {"problem_characteristics": characteristics, "optimization_suggestions": []},
+                        "no_consensus"
+                    )
+                return None
 
         except Exception as e:
             logging.error(f"Error solving problem: {str(e)}")
@@ -460,6 +411,85 @@ Strategy analysis:
 '''
             with open(solution_file, "w") as f:
                 f.write(solution_code)
+
+    async def _save_attempt(
+        self,
+        code: str,
+        prompt: str,
+        model_info: Dict[str, Any],
+        test_results: Optional[Dict[str, Any]],
+        submission_result: Optional[Dict[str, Any]],
+        year: int,
+        day: int,
+        part: int,
+        strategies: List[Dict[str, Any]],
+        analysis: Dict[str, Any],
+        status: str,
+        error: Optional[str] = None
+    ) -> None:
+        """Save attempt details to JSON file.
+        
+        Args:
+            code: Generated solution code
+            prompt: Prompt used to generate solution
+            model_info: Information about the model used
+            test_results: Results from testing, if any
+            submission_result: Results from submission, if any
+            year: Problem year
+            day: Problem day
+            part: Problem part
+            strategies: Applied strategies
+            analysis: Problem analysis
+            status: Current status (e.g., 'generated', 'failed_execution', 'no_consensus', 'submitted')
+            error: Error message if any
+        """
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        attempt_data = {
+            "code": code,
+            "prompt": prompt,
+            "model": model_info,
+            "test_results": test_results or {},
+            "status": {
+                "phase": status,
+                "error": error,
+                "examples_passed": test_results.get("examples", {}).get("passed", False) if test_results else False,
+                "full_passed": test_results.get("full_input", {}).get("passed", False) if test_results else False,
+                "part": part,
+                "attempt_number": len(list(self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "attempts".glob("attempt_*.json"))) + 1
+            },
+            "submission": submission_result or {
+                "submitted": False,
+                "success": False,
+                "message": "",
+                "timestamp": timestamp
+            },
+            "metadata": {
+                "timestamp": timestamp,
+                "year": year,
+                "day": day,
+                "part": part,
+                "execution_time": test_results.get("execution_time") if test_results else None,
+                "memory_usage": test_results.get("memory_usage") if test_results else None
+            },
+            "strategy_analysis": {
+                "applied_strategies": strategies,
+                "problem_analysis": analysis.get("problem_characteristics", {}),
+                "optimization_notes": analysis.get("optimization_suggestions", []),
+                "improvements_made": [],
+                "known_issues": [],
+                "next_steps": []
+            }
+        }
+        
+        # Create attempts directory if it doesn't exist
+        attempts_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "attempts"
+        attempts_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save attempt file
+        attempt_file = attempts_dir / f"attempt_{timestamp}.json"
+        with open(attempt_file, "w") as f:
+            json.dump(attempt_data, f, indent=2)
 
     def _analyze_problem_characteristics(self, problem: Any) -> Dict[str, float]:
         """Analyze problem characteristics for strategy selection."""

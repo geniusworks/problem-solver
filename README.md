@@ -27,6 +27,15 @@ An intelligent system for solving algorithmic programming problems using LLMs an
 - Input parsing optimization
 - Performance consideration
 - Debug output generation
+- Comprehensive attempt recording
+- Consensus-based validation
+
+### Execution and Monitoring
+- Robust solution execution
+- Performance metrics tracking
+- Detailed logging and debugging
+- Attempt history management
+- Model performance analysis
 
 ## Components
 
@@ -44,6 +53,8 @@ An intelligent system for solving algorithmic programming problems using LLMs an
 - `solutions/`: Generated solution implementations
 - `quality/`: Code quality and validation tools
 - `tempfiles.py`: Temporary file management
+- `execution.py`: Solution execution and monitoring
+- `attempts/`: Attempt history and metrics
 
 ## Getting Started
 
