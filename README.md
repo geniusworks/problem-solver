@@ -116,20 +116,26 @@ The project uses a structured development process:
 ### Project Structure
 ```
 problem-solver/
-├── shared/           # Core shared components
-│   ├── llm/         # LLM integration
-│   ├── parser/      # Problem parsing
-│   └── quality/     # Code quality tools
-├── solutions/       # Generated solutions
-├── tests/          # Test suite
-└── years/          # Problem files by year
+├── config/          # Configuration files
+├── dev/            # Development resources
+│   ├── progress/   # Progress tracking
+│   └── *.mmd      # Mermaid diagrams
+├── learning/       # Learning and optimization
+├── shared/         # Core shared components
+│   ├── llm/       # LLM integration
+│   ├── parser/    # Problem parsing
+│   └── quality/   # Code quality tools
+├── solutions/      # Generated solutions
+├── tests/         # Test suite
+└── years/         # Problem files by year
 ```
 
 ### Key Files
-- `main.py`: Main entry point
+- `solve.py`: Main entry point
 - `shared/llm/prompts.py`: Dynamic prompt generation
 - `shared/strategies.py`: Solution strategies
 - `shared/parser.py`: Problem parsing
+- `dev/progress/checkpoint.md`: Development tracking
 
 ## Features in Development
 
