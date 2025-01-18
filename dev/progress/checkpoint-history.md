@@ -17,6 +17,33 @@
 - Runtime code maintains separate path handling
 - Original model code preserved in solutions directory
 
+## 2025-01-18: Documentation and Input File Handling Improvements
+
+### Major Changes
+1. **Input File Handling Improvements**
+   - Changed model prompts to use simple 'input.txt' in solutions
+   - Added runtime path substitution for local execution
+   - Separated model code from runtime code in storage
+   - Improved solution portability and security
+
+2. **Documentation Structure Improvements**
+   - Enhanced checkpoint management process
+   - Added hybrid roadmap approach with 2-week history window
+   - Updated Mermaid diagrams for current architecture
+   - Improved wrap-up process documentation
+
+### Code Changes
+- Updated prompts.py with clearer input handling requirements
+- Modified solver.py to handle both original and runtime code versions
+- Updated utils.py to use consistent input file naming
+- Updated information-flow.mmd and strategy-guidance.mmd
+
+### Notes
+- Solutions now use portable 'input.txt' references
+- Runtime code maintains separate path handling
+- Original model code preserved in solutions directory
+- Improved documentation maintenance process
+
 ## 2025-01-17: Enhanced Solution Template and Problem Analysis
 
 ### Major Changes

@@ -75,6 +75,22 @@ An intelligent system for solving algorithmic programming problems using LLMs an
    python main.py [problem_file]
    ```
 
+## Solution File Structure
+
+Solutions are stored with a standardized structure:
+- Each solution uses 'input.txt' in its local directory for input data
+- Solutions are designed to be portable and secure
+- No absolute paths or system-specific code is included
+- Runtime modifications are kept separate from model-generated code
+
+## Development Process
+
+The project uses a structured development process:
+- Changes are tracked in checkpoint.md
+- A 2-week history window is maintained for completed work
+- Older history is archived in checkpoint-history.md
+- Documentation and diagrams are kept in sync with code changes
+
 ## Development
 
 ### Project Structure

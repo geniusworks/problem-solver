@@ -277,43 +277,69 @@ When making updates:
 # Project Checkpoint
 
 **Instructions for AI Assistant**:
-1. When this file is referenced at the start of a coding session:
+1. When asked to READ or SUMMARIZE checkpoint.md:
    - Read and summarize current status and next steps
    - DO NOT make any file updates at this time
    
-2. When code changes are made during a session:
-   - Update the date in "Current Development Status" to today's date
-   - Update README.md with significant changes
-   - Add new entries to dev/progress/checkpoint-history.md
-   - Ensure all dates are consistent across files
-   - Commit all changes together
+2. When asked to perform SESSION WRAP-UP or END-OF-DAY updates:
+   - [ ] Update the "Current Development Status" section:
+       - Set today's date
+       - Update "Active Development" with current work
+       - List any "Known Issues" or regressions
+       - Document current state in "Notes" for next session
+       - Update "Next Steps" with immediate priorities
+   - [ ] Manage the Development Roadmap:
+       - Move items older than 2 weeks from "Completed" to checkpoint-history.md
+       - Update "In Progress" items based on current work
+       - Review and adjust "Planned" items
+       - Add new roadmap items based on current learnings
+       - Ensure roadmap aligns with project goals
+   - [ ] Update README.md with significant changes
+   - [ ] Manage checkpoint history:
+       - Move completed work sections to checkpoint-history.md
+       - Add new entries for today's changes to checkpoint-history.md
+       - Keep only current state sections in checkpoint.md:
+           - Current Development Status
+           - Active Development Areas
+           - Development Roadmap
+           - Known Issues
+           - Next Steps
+   - [ ] Review and update Mermaid diagrams if changes affect:
+       - Information flow between components (information-flow.mmd)
+       - Strategy handling or prompt generation (strategy-guidance.mmd)
+   - [ ] Ensure all dates are consistent across files
+   - [ ] Commit changes in logical groups:
+       - Group related changes by feature or purpose
+       - Use clear, descriptive commit messages
+       - Keep number of commits minimal but meaningful
+
+Note: This checklist should ONLY be executed when explicitly asked to wrap up the session or perform end-of-day updates. Do not perform these updates for regular code changes or when checkpoint.md is referenced for other purposes.
 
 ## Current Development Status (2025-01-18)
+...
 
-### Active Development
-- Enhanced solution tracking with direct file links
-- Added centralized solutions directory at repo root
-- Improved solution file organization and accessibility
+## Development Roadmap
 
-### Next Steps
-- Continue improving model prompting and debugging capabilities
-- Monitor effectiveness of solution tracking
-- Test solution recording with actual validated solutions
+### Completed ✓ (Last 2 weeks)
+- [x] Improve input file handling and security (2025-01-18)
+  - Changed to use simple 'input.txt' in solutions
+  - Added runtime path substitution
+  - Separated model code from runtime code
+- [x] Enhance solution template implementation (2025-01-17)
+  - Updated prompts.py with improved solution template
+  - Added structured problem analysis guidance
+  - Enhanced input pattern recognition and handling
 
-### Recent Changes
-- Added Solution File column to SOLUTIONS.md for direct links
-- Created central solutions directory at repo root
-- Implemented dual-saving of solutions (year dir and solutions dir)
-- Enhanced solution filename format with year, day, part, and model info
-- Updated .gitignore to properly track solutions directory
+### In Progress
+- [ ] Improve model prompting and debugging capabilities
+- [ ] Monitor effectiveness of input file handling changes
+- [ ] Test solution portability with actual validated solutions
 
-### Known Issues
-- None currently blocking
-
-### Notes
-- SOLUTIONS.md is automatically maintained - manual edits prohibited
-- Solution files are now saved in both year-specific and central locations
-- Solution tracking includes repository state, GitHub identity, and file links
+### Planned
+- [ ] Add analytics dashboard for model performance
+- [ ] Implement automated strategy refinement
+- [ ] Enhance problem similarity matching
+- [ ] Fine-tune cold-start weights based on usage data
 
 ## Active Development Areas
 - Input parsing robustness
