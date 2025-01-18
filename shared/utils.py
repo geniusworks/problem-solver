@@ -404,25 +404,25 @@ def get_input_path(year: int, day: int) -> Path:
     return get_problem_dir(year, day) / config.INPUT_FILE
 
 
-def ensure_input_file(year: int, day: int) -> str:
-    """
-    Ensure the input file exists for the given year and day.
-    If it doesn't exist, download it using the session cookie.
-    Returns the path to the input file.
-    """
-    input_path = get_input_path(year, day)
-
-    if not input_path.exists():
+async def ensure_input_file(workspace_dir: Path, year: int, day: int) -> Path:
+    """Ensure input file exists, downloading if necessary."""
+    day_dir = workspace_dir / "years" / str(year) / f"day{day:02d}"
+    day_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Use simple input.txt name for consistency
+    input_file = day_dir / "input.txt"
+    
+    if not input_file.exists():
         logger = logging.getLogger(__name__)
         logger.info(f"Downloading input for Year {year} Day {day}")
         url = f"{config.AOC_BASE_URL}/{year}/day/{day}/input"
-        response = asyncio.run(make_request(url))
+        response = await make_request(url)
 
         # Save input
-        input_path.write_text(response, encoding="utf-8")
-        logger.info(f"Saved input to {input_path}")
+        input_file.write_text(response, encoding="utf-8")
+        logger.info(f"Saved input to {input_file}")
 
-    return str(input_path)
+    return input_file
 
 
 def read_input(year: int, day: int) -> str:

@@ -91,9 +91,11 @@ class BaseSolver:
             logging.info("")
             for model_name, model in self.models.items():
                 try:
+                    # Add blank line before model name
+                    logging.info("")
                     # Log which model we're trying
                     logging.info(f"Trying model: {model_name}")
-                    logging.info("")  # Add blank line after model name
+                    logging.info("")  # Add blank line after model name too
 
                     # Record start time for performance tracking
                     start_time = datetime.now()
@@ -108,43 +110,60 @@ class BaseSolver:
                     )
                     generation_time = (datetime.now() - start_time).total_seconds()
 
+                    # Check for default implementation
+                    if "return len(data)" in solution_code:
+                        logging.warning(f"Model {model_name} returned default implementation")
+                        raise ExecutionError("Default implementation detected")
+
+                    # Create runtime version with full path
+                    execution_code = solution_code.replace(
+                        "'input.txt'",
+                        f"'{str(self.workspace_dir / 'years' / str(year) / f'day{day:02d}' / 'input.txt')}'"
+                    )
+                    execution_code = execution_code.replace(
+                        '"input.txt"',
+                        f'"{str(self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "input.txt")}"'
+                    )
+
                     # Save solution to temp file and execute it
                     temp_file = self.solution_executor.temp_manager.create_temp_file(
                         f"solution_{year}_day{day}_part{part}_{model_name.replace(':', '_')}.py"
                     )
-                    temp_file.write_text(solution_code)
+                    temp_file.write_text(execution_code)
                     
-                    # Try executing the solution
-                    try:
-                        answer = await self.solution_executor.execute_solution(
-                            temp_file,
-                            str(self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "input.txt")
-                        )
-                        if answer.error:
-                            raise ExecutionError(answer.error)
-                        answers[model_name] = {
-                            'code': solution_code,
-                            'answer': answer.output.strip(),
-                            'metrics': {
-                                'generation_time': generation_time,
-                                'execution_time': answer.performance.execution_time if answer.performance else 0,
-                                'memory_usage': answer.performance.memory_usage if answer.performance else 0
-                            }
+                    # Execute the solution
+                    answer = await self.solution_executor.execute_solution(
+                        temp_file,
+                        str(self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "input.txt")
+                    )
+                    if answer.error:
+                        raise ExecutionError(answer.error)
+
+                    # Store successful result with both original and runtime code
+                    answers[model_name] = {
+                        'model_code': solution_code,  # Original code from model
+                        'runtime_code': execution_code,  # Code used for execution
+                        'answer': answer.output.strip(),
+                        'performance': {
+                            'generation_time': generation_time,
+                            'execution_time': answer.performance.execution_time if answer.performance else 0,
+                            'memory_usage': answer.performance.memory_usage if answer.performance else 0
                         }
-                    except Exception as e:
-                        logging.error(f"Solution execution failed: {str(e)}")
-                        raise
+                    }
+                    
+                    # Log successful execution
+                    logging.info("")
+                    logging.info(f"Model {model_name} succeeded with answer: {answer.output.strip()}")
+                    logging.info("")
 
                 except Exception as e:
+                    logging.info("")
                     logging.error(f"Model {model_name} failed: {str(e)}")
-                    failures.append(model_name)
+                    logging.info("")
+                    failures.append((model_name, str(e)))
                     continue
 
             logging.info("")
-            logging.info("Consensus Summary:")
-            logging.info("-" * 40)
-            logging.info(f"Successful models: {list(answers.keys())}")
-            logging.info(f"Failed models: {failures}")
             logging.info("")
 
             # Check for consensus (2 or more matching answers)
@@ -164,22 +183,14 @@ class BaseSolver:
                     ]
                     break
 
-            logging.info("")
-            if consensus_answer:
-                logging.info(f"Consensus reached! Answer: {consensus_answer}")
-                logging.info(f"Agreeing models: {consensus_models}")
-            else:
-                logging.info("No consensus reached")
-                logging.info("Model answers:")
-                for model, data in answers.items():
-                    logging.info(f"  {model}: {data['answer']}")
-            logging.info("")
+            # Print consensus summary once
+            self._print_consensus_summary(answers, failures, consensus_answer, consensus_models)
 
             if consensus_answer:
                 # Use the fastest successful solution for submission
                 best_model = min(
                     [m for m in consensus_models],
-                    key=lambda m: answers[m]['metrics']['execution_time']
+                    key=lambda m: answers[m]['performance']['execution_time']
                 )
                 best_solution = answers[best_model]
 
@@ -198,7 +209,7 @@ class BaseSolver:
                         was_correct=success,
                         cooldown_seconds=wait_time if not success else None,
                         error_message=message if not success else None,
-                        execution_metrics=best_solution['metrics'],
+                        execution_metrics=best_solution['performance'],
                         strategies_used=strategies
                     )
                     
@@ -206,16 +217,16 @@ class BaseSolver:
                     self.submission_manager.record_submission(
                         year, day, part,
                         submission_result,
-                        best_solution['metrics'],
+                        best_solution['performance'],
                         strategies
                     )
 
                     # Save solution details
                     await self._save_solution(
-                        best_solution['code'],
+                        best_solution['model_code'],
                         create_strategy_prompt(parsed_problem, strategies),
                         self.models[best_model].get_model_info(),
-                        self.solution_executor.get_test_results(best_solution['code'], year, day),
+                        self.solution_executor.get_test_results(best_solution['runtime_code'], year, day),
                         {
                             "success": success,
                             "message": message
@@ -223,15 +234,15 @@ class BaseSolver:
                         year,
                         day,
                         part,
-                        strategies,
+                        [s.to_dict() for s in strategies],  # Convert strategies to dicts
                         {"problem_characteristics": characteristics, "optimization_suggestions": []}
                     )
                     # Save successful attempt
                     await self._save_attempt(
-                        best_solution['code'],
+                        best_solution['model_code'],
                         self.models[best_model].last_prompt,
                         self.models[best_model].get_model_info(),
-                        self.solution_executor.get_test_results(best_solution['code'], year, day),
+                        self.solution_executor.get_test_results(best_solution['runtime_code'], year, day),
                         {
                             "submitted": True,
                             "success": success,
@@ -241,10 +252,15 @@ class BaseSolver:
                         year,
                         day,
                         part,
-                        strategies,
+                        [s.to_dict() for s in strategies],  # Convert strategies to dicts
                         {"problem_characteristics": characteristics, "optimization_suggestions": []},
                         "submitted"
                     )
+
+                    # Save successful solution with original model code
+                    solution_path = self.workspace_dir / "solutions" / str(year) / f"day{day:02d}" / f"part{part}.py"
+                    solution_path.parent.mkdir(parents=True, exist_ok=True)
+                    solution_path.write_text(best_solution['model_code'])  # Save original model code
 
                     if success:
                         return consensus_answer
@@ -260,23 +276,43 @@ class BaseSolver:
                 # Save the no-consensus state
                 for model_name, data in answers.items():
                     await self._save_attempt(
-                        data['code'],
+                        data['model_code'],
                         self.models[model_name].last_prompt,
                         self.models[model_name].get_model_info(),
-                        self.solution_executor.get_test_results(data['code'], year, day),
+                        self.solution_executor.get_test_results(data['runtime_code'], year, day),
                         None,
                         year,
                         day,
                         part,
-                        strategies,
+                        [s.to_dict() for s in strategies],  # Convert strategies to dicts
                         {"problem_characteristics": characteristics, "optimization_suggestions": []},
-                        "no_consensus"
+                        "no_consensus",
+                        "No consensus reached between models"
                     )
                 return None
 
         except Exception as e:
             logging.error(f"Error solving problem: {str(e)}")
             return None
+
+    def _print_consensus_summary(self, answers: Dict[str, Any], failures: List[tuple], consensus_answer: Optional[str], consensus_models: List[str]) -> None:
+        """Print a summary of the consensus results."""
+        logging.info("")  # Single blank line before summary
+        logging.info("Consensus Summary:")
+        logging.info("-" * 40)
+        logging.info(f"Successful models: {list(answers.keys())}")
+        logging.info(f"Failed models: {failures}")
+        logging.info("")  # Single blank line after summary
+
+        if consensus_answer:
+            logging.info(f"Consensus reached! Answer: {consensus_answer}")
+            logging.info(f"Agreeing models: {consensus_models}")
+        else:
+            logging.info("No consensus reached")
+            logging.info("Model answers:")
+            for model, data in answers.items():
+                logging.info(f"  {model}: {data['answer']}")
+            logging.info("")  # Single blank line after answers
 
     async def _get_existing_solution(
         self, year: int, day: int, part: int
@@ -321,6 +357,15 @@ class BaseSolver:
                 
         return None
 
+    def _get_attempts_dir(self, year: int, day: int) -> Path:
+        """Get the attempts directory for a given year and day."""
+        return self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "attempts"
+
+    def _count_attempts(self, year: int, day: int) -> int:
+        """Count the number of attempts for a given year and day."""
+        attempts_dir = self._get_attempts_dir(year, day)
+        return len(list(attempts_dir.glob("attempt_*.json")))
+
     async def _save_solution(
         self,
         code: str,
@@ -346,7 +391,7 @@ class BaseSolver:
                 "examples_passed": test_results["examples"]["passed"],
                 "full_passed": test_results["full_input"]["passed"],
                 "part": part,
-                "attempt_number": len(list(self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "attempts".glob("attempt_*.json"))) + 1
+                "attempt_number": self._count_attempts(year, day) + 1
             },
             "submission": {
                 "submitted": submission_result is not None,
@@ -373,7 +418,7 @@ class BaseSolver:
         }
         
         # Create attempts directory if it doesn't exist
-        attempts_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "attempts"
+        attempts_dir = self._get_attempts_dir(year, day)
         attempts_dir.mkdir(parents=True, exist_ok=True)
         
         # Save attempt file
@@ -456,7 +501,7 @@ Strategy analysis:
                 "examples_passed": test_results.get("examples", {}).get("passed", False) if test_results else False,
                 "full_passed": test_results.get("full_input", {}).get("passed", False) if test_results else False,
                 "part": part,
-                "attempt_number": len(list(self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "attempts".glob("attempt_*.json"))) + 1
+                "attempt_number": self._count_attempts(year, day) + 1
             },
             "submission": submission_result or {
                 "submitted": False,
@@ -483,7 +528,7 @@ Strategy analysis:
         }
         
         # Create attempts directory if it doesn't exist
-        attempts_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "attempts"
+        attempts_dir = self._get_attempts_dir(year, day)
         attempts_dir.mkdir(parents=True, exist_ok=True)
         
         # Save attempt file

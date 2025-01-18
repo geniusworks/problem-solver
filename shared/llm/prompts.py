@@ -1,7 +1,7 @@
 """Module for LLM prompt generation and management."""
 
 import logging
-from typing import List, Optional
+from typing import List, Optional, Union
 from dataclasses import dataclass
 
 from shared.parser import ParsedProblem, TestCase
@@ -79,11 +79,20 @@ def get_strategy_guidance(strategies: List[Strategy]) -> PromptSection:
 def get_implementation_requirements() -> PromptSection:
     """Get basic implementation requirements."""
     content = """Implementation Requirements:
-1. Function signature: solve(input_file_path: str) -> Union[int, float]
-2. Input handling: Match example format exactly
-3. Return value: Numeric answer only, no text
-4. Debug output: Print first 5 parsed elements with types
-5. Error handling: Validate all assumptions"""
+1. Input Handling:
+   - Read input from 'input.txt' in the current directory
+   - Assume the input file is in the same folder as your solution
+2. Process the input according to the problem description
+3. Data Type Handling:
+   - Convert input strings to appropriate numeric types before calculations
+   - Ensure all mathematical operations use numeric types (int/float), not strings
+   - Handle any necessary type conversions early in your processing
+4. Return Value:
+   - Return ONLY the final numeric result (integer or float)
+   - The result should be a raw number without text (e.g., '42' or '3.14')
+   - Do not include labels, descriptions, or formatting
+5. Include necessary error handling and input validation
+6. Add any imports you need to solve the problem effectively"""
     
     return PromptSection("Requirements", content, priority=3)
 

@@ -214,6 +214,16 @@ class SolutionExecutor:
                 
                 if process.returncode != 0:
                     error_msg = stderr.decode() if stderr else "Unknown error"
+                    
+                    # Enhance error messages for common issues
+                    if "NameError" in error_msg:
+                        if "name 'Union' is not defined" in error_msg:
+                            error_msg = "Missing import: Solution uses typing.Union without importing it"
+                        elif "name 'chain' is not defined" in error_msg:
+                            error_msg = "Missing import: Solution uses itertools.chain without importing it"
+                        elif "name 'Optional' is not defined" in error_msg:
+                            error_msg = "Missing import: Solution uses typing.Optional without importing it"
+                    
                     return ExecutionResult("", error=f"Process failed: {error_msg}")
                     
                 return ExecutionResult(stdout.decode())

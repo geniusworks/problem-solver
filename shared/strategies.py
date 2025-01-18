@@ -33,6 +33,17 @@ class Strategy:
     optimization_tips: List[str]
     example_patterns: List[str]
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert strategy to JSON-serializable dictionary."""
+        return {
+            'name': self.name,
+            'description': self.description,
+            'when_to_use': self.when_to_use,
+            'key_techniques': self.key_techniques,
+            'optimization_tips': self.optimization_tips,
+            'example_patterns': self.example_patterns
+        }
+
 # Comprehensive solution strategies for algorithmic problem solving
 SOLUTION_STRATEGIES: Dict[ProblemCategory, List[Strategy]] = {
     ProblemCategory.GRID_TRAVERSAL: [

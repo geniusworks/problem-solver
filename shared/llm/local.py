@@ -169,7 +169,10 @@ Final Question: {problem.final_question}""")
             raise
 
     def _fix_generated_code(self, code: str) -> str:
-        """Fix common issues in generated code."""
+        """Fix common issues in generated code.
+        
+        Only adds the main block if needed. Does not modify the solution code itself.
+        """
         # Add missing main block if needed
         if not re.search(r'if\s+__name__\s*==\s*[\'"]__main__[\'"]\s*:', code):
             code += '\n\nif __name__ == "__main__":\n    import sys\n    print(solve(sys.argv[1]))'

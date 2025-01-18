@@ -1,5 +1,22 @@
 # Checkpoint History
 
+## 2025-01-18
+### Input File Handling Improvements
+- Changed model prompts to use simple 'input.txt' in solutions
+- Added runtime path substitution for local execution
+- Separated model code from runtime code in storage
+- Improved solution portability and security
+
+### Code Changes
+- Updated prompts.py with clearer input handling requirements
+- Modified solver.py to handle both original and runtime code versions
+- Updated utils.py to use consistent input file naming
+
+### Notes
+- Solutions now use portable 'input.txt' references
+- Runtime code maintains separate path handling
+- Original model code preserved in solutions directory
+
 ## 2025-01-17: Enhanced Solution Template and Problem Analysis
 
 ### Major Changes

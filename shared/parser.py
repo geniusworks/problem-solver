@@ -283,22 +283,20 @@ def _extract_final_question(text: str) -> str:
     return ""
 
 
-def parse_problem_text(problem_text: str) -> ParsedProblem:
-    """Parse problem text into structured format."""
-    logger.debug("Starting problem text parsing...")
+def _extract_title(text: str) -> str:
+    """Extract the title from problem text."""
+    lines = text.strip().split("\n")
+    return lines[0] if lines else ""
 
-    # Extract title
-    lines = problem_text.strip().split("\n")
-    title = lines[0] if lines else ""
-    description = "\n".join(lines[1:]) if len(lines) > 1 else ""
 
-    # Extract examples with context
-    logger.debug("Extracting examples...")
-    examples = _extract_examples(problem_text)
-    logger.debug(f"Found {len(examples)} examples")
+def _extract_part(text: str) -> int:
+    """Extract the part number from problem text."""
+    # For now, assume part 1
+    return 1
 
-    # Extract constraints
-    logger.debug("Extracting constraints...")
+
+def _extract_constraints(text: str) -> List[ProblemConstraint]:
+    """Extract constraints from problem text."""
     constraints = []
     constraint_patterns = [
         (r"must be (\d+)", "value"),
@@ -310,43 +308,107 @@ def parse_problem_text(problem_text: str) -> ParsedProblem:
     ]
 
     for pattern, type_ in constraint_patterns:
-        for match in re.finditer(pattern, problem_text, re.IGNORECASE):
+        for match in re.finditer(pattern, text, re.IGNORECASE):
             constraints.append(
                 ProblemConstraint(
                     description=match.group().strip(), type=type_, value=match.group(1)
                 )
             )
+    return constraints
+
+
+def _extract_input_format(text: str) -> InputFormat:
+    """Extract input format from problem text."""
+    # For now, assume empty input format
+    return InputFormat(base_format="")
+
+
+def _extract_output_format(text: str) -> str:
+    """Extract output format from problem text."""
+    # For now, assume empty output format
+    return ""
+
+
+def parse_problem_text(problem_text: str) -> ParsedProblem:
+    """Parse problem text into structured format.
+
+    Args:
+        problem_text: Raw problem text
+
+    Returns:
+        ParsedProblem object
+    """
+    logger.debug("Starting problem text parsing...")
+
+    # Clean up HTML
+    soup = BeautifulSoup(problem_text, "html.parser")
+    for script in soup(["script", "style"]):
+        script.decompose()
+    cleaned_text = soup.get_text()
+
+    # Extract article content if available
+    article = soup.find("article")
+    if article:
+        logger.debug("Found article tag")
+        text = article.get_text()
+    else:
+        logger.debug("No article tag found, using full text")
+        text = cleaned_text
+
+    # Extract examples
+    logger.debug("Extracting examples...")
+    examples = _extract_examples(problem_text)  # Use original HTML for better parsing
+    logger.debug(f"Found {len(examples)} examples")
+
+    # Extract constraints
+    logger.debug("Extracting constraints...")
+    constraints = _extract_constraints(text)
     logger.debug(f"Found {len(constraints)} constraints")
 
-    # Create input format structure
-    input_format = InputFormat(
-        base_format="",  # Will be filled by analyzer
-        variations=[],
-        example_format=None,
-        full_format=None,
-    )
+    # Extract final question
+    final_question = _extract_final_question(text)
 
-    # Extract final question (everything after the last example)
-    final_question = _extract_final_question(problem_text)
-    if not final_question and examples:
-        # If no explicit final question found, use text after last example
-        last_example_pos = problem_text.rfind(examples[-1].input_data)
-        if last_example_pos != -1:
-            remaining_text = problem_text[
-                last_example_pos + len(examples[-1].input_data) :
-            ].strip()
-            final_question = remaining_text.split("\n")[-1].strip()
-
+    # Create ParsedProblem object
     logger.debug("Creating ParsedProblem object...")
-    return ParsedProblem(
-        title=title,
-        description=description,
-        part=1,
+    problem = ParsedProblem(
+        title=_extract_title(text) or "Unknown Title",
+        description=text,
+        part=_extract_part(text) or 1,
         examples=examples,
         constraints=constraints,
-        input_format=input_format,
-        output_format="",  # Will be filled by analyzer
-        final_question=final_question,
-        condition_changes=[],  # Will be filled by analyzer
-        key_concepts=set(),  # Will be filled by analyzer
+        input_format=_extract_input_format(text),
+        output_format=_extract_output_format(text),
+        final_question=final_question
     )
+
+    # Try alternate parsing strategies if no examples found
+    if not examples:
+        logger.debug("No examples found, trying alternate parsing...")
+        # Try finding pre blocks directly
+        pre_blocks = soup.find_all("pre")
+        if pre_blocks:
+            logger.debug(f"Found {len(pre_blocks)} pre blocks directly")
+            for i, block in enumerate(pre_blocks):
+                # Look for input/output pairs
+                text = block.get_text().strip()
+                if text:
+                    problem.examples.append(TestCase(
+                        input_data=text,
+                        expected_output="",  # We'll try to find this in surrounding text
+                        order=i
+                    ))
+                    logger.debug(f"Added example from pre block {i+1}")
+
+    # Try to find expected outputs in text
+    if problem.examples:
+        logger.debug("Looking for expected outputs in text...")
+        for example in problem.examples:
+            if not example.expected_output:
+                # Look for numbers following the example
+                text_after = text[text.find(example.input_data) + len(example.input_data):]
+                numbers = re.findall(r'\b\d+\b', text_after[:200])  # Look in next 200 chars
+                if numbers:
+                    example.expected_output = numbers[0]
+                    logger.debug(f"Found expected output: {example.expected_output}")
+
+    return problem
