@@ -5,31 +5,31 @@ READ/SUMMARIZE: Provide status overview only (skip "SESSION WRAP-UP steps")
 
 SESSION WRAP-UP steps:
 - [ ] Update "Current Status" (with today's date):
-  - Update component statuses and active work
-  - Review and update known issues
-  - Refresh immediate next steps
-  - Update active priorities
+    - Update component statuses and active work
+    - Review and update known issues
+    - Refresh immediate next steps
+    - Update active priorities
 
 - [ ] Manage "Development Progress":
-  - Move items >2 weeks old to checkpoint-history.md (preserve dates)
-  - Update in-progress and planned items
-  - Ensure alignment with strategic objectives
-  - Add today's work under new dated entry in checkpoint-history.md
-  - Add new "Key Decisions" with today's date to history
+    - Move items >2 weeks old to dev/progress/checkpoint-history.md (preserve dates)
+    - Update in-progress and planned items
+    - Ensure alignment with strategic objectives
+    - Add today's work under new dated entry in checkpoint-history.md
+    - Add new "Key Decisions" with today's date to history
 
 - [ ] Maintain Documentation:
-  - Update README.md for structural changes
-  - Update dev/diagrams/* for system changes
-  - Update dev/docs/development-guidelines.md for process changes
-  - Update dev/docs/architecture.md if architecture changed
-  - Require user approval for strategic changes:
-    - Strategic Objectives updates (README.md ↔ checkpoint.md)
-    - Development Roadmap updates (checkpoint.md ↔ README.md)
+    - Update README.md for structural changes
+    - Update dev/diagrams/* for system changes
+    - Update dev/docs/development-guidelines.md for process changes
+    - Update dev/docs/architecture.md if architecture changed
+    - Require user approval for strategic changes:
+        - Strategic Objectives updates (README.md ↔ checkpoint.md)
+        - Development Roadmap updates (checkpoint.md ↔ README.md)
 
 - [ ] Commit Changes:
-  - Group changes logically (documentation, code, configuration)
-  - Commit with clear, descriptive messages
-  - Push changes to repository
+    - Group changes logically (documentation, code, configuration)
+    - Commit with clear, descriptive messages
+    - Push changes to repository
 
 Note: Execute the above steps only on explicit wrap-up request.
 
@@ -71,22 +71,22 @@ Note: Execute the above steps only on explicit wrap-up request.
 
 ### Strategic Objectives
 [ ] Achieve autonomous problem analysis and solving
-  - Enhance automatic strategy identification
-  - Improve pattern recognition across problem types
-  - Develop robust input validation and parsing
-  - Enable self-guided debugging and optimization
+    - Enhance automatic strategy identification
+    - Improve pattern recognition across problem types
+    - Develop robust input validation and parsing
+    - Enable self-guided debugging and optimization
 
 [ ] Implement collaborative multi-model system
-  - Design model specialization framework
-  - Enhance consensus-based validation
-  - Develop inter-model learning mechanisms
-  - Create adaptive model selection
+    - Design model specialization framework
+    - Enhance consensus-based validation
+    - Develop inter-model learning mechanisms
+    - Create adaptive model selection
 
 [ ] Build comprehensive learning and optimization
-  - Implement strategy effectiveness tracking
-  - Create solution pattern library
-  - Develop performance optimization system
-  - Enable cross-problem knowledge transfer
+    - Implement strategy effectiveness tracking
+    - Create solution pattern library
+    - Develop performance optimization system
+    - Enable cross-problem knowledge transfer
 
 ### Planned
 [ ] Add analytics dashboard for model performance
@@ -104,14 +104,14 @@ Note: Execute the above steps only on explicit wrap-up request.
 
 ### Completed ✓ (Last 2 weeks)
 [x] Improve input file handling and security (2025-01-18)
-  - Changed to use simple 'input.txt' in solutions
-  - Added runtime path substitution
-  - Separated model code from runtime code
+    - Changed to use simple 'input.txt' in solutions
+    - Added runtime path substitution
+    - Separated model code from runtime code
 [x] Enhance solution template implementation (2025-01-17)
-  - Updated prompts.py with improved solution template
-  - Added structured problem analysis guidance
-  - Enhanced input pattern recognition and handling
+    - Updated prompts.py with improved solution template
+    - Added structured problem analysis guidance
+    - Enhanced input pattern recognition and handling
 [x] Enhance LLM prompt generation (2025-01-17)
-  - Refactored prompt generation code for better organization
-  - Improved strategy integration in templates
-  - Added dynamic prompt sections based on problem analysis
+    - Refactored prompt generation code for better organization
+    - Improved strategy integration in templates
+    - Added dynamic prompt sections based on problem analysis
