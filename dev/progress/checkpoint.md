@@ -2,34 +2,49 @@
 
 **Instructions for AI Assistant**:
 READ/SUMMARIZE: Provide status overview only (skip "SESSION WRAP-UP steps")
-   
+
 SESSION WRAP-UP steps:
-   - [ ] Update "Current Status" (with today's date):
-       - Update "Active Development" and "Known Issues"
-       - Update immediate "Next Steps"
-       - Update "Focus Areas" priorities
+- [ ] Update "Current Status" (with today's date):
+  - Update component statuses and active work
+  - Review and update known issues
+  - Refresh immediate next steps
+  - Update active priorities
 
-   - [ ] Update "Development Roadmap":
-       - Move items >2 weeks old to "History" (preserve dates)
-       - Update "In Progress" and "Planned" items
-       - Ensure alignment with "Strategic Objectives"
+- [ ] Manage "Development Progress":
+  - Move items >2 weeks old to checkpoint-history.md (preserve dates)
+  - Update in-progress and planned items
+  - Ensure alignment with strategic objectives
+  - Add today's work under new dated entry in checkpoint-history.md
+  - Add new "Key Decisions" with today's date to history
 
-   - [ ] Update checkpoint-history.md:
-       - Add today's work under new dated entry
-       - Add new "Key Decisions" with today's date
-       - Preserve all existing dates
+- [ ] Maintain Documentation:
+  - Update README.md for structural changes
+  - Update dev/diagrams/* for system changes
+  - Update dev/docs/development-guidelines.md for process changes
+  - Update dev/docs/architecture.md if architecture changed
+  - Require user approval for strategic changes:
+    - Strategic Objectives updates (README.md ↔ checkpoint.md)
+    - Development Roadmap updates (checkpoint.md ↔ README.md)
 
-   - [ ] Update "Documentation":
-       - Update README.md for significant changes
-       - Update dev/diagrams/*.mmd for related changes
-       - Update dev/docs/architecture.md if architecture changed
-       - Require user approval to apply objective/roadmap updates:
-           - Prepare "Strategic Objectives" changes (README.md → checkpoint.md)
-           - Prepare "Roadmap" changes (checkpoint.md → README.md)
-
-   - [ ] Commit logically grouped changes and push to repository
+- [ ] Commit Changes:
+  - Group changes logically (documentation, code, configuration)
+  - Commit with clear, descriptive messages
+  - Push changes to repository
 
 Note: Execute the above steps only on explicit wrap-up request.
+
+## Checkpoint Integrity Guidelines
+
+**Core Principles**:
+- Reflect all significant changes in this document
+- Maintain clear project context and direction
+- Move historical context to checkpoint-history.md
+
+**Quick Action Checklist**:
+- [ ] Compare current state with documentation
+- [ ] Clarify any detected divergences
+- [ ] Update checkpoint with full understanding
+- [ ] Preserve core principle consistency
 
 ## Current Status (2025-01-18)
 
