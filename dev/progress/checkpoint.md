@@ -11,7 +11,7 @@ SESSION WRAP-UP steps:
     - Update active priorities
 
 - [ ] Manage "Development Progress":
-    - Move items >2 weeks old to dev/progress/checkpoint-history.md (preserve dates)
+    - Move completed items >2 weeks old to dev/progress/checkpoint-history.md (preserve dates)
     - Update in-progress and planned items
     - Ensure alignment with strategic objectives
     - Add today's work under new dated entry in checkpoint-history.md
