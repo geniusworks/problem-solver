@@ -15,6 +15,9 @@ An intelligent system for solving algorithmic programming problems using LLMs an
 - Strategy-specific solution guidance
 - Modular prompt architecture
 - Adaptive parsing templates
+- Role-based model selection
+- Performance tracking and learning
+- Hardware-aware model management
 
 ### Problem Analysis
 - Automatic strategy identification
@@ -47,9 +50,11 @@ An intelligent system for solving algorithmic programming problems using LLMs an
 
 ### Multi-Model Collaboration
 - Model specialization framework
+- Role-based task distribution
+- Performance-driven model selection
 - Consensus-based validation
 - Inter-model learning mechanisms
-- Adaptive model selection
+- Adaptive role assignment
 
 ### Learning and Optimization
 - Strategy effectiveness tracking

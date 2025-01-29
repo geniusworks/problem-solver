@@ -46,12 +46,28 @@ Note: Execute the above steps only on explicit wrap-up request.
 - [ ] Update checkpoint with full understanding
 - [ ] Preserve core principle consistency
 
-## Current Status (2025-01-18)
+## Current Status (2025-01-28)
 
 ### Active Development
-- Improving documentation management and organization
-- Enhancing checkpoint process for better clarity and consistency
-- Implementing structured wrap-up procedures
+
+#### Model Selection and Performance Tracking
+- [x] Implemented role-based model selection (PRIMARY, REVIEWER, VALIDATOR)
+- [x] Added performance tracking in SQLite database
+- [x] Integrated with existing learning system
+- [x] Updated model list for M1 Mac Mini compatibility
+- [ ] TODO: Implement code quality scoring for model performance metrics
+- [ ] TODO: Add proper problem type classification
+
+#### Model Registry Updates
+- Updated model list to focus on efficient coding models:
+  - codellama:7b (3.8GB) - Primary code generation
+  - deepseek-coder:latest - Code specialist with test generation
+  - mistral:7b (4.1GB) - Strong general performer
+  - qwen2.5-coder:latest (4.7GB) - Code completion expert
+- Added ALIBABA to ModelProvider enum for Qwen models
+- Removed larger models that exceed memory constraints
+- Updated model naming to match Ollama conventions
+- Enhanced Deepseek model capabilities to include test generation
 
 ### Component Status
 - Core solver: Stable, actively improving
@@ -59,13 +75,18 @@ Note: Execute the above steps only on explicit wrap-up request.
 - Documentation: Under reorganization
 
 ### Known Issues
-- None currently blocking
+- Code quality scoring is currently using placeholder values (8.0 for success, 4.0 for failure)
+- Problem type classification returns "general" for all problems
+- Need to validate performance characteristics of Qwen and Deepseek models
+- Some larger models (>8GB) may cause OOM on 16GB systems under heavy load
 
 ### Next Steps
-[ ] Test core solve process with simple problem
-[ ] Validate solution template improvements
-[ ] Enhance problem analysis with pattern recognition
-[ ] Test multi-model consensus mechanism
+1. Implement proper code quality scoring system
+2. Add comprehensive problem type classification
+3. Gather real performance metrics for each model
+4. Consider adding memory monitoring to prevent OOM situations
+5. Test model combinations for optimal role assignments
+6. Evaluate Deepseek's test generation capabilities
 
 ## Development Roadmap
 

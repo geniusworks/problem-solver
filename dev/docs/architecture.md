@@ -15,6 +15,10 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
 
 2. **Solution Generation** (`shared/llm/`)
    - Model Management (`models.py`)
+     - Role-based model registry
+     - Hardware-aware model selection
+     - Performance tracking per role
+     - Model characteristics and capabilities
    - Provider Integration (`local.py`, `remote.py`)
    - Dynamic Prompt Generation (`prompts.py`)
    - Strategy Selection (`strategies/`)
@@ -30,7 +34,9 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
    - Solution pattern library
    - Cross-problem pattern recognition
    - Performance optimization system
-   - Model selection optimization
+   - Model role performance tracking
+   - Role-based model selection
+   - Hardware compatibility management
 
 ## Configuration Management
 
