@@ -20,8 +20,9 @@ class OllamaProvider(LLMProvider):
 
     AVAILABLE_MODELS = [
         "codellama:7b",
-        "phi:latest",
-        "mistral:latest"
+        "deepseek-coder:latest",
+        "mistral:7b",
+        "qwen2.5-coder:latest"
     ]
 
     def __init__(self, model: str = "codellama:7b", debug: bool = False, **kwargs):

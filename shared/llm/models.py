@@ -1,6 +1,6 @@
 """Model-specific implementations and characteristics."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Set
 import logging
@@ -19,6 +19,8 @@ class ModelProvider(Enum):
     META = "meta"               # LLaMA models
     MICROSOFT = "microsoft"     # Phi models
     MISTRAL = "mistral"        # Mistral models
+    DEEPSEEK = "deepseek"      # Deepseek models
+    ALIBABA = "alibaba"        # Qwen models
 
 
 class ModelRunner(Enum):
@@ -27,6 +29,14 @@ class ModelRunner(Enum):
     LLAMACPP = "llamacpp"       # High-performance local inference
     ANTHROPIC_API = "anthropic"  # Cloud API
     OPENAI_API = "openai"       # Cloud API
+
+
+class ModelRole(Enum):
+    """Roles that models can play in the problem-solving process."""
+    PRIMARY = "primary"      # Main solution generator
+    REVIEWER = "reviewer"    # Reviews and improves solutions
+    VALIDATOR = "validator"  # Validates solutions
+    BACKUP = "backup"       # Backup model when others fail
 
 
 @dataclass
@@ -41,14 +51,26 @@ class ModelCapabilities:
 
 
 @dataclass
+class RolePerformance:
+    """Performance metrics for a specific role."""
+    success_rate: float = 0.0
+    avg_latency: float = 0.0
+    last_used: Optional[datetime] = None
+    problems_attempted: int = 0
+    problems_solved: int = 0
+
+
+@dataclass
 class ModelPerformance:
     """Model performance characteristics."""
 
     tokens_per_second: float
     cost_per_token: float
-    avg_latency: float = 0.0
-    error_rate: float = 0.0
-    success_rate: float = 1.0
+    role_performance: Dict[ModelRole, RolePerformance] = field(default_factory=lambda: {
+        role: RolePerformance() for role in ModelRole
+    })
+    overall_success_rate: float = 1.0
+    overall_error_rate: float = 0.0
 
 
 @dataclass
@@ -64,7 +86,7 @@ class ModelCharacteristics:
     last_used: Optional[datetime] = None
     strengths: Set[str] = set()
     weaknesses: Set[str] = set()
-    best_roles: Set[str] = set()
+    best_roles: Set[ModelRole] = set()
 
 
 class ModelRegistry:
@@ -87,50 +109,85 @@ class ModelRegistry:
     def _register_base_models(self):
         """Register models that are always available."""
         base_models = {
-            "codellama-7b-instruct": (7, ModelCharacteristics(
-                name="codellama-7b-instruct",
+            "codellama:7b": (7, ModelCharacteristics(
+                name="codellama:7b",
                 provider=ModelProvider.META,
                 runner=ModelRunner.OLLAMA,
                 capabilities=ModelCapabilities(
                     max_context_length=16384, max_output_length=16384
                 ),
                 performance=ModelPerformance(
-                    tokens_per_second=1000, cost_per_token=0.0
+                    tokens_per_second=1000, cost_per_token=0.0,
+                    role_performance={
+                        ModelRole.PRIMARY: RolePerformance(success_rate=0.9, avg_latency=0.5),
+                        ModelRole.REVIEWER: RolePerformance(success_rate=0.8, avg_latency=1.0),
+                        ModelRole.VALIDATOR: RolePerformance(success_rate=0.95, avg_latency=0.2),
+                    }
                 ),
                 is_local=True,
                 strengths={"code_generation", "code_completion", "fast_iteration"},
                 weaknesses={"complex_reasoning", "test_generation"},
-                best_roles={"PRIMARY", "VALIDATOR"},
+                best_roles={ModelRole.PRIMARY, ModelRole.VALIDATOR},
             )),
-            "mistral-7b-instruct": (7, ModelCharacteristics(
-                name="mistral-7b-instruct",
+            "deepseek-coder:latest": (7, ModelCharacteristics(
+                name="deepseek-coder:latest",
+                provider=ModelProvider.DEEPSEEK,
+                runner=ModelRunner.OLLAMA,
+                capabilities=ModelCapabilities(
+                    max_context_length=8192, max_output_length=8192
+                ),
+                performance=ModelPerformance(
+                    tokens_per_second=1000, cost_per_token=0.0,
+                    role_performance={
+                        ModelRole.PRIMARY: RolePerformance(success_rate=0.85, avg_latency=0.7),
+                        ModelRole.REVIEWER: RolePerformance(success_rate=0.9, avg_latency=0.8),
+                        ModelRole.VALIDATOR: RolePerformance(success_rate=0.92, avg_latency=0.3),
+                    }
+                ),
+                is_local=True,
+                strengths={"code_generation", "python_expertise", "code_review", "test_generation"},
+                weaknesses={"long_context"},
+                best_roles={ModelRole.PRIMARY, ModelRole.REVIEWER, ModelRole.VALIDATOR},
+            )),
+            "mistral:7b": (7, ModelCharacteristics(
+                name="mistral:7b",
                 provider=ModelProvider.MISTRAL,
                 runner=ModelRunner.OLLAMA,
                 capabilities=ModelCapabilities(
                     max_context_length=8192, max_output_length=8192
                 ),
                 performance=ModelPerformance(
-                    tokens_per_second=1000, cost_per_token=0.0
+                    tokens_per_second=1000, cost_per_token=0.0,
+                    role_performance={
+                        ModelRole.PRIMARY: RolePerformance(success_rate=0.8, avg_latency=0.9),
+                        ModelRole.REVIEWER: RolePerformance(success_rate=0.7, avg_latency=1.1),
+                        ModelRole.VALIDATOR: RolePerformance(success_rate=0.9, avg_latency=0.4),
+                    }
                 ),
                 is_local=True,
                 strengths={"code_generation", "instruction_following", "fast_response"},
                 weaknesses={"long_context", "complex_algorithms"},
-                best_roles={"PRIMARY", "VALIDATOR"},
+                best_roles={ModelRole.PRIMARY, ModelRole.VALIDATOR},
             )),
-            "phi4": (4, ModelCharacteristics(
-                name="phi4",
-                provider=ModelProvider.MICROSOFT,
+            "qwen2.5-coder:latest": (7, ModelCharacteristics(
+                name="qwen2.5-coder:latest",
+                provider=ModelProvider.ALIBABA,
                 runner=ModelRunner.OLLAMA,
                 capabilities=ModelCapabilities(
-                    max_context_length=4096, max_output_length=4096
+                    max_context_length=8192, max_output_length=8192
                 ),
                 performance=ModelPerformance(
-                    tokens_per_second=1200, cost_per_token=0.0
+                    tokens_per_second=900, cost_per_token=0.0,
+                    role_performance={
+                        ModelRole.PRIMARY: RolePerformance(success_rate=0.85, avg_latency=0.8),
+                        ModelRole.REVIEWER: RolePerformance(success_rate=0.8, avg_latency=1.0),
+                        ModelRole.VALIDATOR: RolePerformance(success_rate=0.9, avg_latency=0.5),
+                    }
                 ),
                 is_local=True,
-                strengths={"code_generation", "fast_response", "efficient_inference"},
-                weaknesses={"long_context", "complex_reasoning"},
-                best_roles={"PRIMARY", "VALIDATOR"},
+                strengths={"code_generation", "code_completion", "multilingual_code"},
+                weaknesses={"test_generation", "complex_refactoring"},
+                best_roles={ModelRole.PRIMARY, ModelRole.REVIEWER},
             )),
             "claude-3-sonnet": (0, ModelCharacteristics(  # Cloud model, size doesn't matter
                 name="claude-3-sonnet",
@@ -140,7 +197,12 @@ class ModelRegistry:
                     max_context_length=200000, max_output_length=200000
                 ),
                 performance=ModelPerformance(
-                    tokens_per_second=100, cost_per_token=0.003
+                    tokens_per_second=100, cost_per_token=0.003,
+                    role_performance={
+                        ModelRole.PRIMARY: RolePerformance(success_rate=0.9, avg_latency=1.5),
+                        ModelRole.REVIEWER: RolePerformance(success_rate=0.85, avg_latency=2.0),
+                        ModelRole.VALIDATOR: RolePerformance(success_rate=0.95, avg_latency=1.0),
+                    }
                 ),
                 strengths={
                     "code_generation",
@@ -150,7 +212,7 @@ class ModelRegistry:
                     "test_generation",
                 },
                 weaknesses={"very_long_context", "mathematical_proofs"},
-                best_roles={"PRIMARY", "REVIEWER"},
+                best_roles={ModelRole.PRIMARY, ModelRole.REVIEWER},
             )),
         }
         
@@ -164,28 +226,40 @@ class ModelRegistry:
     def _register_hardware_dependent_models(self):
         """Register models that depend on hardware capabilities."""
         dependent_models = {
-            "codellama-13b-instruct": (13, ModelCharacteristics(
-                name="codellama-13b-instruct",
-                provider=ModelProvider.META,
-                runner=ModelRunner.OLLAMA,
-                capabilities=ModelCapabilities(
-                    max_context_length=16384, max_output_length=16384
-                ),
-                performance=ModelPerformance(tokens_per_second=500, cost_per_token=0.0),
-                is_local=True,
-                strengths={"code_generation", "problem_solving", "python_expertise"},
-                weaknesses={"complex_tasks", "test_generation"},
-                best_roles={"PRIMARY", "REVIEWER"},
-            )),
-            "codellama-34b-instruct": (34, ModelCharacteristics(
-                name="codellama-34b-instruct",
+            "codellama:13b": (13, ModelCharacteristics(
+                name="codellama:13b",
                 provider=ModelProvider.META,
                 runner=ModelRunner.OLLAMA,
                 capabilities=ModelCapabilities(
                     max_context_length=16384, max_output_length=16384
                 ),
                 performance=ModelPerformance(
-                    tokens_per_second=200, cost_per_token=0.0
+                    tokens_per_second=500, cost_per_token=0.0,
+                    role_performance={
+                        ModelRole.PRIMARY: RolePerformance(success_rate=0.85, avg_latency=1.2),
+                        ModelRole.REVIEWER: RolePerformance(success_rate=0.8, avg_latency=1.5),
+                        ModelRole.VALIDATOR: RolePerformance(success_rate=0.9, avg_latency=0.8),
+                    }
+                ),
+                is_local=True,
+                strengths={"code_generation", "problem_solving", "python_expertise"},
+                weaknesses={"complex_tasks", "test_generation"},
+                best_roles={ModelRole.PRIMARY, ModelRole.REVIEWER},
+            )),
+            "codellama:34b": (34, ModelCharacteristics(
+                name="codellama:34b",
+                provider=ModelProvider.META,
+                runner=ModelRunner.OLLAMA,
+                capabilities=ModelCapabilities(
+                    max_context_length=16384, max_output_length=16384
+                ),
+                performance=ModelPerformance(
+                    tokens_per_second=200, cost_per_token=0.0,
+                    role_performance={
+                        ModelRole.PRIMARY: RolePerformance(success_rate=0.8, avg_latency=1.8),
+                        ModelRole.REVIEWER: RolePerformance(success_rate=0.75, avg_latency=2.2),
+                        ModelRole.VALIDATOR: RolePerformance(success_rate=0.9, avg_latency=1.2),
+                    }
                 ),
                 is_local=True,
                 strengths={
@@ -195,7 +269,7 @@ class ModelRegistry:
                     "python_expertise",
                 },
                 weaknesses={"long_context", "response_time"},
-                best_roles={"PRIMARY", "REVIEWER"},
+                best_roles={ModelRole.PRIMARY, ModelRole.REVIEWER},
             )),
         }
         
@@ -359,7 +433,7 @@ class ModelManager:
             # Check constraints
             if max_cost is not None and chars.performance.cost_per_token > max_cost:
                 continue
-            if max_latency is not None and chars.performance.avg_latency > max_latency:
+            if max_latency is not None and chars.performance.role_performance[ModelRole.PRIMARY].avg_latency > max_latency:
                 continue
 
             # Check if model is good for problem type

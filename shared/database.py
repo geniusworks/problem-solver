@@ -48,12 +48,45 @@ CREATE TABLE IF NOT EXISTS problem_characteristics (
     last_updated TEXT NOT NULL       -- ISO timestamp
 );
 
+-- Model performance tracking
+CREATE TABLE IF NOT EXISTS model_performance (
+    model_name TEXT NOT NULL,
+    problem_type TEXT NOT NULL,
+    role TEXT NOT NULL,
+    success_rate REAL NOT NULL,
+    avg_quality_score REAL NOT NULL,
+    avg_response_time REAL NOT NULL,
+    cost_per_token REAL NOT NULL,
+    last_updated TEXT NOT NULL,
+    PRIMARY KEY (model_name, problem_type, role)
+);
+
+-- Improvement history
+CREATE TABLE IF NOT EXISTS improvement_history (
+    problem_id TEXT NOT NULL,
+    iteration INTEGER NOT NULL,
+    model_name TEXT NOT NULL,
+    improvement_type TEXT NOT NULL,
+    impact_score REAL NOT NULL,
+    timestamp TEXT NOT NULL,
+    PRIMARY KEY (problem_id, iteration)
+);
+
 -- Create indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_strategy_results_problem 
 ON strategy_results(problem_id);
 
-CREATE INDEX IF NOT EXISTS idx_strategy_results_success 
-ON strategy_results(success);
+CREATE INDEX IF NOT EXISTS idx_problem_characteristics_type
+ON problem_characteristics(problem_type);
+
+CREATE INDEX IF NOT EXISTS idx_model_performance_role
+ON model_performance(role);
+
+CREATE INDEX IF NOT EXISTS idx_model_performance_type
+ON model_performance(problem_type);
+
+CREATE INDEX IF NOT EXISTS idx_improvement_history_model
+ON improvement_history(model_name);
 """
 
 
@@ -229,3 +262,149 @@ class LearningDatabase:
                 }
                 for row in cur.fetchall()
             ]
+
+    def update_model_performance(
+        self,
+        model_name: str,
+        problem_type: str,
+        role: str,
+        success: bool,
+        quality_score: float,
+        response_time: float,
+        cost: float
+    ) -> None:
+        """Update performance metrics for a model.
+        
+        Args:
+            model_name: Name of the model
+            problem_type: Type of problem being solved
+            role: Role of the model (primary, reviewer, etc.)
+            success: Whether the attempt was successful
+            quality_score: Code quality metric (0.0 to 10.0)
+            response_time: Time taken to generate response
+            cost: Cost per token in USD
+        """
+        with self.connect() as conn:
+            cursor = conn.cursor()
+            
+            # Get existing metrics
+            cursor.execute(
+                """
+                SELECT success_rate, avg_quality_score, avg_response_time, cost_per_token
+                FROM model_performance
+                WHERE model_name = ? AND problem_type = ? AND role = ?
+                """,
+                (model_name, problem_type, role)
+            )
+            row = cursor.fetchone()
+            
+            if row:
+                # Update existing metrics with exponential moving average
+                alpha = 0.1  # Weight for new values
+                old_success_rate, old_quality, old_response_time, old_cost = row
+                new_success_rate = old_success_rate * (1 - alpha) + float(success) * alpha
+                new_quality = old_quality * (1 - alpha) + quality_score * alpha
+                new_response_time = old_response_time * (1 - alpha) + response_time * alpha
+                new_cost = old_cost * (1 - alpha) + cost * alpha
+                
+                cursor.execute(
+                    """
+                    UPDATE model_performance
+                    SET success_rate = ?,
+                        avg_quality_score = ?,
+                        avg_response_time = ?,
+                        cost_per_token = ?,
+                        last_updated = datetime('now')
+                    WHERE model_name = ? AND problem_type = ? AND role = ?
+                    """,
+                    (new_success_rate, new_quality, new_response_time, new_cost,
+                     model_name, problem_type, role)
+                )
+            else:
+                # Insert new record
+                cursor.execute(
+                    """
+                    INSERT INTO model_performance (
+                        model_name, problem_type, role,
+                        success_rate, avg_quality_score,
+                        avg_response_time, cost_per_token,
+                        last_updated
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                    """,
+                    (model_name, problem_type, role,
+                     float(success), quality_score,
+                     response_time, cost)
+                )
+
+    def get_top_models(
+        self, problem_type: str, role: str, limit: int = 3
+    ) -> List[str]:
+        """Get the top performing models for a specific problem type and role.
+        
+        Args:
+            problem_type: Type of problem
+            role: Role of the model
+            limit: Maximum number of models to return
+            
+        Returns:
+            List of model names sorted by performance
+        """
+        with self.connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT model_name
+                FROM model_performance
+                WHERE problem_type = ? AND role = ?
+                ORDER BY 
+                    success_rate * 0.4 +  -- Weight success rate highest
+                    (1.0 - avg_response_time / MAX(avg_response_time) OVER ()) * 0.3 +  -- Faster is better
+                    (avg_quality_score / 10.0) * 0.2 +  -- Quality matters
+                    (1.0 - cost_per_token / NULLIF(MAX(cost_per_token) OVER (), 0)) * 0.1  -- Lower cost preferred
+                    DESC
+                LIMIT ?
+                """,
+                (problem_type, role, limit)
+            )
+            return [row[0] for row in cursor.fetchall()]
+
+    def record_improvement(
+        self,
+        problem_id: str,
+        model_name: str,
+        improvement_type: str,
+        impact_score: float
+    ) -> None:
+        """Record a model's improvement of a solution.
+        
+        Args:
+            problem_id: ID of the problem (YYYY_dayDD_partN)
+            model_name: Name of the model making the improvement
+            improvement_type: Type of improvement made
+            impact_score: Impact of the improvement (0.0 to 1.0)
+        """
+        with self.connect() as conn:
+            cursor = conn.cursor()
+            
+            # Get the latest iteration number for this problem
+            cursor.execute(
+                """
+                SELECT MAX(iteration)
+                FROM improvement_history
+                WHERE problem_id = ?
+                """,
+                (problem_id,)
+            )
+            max_iteration = cursor.fetchone()[0] or 0
+            
+            # Record the improvement
+            cursor.execute(
+                """
+                INSERT INTO improvement_history (
+                    problem_id, iteration, model_name,
+                    improvement_type, impact_score, timestamp
+                ) VALUES (?, ?, ?, ?, ?, datetime('now'))
+                """,
+                (problem_id, max_iteration + 1, model_name,
+                 improvement_type, impact_score)
+            )
