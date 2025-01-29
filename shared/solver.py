@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
+from enum import Enum
 
 from shared.errors import ValidationError, ExecutionError
 from shared.execution import SolutionExecutor, TestCase
@@ -15,6 +16,75 @@ from shared.utils import fetch_problem_text, ensure_input_file, ensure_problem_f
 from shared.validator import SubmissionError
 from shared.strategies import get_strategies_for_problem, create_strategy_prompt
 from shared.submission import SubmissionManager, SubmissionResult
+from shared.learning import StrategyOptimizer, LearningDatabase
+
+class ModelRole(Enum):
+    PRIMARY = 1
+    REVIEWER = 2
+    VALIDATOR = 3
+
+
+class AttemptResult:
+    def __init__(
+        self,
+        model_name: str,
+        role: ModelRole,
+        response_time: float,
+        code_quality: float,
+        was_successful: bool,
+        cost: float
+    ) -> None:
+        self.model_name = model_name
+        self.role = role
+        self.response_time = response_time
+        self.code_quality = code_quality
+        self.was_successful = was_successful
+        self.cost = cost
+
+
+class ModelSelector:
+    def __init__(self, metrics_file: str, models_per_role: int) -> None:
+        self.metrics_file = metrics_file
+        self.models_per_role = models_per_role
+        self.metrics = self._load_metrics()
+
+    def _load_metrics(self) -> Dict[str, Any]:
+        try:
+            with open(self.metrics_file, "r") as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return {
+                ModelRole.PRIMARY.name: [],
+                ModelRole.REVIEWER.name: [],
+                ModelRole.VALIDATOR.name: []
+            }
+
+    def save_metrics(self) -> None:
+        with open(self.metrics_file, "w") as f:
+            json.dump(self.metrics, f, indent=2)
+
+    def get_models_for_role(self, role: ModelRole) -> List[str]:
+        return [m["model_name"] for m in self.metrics[role.name]]
+
+    def record_attempt(self, result: AttemptResult) -> None:
+        role_metrics = self.metrics[result.role.name]
+        existing_metric = next((m for m in role_metrics if m["model_name"] == result.model_name), None)
+        if existing_metric:
+            existing_metric["response_time"] = (existing_metric["response_time"] + result.response_time) / 2
+            existing_metric["code_quality"] = (existing_metric["code_quality"] + result.code_quality) / 2
+            existing_metric["success_rate"] = (existing_metric["success_rate"] + result.was_successful) / 2
+            existing_metric["cost"] = (existing_metric["cost"] + result.cost) / 2
+        else:
+            role_metrics.append({
+                "model_name": result.model_name,
+                "response_time": result.response_time,
+                "code_quality": result.code_quality,
+                "success_rate": result.was_successful,
+                "cost": result.cost
+            })
+        role_metrics.sort(key=lambda m: m["response_time"] + m["cost"])
+        self.metrics[result.role.name] = role_metrics[:self.models_per_role]
+        self.save_metrics()
 
 
 class BaseSolver:
@@ -31,6 +101,13 @@ class BaseSolver:
         self.debug = debug
         self.solution_executor = SolutionExecutor(workspace_dir)
         self.submission_manager = SubmissionManager(workspace_dir)
+        
+        # Initialize learning system
+        learning_dir = workspace_dir / "learning"
+        self.strategy_optimizer = StrategyOptimizer(learning_dir, workspace_dir)
+        self.db = LearningDatabase(workspace_dir)
+        
+        # Initialize all available models
         self.models = {
             model: OllamaProvider(model=model, debug=debug)
             for model in OllamaProvider.AVAILABLE_MODELS
@@ -83,217 +160,148 @@ class BaseSolver:
                 problem_text, characteristics
             )
             
-            # Try each model and collect answers
+            # Get top performing models for each role based on problem type
+            problem_type = self._get_problem_type(characteristics)
+            primary_models = self._get_top_models(problem_type, "primary", limit=3)
+            reviewer_models = self._get_top_models(problem_type, "reviewer", limit=3)
+            validator_models = self._get_top_models(problem_type, "validator", limit=3)
+            
+            # Try each primary model and collect answers
             answers = {}
             failures = []
+            
             logging.info("")
-            logging.info(f"Attempting solution with {len(self.models)} models")
+            logging.info(f"Attempting solution with top {len(primary_models)} primary models")
             logging.info("")
-            for model_name, model in self.models.items():
+            
+            for model_name in primary_models:
+                if model_name not in self.models:
+                    logging.warning(f"Model {model_name} not available, skipping")
+                    continue
+                    
+                model = self.models[model_name]
                 try:
-                    # Add blank line before model name
                     logging.info("")
-                    # Log which model we're trying
-                    logging.info(f"Trying model: {model_name}")
-                    logging.info("")  # Add blank line after model name too
+                    logging.info(f"Trying primary model: {model_name}")
+                    logging.info("")
 
                     # Record start time for performance tracking
                     start_time = datetime.now()
-
-                    # Generate solution with strategic guidance
-                    solution_code = await model.generate_solution(
+                    
+                    # Generate solution
+                    solution = await model.generate_solution(
                         parsed_problem,
-                        year=year,
-                        day=day,
+                        year,
+                        day,
                         strategies=strategies,
                         strategy_effectiveness=effectiveness
                     )
-                    generation_time = (datetime.now() - start_time).total_seconds()
-
-                    # Check for default implementation
-                    if "return len(data)" in solution_code:
-                        logging.warning(f"Model {model_name} returned default implementation")
-                        raise ExecutionError("Default implementation detected")
-
-                    # Create runtime version with full path
-                    execution_code = solution_code.replace(
-                        "'input.txt'",
-                        f"'{str(self.workspace_dir / 'years' / str(year) / f'day{day:02d}' / 'input.txt')}'"
-                    )
-                    execution_code = execution_code.replace(
-                        '"input.txt"',
-                        f'"{str(self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "input.txt")}"'
-                    )
-
-                    # Save solution to temp file and execute it
-                    temp_file = self.solution_executor.temp_manager.create_temp_file(
-                        f"solution_{year}_day{day}_part{part}_{model_name.replace(':', '_')}.py"
-                    )
-                    temp_file.write_text(execution_code)
                     
-                    # Execute the solution
-                    answer = await self.solution_executor.execute_solution(
-                        temp_file,
-                        str(self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "input.txt")
-                    )
-                    if answer.error:
-                        raise ExecutionError(answer.error)
-
-                    # Store successful result with both original and runtime code
-                    answers[model_name] = {
-                        'model_code': solution_code,  # Original code from model
-                        'runtime_code': execution_code,  # Code used for execution
-                        'answer': answer.output.strip(),
-                        'performance': {
-                            'generation_time': generation_time,
-                            'execution_time': answer.performance.execution_time if answer.performance else 0,
-                            'memory_usage': answer.performance.memory_usage if answer.performance else 0
-                        }
-                    }
+                    # Calculate metrics
+                    end_time = datetime.now()
+                    response_time = (end_time - start_time).total_seconds()
                     
-                    # Log successful execution
-                    logging.info("")
-                    logging.info(f"Model {model_name} succeeded with answer: {answer.output.strip()}")
-                    logging.info("")
-
-                except Exception as e:
-                    logging.info("")
-                    logging.error(f"Model {model_name} failed: {str(e)}")
-                    logging.info("")
-                    failures.append((model_name, str(e)))
-                    continue
-
-            logging.info("")
-            logging.info("")
-
-            # Check for consensus (2 or more matching answers)
-            answer_counts = {}
-            for model_data in answers.values():
-                answer = model_data['answer']
-                answer_counts[answer] = answer_counts.get(answer, 0) + 1
-
-            consensus_answer = None
-            consensus_models = []
-            for answer, count in answer_counts.items():
-                if count >= 2:  # We have consensus
-                    consensus_answer = answer
-                    consensus_models = [
-                        model for model, data in answers.items()
-                        if data['answer'] == answer
-                    ]
-                    break
-
-            # Print consensus summary once
-            self._print_consensus_summary(answers, failures, consensus_answer, consensus_models)
-
-            if consensus_answer:
-                # Use the fastest successful solution for submission
-                best_model = min(
-                    [m for m in consensus_models],
-                    key=lambda m: answers[m]['performance']['execution_time']
-                )
-                best_solution = answers[best_model]
-
-                logging.info(f"Using solution from {best_model} for submission")
-                # Handle submission
-                can_submit, wait_time = self.submission_manager.can_submit(year, day, part)
-                if not can_submit:
-                    logging.info(f"Waiting {wait_time}s before submitting...")
-                    return None
-
-                try:
-                    success, message = await self.submission_manager.submit_solution(
-                        year, day, part, consensus_answer
-                    )
-                    submission_result = SubmissionResult(
-                        was_correct=success,
-                        cooldown_seconds=wait_time if not success else None,
-                        error_message=message if not success else None,
-                        execution_metrics=best_solution['performance'],
-                        strategies_used=strategies
-                    )
+                    # Validate solution with top validator models
+                    is_valid = True
+                    for validator_name in validator_models:
+                        if validator_name in self.models:
+                            validator = self.models[validator_name]
+                            if not await validator.validate_solution(solution, parsed_problem.test_cases):
+                                is_valid = False
+                                break
                     
-                    # Record submission and update learning system
-                    self.submission_manager.record_submission(
-                        year, day, part,
-                        submission_result,
-                        best_solution['performance'],
-                        strategies
-                    )
-
-                    # Save solution details
-                    await self._save_solution(
-                        best_solution['model_code'],
-                        create_strategy_prompt(parsed_problem, strategies),
-                        self.models[best_model].get_model_info(),
-                        self.solution_executor.get_test_results(best_solution['runtime_code'], year, day),
-                        {
-                            "success": success,
-                            "message": message
-                        },
-                        year,
-                        day,
-                        part,
-                        [s.to_dict() for s in strategies],  # Convert strategies to dicts
-                        {"problem_characteristics": characteristics, "optimization_suggestions": []}
-                    )
-                    # Save successful attempt
-                    await self._save_attempt(
-                        best_solution['model_code'],
-                        self.models[best_model].last_prompt,
-                        self.models[best_model].get_model_info(),
-                        self.solution_executor.get_test_results(best_solution['runtime_code'], year, day),
-                        {
-                            "submitted": True,
-                            "success": success,
-                            "message": message,
-                            "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
-                        },
-                        year,
-                        day,
-                        part,
-                        [s.to_dict() for s in strategies],  # Convert strategies to dicts
-                        {"problem_characteristics": characteristics, "optimization_suggestions": []},
-                        "submitted"
-                    )
-
-                    # Save successful solution with original model code
-                    solution_path = self.workspace_dir / "solutions" / str(year) / f"day{day:02d}" / f"part{part}.py"
-                    solution_path.parent.mkdir(parents=True, exist_ok=True)
-                    solution_path.write_text(best_solution['model_code'])  # Save original model code
-
-                    if success:
-                        return consensus_answer
+                    if is_valid:
+                        answers[model_name] = solution
+                        
+                        # Record successful attempt in learning system
+                        self.db.update_model_performance(
+                            model_name=model_name,
+                            problem_type=problem_type,
+                            role="primary",
+                            success=True,
+                            quality_score=8.0,  # TODO: Implement code quality scoring
+                            response_time=response_time,
+                            cost=0.0  # Local models have no cost
+                        )
                     else:
-                        logging.error(f"Submission failed: {message}")
-                        return None
-
-                except SubmissionError as e:
-                    logging.error(f"Submission error: {str(e)}")
-                    return None
-
-            else:
-                # Save the no-consensus state
-                for model_name, data in answers.items():
-                    await self._save_attempt(
-                        data['model_code'],
-                        self.models[model_name].last_prompt,
-                        self.models[model_name].get_model_info(),
-                        self.solution_executor.get_test_results(data['runtime_code'], year, day),
-                        None,
-                        year,
-                        day,
-                        part,
-                        [s.to_dict() for s in strategies],  # Convert strategies to dicts
-                        {"problem_characteristics": characteristics, "optimization_suggestions": []},
-                        "no_consensus",
-                        "No consensus reached between models"
+                        failures.append((model_name, "Failed validation"))
+                        
+                        # Record failed attempt in learning system
+                        self.db.update_model_performance(
+                            model_name=model_name,
+                            problem_type=problem_type,
+                            role="primary",
+                            success=False,
+                            quality_score=4.0,
+                            response_time=response_time,
+                            cost=0.0
+                        )
+                        
+                except Exception as e:
+                    failures.append((model_name, str(e)))
+                    self.db.update_model_performance(
+                        model_name=model_name,
+                        problem_type=problem_type,
+                        role="primary",
+                        success=False,
+                        quality_score=0.0,
+                        response_time=0.0,
+                        cost=0.0
                     )
-                return None
+
+            # If we have answers, try to reach consensus
+            if answers:
+                consensus_answer = self._get_consensus_answer(answers)
+                if consensus_answer:
+                    # Record the consensus in the solution directory
+                    solution_file = record_solution(
+                        self.workspace_dir, year, day, part, consensus_answer
+                    )
+                    return consensus_answer
+
+            # If no consensus, try review and improvement
+            if len(answers) > 0:
+                best_answer = next(iter(answers.values()))  # Get first answer
+                for reviewer_name in reviewer_models:
+                    if reviewer_name in self.models:
+                        reviewer = self.models[reviewer_name]
+                        try:
+                            improved = await reviewer.improve_solution(best_answer, parsed_problem)
+                            if improved and improved != best_answer:
+                                # Record improvement attempt
+                                self.db.record_improvement(
+                                    problem_id=f"{year}_day{day:02d}_part{part}",
+                                    model_name=reviewer_name,
+                                    improvement_type="code_quality",
+                                    impact_score=0.8  # TODO: Calculate actual impact
+                                )
+                                
+                                # Validate improved solution
+                                if all(
+                                    await self.models[v].validate_solution(improved, parsed_problem.test_cases)
+                                    for v in validator_models
+                                    if v in self.models
+                                ):
+                                    return improved
+                        except Exception as e:
+                            logging.warning(f"Reviewer {reviewer_name} failed: {str(e)}")
+
+            # If we get here, we failed to solve the problem
+            self._print_consensus_summary(answers, failures, None, [])
+            return None
 
         except Exception as e:
             logging.error(f"Error solving problem: {str(e)}")
-            return None
+            raise
+
+    def _get_problem_type(self, characteristics: Dict[str, Any]) -> str:
+        """Determine the problem type from characteristics."""
+        # TODO: Implement proper problem type classification
+        return "general"
+
+    def _get_top_models(self, problem_type: str, role: str, limit: int = 3) -> List[str]:
+        """Get top performing models for a specific problem type and role."""
+        return self.db.get_top_models(problem_type, role, limit)
 
     def _print_consensus_summary(self, answers: Dict[str, Any], failures: List[tuple], consensus_answer: Optional[str], consensus_models: List[str]) -> None:
         """Print a summary of the consensus results."""

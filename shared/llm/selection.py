@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Set, Tuple
 from shared.config import RESOURCES_CONFIG
+from .models import ModelRole, RolePerformance
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ModelPerformanceMetrics:
     """Performance metrics for a model."""
-
+    role_metrics: Dict[ModelRole, RolePerformance]
     avg_response_time: float
     avg_code_quality: float
     success_rate: float
@@ -27,8 +28,8 @@ class ModelPerformanceMetrics:
 @dataclass
 class AttemptResult:
     """Result of a single model attempt."""
-
     model_name: str
+    role: ModelRole
     response_time: float
     code_quality: float
     was_successful: bool
@@ -38,7 +39,6 @@ class AttemptResult:
 @dataclass
 class ConsensusResult:
     """Result of a consensus check."""
-
     has_consensus: bool
     agreed_solution: Optional[str]
     agreeing_models: List[str]
@@ -49,20 +49,29 @@ class ModelSelector:
     """Intelligent model selection based on performance history."""
 
     def __init__(
-        self, metrics_file: str = "model_metrics.json", consensus_timeout: int = 60
+        self, 
+        metrics_file: str = "model_metrics.json", 
+        consensus_timeout: int = 60,
+        models_per_role: int = 3  # Number of leading models to track per role
     ):
         """Initialize the model selector.
 
         Args:
             metrics_file: Path to the metrics storage file.
             consensus_timeout: Seconds to wait for additional votes after consensus.
+            models_per_role: Number of leading models to maintain per role.
         """
         self.metrics_file = metrics_file
         self.metrics: Dict[str, ModelPerformanceMetrics] = {}
         self.cloud_timeout = RESOURCES_CONFIG.get("consensus", {}).get("timeout_seconds", 300)
         self.min_code_quality = float(os.getenv("MIN_CODE_QUALITY", "7.0"))
         self.consensus_timeout = consensus_timeout
+        self.models_per_role = models_per_role
+        self.leading_models: Dict[ModelRole, List[str]] = {
+            role: [] for role in ModelRole
+        }
         self._load_metrics()
+        self._update_leading_models()
 
     def _load_metrics(self) -> None:
         """Load metrics from storage."""
@@ -73,7 +82,19 @@ class ModelSelector:
             with open(self.metrics_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 for model_name, metrics in data.items():
+                    role_metrics = {}
+                    for role_name, role_data in metrics.get("role_metrics", {}).items():
+                        role = ModelRole(role_name)
+                        role_metrics[role] = RolePerformance(
+                            success_rate=role_data["success_rate"],
+                            avg_latency=role_data["avg_latency"],
+                            last_used=datetime.fromisoformat(role_data["last_used"]) if role_data.get("last_used") else None,
+                            problems_attempted=role_data["problems_attempted"],
+                            problems_solved=role_data["problems_solved"]
+                        )
+
                     self.metrics[model_name] = ModelPerformanceMetrics(
+                        role_metrics=role_metrics,
                         avg_response_time=metrics["avg_response_time"],
                         avg_code_quality=metrics["avg_code_quality"],
                         success_rate=metrics["success_rate"],
@@ -94,16 +115,24 @@ class ModelSelector:
         try:
             data = {
                 model_name: {
+                    "role_metrics": {
+                        role.value: {
+                            "success_rate": perf.success_rate,
+                            "avg_latency": perf.avg_latency,
+                            "last_used": perf.last_used.isoformat() if perf.last_used else None,
+                            "problems_attempted": perf.problems_attempted,
+                            "problems_solved": perf.problems_solved
+                        }
+                        for role, perf in metrics.role_metrics.items()
+                    },
                     "avg_response_time": metrics.avg_response_time,
                     "avg_code_quality": metrics.avg_code_quality,
                     "success_rate": metrics.success_rate,
                     "total_attempts": metrics.total_attempts,
                     "successful_attempts": metrics.successful_attempts,
-                    "last_success": (
-                        metrics.last_success.isoformat()
-                        if metrics.last_success
-                        else None
-                    ),
+                    "last_success": metrics.last_success.isoformat()
+                    if metrics.last_success
+                    else None,
                     "cost_per_success": metrics.cost_per_success,
                 }
                 for model_name, metrics in self.metrics.items()
@@ -113,14 +142,29 @@ class ModelSelector:
         except Exception as e:
             logger.error("Failed to save metrics: %s", str(e))
 
-    def record_attempt(self, result: AttemptResult) -> None:
-        """Record the result of a model attempt.
+    def _update_leading_models(self) -> None:
+        """Update the list of leading models for each role based on performance."""
+        for role in ModelRole:
+            # Sort models by role-specific performance
+            sorted_models = sorted(
+                [(name, metrics) for name, metrics in self.metrics.items()],
+                key=lambda x: (
+                    x[1].role_metrics.get(role, RolePerformance()).success_rate,
+                    -x[1].role_metrics.get(role, RolePerformance()).avg_latency
+                ),
+                reverse=True
+            )
+            
+            # Update leading models for this role
+            self.leading_models[role] = [
+                name for name, _ in sorted_models[:self.models_per_role]
+            ]
 
-        Args:
-            result: The attempt result to record.
-        """
+    def record_attempt(self, result: AttemptResult) -> None:
+        """Record the result of a model attempt and update rankings."""
         if result.model_name not in self.metrics:
             self.metrics[result.model_name] = ModelPerformanceMetrics(
+                role_metrics={role: RolePerformance() for role in ModelRole},
                 avg_response_time=result.response_time,
                 avg_code_quality=result.code_quality,
                 success_rate=1.0 if result.was_successful else 0.0,
@@ -131,24 +175,54 @@ class ModelSelector:
             )
         else:
             metrics = self.metrics[result.model_name]
-            metrics.avg_response_time = (
-                metrics.avg_response_time * metrics.total_attempts
-                + result.response_time
-            ) / (metrics.total_attempts + 1)
-            metrics.avg_code_quality = (
-                metrics.avg_code_quality * metrics.total_attempts + result.code_quality
-            ) / (metrics.total_attempts + 1)
+            # Update role-specific metrics
+            role_perf = metrics.role_metrics.get(result.role, RolePerformance())
+            role_perf.problems_attempted += 1
+            if result.was_successful:
+                role_perf.problems_solved += 1
+            role_perf.success_rate = role_perf.problems_solved / role_perf.problems_attempted
+            role_perf.avg_latency = (
+                (role_perf.avg_latency * (role_perf.problems_attempted - 1) + result.response_time)
+                / role_perf.problems_attempted
+            )
+            role_perf.last_used = datetime.now()
+            metrics.role_metrics[result.role] = role_perf
+
+            # Update overall metrics
             metrics.total_attempts += 1
             if result.was_successful:
                 metrics.successful_attempts += 1
                 metrics.last_success = datetime.now()
-                metrics.cost_per_success = (
-                    metrics.cost_per_success * (metrics.successful_attempts - 1)
-                    + result.cost
-                ) / metrics.successful_attempts
             metrics.success_rate = metrics.successful_attempts / metrics.total_attempts
+            metrics.avg_response_time = (
+                (metrics.avg_response_time * (metrics.total_attempts - 1) + result.response_time)
+                / metrics.total_attempts
+            )
+            metrics.avg_code_quality = (
+                (metrics.avg_code_quality * (metrics.total_attempts - 1) + result.code_quality)
+                / metrics.total_attempts
+            )
+            if result.was_successful:
+                metrics.cost_per_success = (
+                    (metrics.cost_per_success * (metrics.successful_attempts - 1) + result.cost)
+                    / metrics.successful_attempts
+                )
 
+        self._update_leading_models()
         self._save_metrics()
+
+    def get_models_for_role(self, role: ModelRole, count: Optional[int] = None) -> List[str]:
+        """Get the top performing models for a specific role.
+        
+        Args:
+            role: The role to get models for
+            count: Number of models to return, defaults to models_per_role
+            
+        Returns:
+            List of model names, ordered by performance
+        """
+        count = count or self.models_per_role
+        return self.leading_models[role][:count]
 
     def select_models(
         self, available_models: Set[str], is_cloud: Dict[str, bool], max_models: int = 3
