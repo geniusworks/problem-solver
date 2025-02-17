@@ -291,8 +291,7 @@ class BaseSolver:
             return None
 
         except Exception as e:
-            logging.error(f"Error solving problem: {str(e)}")
-            raise
+            raise  # Let the error propagate to the top level
 
     def _get_problem_type(self, characteristics: Dict[str, Any]) -> str:
         """Determine the problem type from characteristics."""

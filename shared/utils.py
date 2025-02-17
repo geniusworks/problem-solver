@@ -3,11 +3,13 @@
 import json
 import logging
 import time
+import requests
 import os
 import asyncio
 import re
 from datetime import datetime
 from pathlib import Path
+from shared.errors import SessionError
 from typing import Tuple, Dict, Any, Optional, List
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -119,6 +121,18 @@ def get_session_cookie() -> str:
         print("\nAOC_SESSION environment variable not set.")
         return _prompt_for_session()
     
+    # Validate the session cookie synchronously
+    url = "https://adventofcode.com/2024/day/1"
+    response = requests.get(
+        url,
+        cookies={"session": session_cookie},
+        headers={"User-Agent": config.USER_AGENT},
+        timeout=30,
+    )
+    
+    if response.status_code == 400:
+        raise SessionError("Authentication failed: Your session token appears to be invalid or expired. Please update AOC_SESSION in your .env file with a valid session cookie from adventofcode.com")
+    
     return session_cookie
 
 async def get_session_cookie_async() -> str:
@@ -180,9 +194,11 @@ async def make_request(url: str, timeout: int = 30) -> str:
         logger.debug("Request headers: %s", headers)
         async with session.get(url, headers=headers, timeout=timeout) as response:
             logger.debug("Response status: %d", response.status)
+            if response.status == 400:
+                raise SessionError("Authentication failed: Your session token appears to be invalid or expired. Please update AOC_SESSION in your .env file with a valid session cookie from adventofcode.com")
+            response.raise_for_status()
             text = await response.text()
             logger.debug("Response text length: %d characters", len(text))
-            response.raise_for_status()
             return text
 
 
@@ -447,27 +463,33 @@ def download_input(year: int, day: int) -> str:
         input_file = input_dir / "input.txt"
         if not input_file.exists():
             url = f"https://adventofcode.com/{year}/day/{day}/input"
-            response = requests.get(
-                url,
-                cookies={"session": session_cookie},
-                headers={"User-Agent": config.USER_AGENT},
-                timeout=30,
-            )
-            
-            if response.status_code == 404:
-                raise InputError(f"Input for year {year} day {day} is not available yet")
-            
-            response.raise_for_status()
+            logging.info(f"Attempting to download input from: {url}")
+            try:
+                response = requests.get(
+                    url,
+                    cookies={"session": session_cookie},
+                    headers={"User-Agent": config.USER_AGENT},
+                    timeout=30,
+                )
+                logging.info(f"Response status: {response.status_code}")
+                logging.info(f"Response headers: {response.headers}")
+                if response.status_code == 400:
+                    raise SessionError("Authentication failed: Your session token appears to be invalid or expired. Please update AOC_SESSION in your .env file with a valid session cookie from adventofcode.com")
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                logging.error(f"Request failed: {str(e)}")
+                if "404" in str(e):
+                    raise InputError(f"Input for year {year} day {day} is not available yet")
+                raise SessionError(f"Failed to download input: {str(e)}")
             input_file.write_text(response.text, encoding="utf-8")
 
         return input_file.read_text(encoding="utf-8")
         
-    except SessionError as e:
-        # Re-raise SessionError with the detailed message
-        raise
     except requests.exceptions.RequestException as e:
         if "404" in str(e):
             raise InputError(f"Input for year {year} day {day} is not available yet")
+        if "400" in str(e):
+            raise SessionError("Authentication failed: Your session token appears to be invalid or expired. Please update AOC_SESSION in your .env file with a valid session cookie from adventofcode.com")
         raise SessionError(f"Failed to download input: {str(e)}")
 
 

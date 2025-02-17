@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import NoReturn
 
 from shared.solver import BaseSolver
-from shared.utils import setup_logging
+from shared.utils import setup_logging, SessionError
 
 
 class ProblemSolver:
@@ -63,7 +63,10 @@ async def async_main() -> int:
             logging.error("No solution found")
             return 1
     except Exception as e:
-        logging.error(f"Error solving problem: {e}")
+        if isinstance(e, SessionError):
+            logging.error(f"Authentication Error: {e}")
+        else:
+            logging.error(f"Error solving problem: {e}")
         return 1
 
 

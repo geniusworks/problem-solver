@@ -2,6 +2,11 @@
 
 # Key Decisions
 
+## Error Handling and User Experience
+- **Authentication Error Handling** (2025-02-17): Improved error propagation and user feedback
+  - Rationale: Better user experience and easier debugging
+  - Impact: Clearer error messages and more reliable error handling
+
 ## Architecture and Design
 - **Input File Handling** (2025-01-18): Standardized on 'input.txt' in solution directories
   - Rationale: Improves portability and security
