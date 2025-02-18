@@ -3,6 +3,7 @@
 
 import sqlite3
 from pathlib import Path
+from typing import Optional
 
 
 def init_db(db_path: str = "solver.db", schema_path: Optional[str] = None) -> None:
