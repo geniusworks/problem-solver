@@ -20,7 +20,7 @@ class OllamaProvider(LLMProvider):
 
     AVAILABLE_MODELS = [
         "codellama:7b",
-        "deepseek-coder:latest",
+
         "mistral:7b",
         "qwen2.5-coder:latest"
     ]

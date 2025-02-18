@@ -2,6 +2,11 @@
 
 # Key Decisions
 
+## Model Integration and Configuration
+- **Model Registry Update** (2025-02-17): Removed Deepseek model from available models
+  - Rationale: Simplify model selection and focus on core models
+  - Impact: Reduced complexity and more focused model capabilities
+
 ## Error Handling and User Experience
 - **Authentication Error Handling** (2025-02-17): Improved error propagation and user feedback
   - Rationale: Better user experience and easier debugging

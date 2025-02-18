@@ -19,7 +19,7 @@ class ModelProvider(Enum):
     META = "meta"               # LLaMA models
     MICROSOFT = "microsoft"     # Phi models
     MISTRAL = "mistral"        # Mistral models
-    DEEPSEEK = "deepseek"      # Deepseek models
+
     ALIBABA = "alibaba"        # Qwen models
 
 
@@ -129,9 +129,7 @@ class ModelRegistry:
                 weaknesses={"complex_reasoning", "test_generation"},
                 best_roles={ModelRole.PRIMARY, ModelRole.VALIDATOR},
             )),
-            "deepseek-coder:latest": (7, ModelCharacteristics(
-                name="deepseek-coder:latest",
-                provider=ModelProvider.DEEPSEEK,
+
                 runner=ModelRunner.OLLAMA,
                 capabilities=ModelCapabilities(
                     max_context_length=8192, max_output_length=8192

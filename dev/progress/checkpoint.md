@@ -52,6 +52,7 @@ Note: Execute the above steps only on explicit wrap-up request.
 - Authentication: Improved error handling and user feedback ⚡
 - Input Retrieval: Ready for testing with valid session token 🔄
 - Problem Solving: Not started yet ⏳
+- Model Integration: Updated available models list 🔄
 
 ### Known Issues
 - Session token validation needs to be tested with valid token
@@ -86,13 +87,11 @@ Note: Execute the above steps only on explicit wrap-up request.
 #### Model Registry Updates
 - Updated model list to focus on efficient coding models:
   - codellama:7b (3.8GB) - Primary code generation
-  - deepseek-coder:latest - Code specialist with test generation
   - mistral:7b (4.1GB) - Strong general performer
   - qwen2.5-coder:latest (4.7GB) - Code completion expert
 - Added ALIBABA to ModelProvider enum for Qwen models
 - Removed larger models that exceed memory constraints
 - Updated model naming to match Ollama conventions
-- Enhanced Deepseek model capabilities to include test generation
 
 ### Component Status
 - Core solver: Stable, actively improving
@@ -102,7 +101,7 @@ Note: Execute the above steps only on explicit wrap-up request.
 ### Known Issues
 - Code quality scoring is currently using placeholder values (8.0 for success, 4.0 for failure)
 - Problem type classification returns "general" for all problems
-- Need to validate performance characteristics of Qwen and Deepseek models
+- Need to validate performance characteristics of Qwen model
 - Some larger models (>8GB) may cause OOM on 16GB systems under heavy load
 
 ### Next Steps
@@ -111,7 +110,6 @@ Note: Execute the above steps only on explicit wrap-up request.
 3. Gather real performance metrics for each model
 4. Consider adding memory monitoring to prevent OOM situations
 5. Test model combinations for optimal role assignments
-6. Evaluate Deepseek's test generation capabilities
 
 ## Development Roadmap
 
