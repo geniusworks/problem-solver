@@ -3,6 +3,16 @@
 # Key Decisions
 
 ## Learning System Architecture
+- **Prompt Format Update** (2025-02-17): Added explicit Python code output requirements
+  - Rationale: Ensure consistent code output format from LLMs
+  - Impact: More reliable code extraction and execution
+
+## Problem Solving Implementation
+- **Initial Debug Session** (2025-02-17): Identified key issues in problem-solving flow
+  - Rationale: Systematic debugging of first solve attempt
+  - Impact: Clear next steps for fixing example extraction and database issues
+
+## Learning System Architecture
 - **Database Consolidation** (2025-02-17): Unified all databases into single learning store
   - Rationale: Prevent multiple database instances and improve data consistency
   - Impact: Simplified database management and ensured data integrity
