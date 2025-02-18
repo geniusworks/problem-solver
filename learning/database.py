@@ -24,12 +24,11 @@ class LearningDatabase:
             db_dir = Path(__file__).parent.resolve()
         
         self.db_path = db_dir / "solver.db"
-        self.schema_path = db_dir / "schema.sql"
         
         # Initialize if needed
         if not self.db_path.exists():
             logger.info("Database not found. Initializing at %s", self.db_path)
-            init_db(str(self.db_path), str(self.schema_path))
+            init_db(str(self.db_path))
     
     @contextmanager
     def connect(self) -> Generator[sqlite3.Connection, None, None]:

@@ -5,16 +5,19 @@ import sqlite3
 from pathlib import Path
 
 
-def init_db(db_path: str = "solver.db", schema_path: str = "schema.sql") -> None:
+def init_db(db_path: str = "solver.db", schema_path: Optional[str] = None) -> None:
     """Initialize the database with the schema.
     
     Args:
         db_path: Path to the database file to create/update
-        schema_path: Path to the schema SQL file
+        schema_path: Optional path to the schema SQL file. If None, uses schema.sql from the learning module
     """
     # Get absolute paths
     db_path = Path(db_path).resolve()
-    schema_path = Path(schema_path).resolve()
+    if schema_path is None:
+        schema_path = Path(__file__).parent / 'schema.sql'
+    else:
+        schema_path = Path(schema_path).resolve()
     
     print(f"Initializing database at {db_path}")
     print(f"Using schema from {schema_path}")
