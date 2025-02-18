@@ -58,11 +58,13 @@ Note: Execute the above steps only on explicit wrap-up request.
 ### Known Issues
 - Session token validation needs to be tested with valid token
 - Need to document session token acquisition process in README
+- Need to verify database initialization works with consolidated schema
 
 ### Next Steps
 1. Test authentication flow with valid session token
 2. Document session token acquisition process
-3. Begin implementing problem-solving logic
+3. Verify database initialization with consolidated schema
+4. Begin implementing problem-solving logic
 
 ### Active Priorities
 - [HIGH] Complete authentication and input retrieval testing

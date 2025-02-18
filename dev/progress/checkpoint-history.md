@@ -6,6 +6,9 @@
 - **Database Consolidation** (2025-02-17): Unified all databases into single learning store
   - Rationale: Prevent multiple database instances and improve data consistency
   - Impact: Simplified database management and ensured data integrity
+- **Schema Management** (2025-02-17): Consolidated schema into single source of truth
+  - Rationale: Eliminate duplicate schema definitions and potential inconsistencies
+  - Impact: More maintainable codebase and reliable database structure
 
 ## Model Integration and Configuration
 - **Model Registry Update** (2025-02-17): Removed Deepseek model from available models
