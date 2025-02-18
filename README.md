@@ -97,9 +97,34 @@ An intelligent system for solving algorithmic programming problems using LLMs an
      ollama pull codellama:7b
      ```
 
-3. Run the solver:
+3. Configure environment:
+   - Create a `.env` file in the project root
+   - Add your Advent of Code session token:
+     ```bash
+     AOC_SESSION=your_session_cookie  # Get this from adventofcode.com cookies after logging in
+     ```
+   To get your session cookie:
+   1. Log in to adventofcode.com
+   2. Open browser developer tools (F12)
+   3. Go to Application/Storage -> Cookies
+   4. Copy the value of the 'session' cookie
+
+4. Run the solver:
    ```bash
-   python solve.py [problem_file]
+   # Activate virtual environment
+   source venv/bin/activate
+   
+   # Run test case (2024 Day 1 Part 1)
+   python solve.py --year 2024 --day 1 --part 1
+   ```
+   
+   Optional flags:
+   - `--force`: Force new solution even if already solved
+   - `--debug`: Enable debug logging
+   
+   You can also use the full path if not in the virtual environment:
+   ```bash
+   <project-root>/venv/bin/python <project-root>/solve.py --year 2024 --day 1 --part 1
    ```
 
 ## Solution File Structure
