@@ -22,7 +22,7 @@ from urllib3.util.retry import Retry
 
 from shared import config
 from shared.errors import ValidationError, SessionError, InputError
-from shared.parser import parse_problem_text as _parse_problem_text
+from shared.parser import parse_problem_text
 
 logger = logging.getLogger(__name__)
 
@@ -300,15 +300,25 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, A
         solving a part). Multiple solution attempts for the same part will
         use cached data.
     """
-    cache_file = Path(f"years/{year}/day{day:02d}/problem.html")
+    problem_dir = create_problem_dir(year, day)
+    cache_file = problem_dir / "problem.html"
     if cache_file.exists():
         logger.debug("Using cached problem text from %s", cache_file)
         with open(cache_file, "r", encoding="utf-8") as f:
             html = f.read()
         
-        # Get state and answers from cached HTML
+        # Parse HTML and extract examples
         soup = BeautifulSoup(html, "html.parser")
         state, part1_answer, part2_answer = await _get_problem_state(soup)
+        
+        # Extract examples from HTML before converting to text
+        examples = []
+        for article in soup.find_all("article", class_="day-desc"):
+            pre_blocks = article.find_all("pre")
+            for pre in pre_blocks:
+                code = pre.find("code")
+                if code:
+                    examples.append(code.get_text())
     else:
         logger.info(f"Fetching fresh problem text for year {year} day {day} part {part}")
         url = f"{config.AOC_BASE_URL}/{year}/day/{day}"
@@ -319,6 +329,15 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, A
         soup = BeautifulSoup(html, "html.parser")
         state, part1_answer, part2_answer = await _get_problem_state(soup)
         
+        # Extract examples from HTML before saving
+        examples = []
+        for article in soup.find_all("article", class_="day-desc"):
+            pre_blocks = article.find_all("pre")
+            for pre in pre_blocks:
+                code = pre.find("code")
+                if code:
+                    examples.append(code.get_text())
+
         # Save to cache
         meta = CacheMetadata(
             state=state,
@@ -327,6 +346,12 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, A
             part2_answer=part2_answer,
         )
         await _save_cache(year, day, html, meta)
+
+        # Save examples separately
+        if examples:
+            examples_path = cache_file.with_suffix(".examples.txt")
+            with open(examples_path, "w", encoding="utf-8") as f:
+                f.write("\n---\n".join(examples))
     
     # Return appropriate data based on part
     if part == 2:
@@ -347,6 +372,7 @@ async def ensure_problem_files(year: int, day: int) -> Dict[str, Path]:
     """
     # Create problem directory if it doesn't exist
     problem_dir = create_problem_dir(year, day)
+    cache_file = problem_dir / "problem.html"
 
     # Fetch problem text and examples
     html_text, soup, _ = await fetch_problem_text(year, day)
@@ -354,7 +380,8 @@ async def ensure_problem_files(year: int, day: int) -> Dict[str, Path]:
     save_to_file(config.PROBLEM_FILE, problem_text, problem_dir)
 
     # Extract and save examples from problem text
-    parsed_problem = parse_problem_text(problem_text)
+    examples_file = cache_file.with_suffix(".examples.txt")
+    parsed_problem = parse_problem_text(problem_text, examples_file)
     save_examples(parsed_problem.examples, problem_dir)
 
     # Fetch input data using the same soup object
@@ -368,9 +395,10 @@ async def ensure_problem_files(year: int, day: int) -> Dict[str, Path]:
     }
 
 
-def parse_problem_text(problem_text: str) -> Any:
+def parse_problem_text(problem_text: str, examples_file: Optional[Path] = None) -> Any:
     """Parse problem text into structured data."""
-    return _parse_problem_text(problem_text)
+    from shared.parser import parse_problem_text as _parse_problem_text
+    return _parse_problem_text(problem_text, examples_file)
 
 
 def save_examples(examples: List[Any], problem_dir: Path) -> None:

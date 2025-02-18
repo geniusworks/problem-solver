@@ -173,6 +173,66 @@ class ParsedProblem:
         )
 
 
+def _determine_example_purpose(context_before: str, context_after: str) -> ExamplePurpose:
+    """Determine the purpose of an example based on its surrounding context."""
+    context = (context_before + " " + context_after).lower()
+    
+    # Look for keywords indicating edge cases
+    edge_patterns = [
+        r'\bedge\s*case\b',
+        r'\bcorner\s*case\b',
+        r'\blimit\b.*\bcase\b',
+        r'\bextreme\b.*\bcase\b',
+        r'\bspecial\s*case\b'
+    ]
+    
+    for pattern in edge_patterns:
+        if re.search(pattern, context):
+            return ExamplePurpose.EDGE_CASE
+    
+    # Look for keywords indicating demonstration
+    demo_patterns = [
+        r'\bexample\b',
+        r'\bdemonstrat\w+\b',
+        r'\billustrat\w+\b',
+        r'\bshow\w*\s+how\b',
+        r'\bfor\s+instance\b'
+    ]
+    
+    for pattern in demo_patterns:
+        if re.search(pattern, context):
+            return ExamplePurpose.DEMONSTRATION
+    
+    # Default to unknown if no clear purpose found
+    return ExamplePurpose.UNKNOWN
+
+
+def _extract_examples_from_text(text: str) -> List[TestCase]:
+    """Extract examples from plain text version of problem.
+    This is a fallback when HTML parsing fails.
+    """
+    examples = []
+    # Look for code blocks that typically start with newlines and spaces
+    code_blocks = re.finditer(r'\n\s*(\d[^\n]+(?:\n\s+[^\n]+)*)', text)
+    for i, match in enumerate(code_blocks):
+        block = match.group(1).strip()
+        if block:
+            # Get some context before and after for determining purpose
+            start = max(0, match.start() - 200)
+            end = min(len(text), match.end() + 200)
+            context_before = text[start:match.start()]
+            context_after = text[match.end():end]
+            
+            examples.append(TestCase(
+                input_data=block,
+                expected_output="",  # Will try to find this in surrounding text
+                order=i,
+                purpose=_determine_example_purpose(context_before, context_after)
+            ))
+    
+    return examples
+
+
 def _extract_examples(article: BeautifulSoup) -> List[TestCase]:
     """Extract all examples from problem text with their context."""
     logger.debug("Starting example extraction...")
@@ -212,34 +272,66 @@ def _extract_examples(article: BeautifulSoup) -> List[TestCase]:
             
             context_after = article.get_text()[example_pos + len(code_content):next_pos].strip()
             
-            # Look for numbers in the context after that could be answers
+            # Look for expected output in various formats
             answer = None
             answer_type = None
-            context_text = context_after
+            context_text = context_after.lower()
             
-            # First try to find a number after "answer:" or similar
-            answer_match = re.search(r'(?:answer|output|result)[: ]+([-+]?[0-9]*\.?[0-9]+)', context_text.lower())
-            if answer_match:
-                answer_str = answer_match.group(1)
-                # Determine if it's an integer or float
-                if '.' in answer_str:
-                    answer = float(answer_str)
-                    answer_type = 'float'
-                else:
-                    answer = int(answer_str)
-                    answer_type = 'integer'
+            # Try to find output after various keywords
+            output_patterns = [
+                # Numeric patterns
+                (r'(?:answer|output|result)[: ]+([-+]?[0-9]*\.?[0-9]+)', 'numeric'),
+                # String patterns (in quotes)
+                (r'(?:answer|output|result)[: ]+["\']([^"\']*)["\'](\s|$)', 'string'),
+                # String patterns (without quotes)
+                (r'(?:answer|output|result)[: ]+([A-Za-z0-9_]+)\b', 'string'),
+                # List patterns
+                (r'(?:answer|output|result)[: ]+\[(.*?)\]', 'list'),
+                # Boolean patterns
+                (r'(?:answer|output|result)[: ]+(true|false)\b', 'boolean')
+            ]
+            
+            for pattern, type_name in output_patterns:
+                answer_match = re.search(pattern, context_text, re.IGNORECASE)
+                if answer_match:
+                    answer_str = answer_match.group(1).strip()
+                    if type_name == 'numeric':
+                        if '.' in answer_str:
+                            answer = float(answer_str)
+                            answer_type = 'float'
+                        else:
+                            answer = int(answer_str)
+                            answer_type = 'integer'
+                    elif type_name == 'string':
+                        answer = answer_str
+                        answer_type = 'string'
+                    elif type_name == 'list':
+                        answer = [x.strip() for x in answer_str.split(',')]
+                        answer_type = 'list'
+                    elif type_name == 'boolean':
+                        answer = answer_str.lower() == 'true'
+                        answer_type = 'boolean'
+                    break
+            
+            # If no explicit answer found, look for a code block immediately after
+            if answer is None and i + 1 < len(pre_blocks):
+                next_code = pre_blocks[i + 1].find("code")
+                if next_code and len(context_after.split()) < 20:  # Only if there's minimal text between
+                    answer = next_code.get_text().strip()
+                    answer_type = 'output_block'
             
             # Clean up input data - split into lines and remove extra whitespace
             input_lines = [line.strip() for line in code_content.split('\n') if line.strip()]
             examples.append(
                 TestCase(
                     input_data='\n'.join(input_lines),
-                    expected_output=answer if answer is not None else "",  # Allow empty expected output
-                    expected_type=answer_type,  # Store the type
-                    description=f"{context_before}\n\n{context_after}",  # Include full article context
+                    expected_output=str(answer) if answer is not None else "",
+                    expected_type=answer_type,
+                    description=f"{context_before}\n\n{context_after}",
                     order=len(examples),
                     demonstrates=set(),
                     referenced_by=[],
+                    purpose=_determine_example_purpose(context_before, context_after)
                 )
             )
             logger.debug("Added example with input and output")
@@ -278,9 +370,12 @@ def _extract_title(text: str) -> str:
     return lines[0] if lines else ""
 
 
-def _extract_part(text: str) -> int:
+def _extract_part(text: str) -> Optional[int]:
     """Extract the part number from problem text."""
-    # For now, assume part 1
+    # Look for Part Two heading
+    if "--- Part Two ---" in text:
+        return 2
+    # Look for Part One heading or assume part 1 if neither found
     return 1
 
 
@@ -318,51 +413,77 @@ def _extract_output_format(text: str) -> str:
     return ""
 
 
-def parse_problem_text(problem_text: str) -> ParsedProblem:
+def parse_problem_text(problem_text: str, examples_file: Optional[Path] = None) -> ParsedProblem:
     """Parse problem text into structured format.
 
     Args:
-        problem_text: Raw problem text
+        problem_text: Raw problem text (can be HTML or plain text)
+        examples_file: Optional path to a file containing pre-extracted examples
 
     Returns:
         ParsedProblem object
     """
     logger.debug("Starting problem text parsing...")
 
-    # Clean up HTML
-    soup = BeautifulSoup(problem_text, "html.parser")
-
-    # Extract article content if available
-    article = soup.find("article", class_="day-desc")
-    if article:
-        article = article
+    # Determine if input is HTML or plain text
+    is_html = "<" in problem_text and ">" in problem_text
+    
+    if is_html:
+        # Parse HTML
+        soup = BeautifulSoup(problem_text, "html.parser")
+        # Extract article content if available
+        articles = soup.find_all("article", class_="day-desc")
+        if articles:
+            # Use the appropriate article based on part number
+            part_text = soup.get_text()
+            part = _extract_part(part_text) or 1
+            article = articles[part - 1] if part <= len(articles) else articles[0]
+        else:
+            article = soup
+        text_content = article.get_text()
     else:
-        article = soup
+        # Use plain text directly
+        text_content = problem_text
+        article = None
 
-    # Extract examples
-    examples = _extract_examples(article)
+    # Try to load pre-extracted examples first
+    examples = []
+    if examples_file and examples_file.exists():
+        logger.debug(f"Loading pre-extracted examples from {examples_file}")
+        with open(examples_file, 'r', encoding='utf-8') as f:
+            example_texts = f.read().split('\n---\n')
+            for i, text in enumerate(example_texts):
+                examples.append(TestCase(
+                    input_data=text.strip(),
+                    expected_output="",  # Will try to find this in text
+                    order=i
+                ))
+    else:
+        # Fall back to extracting examples from text
+        logger.debug("No pre-extracted examples found, parsing from text")
+        examples = _extract_examples(article) if article else _extract_examples_from_text(text_content)
 
     # Extract constraints
-    constraints = _extract_constraints(article.get_text())
+    constraints = _extract_constraints(text_content)
 
     # Extract final question
-    final_question = _extract_final_question(article.get_text())
+    final_question = _extract_final_question(text_content)
 
     # Create ParsedProblem object
     logger.debug("Creating ParsedProblem object...")
     problem = ParsedProblem(
-        title=_extract_title(article.get_text()) or "Unknown Title",
-        description=article.get_text(),
-        part=_extract_part(article.get_text()) or 1,
+        title=_extract_title(text_content) or "Unknown Title",
+        description=text_content,
+        part=_extract_part(text_content) or 1,
         examples=examples,
         constraints=constraints,
-        input_format=_extract_input_format(article.get_text()),
-        output_format=_extract_output_format(article.get_text()),
+        input_format=_extract_input_format(text_content),
+        output_format=_extract_output_format(text_content),
         final_question=final_question
     )
 
     # Try alternate parsing strategies if no examples found
-    if not examples:
+    if not examples and article:
         logger.debug("No examples found, trying alternate parsing...")
         # Try finding pre blocks directly
         pre_blocks = article.find_all("pre")
@@ -385,8 +506,10 @@ def parse_problem_text(problem_text: str) -> ParsedProblem:
         for example in problem.examples:
             if not example.expected_output:
                 # Look for numbers following the example
-                text_after = article.get_text()[article.get_text().find(example.input_data) + len(example.input_data):]
-                numbers = re.findall(r'\b\d+\b', text_after[:200])  # Look in next 200 chars
+                search_text = article.get_text() if article else text_content
+                start_pos = search_text.find(example.input_data) + len(example.input_data)
+                text_after = search_text[start_pos:start_pos + 200]
+                numbers = re.findall(r'\b\d+\b', text_after)  # Look in next 200 chars
                 if numbers:
                     example.expected_output = numbers[0]
                     logger.debug(f"Found expected output: {example.expected_output}")

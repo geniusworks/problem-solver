@@ -2,6 +2,14 @@
 
 # Key Decisions
 
+## Problem Parsing and Example Extraction
+- **Example Extraction Improvement** (2025-02-18): Changed to HTML-first example extraction
+  - Rationale: More reliable extraction by using HTML structure before text conversion
+  - Impact: Better example detection and preservation of formatting
+- **Example Storage** (2025-02-18): Added separate .examples.txt storage
+  - Rationale: Easier access to examples and better separation of concerns
+  - Impact: More maintainable code and improved example handling
+
 ## Learning System Architecture
 - **Prompt Format Update** (2025-02-17): Added explicit Python code output requirements
   - Rationale: Ensure consistent code output format from LLMs

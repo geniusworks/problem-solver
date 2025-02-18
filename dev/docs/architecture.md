@@ -9,7 +9,10 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
 ### Problem Solving Pipeline
 
 1. **Problem Fetching & Parsing** (`shared/parser/`)
-   - Problem text and input parsing (`problem.py`)
+   - Problem text and input parsing (`parser.py`)
+     - HTML-first example extraction
+     - Separate example storage (.examples.txt)
+     - Fallback plain text parsing
    - Problem analysis and understanding (`analysis.py`)
    - Test case extraction and validation (`tests.py`)
 
