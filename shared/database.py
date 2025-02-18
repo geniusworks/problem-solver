@@ -10,7 +10,6 @@ from typing import Any, Dict, Generator, List, Optional, Tuple
 logger = logging.getLogger(__name__)
 
 from pathlib import Path
-from learning.init_db import init_db
 
 
 class LearningDatabase:
@@ -32,9 +31,7 @@ class LearningDatabase:
         # Initialize if needed
         if not self.db_path.exists():
             logger.info("Database not found. Initializing at %s", self.db_path)
-            init_db(str(self.db_path))
     
-
     @contextmanager
     def connect(self) -> Generator[sqlite3.Connection, None, None]:
         """Get a database connection with automatic cleanup."""
