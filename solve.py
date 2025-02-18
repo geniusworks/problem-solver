@@ -17,7 +17,7 @@ class ProblemSolver:
     """Main class for solving AoC problems with enhanced features."""
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args():
     """Parse command line arguments.
 
     Returns:
@@ -48,12 +48,12 @@ async def async_main() -> int:
     args = parse_args()
     
     # Set up logging
-    if args.debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-        logging.getLogger("shared").setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger("shared").setLevel(logging.DEBUG)
     
     try:
-        workspace_dir = Path(__file__).parent
+        workspace_dir = Path(__file__).parent.resolve()
+        workspace_dir.mkdir(parents=True, exist_ok=True)
         solver = BaseSolver(workspace_dir, debug=args.debug)
         solution = await solver.solve_problem(args.year, args.day, args.part, force=args.force)
         if solution:

@@ -79,20 +79,23 @@ def get_strategy_guidance(strategies: List[Strategy]) -> PromptSection:
 def get_implementation_requirements() -> PromptSection:
     """Get basic implementation requirements."""
     content = """Implementation Requirements:
-1. Input Handling:
+1. Output Format:
+   - Provide your solution as a complete Python script
+   - Place your code between ```python and ``` markers
+   - Include all necessary imports at the top of the file
+2. Input Handling:
    - Read input from 'input.txt' in the current directory
    - Assume the input file is in the same folder as your solution
-2. Process the input according to the problem description
-3. Data Type Handling:
+3. Process the input according to the problem description
+4. Data Type Handling:
    - Convert input strings to appropriate numeric types before calculations
    - Ensure all mathematical operations use numeric types (int/float), not strings
    - Handle any necessary type conversions early in your processing
-4. Return Value:
+5. Return Value:
    - Return ONLY the final numeric result (integer or float)
    - The result should be a raw number without text (e.g., '42' or '3.14')
    - Do not include labels, descriptions, or formatting
-5. Include necessary error handling and input validation
-6. Add any imports you need to solve the problem effectively"""
+6. Include necessary error handling and input validation"""
     
     return PromptSection("Requirements", content, priority=3)
 

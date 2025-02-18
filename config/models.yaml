@@ -5,7 +5,7 @@ defaults:
   timeout_seconds: 60
 
 models:
-  codellama-7b-instruct:
+  codellama:7b:
     size: 7
     context_length: 4096
     default_temperature: 0.1

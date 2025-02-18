@@ -1,2 +1,3 @@
 1. When starting a work session, review `dev/progress/checkpoint.md`
 2. When done with a work session, follow the disciplined wrap-up procedures in `dev/progress/checkpoint.md`
+3. Remember that any commands run in this project must be in the venv environment and/or full paths to executables must be used where applicable
