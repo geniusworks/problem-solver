@@ -20,7 +20,7 @@ class OllamaProvider(LLMProvider):
 
     AVAILABLE_MODELS = [
         "codellama:7b",
-
+        "codellama:7b-instruct",
         "mistral:7b",
         "qwen2.5-coder:latest"
     ]
@@ -241,7 +241,7 @@ Final Question: {problem.final_question}""")
             # Run Ollama with the prompt directly
             logger.debug("Running Ollama command...")
             process = await asyncio.create_subprocess_exec(
-                "ollama",
+                "/usr/local/bin/ollama",
                 "run",
                 self.model,
                 prompt,

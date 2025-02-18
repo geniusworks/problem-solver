@@ -7,8 +7,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Optional, List, Tuple, Any
 
-from .learning import StrategyResult, StrategyOptimizer, Strategy, ProblemCategory, SOLUTION_STRATEGIES, get_strategies_for_problem
-
 logger = logging.getLogger(__name__)
 
 
@@ -35,10 +33,9 @@ class SubmissionManager:
         self.history_file = workspace_dir / "submission_history.json"
         self.last_submission: Dict[str, datetime] = {}
         self.cooldown_periods: Dict[str, timedelta] = {}
-        self.strategy_optimizer = StrategyOptimizer(
-            workspace_dir / "learning",
-            workspace_dir
-        )
+        self.learning_database = None
+        self.learning_dir = workspace_dir / "learning"
+        self.learning_dir.mkdir(parents=True, exist_ok=True)
         self._load_history()
 
     def _load_history(self) -> None:
@@ -100,6 +97,7 @@ class SubmissionManager:
 
         # Record strategy result if metrics available
         if execution_metrics and strategies_used:
+            from learning.optimizer import StrategyResult, StrategyOptimizer, Strategy, ProblemCategory, SOLUTION_STRATEGIES, get_strategies_for_problem  # Lazy import
             strategy_result = StrategyResult(
                 problem_id=problem_key,
                 strategies_used=strategies_used,
@@ -109,13 +107,20 @@ class SubmissionManager:
                 attempts=self._get_attempt_count(problem_key),
                 failure_points=[result.error_message] if result.error_message else []
             )
-            self.strategy_optimizer.record_result(strategy_result)
+            if not self.learning_database:
+                from learning import LearningDatabase
+                self.learning_database = LearningDatabase(self.learning_dir)
+            strategy_optimizer = StrategyOptimizer(
+                self.learning_dir,
+                self.workspace_dir
+            )
+            strategy_optimizer.record_result(strategy_result)
 
     def get_recommended_strategies(
         self, problem_text: str, characteristics: Dict[str, Any]
-    ) -> Tuple[List[Strategy], Dict[str, float]]:
-        """Get recommended strategies based on problem characteristics.
-        
+    ) -> Tuple[List["Strategy"], Dict[str, float]]:
+        """Get the recommended strategies for a problem.
+
         Args:
             problem_text: The problem description text
             characteristics: Problem characteristics from analysis
@@ -124,9 +129,11 @@ class SubmissionManager:
             Tuple of (list of strategies, dict of strategy effectiveness scores)
         """
         # Get strategy names from problem text
+        from learning.optimizer import get_strategies_for_problem  # Lazy import
         strategy_names = get_strategies_for_problem(problem_text)
         
         # Look up the actual Strategy objects
+        from learning.optimizer import Strategy, ProblemCategory, SOLUTION_STRATEGIES  # Lazy import
         strategies = []
         for category in ProblemCategory:
             if category in SOLUTION_STRATEGIES:
@@ -135,7 +142,12 @@ class SubmissionManager:
                         strategies.append(strategy)
         
         # Get effectiveness scores from optimizer
-        effectiveness = self.strategy_optimizer.get_strategy_effectiveness(
+        from learning.optimizer import StrategyOptimizer  # Lazy import
+        strategy_optimizer = StrategyOptimizer(
+            self.learning_dir,
+            self.workspace_dir
+        )
+        effectiveness = strategy_optimizer.get_strategy_effectiveness(
             characteristics, [s.name for s in strategies]
         )
         
@@ -143,7 +155,8 @@ class SubmissionManager:
 
     def _get_attempt_count(self, problem_key: str) -> int:
         """Get the number of submission attempts for a problem."""
-        return sum(1 for result in self.strategy_optimizer.results 
+        from learning.optimizer import StrategyResult  # Lazy import
+        return sum(1 for result in StrategyResult.results 
                   if result.problem_id == problem_key)
 
     def can_submit(self, year: int, day: int, part: int) -> Tuple[bool, Optional[int]]:

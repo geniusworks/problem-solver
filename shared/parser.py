@@ -173,22 +173,11 @@ class ParsedProblem:
         )
 
 
-def _extract_examples(text: str) -> List[TestCase]:
+def _extract_examples(article: BeautifulSoup) -> List[TestCase]:
     """Extract all examples from problem text with their context."""
     logger.debug("Starting example extraction...")
     examples = []
 
-    # Parse HTML
-    soup = BeautifulSoup(text, "html.parser")
-    
-    # Get the full article content first
-    article = soup.find("article", class_="day-desc")
-    if not article:
-        logger.warning("No article found in problem text")
-        return examples
-        
-    article_text = article.get_text()
-    
     # Find all pre blocks
     pre_blocks = article.find_all("pre")
     logger.debug("Found %d pre blocks", len(pre_blocks))
@@ -204,24 +193,24 @@ def _extract_examples(text: str) -> List[TestCase]:
             logger.debug("Pre block %d content length: %d", i+1, len(code_content))
             
             # Find where this example occurs in the full article text
-            example_pos = article_text.find(code_content)
+            example_pos = article.get_text().find(code_content)
             if example_pos == -1:
                 continue
                 
             # Get all text before this example in the article
-            context_before = article_text[:example_pos].strip()
+            context_before = article.get_text()[:example_pos].strip()
             
             # Get all text after this example until the next example or end
-            next_pos = len(article_text)
+            next_pos = len(article.get_text())
             for next_block in pre_blocks[i+1:]:
                 next_content = next_block.find("code")
                 if next_content:
-                    pos = article_text.find(next_content.get_text())
+                    pos = article.get_text().find(next_content.get_text())
                     if pos != -1:
                         next_pos = pos
                         break
             
-            context_after = article_text[example_pos + len(code_content):next_pos].strip()
+            context_after = article.get_text()[example_pos + len(code_content):next_pos].strip()
             
             # Look for numbers in the context after that could be answers
             answer = None
@@ -342,42 +331,33 @@ def parse_problem_text(problem_text: str) -> ParsedProblem:
 
     # Clean up HTML
     soup = BeautifulSoup(problem_text, "html.parser")
-    for script in soup(["script", "style"]):
-        script.decompose()
-    cleaned_text = soup.get_text()
 
     # Extract article content if available
-    article = soup.find("article")
+    article = soup.find("article", class_="day-desc")
     if article:
-        logger.debug("Found article tag")
-        text = article.get_text()
+        article = article
     else:
-        logger.debug("No article tag found, using full text")
-        text = cleaned_text
+        article = soup
 
     # Extract examples
-    logger.debug("Extracting examples...")
-    examples = _extract_examples(problem_text)  # Use original HTML for better parsing
-    logger.debug(f"Found {len(examples)} examples")
+    examples = _extract_examples(article)
 
     # Extract constraints
-    logger.debug("Extracting constraints...")
-    constraints = _extract_constraints(text)
-    logger.debug(f"Found {len(constraints)} constraints")
+    constraints = _extract_constraints(article.get_text())
 
     # Extract final question
-    final_question = _extract_final_question(text)
+    final_question = _extract_final_question(article.get_text())
 
     # Create ParsedProblem object
     logger.debug("Creating ParsedProblem object...")
     problem = ParsedProblem(
-        title=_extract_title(text) or "Unknown Title",
-        description=text,
-        part=_extract_part(text) or 1,
+        title=_extract_title(article.get_text()) or "Unknown Title",
+        description=article.get_text(),
+        part=_extract_part(article.get_text()) or 1,
         examples=examples,
         constraints=constraints,
-        input_format=_extract_input_format(text),
-        output_format=_extract_output_format(text),
+        input_format=_extract_input_format(article.get_text()),
+        output_format=_extract_output_format(article.get_text()),
         final_question=final_question
     )
 
@@ -385,7 +365,7 @@ def parse_problem_text(problem_text: str) -> ParsedProblem:
     if not examples:
         logger.debug("No examples found, trying alternate parsing...")
         # Try finding pre blocks directly
-        pre_blocks = soup.find_all("pre")
+        pre_blocks = article.find_all("pre")
         if pre_blocks:
             logger.debug(f"Found {len(pre_blocks)} pre blocks directly")
             for i, block in enumerate(pre_blocks):
@@ -405,7 +385,7 @@ def parse_problem_text(problem_text: str) -> ParsedProblem:
         for example in problem.examples:
             if not example.expected_output:
                 # Look for numbers following the example
-                text_after = text[text.find(example.input_data) + len(example.input_data):]
+                text_after = article.get_text()[article.get_text().find(example.input_data) + len(example.input_data):]
                 numbers = re.findall(r'\b\d+\b', text_after[:200])  # Look in next 200 chars
                 if numbers:
                     example.expected_output = numbers[0]

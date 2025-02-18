@@ -1,26 +1,17 @@
 """Learning system for strategy optimization and feedback."""
 
-import dataclasses
-import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Set, Any
 from pathlib import Path
+import json
+import dataclasses
 
-from .database import LearningDatabase
-from .strategies import Strategy, ProblemCategory, SOLUTION_STRATEGIES, get_strategies_for_problem
 
 logger = logging.getLogger(__name__)
 
-@dataclass
-class StrategyResult:
-    """Records the effectiveness of a strategy."""
-    strategy_name: str
-    problem_characteristics: Dict[str, Any]
-    execution_time: float
-    memory_usage: float
-    was_successful: bool
+
 
 @dataclass
 class StrategyResultForProblem:
@@ -37,13 +28,14 @@ class StrategyResultForProblem:
 
 class StrategyOptimizer:
     """Learns and optimizes strategy selection."""
-    
-    def __init__(self, learning_dir: Path, workspace_dir: Path):
-        """Initialize the strategy optimizer.
-        
+
+    def __init__(self, learning_dir: Path, workspace_dir: Path, db: 'LearningDatabase'):
+        """Initialize the strategy optimizer."
+
         Args:
             learning_dir: Directory for storing learning data
             workspace_dir: Directory for storing database
+            db: LearningDatabase instance
         """
         self.learning_dir = learning_dir
         self.learning_dir.mkdir(parents=True, exist_ok=True)
@@ -52,7 +44,7 @@ class StrategyOptimizer:
         self._load_results()
         
         self.workspace_dir = workspace_dir
-        self.db = LearningDatabase(workspace_dir)
+        self.db = db
         self.problem_results: List[StrategyResultForProblem] = []
 
     def _load_results(self) -> None:
@@ -95,21 +87,22 @@ class StrategyOptimizer:
     def get_strategy_effectiveness(
         self, characteristics: Dict[str, Any], strategy_names: List[str]
     ) -> Dict[str, float]:
-        """Get effectiveness scores for strategies.
+        """Get the effectiveness of a strategy.
         
         Args:
             characteristics: Problem characteristics
-            strategy_names: List of strategy names to get scores for
-            
+            strategy_names: List of strategy names
+        
         Returns:
-            Dict mapping strategy names to effectiveness scores
+            Dictionary of strategy effectiveness
         """
-        # For now just return equal weights
-        # TODO: Implement actual learning based on results
-        return {name: 1.0 for name in strategy_names}
+        # TODO: Implement strategy effectiveness calculation
+        return {name: 0.5 for name in strategy_names}  # Placeholder implementation
 
-    def analyze_failures(self) -> Dict[str, List[str]]:
-        """Analyze common failure patterns and their relationships to strategies."""
+    def update_strategy_weights(self) -> None:
+        """Update strategy weights based on past performance."""
+        # TODO: Implement strategy weight update logic
+        logger.info("Updating strategy weights...")
         failure_patterns: Dict[str, List[str]] = {}
         
         # Group failures by strategy combinations
@@ -123,56 +116,37 @@ class StrategyOptimizer:
         # Deduplicate and sort failure points
         return {k: sorted(set(v)) for k, v in failure_patterns.items()}
 
-    def get_recommended_strategies(self, problem_characteristics: Dict[str, float]) -> List[str]:
-        """Get weighted strategy recommendations for a problem."""
-        # First, check for similar problems
-        similar_problems = self.db.get_similar_problems(problem_characteristics)
+    def get_failure_patterns(self) -> Dict[str, List[str]]:
+        """Get failure patterns for strategy combinations."""
+        failure_patterns: Dict[str, List[str]] = {}
         
-        # Get successful strategies from similar problems
-        strategy_scores: Dict[str, float] = {}
-        for problem in similar_problems:
-            if problem['successful_strategies']:
-                similarity = problem['similarity']
-                for strategy in problem['successful_strategies']:
-                    if strategy not in strategy_scores:
-                        strategy_scores[strategy] = 0.0
-                    strategy_scores[strategy] += similarity
+        # Group failures by strategy combinations
+        for result in self.problem_results:
+            if not result.success:
+                strategy_key = ','.join(sorted(result.strategies_used))
+                if strategy_key not in failure_patterns:
+                    failure_patterns[strategy_key] = []
+                failure_patterns[strategy_key].extend(result.failure_points)
         
-        # Combine with general strategy weights
-        weights = self.db.get_strategy_weights()
-        for strategy, metrics in weights.items():
-            if strategy not in strategy_scores:
-                strategy_scores[strategy] = 0.0
-            strategy_scores[strategy] += metrics['weight'] * 0.5  # Balance with similarity scores
-        
-        # Sort and return top strategies
-        sorted_strategies = sorted(
-            strategy_scores.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
-        return [s[0] for s in sorted_strategies]
+        # Deduplicate and sort failure points
+        return {k: sorted(set(v)) for k, v in failure_patterns.items()}
 
-    def update_strategy_weights(self) -> None:
-        """Update strategy weights based on their effectiveness."""
-        effectiveness = self.get_strategy_effectiveness({}, list(SOLUTION_STRATEGIES.keys()))
+    def update_model_performance(self, model_name: str, category: str, success: bool) -> None:
+        """Update model performance metrics.
         
-        # Calculate new weights based on success rate and performance
-        new_weights = {}
-        for strategy, metrics in effectiveness.items():
-            # Combine metrics into a single weight
-            # Higher success rate and lower resource usage = higher weight
-            weight = (
-                metrics * 0.6 +  # Prioritize success
-                0.2 +  # Lower time is better
-                0.2  # Lower memory is better
-            )
-            new_weights[strategy] = {
-                'weight': weight,
-                'success_rate': metrics,
-                'avg_execution_time': 0.0,
-                'avg_memory_usage': 0.0
-            }
+        Args:
+            model_name: Name of the model
+            category: Category of the model
+            success: Whether the model was successful
+        """
+        # TODO: Implement model performance update logic
+        logger.info(f"Updating model performance for {model_name} in {category}...")
+
+        # Example: Update database
+        new_weights = {
+            "model1": 0.8,
+            "model2": 0.6
+        }
         
         # Update database
         if new_weights:
