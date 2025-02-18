@@ -133,7 +133,8 @@ class LearningDatabase:
             List of (model_name, success_rate) tuples sorted by success rate.
         """
         with self.connect() as conn:
-            return conn.execute(
+            logger.info(f"Getting top models for problem_type={problem_type}, role={role}")
+            models = conn.execute(
                 """
                 SELECT model_name, success_rate 
                 FROM model_performance
@@ -144,3 +145,5 @@ class LearningDatabase:
                 """,
                 (problem_type, role, min_success_rate),
             ).fetchall()
+            logger.info(f"Found models: {models}")
+            return models
