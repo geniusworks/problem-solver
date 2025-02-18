@@ -51,6 +51,7 @@ class StrategyOptimizer:
         self._load_results()
         
         self.workspace_dir = workspace_dir
+        from .database import LearningDatabase  # Lazy import
         self.db = LearningDatabase(workspace_dir)
         self.problem_results: List[StrategyResultForProblem] = []
 

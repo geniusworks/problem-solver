@@ -44,11 +44,11 @@ CREATE TABLE IF NOT EXISTS model_performance (
     problem_type TEXT NOT NULL,      -- Category of problem
     role TEXT NOT NULL,              -- Model's role (primary, reviewer, etc.)
     success_rate REAL NOT NULL,      -- 0.0 to 1.0
-    avg_quality_score REAL,          -- Code quality metric
-    avg_response_time REAL,          -- In seconds
-    cost_per_token REAL,             -- In USD
-    last_updated TEXT NOT NULL,      -- ISO timestamp
-    PRIMARY KEY(model_name, problem_type, role)
+    response_time REAL NOT NULL,
+    cost REAL NOT NULL,
+    quality_score REAL NOT NULL,
+    avg_quality_score REAL NOT NULL DEFAULT 0.0,
+    UNIQUE(model_name, problem_type, role)
 );
 
 -- Collaborative improvement tracking
