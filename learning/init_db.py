@@ -29,9 +29,11 @@ def init_db(db_path: str = "solver.db", schema_path: Optional[str] = None) -> No
     
     # Connect and initialize
     with sqlite3.connect(db_path) as conn:
-        conn.executescript(schema_sql)
+        statements = schema_sql.split(';')
+        for statement in statements:
+            if statement.strip():
+                conn.execute(statement)
         conn.commit()
-        conn.close()
     
     print("Database initialized successfully!")
 
