@@ -65,16 +65,20 @@ An intelligent system for solving algorithmic programming problems using LLMs an
 ## Components
 
 ### Problem Analysis
-- `shared/parser/problem.py`: Problem parsing and structure analysis
-- `shared/parser/analysis.py`: Deep problem understanding
-- `shared/strategies/base.py`: Solution strategy framework
-- `shared/strategies/patterns.py`: Pattern recognition and application
+- `shared/parser.py`: Problem parsing and example extraction
+  - HTML-first example extraction
+  - Separate example storage (.examples.txt)
+  - Fallback plain text parsing
+- `shared/analysis.py`: Deep problem understanding
+- `learning/strategies.py`: Solution strategy framework
+- `learning/patterns.py`: Pattern recognition and application
 
 ### LLM Integration
 - `shared/llm/base.py`: Base LLM provider interface
 - `shared/llm/local.py`: Local LLM implementation (Ollama)
 - `shared/llm/prompts.py`: Dynamic prompt generation
 - `shared/llm/models.py`: Model management and selection
+- `learning/database.py`: Model performance tracking
 
 ### Solution Management
 - `solutions/`: Generated solution implementations

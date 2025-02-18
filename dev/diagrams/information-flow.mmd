@@ -9,7 +9,7 @@ sequenceDiagram
     participant Executor as Solution Executor
     participant Submit as Submission Manager
 
-    Note over Cache: Problem Directory Structure:<br/>years/YYYY/dayXX/<br/>- attempts/<br/>- examples/<br/>- input.txt<br/>- problem.txt<br/>- problem.html<br/>- problem_meta.json
+    Note over Cache: Problem Directory Structure:<br/>years/YYYY/dayXX/<br/>- attempts/<br/>- examples/<br/>- input.txt<br/>- problem.txt<br/>- problem.html<br/>- problem.examples.txt<br/>- problem_meta.json
 
     alt Cache exists
         Cache->>Parser: Load cached problem.html
@@ -19,6 +19,8 @@ sequenceDiagram
         Cache->>Parser: Pass HTML
     end
 
+    Parser->>Parser: Extract examples from HTML
+    Parser->>Cache: Save examples to .examples.txt
     Parser->>Parser: parse_problem_text()
     Parser->>Strategy: Analyze problem characteristics
     Strategy->>Strategy: get_strategies_for_problem()
