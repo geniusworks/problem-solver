@@ -9,85 +9,8 @@ from typing import Any, Dict, Generator, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_SQL = """
--- Strategy results for each solution attempt
-CREATE TABLE IF NOT EXISTS strategy_results (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    problem_id TEXT NOT NULL,  -- Format: YYYY_dayDD_partN
-    timestamp TEXT NOT NULL,   -- ISO format
-    strategies_used TEXT NOT NULL,  -- JSON array of strategy names
-    success BOOLEAN NOT NULL,
-    execution_time REAL,       -- In seconds
-    memory_usage INTEGER,      -- In bytes
-    attempts INTEGER,          -- Number of attempts before success/giving up
-    failure_points TEXT,       -- JSON array of failure descriptions
-    generation_time REAL,      -- Time to generate solution
-    code_size INTEGER,         -- Size of solution in bytes
-    UNIQUE(problem_id, timestamp)
-);
-
--- Strategy weights and effectiveness
-CREATE TABLE IF NOT EXISTS strategy_weights (
-    strategy_name TEXT PRIMARY KEY,
-    success_rate REAL NOT NULL,      -- 0.0 to 1.0
-    avg_execution_time REAL,         -- In seconds
-    avg_memory_usage INTEGER,        -- In bytes
-    avg_attempts INTEGER,            -- Average attempts when this strategy is used
-    total_uses INTEGER NOT NULL,     -- Total times this strategy was used
-    last_updated TEXT NOT NULL,      -- ISO timestamp
-    problem_types TEXT               -- JSON array of problem types this works well for
-);
-
--- Problem characteristics and patterns
-CREATE TABLE IF NOT EXISTS problem_characteristics (
-    problem_id TEXT PRIMARY KEY,     -- Format: YYYY_dayDD_partN
-    characteristics TEXT NOT NULL,    -- JSON object of problem features
-    successful_strategies TEXT,       -- JSON array of strategies that worked
-    solution_metrics TEXT,           -- JSON object with solution metrics
-    attempt_history TEXT,            -- JSON array of attempt summaries
-    last_updated TEXT NOT NULL       -- ISO timestamp
-);
-
--- Model performance tracking
-CREATE TABLE IF NOT EXISTS model_performance (
-    model_name TEXT NOT NULL,
-    problem_type TEXT NOT NULL,
-    role TEXT NOT NULL,
-    success_rate REAL NOT NULL,
-    avg_quality_score REAL NOT NULL,
-    avg_response_time REAL NOT NULL,
-    cost_per_token REAL NOT NULL,
-    last_updated TEXT NOT NULL,
-    PRIMARY KEY (model_name, problem_type, role)
-);
-
--- Improvement history
-CREATE TABLE IF NOT EXISTS improvement_history (
-    problem_id TEXT NOT NULL,
-    iteration INTEGER NOT NULL,
-    model_name TEXT NOT NULL,
-    improvement_type TEXT NOT NULL,
-    impact_score REAL NOT NULL,
-    timestamp TEXT NOT NULL,
-    PRIMARY KEY (problem_id, iteration)
-);
-
--- Create indexes for common queries
-CREATE INDEX IF NOT EXISTS idx_strategy_results_problem 
-ON strategy_results(problem_id);
-
-CREATE INDEX IF NOT EXISTS idx_problem_characteristics_type
-ON problem_characteristics(problem_type);
-
-CREATE INDEX IF NOT EXISTS idx_model_performance_role
-ON model_performance(role);
-
-CREATE INDEX IF NOT EXISTS idx_model_performance_type
-ON model_performance(problem_type);
-
-CREATE INDEX IF NOT EXISTS idx_improvement_history_model
-ON improvement_history(model_name);
-"""
+from pathlib import Path
+from learning.init_db import init_db
 
 
 class LearningDatabase:
@@ -113,9 +36,8 @@ class LearningDatabase:
     
     def _init_db(self) -> None:
         """Initialize the database with the schema."""
-        with self.connect() as conn:
-            conn.executescript(SCHEMA_SQL)
-            conn.commit()
+        schema_path = Path(__file__).parent.parent / 'learning' / 'schema.sql'
+        init_db(str(self.db_path), str(schema_path))
     
     @contextmanager
     def connect(self) -> Generator[sqlite3.Connection, None, None]:
