@@ -2,6 +2,11 @@
 
 # Key Decisions
 
+## Learning System Architecture
+- **Database Consolidation** (2025-02-17): Unified all databases into single learning store
+  - Rationale: Prevent multiple database instances and improve data consistency
+  - Impact: Simplified database management and ensured data integrity
+
 ## Model Integration and Configuration
 - **Model Registry Update** (2025-02-17): Removed Deepseek model from available models
   - Rationale: Simplify model selection and focus on core models

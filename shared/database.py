@@ -104,7 +104,7 @@ class LearningDatabase:
         
         self.db_dir = workspace_dir / "learning"
         self.db_dir.mkdir(parents=True, exist_ok=True)
-        self.db_path = self.db_dir / "solver.db"
+        self.db_path = Path(__file__).parent.parent / 'learning' / 'solver.db'
         
         # Initialize if needed
         if not self.db_path.exists():

@@ -109,7 +109,7 @@ class AdaptiveSolver:
 
         # Initialize performance tracking
         self.performance_tracker = PerformanceTracker(
-            performance_db or Path("model_performance.db")
+            performance_db or (Path(__file__).parent.parent.parent / 'learning' / 'solver.db')
         )
         
         # Initialize optimizers with performance data
