@@ -21,7 +21,7 @@ class LearningDatabase:
             db_dir: Directory containing the database. If None, uses the learning directory.
         """
         if db_dir is None:
-            db_dir = Path(__file__).parent.resolve()
+            db_dir = Path.cwd()
         
         self.db_path = db_dir / "solver.db"
         
@@ -119,3 +119,27 @@ class LearningDatabase:
                 ),
             )
             conn.commit()
+
+    def get_top_models(self, problem_type: str, role: str, min_success_rate: float = 0.5) -> List[Tuple[str, float]]:
+        """Get top performing models for a given problem type and role.
+        
+        Args:
+            problem_type: Type of problem (e.g. 'string', 'math', etc.)
+            role: Role the model plays (e.g. 'solver', 'reviewer', etc.)
+            min_success_rate: Minimum success rate to consider
+            
+        Returns:
+            List of (model_name, success_rate) tuples sorted by success rate.
+        """
+        with self.connect() as conn:
+            return conn.execute(
+                """
+                SELECT model_name, success_rate 
+                FROM model_performance
+                WHERE problem_type = ? 
+                AND role = ?
+                AND success_rate >= ?
+                ORDER BY success_rate DESC
+                """,
+                (problem_type, role, min_success_rate),
+            ).fetchall()
