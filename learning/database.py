@@ -21,7 +21,7 @@ class LearningDatabase:
             db_dir: Directory containing the database. If None, uses the learning directory.
         """
         if db_dir is None:
-            db_dir = Path.cwd()
+            db_dir = Path(__file__).parent
         
         self.db_path = db_dir / "solver.db"
         
