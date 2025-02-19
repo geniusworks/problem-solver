@@ -139,15 +139,20 @@ class StrategyOptimizer:
             category: Category of the model
             success: Whether the model was successful
         """
-        # TODO: Implement model performance update logic
         logger.info(f"Updating model performance for {model_name} in {category}...")
 
-        # Example: Update database
-        new_weights = {
-            "model1": 0.8,
-            "model2": 0.6
+        # Calculate basic metrics
+        metrics = {
+            "success_rate": 1.0 if success else 0.0,
+            "response_time": 0.0,  # TODO: Add timing
+            "code_quality": 0.0,   # TODO: Add code quality metrics
         }
         
-        # Update database
-        if new_weights:
-            self.db.update_strategy_weights(new_weights)
+        # Update database with model performance
+        self.db.update_model_performance(
+            model_id=model_name,  # Use model name as ID for now
+            metrics=metrics,
+            success=success,
+            problem_type=category
+        )
+        # TODO: Add strategy weight updates based on performance

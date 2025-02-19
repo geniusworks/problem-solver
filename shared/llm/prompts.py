@@ -78,24 +78,58 @@ def get_strategy_guidance(strategies: List[Strategy]) -> PromptSection:
 
 def get_implementation_requirements() -> PromptSection:
     """Get basic implementation requirements."""
-    content = """Implementation Requirements:
-1. Output Format:
-   - Provide your solution as a complete Python script
-   - Place your code between ```python and ``` markers
-   - Include all necessary imports at the top of the file
+    content = """⚠️ CRITICAL REQUIREMENTS - READ CAREFULLY ⚠️
+
+YOU MUST PROVIDE A COMPLETE, RUNNABLE PYTHON SOLUTION. NO EXCEPTIONS.
+
+❌ DO NOT:
+- Provide partial solutions or pseudo-code
+- Include explanations or analysis outside the code block
+- Ask questions or request clarifications
+- Suggest multiple approaches
+- Use placeholder code or TODOs
+
+✅ YOU MUST:
+1. Code Format:
+   - Wrap your COMPLETE solution in ```python and ``` markers
+   - Include ALL necessary imports at the top
+   - Make the code ready to run without any modifications
+   - Follow PEP 8 style guidelines
+
 2. Input Handling:
-   - Read input from 'input.txt' in the current directory
-   - Assume the input file is in the same folder as your solution
-3. Process the input according to the problem description
-4. Data Type Handling:
-   - Convert input strings to appropriate numeric types before calculations
-   - Ensure all mathematical operations use numeric types (int/float), not strings
-   - Handle any necessary type conversions early in your processing
-5. Return Value:
-   - Return ONLY the final numeric result (integer or float)
-   - The result should be a raw number without text (e.g., '42' or '3.14')
-   - Do not include labels, descriptions, or formatting
-6. Include necessary error handling and input validation"""
+   - Read from 'input.txt' in the current directory
+   - Use proper file error handling (FileNotFoundError, etc.)
+   - Handle malformed input gracefully
+   - Close file handles properly
+
+3. Solution Requirements:
+   - Process input EXACTLY as specified in the problem
+   - Convert strings to appropriate types (int/float)
+   - Use efficient data structures and algorithms
+   - Include comprehensive error handling
+   - Follow all problem constraints
+
+4. Output Format:
+   - Print ONLY the final answer
+   - No labels, descriptions, or formatting
+   - Raw number output only (e.g., '42' or '3.14')
+   - Single print statement for the answer
+
+Example of CORRECT response format:
+```python
+from typing import List
+import sys
+
+def solve() -> int:
+    with open('input.txt') as f:
+        # Solution implementation
+        return answer
+
+if __name__ == '__main__':
+    print(solve())
+```
+
+⚠️ IF YOUR RESPONSE DOES NOT MATCH THIS FORMAT EXACTLY, IT WILL BE REJECTED ⚠️"""
     
     return PromptSection("Requirements", content, priority=3)
 

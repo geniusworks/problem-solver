@@ -218,12 +218,14 @@ class BaseSolver:
                             self.db = LearningDatabase(learning_dir)
                         self.db.update_model_performance(
                             model_name=model_name,
-                            problem_type=problem_type,
-                            role="primary",
+                            metrics={
+                                "quality_score": 8.0,  # TODO: Implement code quality scoring
+                                "response_time": response_time,
+                                "cost": 0.0  # Local models have no cost
+                            },
                             success=True,
-                            quality_score=8.0,  # TODO: Implement code quality scoring
-                            response_time=response_time,
-                            cost=0.0  # Local models have no cost
+                            problem_type=problem_type,
+                            role="primary"
                         )
                     else:
                         failures.append((model_name, "Failed validation"))
@@ -234,12 +236,14 @@ class BaseSolver:
                             self.db = LearningDatabase(learning_dir)
                         self.db.update_model_performance(
                             model_name=model_name,
-                            problem_type=problem_type,
-                            role="primary",
+                            metrics={
+                                "quality_score": 4.0,
+                                "response_time": response_time,
+                                "cost": 0.0
+                            },
                             success=False,
-                            quality_score=4.0,
-                            response_time=response_time,
-                            cost=0.0
+                            problem_type=problem_type,
+                            role="primary"
                         )
                         
                 except Exception as e:
@@ -248,12 +252,14 @@ class BaseSolver:
                         self.db = LearningDatabase(Path(__file__).parent.parent / 'learning')
                     self.db.update_model_performance(
                         model_name=model_name,
-                        problem_type=problem_type,
-                        role="primary",
+                        metrics={
+                            "quality_score": 0.0,
+                            "response_time": 0.0,
+                            "cost": 0.0
+                        },
                         success=False,
-                        quality_score=0.0,
-                        response_time=0.0,
-                        cost=0.0
+                        problem_type=problem_type,
+                        role="primary"
                     )
 
             # If we have answers, try to reach consensus
@@ -317,6 +323,35 @@ class BaseSolver:
         logging.info(f"Top models: {models}")
         return models
 
+    def _get_consensus_answer(self, answers: Dict[str, str]) -> Optional[str]:
+        """Get consensus answer from multiple model outputs.
+        
+        Args:
+            answers: Dictionary mapping model names to their answers
+            
+        Returns:
+            The consensus answer if one exists, None otherwise
+        """
+        if not answers:
+            return None
+            
+        # Count occurrences of each answer
+        answer_counts = {}
+        for answer in answers.values():
+            answer_counts[answer] = answer_counts.get(answer, 0) + 1
+            
+        # Find most common answer
+        max_count = max(answer_counts.values())
+        consensus_answers = [
+            answer for answer, count in answer_counts.items() 
+            if count == max_count
+        ]
+        
+        # Only return consensus if there's a clear winner
+        if len(consensus_answers) == 1 and max_count >= 2:
+            return consensus_answers[0]
+        return None
+
     def _print_consensus_summary(self, answers: Dict[str, Any], failures: List[tuple], consensus_answer: Optional[str], consensus_models: List[str]) -> None:
         """Print a summary of the consensus results."""
         logging.info("")  # Single blank line before summary
@@ -333,7 +368,7 @@ class BaseSolver:
             logging.info("No consensus reached")
             logging.info("Model answers:")
             for model, data in answers.items():
-                logging.info(f"  {model}: {data['answer']}")
+                logging.info(f"  {model}: {data}")
             logging.info("")  # Single blank line after answers
 
     async def _get_existing_solution(

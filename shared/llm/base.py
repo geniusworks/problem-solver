@@ -57,3 +57,17 @@ class LLMProvider(ABC):
     def is_local(self) -> bool:
         """Return whether this is a local provider."""
         pass
+
+    @abstractmethod
+    async def improve_solution(self, solution: str, problem, feedback: Optional[str] = None) -> str:
+        """Improve an existing solution based on feedback.
+
+        Args:
+            solution: The current solution code
+            problem: The problem being solved
+            feedback: Optional feedback about what needs improvement
+
+        Returns:
+            Improved solution code
+        """
+        pass

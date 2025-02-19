@@ -312,6 +312,38 @@ Final Question: {problem.final_question}""")
     @property
     def is_local(self) -> bool:
         return True
+        
+    async def improve_solution(self, solution: str, problem, feedback: Optional[str] = None) -> str:
+        """Improve an existing solution based on feedback.
+
+        Args:
+            solution: The current solution code
+            problem: The problem being solved
+            feedback: Optional feedback about what needs improvement
+
+        Returns:
+            Improved solution code
+        """
+        prompt = f"""Here is a Python solution that needs improvement:
+
+```python
+{solution}
+```
+
+Problem Description:
+{problem.description}
+
+Examples:
+{format_test_cases(problem.examples)}
+
+Final Question: {problem.final_question}
+
+{'Feedback: ' + feedback if feedback else 'Please improve this solution while maintaining the exact same output format.'}
+
+Provide ONLY the improved code between ```python and ``` markers. Do not include any explanations."""
+
+        response = await self.generate(prompt)
+        return self._extract_code(response.content) or solution  # Return original if no valid code found
 
 
 class LMStudioProvider(LLMProvider):
@@ -340,6 +372,10 @@ class LMStudioProvider(LLMProvider):
         self, solution: str, test_cases: List[Dict[str, str]]
     ) -> bool:
         """Validate solution using LM Studio."""
+        raise NotImplementedError("LM Studio provider is not fully implemented yet")
+
+    async def improve_solution(self, solution: str, problem, feedback: Optional[str] = None) -> str:
+        """Improve an existing solution based on feedback."""
         raise NotImplementedError("LM Studio provider is not fully implemented yet")
 
     @property

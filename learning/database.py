@@ -85,85 +85,69 @@ class LearningDatabase:
 
     def update_model_performance(
         self,
-        model_id: str,
+        model_name: str,
         metrics: Dict[str, float],
         success: bool,
-        problem_type: Optional[str] = None
+        problem_type: str = 'general',
+        role: str = 'primary'
     ) -> None:
         """Update performance metrics for a model.
         
         Args:
-            model_id: Identifier for the model
+            model_name: Name of the model
             metrics: Dictionary of metric names to values
             success: Whether the model succeeded at its task
-            problem_type: Optional type of problem being solved
+            problem_type: Type of problem being solved
+            role: Role of the model (primary, reviewer, etc.)
         """
         with self.connect() as conn:
             cursor = conn.cursor()
             
-            # Check if model exists
+            # Check if model exists for this problem type and role
             cursor.execute(
-                "SELECT model_id FROM model_performance WHERE model_id = ?",
-                (model_id,)
+                """SELECT model_name 
+                   FROM model_performance 
+                   WHERE model_name = ? AND problem_type = ? AND role = ?""",
+                (model_name, problem_type, role)
             )
             exists = cursor.fetchone() is not None
             
             if exists:
                 # Update existing record
-                update_fields = [
-                    f"{metric} = ({metric} * attempts + ?) / (attempts + 1)"
-                    for metric in metrics.keys()
-                ]
-                update_fields.append("attempts = attempts + 1")
-                update_fields.append("successes = successes + ?")
-                update_fields.append("last_update = ?")
-                
-                sql = f"""
-                UPDATE model_performance 
-                SET {', '.join(update_fields)}
-                WHERE model_id = ?
-                """
-                
-                params = (
-                    *metrics.values(),  # Current metric values
-                    int(success),      # Success count increment
-                    datetime.now(),    # Last update timestamp
-                    model_id           # WHERE clause
+                cursor.execute(
+                    """UPDATE model_performance
+                       SET success_rate = ?,
+                           response_time = ?,
+                           cost = ?,
+                           quality_score = ?
+                       WHERE model_name = ? AND problem_type = ? AND role = ?""",
+                    (
+                        1.0 if success else 0.0,
+                        metrics.get('response_time', 0.0),
+                        metrics.get('cost', 0.0),
+                        metrics.get('quality_score', 0.0),
+                        model_name,
+                        problem_type,
+                        role
+                    )
                 )
-                
             else:
                 # Insert new record
-                metric_fields = list(metrics.keys())
-                placeholders = ['?'] * (len(metric_fields) + 4)  # +4 for attempts, successes, last_update, model_id
-                
-                sql = f"""
-                INSERT INTO model_performance 
-                (model_id, attempts, successes, last_update, {', '.join(metric_fields)})
-                VALUES ({', '.join(placeholders)})
-                """
-                
-                params = (
-                    model_id,        # model_id
-                    1,              # attempts
-                    int(success),   # successes
-                    datetime.now(), # last_update
-                    *metrics.values() # metric values
-                )
-            
-            cursor.execute(sql, params)
-            
-            # Update problem type stats if provided
-            if problem_type:
                 cursor.execute(
-                    """
-                    INSERT INTO model_problem_types 
-                    (model_id, problem_type, attempts, successes) 
-                    VALUES (?, ?, 1, ?)
-                    ON CONFLICT(model_id, problem_type) DO UPDATE SET
-                    attempts = attempts + 1,
-                    successes = successes + ?
-                    """,
-                    (model_id, problem_type, int(success), int(success))
+                    """INSERT INTO model_performance
+                       (model_name, problem_type, role, success_rate, 
+                        response_time, cost, quality_score, avg_quality_score)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        model_name,
+                        problem_type,
+                        role,
+                        1.0 if success else 0.0,
+                        metrics.get('response_time', 0.0),
+                        metrics.get('cost', 0.0),
+                        metrics.get('quality_score', 0.0),
+                        metrics.get('quality_score', 0.0)  # Initial avg same as current
+                    )
                 )
             
             conn.commit()
