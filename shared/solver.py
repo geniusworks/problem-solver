@@ -200,14 +200,23 @@ class BaseSolver:
                     end_time = datetime.now()
                     response_time = (end_time - start_time).total_seconds()
                     
-                    # Temporarily disable validation
+                    # Analyze code quality
+                    from quality.code_quality import CodeQualityAnalyzer
+                    analyzer = CodeQualityAnalyzer()
+                    quality_metrics = analyzer.analyze(solution)
+                    
+                    # Validate solution
                     is_valid = True
-                    # for validator_name in validator_models:
-                    #     if validator_name in self.models:
-                    #         validator = self.models[validator_name]
-                    #         if not await validator.validate_solution(solution, parsed_problem.test_cases):
-                    #             is_valid = False
-                    #             break
+                    validation_errors = []
+                    for validator_name in validator_models:
+                        if validator_name in self.models:
+                            validator = self.models[validator_name]
+                            try:
+                                if not await validator.validate_solution(solution, parsed_problem.test_cases):
+                                    is_valid = False
+                                    validation_errors.append(f"Failed {validator_name} validation")
+                            except Exception as e:
+                                validation_errors.append(f"{validator_name} validation error: {str(e)}")
                     
                     if is_valid:
                         answers[model_name] = solution
@@ -219,16 +228,19 @@ class BaseSolver:
                         self.db.update_model_performance(
                             model_name=model_name,
                             metrics={
-                                "quality_score": 8.0,  # TODO: Implement code quality scoring
+                                "quality_score": quality_metrics.overall_score * 10.0,  # Convert to 0-10 scale
                                 "response_time": response_time,
-                                "cost": 0.0  # Local models have no cost
+                                "cost": 0.0,  # Local models have no cost
+                                "complexity_score": quality_metrics.cyclomatic_complexity,
+                                "maintainability_score": quality_metrics.maintainability_index,
+                                "error_handling_score": quality_metrics.error_handling_score
                             },
                             success=True,
                             problem_type=problem_type,
                             role="primary"
                         )
                     else:
-                        failures.append((model_name, "Failed validation"))
+                        failures.append((model_name, "; ".join(validation_errors)))
                         
                         # Record failed attempt in learning system
                         if not self.db:
@@ -237,9 +249,12 @@ class BaseSolver:
                         self.db.update_model_performance(
                             model_name=model_name,
                             metrics={
-                                "quality_score": 4.0,
+                                "quality_score": quality_metrics.overall_score * 10.0,
                                 "response_time": response_time,
-                                "cost": 0.0
+                                "cost": 0.0,
+                                "complexity_score": quality_metrics.cyclomatic_complexity,
+                                "maintainability_score": quality_metrics.maintainability_index,
+                                "error_handling_score": quality_metrics.error_handling_score
                             },
                             success=False,
                             problem_type=problem_type,
@@ -255,7 +270,10 @@ class BaseSolver:
                         metrics={
                             "quality_score": 0.0,
                             "response_time": 0.0,
-                            "cost": 0.0
+                            "cost": 0.0,
+                            "complexity_score": 0.0,
+                            "maintainability_score": 0.0,
+                            "error_handling_score": 0.0
                         },
                         success=False,
                         problem_type=problem_type,
@@ -264,7 +282,22 @@ class BaseSolver:
 
             # If we have answers, try to reach consensus
             if answers:
-                consensus_answer = self._get_consensus_answer(answers)
+                # Get quality metrics for all solutions
+                from quality.code_quality import CodeQualityAnalyzer
+                analyzer = CodeQualityAnalyzer()
+                quality_scores = {}
+                
+                for model_name, solution in answers.items():
+                    metrics = analyzer.analyze(solution)
+                    quality_scores[model_name] = metrics.overall_score
+                
+                # Weight solutions by quality score when determining consensus
+                weighted_answers = {}
+                for model_name, solution in answers.items():
+                    weight = quality_scores[model_name]
+                    weighted_answers[model_name] = (solution, weight)
+                
+                consensus_answer = self._get_weighted_consensus_answer(weighted_answers)
                 if consensus_answer:
                     # Record the consensus in the solution directory
                     solution_file = record_solution(
@@ -272,33 +305,58 @@ class BaseSolver:
                     )
                     return consensus_answer
 
-            # If no consensus, try review and improvement
+            # If no consensus, try collaborative improvement
             if len(answers) > 0:
-                best_answer = next(iter(answers.values()))  # Get first answer
-                for reviewer_name in reviewer_models:
-                    if reviewer_name in self.models:
-                        reviewer = self.models[reviewer_name]
-                        try:
-                            improved = await reviewer.improve_solution(best_answer, parsed_problem)
-                            if improved and improved != best_answer:
-                                # Record improvement attempt
-                                if not self.db:
-                                    from learning import LearningDatabase
-                                    self.db = LearningDatabase(learning_dir)
-                                    self.db.record_improvement(
-                                    problem_id=f"{year}_day{day:02d}_part{part}",
-                                    model_name=reviewer_name,
-                                    improvement_type="code_quality",
-                                    impact_score=0.8  # TODO: Calculate actual impact
-                                )
-                                
-                                # Validate improved solution
-                                if all(
-                                    await self.models[v].validate_solution(improved, parsed_problem.test_cases)
-                                    for v in validator_models
-                                    if v in self.models
-                                ):
-                                    return improved
+                # Select best solution as starting point based on quality score
+                best_model = max(quality_scores.items(), key=lambda x: x[1])[0]
+                best_answer = answers[best_model]
+                
+                # Initialize collaborative improvement
+                from llm.collaborative import CollaborativeImprovement
+                collaborator = CollaborativeImprovement(
+                    [self.models[name] for name in reviewer_models if name in self.models],
+                    max_iterations=3
+                )
+                
+                try:
+                    # Attempt collaborative improvement
+                    improved_candidate = await collaborator.improve_solution(best_answer)
+                    
+                    if improved_candidate and improved_candidate.solution != best_answer:
+                        # Analyze improvement impact
+                        original_metrics = analyzer.analyze(best_answer)
+                        improved_metrics = analyzer.analyze(improved_candidate.solution)
+                        impact_score = improved_metrics.overall_score - original_metrics.overall_score
+                        
+                        # Record improvement attempt
+                        if not self.db:
+                            from learning import LearningDatabase
+                            self.db = LearningDatabase(learning_dir)
+                        self.db.record_improvement(
+                            problem_id=f"{year}_day{day:02d}_part{part}",
+                            model_name=improved_candidate.author,
+                            improvement_type="collaborative",
+                            impact_score=impact_score
+                        )
+                        
+                        # Validate improved solution
+                        validation_success = True
+                        for validator_name in validator_models:
+                            if validator_name in self.models:
+                                validator = self.models[validator_name]
+                                try:
+                                    if not await validator.validate_solution(
+                                        improved_candidate.solution,
+                                        parsed_problem.test_cases
+                                    ):
+                                        validation_success = False
+                                        break
+                                except Exception:
+                                    validation_success = False
+                                    break
+                                    
+                        if validation_success:
+                            return improved_candidate.solution
                         except Exception as e:
                             logging.warning(f"Reviewer {reviewer_name} failed: {str(e)}")
 
@@ -323,31 +381,41 @@ class BaseSolver:
         logging.info(f"Top models: {models}")
         return models
 
-    def _get_consensus_answer(self, answers: Dict[str, str]) -> Optional[str]:
-        """Get consensus answer from multiple model outputs.
+    def _get_weighted_consensus_answer(
+        self, weighted_answers: Dict[str, Tuple[str, float]]
+    ) -> Optional[str]:
+        """Get consensus answer from multiple model outputs, weighted by confidence.
         
         Args:
-            answers: Dictionary mapping model names to their answers
+            weighted_answers: Dictionary mapping model names to (answer, weight) tuples
             
         Returns:
             The consensus answer if one exists, None otherwise
         """
-        if not answers:
+        if not weighted_answers:
             return None
             
-        # Count occurrences of each answer
-        answer_counts = {}
-        for answer in answers.values():
-            answer_counts[answer] = answer_counts.get(answer, 0) + 1
-            
-        # Find most common answer
-        max_count = max(answer_counts.values())
-        consensus_answers = [
-            answer for answer, count in answer_counts.items() 
-            if count == max_count
-        ]
+        # Group identical answers and sum their weights
+        answer_groups: Dict[str, float] = {}
+        for model_name, (answer, weight) in weighted_answers.items():
+            if answer in answer_groups:
+                answer_groups[answer] += weight
+            else:
+                answer_groups[answer] = weight
+                
+        # Find answer with highest total weight
+        best_answer = max(answer_groups.items(), key=lambda x: x[1])[0]
+        best_weight = answer_groups[best_answer]
         
-        # Only return consensus if there's a clear winner
+        # Only return consensus if weight is significantly higher than others
+        total_weight = sum(answer_groups.values())
+        if best_weight / total_weight >= 0.6:  # At least 60% agreement
+            return best_answer
+            
+        return None
+
+
+
         if len(consensus_answers) == 1 and max_count >= 2:
             return consensus_answers[0]
         return None

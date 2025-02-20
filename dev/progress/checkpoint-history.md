@@ -2,6 +2,13 @@
 
 # Key Decisions
 
+## Model Consensus System Enhancement
+- **Weighted Consensus Implementation** (2025-02-20): Implemented weighted consensus system
+  - Rationale: Improve solution quality by considering model confidence and performance
+  - Impact: More reliable consensus decisions based on model weights
+  - Technical: Uses 60% weight threshold for consensus
+
+
 ## Model Consensus and Review System
 - **Reviewer Functionality** (2025-02-19): Added improve_solution capability to LLM providers
   - Rationale: Enable models to review and improve each other's solutions
