@@ -51,7 +51,8 @@ Note: Execute the above steps only on explicit wrap-up request.
 ### Component Status
 - Authentication: Improved error handling and user feedback ⚡
 - Input Retrieval: Ready for testing with valid session token ⚡
-- Core Solver: Pipeline enabled; integration tests for `solve.py` and solver flows are passing ⚡
+- Core Solver: Pipeline enabled; integration tests for `solve.py` and solver flows are passing;
+  execution-based candidate selection fallback implemented ⚡
 - Model Integration: Curated local model list for M1 16GB-class hardware and Ollama preflight
   check in place 🔄
 - Learning System: Database and schema implemented; model performance updates now include

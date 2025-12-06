@@ -341,11 +341,13 @@ class BaseSolver:
                     )
 
             # If we have answers, try to reach consensus
+            consensus_answer: Optional[str] = None
+            quality_scores: Dict[str, float] = {}
+            analyzer = None
             if answers:
                 # Get quality metrics for all solutions
                 from shared.quality.code_quality import CodeQualityAnalyzer
                 analyzer = CodeQualityAnalyzer()
-                quality_scores = {}
                 
                 for model_name, solution in answers.items():
                     metrics = analyzer.analyze(solution)
@@ -419,6 +421,69 @@ class BaseSolver:
                             return improved_candidate.solution
                 except Exception as e:
                     logging.warning(f"Collaborative improvement failed: {str(e)}")
+
+            # If we still have answers but no consensus or collaborative improvement result,
+            # run each candidate through execution-based validation against examples and
+            # full input, and prefer the first that passes.
+            if answers:
+                # Build execution test cases from parsed examples when available
+                exec_test_cases: List[TestCase] = []
+                for example in getattr(parsed_problem, "examples", []) or []:
+                    input_data = getattr(example, "input_data", None)
+                    expected_output = getattr(example, "expected_output", None)
+                    if input_data is None or expected_output in (None, ""):
+                        continue
+                    exec_test_cases.append(
+                        TestCase(
+                            input_data=str(input_data),
+                            expected_output=str(expected_output),
+                            description=getattr(example, "description", None),
+                        )
+                    )
+
+                validated_candidates: List[Tuple[str, str]] = []
+                for model_name, solution in answers.items():
+                    try:
+                        example_results, full_result, full_answer = (
+                            await self.solution_executor.test_solution(
+                                solution_code=solution,
+                                year=year,
+                                day=day,
+                                part=part,
+                                test_cases=exec_test_cases,
+                                model_name=model_name,
+                                debug=self.debug,
+                            )
+                        )
+
+                        # All available example runs must be error-free (or there may be
+                        # no extracted examples at all), and we require a successful
+                        # full-input run with a non-empty answer.
+                        if example_results and any(
+                            r.error is not None for r in example_results
+                        ):
+                            continue
+                        if not full_result or full_result.error is not None:
+                            continue
+                        if not full_answer:
+                            continue
+
+                        validated_candidates.append((model_name, solution))
+                    except Exception:
+                        # Any execution failure disqualifies this candidate
+                        continue
+
+                if validated_candidates:
+                    # If we have quality scores from earlier, prefer the highest; otherwise
+                    # fall back to the first validated candidate.
+                    if quality_scores:
+                        validated_candidates.sort(
+                            key=lambda item: quality_scores.get(item[0], 0.0),
+                            reverse=True,
+                        )
+                    chosen_model, chosen_solution = validated_candidates[0]
+                    record_solution(year, day, part, chosen_model, chosen_solution)
+                    return chosen_solution
 
             # If we get here, we failed to solve the problem
             self._print_consensus_summary(answers, failures, None, [])

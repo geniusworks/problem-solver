@@ -33,6 +33,7 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
    - Safe code execution environment
    - Resource monitoring and limits
    - Performance metrics collection
+   - Execution-based candidate selection after consensus using example and full-input runs
    - Attempt tracking and analysis
 
 4. **Learning System** (`learning/`)

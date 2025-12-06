@@ -207,12 +207,16 @@ problem-solver/
   run of `solve.py` for 2024 Day 01 Part 1.
 - Weighted consensus and collaborative improvement flows are exercised by integration tests;
   problem type classification is implemented and feeds model selection and learning.
+- After consensus (and optional collaborative improvement) fails to choose a solution, the
+  solver now uses execution-based selection: candidate solutions are executed against AoC
+  examples and full input via `SolutionExecutor.test_solution`, and any passing candidate is
+  selected before falling back to "no solution".
 - Code quality scoring is implemented via `CodeQualityAnalyzer` and integrated into
   `LearningDatabase.update_model_performance` calls.
 - Local model list is curated for M1 16GB-class hardware and checked against Ollama at startup;
   if none of the configured models are installed, the solver raises a clear message listing the
   models to install.
-- The current test suite passes locally (42/42) with `PYTHONPATH=. venv/bin/pytest`.
+- The current test suite passes locally (43/43) with `PYTHONPATH=. venv/bin/pytest`.
 
 ## Features in Development
 
