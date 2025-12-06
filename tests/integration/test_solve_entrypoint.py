@@ -71,6 +71,11 @@ async def test_solve_entrypoint_end_to_end(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(solver_module, "parse_problem_text", lambda text: DummyParsedProblem())
 
     monkeypatch.setattr(solver_module, "OllamaProvider", DummyModel)
+    monkeypatch.setattr(
+        solver_module.BaseSolver,
+        "_resolve_available_models",
+        lambda self: DummyModel.AVAILABLE_MODELS,
+    )
     monkeypatch.setattr(cq, "CodeQualityAnalyzer", DummyCodeQualityAnalyzer)
     monkeypatch.setattr(solver_module, "record_solution", lambda *args, **kwargs: None)
     monkeypatch.setattr(

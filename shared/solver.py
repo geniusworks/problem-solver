@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import List, Tuple, Optional, Dict, Any, Union
 from datetime import datetime
 from enum import Enum
+import requests
+from requests import RequestException
 from shared.errors import ValidationError, ExecutionError
 from shared.execution import SolutionExecutor, TestCase
 from shared.llm.local import OllamaProvider
@@ -107,11 +109,60 @@ class BaseSolver:
         self.strategy_optimizer = None
         self.db = None
         
-        # Initialize all available models
+        # Initialize all available models, preferring those actually installed in Ollama
+        model_names = self._resolve_available_models()
         self.models = {
             model: OllamaProvider(model=model, debug=debug)
-            for model in OllamaProvider.AVAILABLE_MODELS
+            for model in model_names
         }
+
+    def _resolve_available_models(self) -> List[str]:
+        """Determine which configured local models are available via Ollama.
+
+        If Ollama is unreachable or returns an unexpected response, fall back to the
+        statically configured AVAILABLE_MODELS list. If Ollama is reachable but none
+        of the configured models are installed, raise a clear error so users know
+        which models to install.
+        """
+        host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+        url = f"{host.rstrip('/')}/api/tags"
+
+        try:
+            response = requests.get(url, timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            installed = {
+                m.get("name")
+                for m in data.get("models", [])
+                if isinstance(m, dict) and m.get("name")
+            }
+
+            if not installed:
+                # Nothing reported; keep configured list
+                return list(OllamaProvider.AVAILABLE_MODELS)
+
+            # Intersect configured models with installed models, preserving order
+            filtered = [
+                model
+                for model in OllamaProvider.AVAILABLE_MODELS
+                if model in installed
+            ]
+
+            if not filtered:
+                configured = ", ".join(OllamaProvider.AVAILABLE_MODELS)
+                raise RuntimeError(
+                    "No configured local models are installed in Ollama at "
+                    f"{host}. Please install at least one of: {configured}"
+                )
+
+            return filtered
+        except RequestException:
+            # Ollama not reachable; keep configured list so environments without
+            # Ollama can still run tests and other parts of the system.
+            return list(OllamaProvider.AVAILABLE_MODELS)
+        except ValueError:
+            # Malformed JSON or unexpected response; fall back to configured list
+            return list(OllamaProvider.AVAILABLE_MODELS)
 
     async def solve_problem(
         self, year: int, day: int, part: int, force: bool = False
