@@ -3,7 +3,7 @@
 ### 1. Solver Pipeline & AoC Integration
 - [x] Remove the debug `exit()` and fix `learning_dir` initialization in `BaseSolver.solve_problem`.
 - [x] Add an integration test that drives `solve.py` for 2024 Day 01 Part 1 (with a stub or local model) and verifies end-to-end behavior.
-- [ ] Clarify and, if needed, update AoC utilities (such as `get_problem_year_day`) for the 12-day AoC 2025 format.
+- [x] Clarify and, if needed, update AoC utilities (such as `get_problem_year_day`) for the 12-day AoC 2025 format.
 
 ### 2. Consensus, Validation, and Learning
 - [ ] Test and refine the weighted consensus system with real problems and add unit tests for `_get_weighted_consensus_answer`.

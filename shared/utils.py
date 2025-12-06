@@ -68,6 +68,11 @@ def setup_logging(year: Optional[int] = None, day: Optional[int] = None):
     logging.getLogger("asyncio").setLevel(logging.INFO)
 
 
+def get_aoc_day_count(year: int) -> int:
+    """Return the number of Advent of Code days for a given year."""
+    return 25 if year < 2025 else 12
+
+
 def get_problem_year_day() -> Tuple[int, int]:
     """
     Get the current Advent of Code year and day.
@@ -75,8 +80,13 @@ def get_problem_year_day() -> Tuple[int, int]:
     Otherwise, default to the most recent December.
     """
     now = datetime.now()
-    year = now.year if now.month == 12 else now.year - 1
-    day = min(now.day if now.month == 12 else 25, 25)
+
+    if now.month == 12:
+        year = now.year
+        day = min(now.day, get_aoc_day_count(year))
+    else:
+        year = now.year - 1
+        day = get_aoc_day_count(year)
     return year, day
 
 
