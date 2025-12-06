@@ -33,6 +33,12 @@ class LearningDatabase:
             logger.info("Database not found. Initializing at %s", self.db_path)
             schema_path = Path(__file__).parent / 'schema.sql'
             init_db(str(db_dir), db_path="solver.db", schema_path=str(schema_path))
+        
+        # Ensure schema migrations are applied (e.g., newly added columns)
+        try:
+            self._ensure_schema()
+        except Exception as e:
+            logger.warning("Schema check/update failed: %s", e)
     
     @contextmanager
     def connect(self) -> Generator[sqlite3.Connection, None, None]:
@@ -42,6 +48,23 @@ class LearningDatabase:
             yield conn
         finally:
             conn.close()
+
+    def _ensure_schema(self) -> None:
+        """Apply lightweight schema migrations if needed.
+        Currently ensures 'avg_quality_score' exists on model_performance.
+        """
+        with self.connect() as conn:
+            cursor = conn.cursor()
+            # Inspect model_performance columns
+            cursor.execute("PRAGMA table_info(model_performance)")
+            cols = {row[1] for row in cursor.fetchall()}
+            
+            # Add missing avg_quality_score column if absent
+            if 'avg_quality_score' not in cols:
+                cursor.execute(
+                    "ALTER TABLE model_performance ADD COLUMN avg_quality_score REAL NOT NULL DEFAULT 0.0"
+                )
+                conn.commit()
     
     def record_strategy_result(
         self,

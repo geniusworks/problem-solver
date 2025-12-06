@@ -3,7 +3,10 @@
 import json
 import logging
 import re
-from bs4 import BeautifulSoup
+try:
+    from bs4 import BeautifulSoup  # type: ignore
+except Exception:  # ImportError or others
+    BeautifulSoup = None  # Fallback to plain-text parsing when bs4 unavailable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -37,6 +40,15 @@ class TestCase:
         default_factory=list
     )  # Parts of text referencing this example
     purpose: Optional[ExamplePurpose] = None  # Purpose of this example
+
+    # Compatibility aliases used by tests
+    @property
+    def input(self) -> str:  # pragma: no cover - simple alias
+        return self.input_data
+
+    @property
+    def expected(self) -> str:  # pragma: no cover - simple alias
+        return self.expected_output
 
 
 @dataclass
@@ -211,8 +223,24 @@ def _extract_examples_from_text(text: str) -> List[TestCase]:
     """Extract examples from plain text version of problem.
     This is a fallback when HTML parsing fails.
     """
-    examples = []
-    # Look for code blocks that typically start with newlines and spaces
+    examples: List[TestCase] = []
+    # First, handle simple line-based patterns like "input => output"
+    pair_re = re.compile(r"^\s*(.+?)\s*=>\s*(.+?)\s*$")
+    lines = [ln for ln in text.splitlines()]
+    for ln in lines:
+        m = pair_re.match(ln)
+        if m:
+            left, right = m.group(1).strip(), m.group(2).strip()
+            examples.append(TestCase(
+                input_data=left,
+                expected_output=right,
+                order=len(examples)
+            ))
+
+    if examples:
+        return examples
+
+    # Fallback: Look for code-like blocks and infer expected value later
     code_blocks = re.finditer(r'\n\s*(\d[^\n]+(?:\n\s+[^\n]+)*)', text)
     for i, match in enumerate(code_blocks):
         block = match.group(1).strip()
@@ -222,14 +250,14 @@ def _extract_examples_from_text(text: str) -> List[TestCase]:
             end = min(len(text), match.end() + 200)
             context_before = text[start:match.start()]
             context_after = text[match.end():end]
-            
+
             examples.append(TestCase(
                 input_data=block,
                 expected_output="",  # Will try to find this in surrounding text
                 order=i,
                 purpose=_determine_example_purpose(context_before, context_after)
             ))
-    
+
     return examples
 
 
@@ -428,7 +456,7 @@ def parse_problem_text(problem_text: str, examples_file: Optional[Path] = None) 
     # Determine if input is HTML or plain text
     is_html = "<" in problem_text and ">" in problem_text
     
-    if is_html:
+    if is_html and BeautifulSoup is not None:
         # Parse HTML
         soup = BeautifulSoup(problem_text, "html.parser")
         # Extract article content if available

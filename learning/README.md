@@ -30,13 +30,13 @@ The SQLite database tracks:
 
 The learning system is integrated into the main solver through:
 
-1. **Strategy Selection** (`shared/learning.py`)
+1. **Strategy Selection** (`learning/optimizer.py`)
    ```python
    optimizer = StrategyOptimizer(learning_dir, workspace_dir)
    strategies = optimizer.get_recommended_strategies(problem_characteristics)
    ```
 
-2. **Result Recording** (`shared/database.py`)
+2. **Result Recording** (`learning/database.py`)
    ```python
    db = LearningDatabase(workspace_dir)
    db.store_result(
@@ -82,24 +82,24 @@ The learning system is automatically used by the solver, but you can also:
 
 1. **View Strategy Stats**
    ```python
-   from shared.database import LearningDatabase
-   
-   db = LearningDatabase()
-   stats = db.get_strategy_weights()
-   ```
+from learning.database import LearningDatabase
+
+db = LearningDatabase()
+stats = db.get_strategy_weights()
+```
 
 2. **Analyze Patterns**
    ```python
-   from shared.learning import StrategyOptimizer
-   
-   optimizer = StrategyOptimizer()
-   patterns = optimizer.analyze_failures()
-   ```
+from learning.optimizer import StrategyOptimizer
+
+optimizer = StrategyOptimizer(learning_dir, workspace_dir)
+patterns = optimizer.analyze_failures()
+```
 
 3. **Reset Learning**
    ```bash
    rm learning/solver.db
-   python -c "from shared.database import LearningDatabase; LearningDatabase()"
+   python -c "from learning.database import LearningDatabase; LearningDatabase()"
    ```
 
 ## Development

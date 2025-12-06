@@ -338,28 +338,37 @@ class PerformanceTracker:
         # Start with base success rate from characteristics
         base_rate = chars.performance.success_rate
 
-        # Adjust based on problem type if available
-        if problem_type:
-            problem_type = problem_type.lower()
+        # Adjust based on problem type if available (safely normalize)
+        pt = None
+        if problem_type is not None:
+            if isinstance(problem_type, str):
+                pt = problem_type.lower()
+            else:
+                try:
+                    pt = str(problem_type).lower()
+                except Exception:
+                    pt = None
+
+        if pt:
             for known_type, weights in self.DEFAULT_PROBLEM_TYPES.items():
-                if known_type in problem_type:
+                if known_type in pt:
                     category_name = chars.category.name
                     type_weight = weights.get(category_name, 0.7)
                     base_rate *= type_weight
                     break
 
         # Adjust based on model strengths
-        if problem_type:
+        if pt:
             strength_bonus = 0.1 if any(
-                strength in problem_type 
+                strength in pt 
                 for strength in chars.strengths
             ) else 0.0
             base_rate += strength_bonus
 
         # Adjust based on model weaknesses
-        if problem_type:
+        if pt:
             weakness_penalty = 0.1 if any(
-                weakness in problem_type 
+                weakness in pt 
                 for weakness in chars.weaknesses
             ) else 0.0
             base_rate -= weakness_penalty

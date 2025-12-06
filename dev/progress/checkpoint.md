@@ -51,28 +51,31 @@ Note: Execute the above steps only on explicit wrap-up request.
 ### Component Status
 - Authentication: Improved error handling and user feedback ⚡
 - Input Retrieval: Ready for testing with valid session token ⚡
-- Problem Solving: Enhanced weighted consensus system implemented ⚡
+- Core Solver: Pipeline present but not fully enabled; end-to-end solving currently stops after debug logging ⚠️
 - Model Integration: Updated available models list and prompt format 🔄
-- Learning System: Database initialization fixed ⚡
+- Learning System: Database and schema implemented; integration in the main solving path needs validation 🔄
 
 ### Known Issues
-- New weighted consensus system needs testing with real problems
-- Code quality scoring system not yet implemented
-- Solution validation needs enhancement
-- Review system functionality needs verification
+- Base solver pipeline exits early after logging problem text, preventing end-to-end consensus solving.
+- Inconsistent `learning_dir` initialization paths in `BaseSolver` and learning database usage.
+- Weighted consensus system and collaborative review flows are untested with real problems.
+- Code quality scoring integrated into the learning database is incomplete and unvalidated.
+- Problem type classification currently returns `"general"` for all problems.
+- Core solver, LLM integration, validator, quality, and learning modules have low test coverage.
 
 ### Next Steps
-1. Test new weighted consensus system with real problems
-2. Add unit tests for weighted consensus implementation
-3. Implement comprehensive code quality scoring
-4. Enhance solution validation with better test coverage
-5. Verify and improve reviewer functionality
+1. Enable the full solver pipeline (remove debug exit, fix learning database initialization) and verify with an end-to-end test on 2024 Day 01 Part 1.
+2. Test and refine the weighted consensus system and validator/reviewer/collaborative flows using real problems.
+3. Implement proper code quality scoring and problem type classification and integrate both into learning and model selection.
+4. Increase test coverage for solver, LLM integration, validator, quality, and learning modules.
+5. Review AoC 2025 behavior (12-day event) and update any utilities or documentation that assume 25 days.
 
 ### Active Priorities
-- [HIGH] Test and refine weighted consensus system
-- [HIGH] Add unit tests for consensus implementation
-- [MED] Implement code quality scoring
-- [LOW] Enhance solution validation
+- [HIGH] Make `BaseSolver.solve_problem` fully operational and covered by at least one integration test.
+- [HIGH] Test and refine weighted consensus, validation, and reviewer/collaborative flows.
+- [MED] Implement real code quality scoring and problem type classification in the learning pipeline.
+- [MED] Raise coverage on solver, LLM, validator, quality, and learning modules.
+- [LOW] Tidy AoC 2025 utilities and documentation regarding the 12-day format.
 
 ### Current Test Focus
 - Working on: 2024 Day 01 Part 1
@@ -145,12 +148,10 @@ Note: Execute the above steps only on explicit wrap-up request.
 [ ] Fine-tune cold-start weights based on usage data
 
 ### Current Focus
-[ ] Improve model prompting and debugging capabilities
-[ ] Monitor effectiveness of input file handling changes
-[ ] Test solution portability with actual validated solutions
-[ ] Document organization and maintenance
-[ ] Ensure solution portability and security
-[ ] Enhance model prompting and debugging
+[ ] Enable and test the full solver pipeline end-to-end for at least one AoC problem (2024 Day 01).
+[ ] Exercise and refine weighted consensus, validation, and reviewer/collaborative flows.
+[ ] Implement and wire up problem type classification and code quality scoring.
+[ ] Improve test coverage for solver, LLM integration, validator, quality, and learning modules.
 
 ### Completed ✓ (Last 2 weeks)
 [x] Improve input file handling and security (2025-01-18)

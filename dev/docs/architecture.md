@@ -8,23 +8,23 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
 
 ### Problem Solving Pipeline
 
-1. **Problem Fetching & Parsing** (`shared/parser/`)
-   - Problem text and input parsing (`parser.py`)
+1. **Problem Fetching & Parsing** (`shared/parser.py`)
+   - Problem text and input parsing (`shared/parser.py`)
      - HTML-first example extraction
      - Separate example storage (.examples.txt)
      - Fallback plain text parsing
-   - Problem analysis and understanding (`analysis.py`)
-   - Test case extraction and validation (`tests.py`)
+   - Problem analysis and understanding (`shared/problem_analysis.py`)
+   - Test case extraction and validation (see `tests/`)
 
 2. **Solution Generation** (`shared/llm/`)
-   - Model Management (`models.py`)
+   - Model Management (`shared/llm/models.py`)
      - Role-based model registry
      - Hardware-aware model selection
      - Performance tracking per role
      - Model characteristics and capabilities
-   - Provider Integration (`local.py`, `remote.py`)
+   - Provider Integration (`shared/llm/local.py`)
    - Dynamic Prompt Generation (`prompts.py`)
-   - Strategy Selection (`strategies/`)
+   - Strategy Selection (`shared/strategies.py`)
 
 3. **Solution Execution** (`shared/execution.py`)
    - Safe code execution environment

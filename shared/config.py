@@ -80,6 +80,18 @@ def get_cache_config(cache_type: str) -> Dict[str, Any]:
     """Get configuration for a specific cache type."""
     return CACHE_CONFIG.get(f"{cache_type}_cache", {})
 
+def get_model_defaults() -> Dict[str, Any]:
+    """Return model default settings from models.yaml."""
+    return MODELS_CONFIG.get("defaults", {}) or {}
+
+def get_hardware_config() -> Dict[str, Any]:
+    """Return the full hardware configuration dictionary."""
+    return HARDWARE_CONFIG or {}
+
+def get_resource_config() -> Dict[str, Any]:
+    """Return the full resources configuration dictionary."""
+    return RESOURCES_CONFIG or {}
+
 # File patterns
 INPUT_FILE = "input.txt"
 EXAMPLES_DIR = "examples"  # Directory to store example files

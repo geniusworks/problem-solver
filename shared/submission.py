@@ -129,11 +129,11 @@ class SubmissionManager:
             Tuple of (list of strategies, dict of strategy effectiveness scores)
         """
         # Get strategy names from problem text
-        from learning.optimizer import get_strategies_for_problem  # Lazy import
+        from shared.strategies import get_strategies_for_problem  # Lazy import
         strategy_names = get_strategies_for_problem(problem_text)
         
         # Look up the actual Strategy objects
-        from learning.optimizer import Strategy, ProblemCategory, SOLUTION_STRATEGIES  # Lazy import
+        from shared.strategies import Strategy, ProblemCategory, SOLUTION_STRATEGIES  # Lazy import
         strategies = []
         for category in ProblemCategory:
             if category in SOLUTION_STRATEGIES:

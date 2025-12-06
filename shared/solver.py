@@ -102,8 +102,8 @@ class BaseSolver:
         self.submission_manager = SubmissionManager(workspace_dir)
         
         # Initialize learning system
-        learning_dir = workspace_dir / "learning"
-        learning_dir.mkdir(parents=True, exist_ok=True)
+        self.learning_dir = workspace_dir / "learning"
+        self.learning_dir.mkdir(parents=True, exist_ok=True)
         self.strategy_optimizer = None
         self.db = None
         
@@ -151,6 +151,11 @@ class BaseSolver:
             # Get problem text and parse it
             problem_text, _, previous_answer = await fetch_problem_text(year, day, part)
             parsed_problem = parse_problem_text(problem_text)
+
+            # Temporary for debugging purposes
+            if self.debug:
+                logging.info("Problem text for part %d:", part)
+                logging.info(problem_text)
 
             # Analyze problem characteristics
             characteristics = self._analyze_problem_characteristics(parsed_problem)
@@ -201,7 +206,7 @@ class BaseSolver:
                     response_time = (end_time - start_time).total_seconds()
                     
                     # Analyze code quality
-                    from quality.code_quality import CodeQualityAnalyzer
+                    from shared.quality.code_quality import CodeQualityAnalyzer
                     analyzer = CodeQualityAnalyzer()
                     quality_metrics = analyzer.analyze(solution)
                     
@@ -224,7 +229,7 @@ class BaseSolver:
                         # Record successful attempt in learning system
                         if not self.db:
                             from learning import LearningDatabase
-                            self.db = LearningDatabase(learning_dir)
+                            self.db = LearningDatabase(self.learning_dir)
                         self.db.update_model_performance(
                             model_name=model_name,
                             metrics={
@@ -245,7 +250,7 @@ class BaseSolver:
                         # Record failed attempt in learning system
                         if not self.db:
                             from learning import LearningDatabase
-                            self.db = LearningDatabase(learning_dir)
+                            self.db = LearningDatabase(self.learning_dir)
                         self.db.update_model_performance(
                             model_name=model_name,
                             metrics={
@@ -264,7 +269,7 @@ class BaseSolver:
                 except Exception as e:
                     failures.append((model_name, str(e)))
                     if not self.db:
-                        self.db = LearningDatabase(Path(__file__).parent.parent / 'learning')
+                        self.db = LearningDatabase(self.learning_dir)
                     self.db.update_model_performance(
                         model_name=model_name,
                         metrics={
@@ -283,7 +288,7 @@ class BaseSolver:
             # If we have answers, try to reach consensus
             if answers:
                 # Get quality metrics for all solutions
-                from quality.code_quality import CodeQualityAnalyzer
+                from shared.quality.code_quality import CodeQualityAnalyzer
                 analyzer = CodeQualityAnalyzer()
                 quality_scores = {}
                 
@@ -300,8 +305,8 @@ class BaseSolver:
                 consensus_answer = self._get_weighted_consensus_answer(weighted_answers)
                 if consensus_answer:
                     # Record the consensus in the solution directory
-                    solution_file = record_solution(
-                        self.workspace_dir, year, day, part, consensus_answer
+                    record_solution(
+                        year, day, part, "consensus", consensus_answer
                     )
                     return consensus_answer
 
@@ -312,7 +317,7 @@ class BaseSolver:
                 best_answer = answers[best_model]
                 
                 # Initialize collaborative improvement
-                from llm.collaborative import CollaborativeImprovement
+                from shared.llm.collaborative import CollaborativeImprovement
                 collaborator = CollaborativeImprovement(
                     [self.models[name] for name in reviewer_models if name in self.models],
                     max_iterations=3
@@ -357,8 +362,8 @@ class BaseSolver:
                                     
                         if validation_success:
                             return improved_candidate.solution
-                        except Exception as e:
-                            logging.warning(f"Reviewer {reviewer_name} failed: {str(e)}")
+                except Exception as e:
+                    logging.warning(f"Collaborative improvement failed: {str(e)}")
 
             # If we get here, we failed to solve the problem
             self._print_consensus_summary(answers, failures, None, [])
@@ -376,8 +381,13 @@ class BaseSolver:
         """Get top performing models for a specific problem type and role."""
         logging.info(f"Getting top models for problem_type={problem_type}, role={role}, limit={limit}, min_success_rate={min_success_rate}")
         if not self.db:
-            self.db = LearningDatabase(Path(__file__).parent.parent / 'learning')
+            self.db = LearningDatabase(self.learning_dir)
         models = self.db.get_top_models(problem_type, role, limit, min_success_rate)
+        if not models:
+            # Cold-start fallback: use available local models if DB has no entries meeting threshold
+            fallback = list(self.models.keys())[:limit]
+            logging.info(f"Top models: [] -> using fallback models {fallback}")
+            return fallback
         logging.info(f"Top models: {models}")
         return models
 

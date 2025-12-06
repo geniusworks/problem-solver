@@ -1,6 +1,15 @@
 # Checkpoint History
 
 # Key Decisions
+ 
+## Unified Solver Roadmap (2025-12-05)
+- **Rationale**: Align progress tracking with the latest architecture review and provide a clear path to a production-ready solver.
+- **Impact**: Focuses work on enabling the full solver pipeline, validating weighted consensus and review flows, integrating code quality and problem type classification into learning, and improving coverage and observability.
+- **Focus Areas**:
+  - Make `BaseSolver.solve_problem` fully operational and covered by end-to-end tests.
+  - Test and refine weighted consensus, validation, and reviewer/collaborative improvement flows with real problems.
+  - Implement problem type classification and integrate it with model/strategy selection and the learning system.
+  - Raise test coverage for solver, LLM, validator, quality, and learning modules and review AoC 2025 assumptions (12-day format).
 
 ## Model Consensus System Enhancement
 - **Weighted Consensus Implementation** (2025-02-20): Implemented weighted consensus system

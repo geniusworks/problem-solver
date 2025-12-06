@@ -127,9 +127,11 @@ class StrategyOptimizer:
             self, problem_characteristics: Dict[str, float]
         ) -> List[tuple[str, float]]:
         """Get weighted strategy recommendations for a problem."""
-        strategies = get_strategies_for_problem(problem_characteristics)
-        scores = self.get_strategy_effectiveness(problem_characteristics, [s.name for s in strategies])
-        return sorted([(s.name, scores[s.name]) for s in strategies], key=lambda x: x[1], reverse=True)
+        # Build a simple text hint from characteristic keys for keyword matching
+        text_hint = " ".join(map(str, problem_characteristics.keys()))
+        strategy_names = get_strategies_for_problem(text_hint)
+        scores = self.get_strategy_effectiveness(problem_characteristics, strategy_names)
+        return sorted([(name, scores[name]) for name in strategy_names], key=lambda x: x[1], reverse=True)
 
     def update_strategy_weights(self) -> None:
         """Update strategy weights based on their effectiveness."""

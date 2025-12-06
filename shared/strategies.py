@@ -758,14 +758,18 @@ def get_strategies_for_problem(problem_text: str) -> List[str]:
         List of potentially applicable strategy names
     """
     strategies = []
-    
-    # Find relevant categories based on keywords
-    problem_text = problem_text.lower()
+
+    # Find relevant categories based on keywords (safely normalize input)
+    try:
+        text = problem_text if isinstance(problem_text, str) else str(problem_text)
+    except Exception:
+        text = ""
+    text = text.lower()
     category_scores = {}
     
     # Score each category based on keyword matches
     for category, words in CATEGORY_KEYWORDS.items():
-        score = sum(problem_text.count(word) for word in words)
+        score = sum(text.count(word) for word in words)
         if score > 0:
             category_scores[category] = score
             

@@ -69,9 +69,8 @@ An intelligent system for solving algorithmic programming problems using LLMs an
   - HTML-first example extraction
   - Separate example storage (.examples.txt)
   - Fallback plain text parsing
-- `shared/analysis.py`: Deep problem understanding
-- `learning/strategies.py`: Solution strategy framework
-- `learning/patterns.py`: Pattern recognition and application
+- `shared/problem_analysis.py`: Deep problem understanding
+- `shared/strategies.py`: Solution strategy framework
 
 ### LLM Integration
 - `shared/llm/base.py`: Base LLM provider interface
@@ -84,7 +83,7 @@ An intelligent system for solving algorithmic programming problems using LLMs an
 - `solutions/`: Generated solution implementations
 - `shared/quality/`: Code quality and validation tools
 - `shared/execution.py`: Solution execution and monitoring
-- `shared/attempts/`: Attempt history and metrics
+ 
 
 ## Getting Started
 
@@ -126,9 +125,14 @@ An intelligent system for solving algorithmic programming problems using LLMs an
    - `--force`: Force new solution even if already solved
    - `--debug`: Enable debug logging
    
-   You can also use the full path if not in the virtual environment:
+   Or invoke the venv Python explicitly without activating the shell:
    ```bash
-   <project-root>/venv/bin/python <project-root>/solve.py --year 2024 --day 1 --part 1
+   venv/bin/python solve.py --year 2024 --day 1 --part 1
+   ```
+   
+5. Run tests (optional):
+   ```bash
+   PYTHONPATH=. venv/bin/pytest -q
    ```
 
 ## Solution File Structure
@@ -159,9 +163,9 @@ problem-solver/
 │   └── progress/   # Progress tracking
 ├── learning/       # Learning and optimization
 ├── shared/         # Core shared components
-│   ├── llm/       # LLM integration
-│   ├── parser/    # Problem parsing
-│   └── quality/   # Code quality tools
+│   ├── llm/        # LLM integration
+│   ├── parser.py   # Problem parsing
+│   └── quality/    # Code quality tools
 ├── solutions/      # Generated solutions
 ├── tests/         # Test suite
 └── years/         # Problem files by year
@@ -174,6 +178,14 @@ problem-solver/
 - `shared/parser.py`: Problem parsing
 - `dev/progress/checkpoint.md`: Development tracking
 - `dev/docs/architecture.md`: System architecture
+
+## Status Notes (2025-08-11)
+
+- Defensive fixes to prevent `.lower()` on non-strings implemented in `shared/strategies.py`, `learning/optimizer.py`, and `shared/llm/performance.py`.
+- Import hygiene: `shared/submission.py` now imports strategies from `shared/strategies`.
+- Filename safety: `shared/utils.py` coerces `model_name` to string before lowercasing.
+- Tests: current suite passes locally (9/9). Run with the venv and `PYTHONPATH=.` (see below).
+- Still in progress: weighted consensus validation, code quality scoring, and problem type classification (currently returns `"general"`).
 
 ## Features in Development
 

@@ -47,6 +47,25 @@ class GenerationResult:
 class ModelProvider(ABC):
     """Abstract base class for model providers."""
 
+    def __init__(
+        self,
+        *,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> None:
+        """Initialize base provider with config defaults.
+
+        Exposes attributes used by tests:
+        - temperature: default from `config.models.yaml` or overridden
+        - max_tokens: default from `config.models.yaml` or overridden
+        """
+        self.temperature = (
+            DEFAULT_TEMPERATURE if temperature is None else float(temperature)
+        )
+        self.max_tokens = (
+            DEFAULT_MAX_TOKENS if max_tokens is None else int(max_tokens)
+        )
+
     async def generate(
         self,
         prompt: str,

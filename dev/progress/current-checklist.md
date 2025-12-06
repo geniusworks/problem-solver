@@ -1,46 +1,24 @@
-## Updated Checklist of Recommended Next Steps
+## Current Unified Roadmap Checklist
 
-Based on both [dev/progress/checkpoint.md](cci:7://file://<project-root>/dev/progress/checkpoint.md:0:0-0:0) and the latest [README.md](cci:7://file://<project-root>/README.md:0:0-0:0), here is an updated, prioritized checklist for the project:
+### 1. Solver Pipeline & AoC Integration
+- [x] Remove the debug `exit()` and fix `learning_dir` initialization in `BaseSolver.solve_problem`.
+- [ ] Add an integration test that drives `solve.py` for 2024 Day 01 Part 1 (with a stub or local model) and verifies end-to-end behavior.
+- [ ] Clarify and, if needed, update AoC utilities (such as `get_problem_year_day`) for the 12-day AoC 2025 format.
 
----
+### 2. Consensus, Validation, and Learning
+- [ ] Test and refine the weighted consensus system with real problems and add unit tests for `_get_weighted_consensus_answer`.
+- [ ] Verify and harden validator and reviewer/collaborative improvement flows with at least one integration-style test.
+- [ ] Wire real code quality metrics from `CodeQualityAnalyzer` into the learning database and verify via tests.
 
-### 1. Consensus & Validation Systems
-- [ ] Test and refine the new weighted consensus system with real problems (see `years/2024/day01/`)
-- [ ] Add robust unit tests for the consensus implementation
-- [ ] Enhance solution validation: comprehensive test coverage, performance validation, input assumption verification, and correctness checks
+### 3. Problem Classification & Model/Strategy Selection
+- [ ] Implement a real `_get_problem_type` in `BaseSolver` using problem analysis/strategy signals.
+- [ ] Integrate problem type into `get_top_models` and strategy recommendation.
+- [ ] Add tests that confirm sample problems map to expected problem types and top-model sets.
 
-### 2. Code Quality, Learning & Optimization
-- [ ] Implement a proper code quality scoring system (replace placeholders)
-- [ ] Add comprehensive problem type classification (currently always "general")
-- [ ] Gather and analyze real performance metrics for each model (track in `learning/database.py`)
-- [ ] Implement strategy effectiveness tracking and a solution pattern library
-- [ ] Enable cross-problem knowledge transfer and meta-learning features
+### 4. Coverage & Monitoring
+- [ ] Increase test coverage for solver, LLM integration, validator, quality, submission, and learning modules.
+- [ ] Add basic memory/OOM safeguards for large models and verify behavior on the target hardware.
 
-### 3. Model Management & Multi-Model Collaboration
-- [ ] Add/verify memory monitoring to avoid OOM with large models
-- [ ] Optimize model combinations and role assignments (PRIMARY, REVIEWER, VALIDATOR)
-- [ ] Develop inter-model learning mechanisms and adaptive role assignment
-
-### 4. Documentation & Process Integrity
-- [ ] Keep documentation (README.md, architecture.md, diagrams) in sync with code and structural changes
-- [ ] Move completed items >2 weeks old from checkpoint.md to checkpoint-history.md
-- [ ] Document new key decisions and update development guidelines as needed
-
-### 5. Usability & Solution Portability
-- [ ] Continue to improve model prompting and debugging capabilities
-- [ ] Test and ensure solution portability and security (no absolute paths, runtime mods separate from model code)
-- [ ] Monitor the effectiveness of input file handling changes
-
-### 6. Development Process & Roadmap
-- [ ] Maintain the structured development process (checkpoint.md, checkpoint-history.md)
-- [ ] Review and update strategic objectives and planned features (analytics dashboard, automated strategy refinement, problem similarity matching, cold-start weight tuning)
-- [ ] Ensure all new features are covered by tests in the `tests/` suite
-
----
-
-**Notes:**
-- The README.md confirms and expands on the strategic focus areas in checkpoint.md, especially around meta-learning, multi-model collaboration, and robust validation.
-- The project emphasizes modularity, security, and portability in solution design.
-- The setup and development process is well-documented—ensure new contributors follow these steps.
-
-If you want to focus on a specific area or want a deeper technical dive into any checklist item, let me know!
+### 5. Long-Term Enhancements
+- [ ] Plan and schedule analytics dashboards, automated strategy refinement, and problem similarity matching.
+- [ ] Tune cold-start weights based on real usage data once enough attempts have been collected.

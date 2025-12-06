@@ -649,8 +649,12 @@ def save_solution_file(year: int, day: int, part: int, model_name: str, solution
     Returns:
         Path to the solution file in the solutions directory (relative to repo root)
     """
-    # Clean up model name for filename
-    safe_model_name = re.sub(r'[^\w\-]', '_', model_name.lower())
+    # Clean up model name for filename (coerce to string defensively)
+    try:
+        model_name_str = model_name if isinstance(model_name, str) else str(model_name)
+    except Exception:
+        model_name_str = "unknown"
+    safe_model_name = re.sub(r'[^\w\-]', '_', model_name_str.lower())
     
     # Create solution filename
     solution_filename = f"{year}_day{day:02d}_part{part}_{safe_model_name}.py"
@@ -688,49 +692,57 @@ def record_solution(year: int, day: int, part: int, model_name: str, solution_co
         It is safe to call multiple times as it will ignore duplicate entries.
     """
     solutions_file = Path(__file__).parent.parent / "solutions" / "README.md"
+    solutions_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Ensure file exists with a minimal header
+    table_header = (
+        "| Year | Day | Part | Repository Hash | LLM Model(s) | Validation Time (UTC) | Solved By | Solution File |\n"
+        "|------|-----|------|-----------------|--------------|------------------------|-----------|---------------|\n"
+    )
     if not solutions_file.exists():
-        logger = logging.getLogger(__name__)
-        logger.error("solutions/README.md not found - solution recording skipped")
-        return
-        
-    # Read existing solutions
+        initial = "# Advent of Code Solutions Log\n\n" + table_header
+        solutions_file.write_text(initial)
+
+    # Read existing content
     content = solutions_file.read_text()
-    
+
+    # Ensure the table header is present (handle both "|Year" and "| Year")
+    header_added = False
+    if not re.search(r"(?m)^\s*\|\s*Year\s*\|\s*Day\s*\|\s*Part\s*\|", content):
+        # Insert header after title line if present; otherwise prepend
+        insert_at = content.find("\n") + 1 if content.startswith("# Advent of Code Solutions Log") else 0
+        content = content[:insert_at] + ("\n" if insert_at and not content[insert_at-1] == "\n" else "") + table_header + content[insert_at:]
+        header_added = True
+
     # Check if this year/day/part already has a solution
-    pattern = fr"\|{year}\s*\|{day}\s*\|{part}\s*\|"
+    pattern = rf"(?m)^\s*\|\s*{year}\s*\|\s*{day}\s*\|\s*{part}\s*\|"
     if re.search(pattern, content):
+        if header_added:
+            # Persist the header fix even when not adding a new row
+            solutions_file.write_text(content)
         return  # Already recorded
-        
+
     # Save solution file and get path
     solution_path = save_solution_file(year, day, part, model_name, solution_code)
-        
+
     # Get repository state and GitHub username
     commit_hash, has_local_changes = get_repository_state()
     repo_hash = f"{commit_hash} {'(modified)' if has_local_changes else ''}"
     github_user = get_github_username()
-        
+
     # Format current time in UTC
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-    
-    # Add new solution entry
-    table_start = content.find("|Year")
-    table_end = content.find("\n\n", table_start)
-    if table_end == -1:
-        table_end = len(content)
-        
-    new_entry = f"\n|{year}|{day}|{part}|{repo_hash}|{model_name}|{timestamp}|{github_user}|{solution_path}|"
-    
-    # Insert new entry after header
-    header_end = content.find("\n", table_start) + 1
-    updated_content = (
-        content[:header_end] +
-        content[header_end:content.find("\n", header_end)] +  # Separator line
-        new_entry +
-        content[table_end:]
-    )
-    
+
+    # Build new entry row
+    new_entry = f"|{year}|{day}|{part}|{repo_hash}|{model_name}|{timestamp}|{github_user}|{solution_path}|\n"
+
+    # Append the new row to the end of file
+    if not content.endswith("\n"):
+        content += "\n"
+    content += new_entry
+
     # Write updated content
-    solutions_file.write_text(updated_content)
-    
+    solutions_file.write_text(content)
+
     logger = logging.getLogger(__name__)
     logger.info(f"Recorded validated solution for year {year} day {day} part {part}")

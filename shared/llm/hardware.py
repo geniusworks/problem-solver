@@ -5,7 +5,7 @@ import logging
 import os
 import platform
 from dataclasses import dataclass
-from typing import Dict, List, Set, Optional
+from typing import Dict, List, Set, Optional, Any
 
 from shared.config import HARDWARE_CONFIG
 from shared.errors import BaseError
@@ -28,6 +28,47 @@ class HardwareManager:
         self.capabilities = self._load_capabilities()
         self.registered_models: Dict[str, int] = {}
         self.active_models: Set[str] = set()
+
+    def get_current_profile(self) -> Dict[str, Any]:
+        """Return a dictionary describing the current hardware profile.
+
+        Ensures the presence of a 'gpu_memory' key as expected by tests.
+        """
+        # Determine profile from config if available
+        profile_name = self._detect_hardware_profile()
+        profiles = (HARDWARE_CONFIG or {}).get("profiles", {})
+        profile_cfg: Dict[str, Any] = {}
+        if profile_name and profile_name in profiles:
+            profile_cfg = profiles[profile_name]
+        elif "base" in profiles:
+            profile_cfg = profiles["base"]
+        else:
+            # Fallback using current capabilities dataclass
+            profile_cfg = {
+                "max_model_size": getattr(self.capabilities, "max_model_size", 7),
+                "concurrent_models": getattr(self.capabilities, "concurrent_models", 1),
+                "gpu_memory_utilization": 50,
+                "cpu_thread_count": os.cpu_count() or 4,
+                "metal_enabled": platform.system() == "Darwin",
+            }
+
+        # Estimate unified GPU memory on Mac as a portion of total memory
+        try:
+            mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
+            total_mem_mb = int(mem_bytes / (1024 * 1024))
+        except Exception:
+            total_mem_mb = 8192  # sensible default
+
+        util = int(profile_cfg.get("gpu_memory_utilization", 50))
+        gpu_memory_mb = max(256, int(total_mem_mb * util / 100))
+
+        return {
+            **profile_cfg,
+            # Provide normalized keys expected by tests/consumers
+            "gpu_memory": gpu_memory_mb,
+            "total_memory_mb": total_mem_mb,
+            "profile": profile_name or "base",
+        }
 
     def _detect_hardware_profile(self) -> Optional[str]:
         """Detect the current hardware profile based on system information.
@@ -71,13 +112,23 @@ class HardwareManager:
                     concurrent_models=profile["concurrent_models"]
                 )
         
-        # Fall back to default config
+        # Fall back to defaults
         if "max_model_size" in HARDWARE_CONFIG and "concurrent_models" in HARDWARE_CONFIG:
             return HardwareProfile(
                 max_model_size=HARDWARE_CONFIG["max_model_size"],
                 concurrent_models=HARDWARE_CONFIG["concurrent_models"]
             )
-            
+
+        # Try base profile inside profiles
+        profiles = HARDWARE_CONFIG.get("profiles", {}) if isinstance(HARDWARE_CONFIG, dict) else {}
+        base = profiles.get("base") if isinstance(profiles, dict) else None
+        if base and "max_model_size" in base and "concurrent_models" in base:
+            logger.info("Using base hardware profile from config")
+            return HardwareProfile(
+                max_model_size=base["max_model_size"],
+                concurrent_models=base["concurrent_models"]
+            )
+
         raise BaseError(
             "No hardware configuration found. Please provide a config file."
         )
