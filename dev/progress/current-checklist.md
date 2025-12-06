@@ -7,11 +7,11 @@
 
 ### 2. Consensus, Validation, and Learning
 - [ ] Test and refine the weighted consensus system with real problems and add unit tests for `_get_weighted_consensus_answer`.
-- [ ] Verify and harden validator and reviewer/collaborative improvement flows with at least one integration-style test.
+- [x] Verify and harden validator and reviewer/collaborative improvement flows with at least one integration-style test.
 - [ ] Wire real code quality metrics from `CodeQualityAnalyzer` into the learning database and verify via tests.
 
 ### 3. Problem Classification & Model/Strategy Selection
-- [ ] Implement a real `_get_problem_type` in `BaseSolver` using problem analysis/strategy signals.
+- [x] Implement a real `_get_problem_type` in `BaseSolver` using problem analysis/strategy signals.
 - [ ] Integrate problem type into `get_top_models` and strategy recommendation.
 - [ ] Add tests that confirm sample problems map to expected problem types and top-model sets.
 

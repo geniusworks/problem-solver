@@ -373,8 +373,23 @@ class BaseSolver:
             raise  # Let the error propagate to the top level
 
     def _get_problem_type(self, characteristics: Dict[str, Any]) -> str:
-        """Determine the problem type from characteristics."""
-        # TODO: Implement proper problem type classification
+        """Determine the problem type from characteristics.
+
+        This is a lightweight heuristic classifier that maps the
+        numeric characteristics produced by `_analyze_problem_characteristics`
+        into coarse problem type strings used by the learning DB.
+        """
+        # Prioritize more specific structural signals first
+        if characteristics.get("grid_operations", 0.0) > 0.0:
+            return "grid"
+        if characteristics.get("graph_complexity", 0.0) > 0.0:
+            return "graph"
+        if characteristics.get("math_complexity", 0.0) > 0.0:
+            return "math"
+        if characteristics.get("string_processing", 0.0) > 0.0:
+            return "string"
+        if characteristics.get("optimization_required", 0.0) > 0.0:
+            return "optimization"
         return "general"
 
     def _get_top_models(self, problem_type: str, role: str, limit: int = 3, min_success_rate: float = 0.5) -> list[str]:
