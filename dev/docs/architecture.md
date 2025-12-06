@@ -23,6 +23,9 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
      - Performance tracking per role
      - Model characteristics and capabilities
    - Provider Integration (`shared/llm/local.py`)
+     - Local Ollama provider with curated model list for typical developer hardware
+     - Preflight check against Ollama `/api/tags` to intersect configured models with
+       actually installed tags
    - Dynamic Prompt Generation (`prompts.py`)
    - Strategy Selection (`shared/strategies.py`)
 
@@ -40,6 +43,8 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
    - Model role performance tracking
    - Role-based model selection
    - Hardware compatibility management
+   - Problem type classification feeding model and strategy selection
+   - Code quality metrics recorded per attempt and used in model performance tracking
 
 ## Configuration Management
 

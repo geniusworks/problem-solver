@@ -46,41 +46,49 @@ Note: Execute the above steps only on explicit wrap-up request.
 - [ ] Update checkpoint with full understanding
 - [ ] Preserve core principle consistency
 
-## Current Status (2025-02-20)
+## Current Status (2025-12-06)
 
 ### Component Status
 - Authentication: Improved error handling and user feedback ⚡
 - Input Retrieval: Ready for testing with valid session token ⚡
-- Core Solver: Pipeline present but not fully enabled; end-to-end solving currently stops after debug logging ⚠️
-- Model Integration: Updated available models list and prompt format 🔄
-- Learning System: Database and schema implemented; integration in the main solving path needs validation 🔄
+- Core Solver: Pipeline enabled; integration tests for `solve.py` and solver flows are passing ⚡
+- Model Integration: Curated local model list for M1 16GB-class hardware and Ollama preflight
+  check in place 🔄
+- Learning System: Database and schema implemented; model performance updates now include
+  code quality metrics and problem type information 🔄
 
 ### Known Issues
-- Base solver pipeline exits early after logging problem text, preventing end-to-end consensus solving.
-- Inconsistent `learning_dir` initialization paths in `BaseSolver` and learning database usage.
-- Weighted consensus system and collaborative review flows are untested with real problems.
-- Code quality scoring integrated into the learning database is incomplete and unvalidated.
-- Problem type classification currently returns `"general"` for all problems.
-- Core solver, LLM integration, validator, quality, and learning modules have low test coverage.
+- No real Advent of Code runs have been executed end-to-end yet with live AoC inputs.
+- Collaborative improvement and validator flows have only been exercised on synthetic test
+  problems.
+- Core solver, LLM integration, validator, quality, and learning modules still have
+  relatively low coverage (~30%).
+- AoC 2025 12-day format is supported in utilities but has not yet been validated with real
+  December runs.
 
 ### Next Steps
-1. Enable the full solver pipeline (remove debug exit, fix learning database initialization) and verify with an end-to-end test on 2024 Day 01 Part 1.
-2. Test and refine the weighted consensus system and validator/reviewer/collaborative flows using real problems.
-3. Implement proper code quality scoring and problem type classification and integrate both into learning and model selection.
-4. Increase test coverage for solver, LLM integration, validator, quality, and learning modules.
-5. Review AoC 2025 behavior (12-day event) and update any utilities or documentation that assume 25 days.
+1. Run a controlled end-to-end solve for at least one AoC problem (e.g., 2024 Day 01 Part 1)
+   using real inputs and the curated local model set.
+2. Observe and fix any issues encountered during real runs (network, session, model
+   failures, resource constraints).
+3. Expand tests and coverage for solver, LLM integration, validator, quality, and learning
+   modules based on feedback from real runs.
+4. Monitor performance and memory behavior on M1 16GB hardware for the curated model set
+   and adjust model list or limits if needed.
 
 ### Active Priorities
-- [HIGH] Make `BaseSolver.solve_problem` fully operational and covered by at least one integration test.
-- [HIGH] Test and refine weighted consensus, validation, and reviewer/collaborative flows.
-- [MED] Implement real code quality scoring and problem type classification in the learning pipeline.
+- [HIGH] Exercise the full solver pipeline end-to-end for at least one AoC problem
+  (2024 Day 01 as initial target).
+- [HIGH] Validate weighted consensus, validation, and reviewer/collaborative flows against
+  real problem runs.
 - [MED] Raise coverage on solver, LLM, validator, quality, and learning modules.
-- [LOW] Tidy AoC 2025 utilities and documentation regarding the 12-day format.
+- [LOW] Confirm AoC 2025 utilities and documentation behave correctly during the December
+  12-day event.
 
 ### Current Test Focus
-- Working on: 2024 Day 01 Part 1
-- Status: Testing improved model consensus system
-- Location: Problem files in `years/2024/day01/`
+- Working on: 2024 Day 01 Part 1 (next step: real run via `solve.py`).
+- Status: Integration tests for consensus and collaborative flows are passing; awaiting
+  real AoC trial.
 
 
 ### Active Development
@@ -89,18 +97,21 @@ Note: Execute the above steps only on explicit wrap-up request.
 - [x] Implemented role-based model selection (PRIMARY, REVIEWER, VALIDATOR)
 - [x] Added performance tracking in SQLite database
 - [x] Integrated with existing learning system
-- [x] Updated model list for M1 Mac Mini compatibility
-- [ ] TODO: Implement code quality scoring for model performance metrics
-- [ ] TODO: Add proper problem type classification
+- [x] Implemented code quality scoring for model performance metrics and wired it into the
+      learning database
+- [x] Added problem type classification and integrated it into model/strategy selection
 
 #### Model Registry Updates
-- Updated model list to focus on efficient coding models:
-  - codellama:7b (3.8GB) - Primary code generation
-  - mistral:7b (4.1GB) - Strong general performer
-  - qwen2.5-coder:latest (4.7GB) - Code completion expert
+- Updated model list to focus on efficient coding models that fit M1 16GB constraints:
+  - qwen2.5-coder:7b (4.7GB) - Primary code generation and completion
+  - llama3.1:8b (4.9GB) - Strong general reasoning and problem solving
+  - mistral:7b (4.4GB) - Fast, robust general performer
+  - codellama:7b-instruct (3.8GB) - Legacy but solid code model and fallback
+  - gemma3:latest (3.3GB) - Compact, good general model
+  - deepseek-coder:6.7b - Additional code-focused model for diversity
 - Added ALIBABA to ModelProvider enum for Qwen models
-- Removed larger models that exceed memory constraints
-- Updated model naming to match Ollama conventions
+- Removed or de-emphasized larger models that exceed practical memory constraints
+- Updated model naming and configuration to match Ollama conventions and curated list
 
 ### Component Status
 - Core solver: Stable, actively improving
@@ -108,10 +119,11 @@ Note: Execute the above steps only on explicit wrap-up request.
 - Documentation: Under reorganization
 
 ### Known Issues
-- Code quality scoring is currently using placeholder values (8.0 for success, 4.0 for failure)
-- Problem type classification returns "general" for all problems
-- Need to validate performance characteristics of Qwen model
-- Some larger models (>8GB) may cause OOM on 16GB systems under heavy load
+- Need to validate performance characteristics of the curated model set under sustained
+  AoC workloads.
+- Some larger models (>13B effective size) may still cause OOM or poor performance on
+  16GB systems if accidentally used; these have been removed from the default list but may
+  exist locally.
 
 ### Next Steps
 1. Implement proper code quality scoring system

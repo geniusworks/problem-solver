@@ -95,10 +95,17 @@ An intelligent system for solving algorithmic programming problems using LLMs an
 
 2. Set up Ollama:
    - Install Ollama from [ollama.ai](https://ollama.ai)
-   - Pull required models:
+   - Pull recommended local models (install at least one; more improves ensemble quality):
      ```bash
-     ollama pull codellama:7b
+     ollama pull qwen2.5-coder:7b
+     ollama pull llama3.1:8b
+     ollama pull mistral:7b
+     ollama pull codellama:7b-instruct
+     ollama pull gemma3:latest
+     ollama pull deepseek-coder:6.7b
      ```
+   - On startup, the solver checks which of these models are actually installed via the Ollama
+     API and will raise a clear error message if none of the configured models are available.
 
 3. Configure environment:
    - Create a `.env` file in the project root
@@ -184,8 +191,21 @@ problem-solver/
 - Defensive fixes to prevent `.lower()` on non-strings implemented in `shared/strategies.py`, `learning/optimizer.py`, and `shared/llm/performance.py`.
 - Import hygiene: `shared/submission.py` now imports strategies from `shared/strategies`.
 - Filename safety: `shared/utils.py` coerces `model_name` to string before lowercasing.
-- Tests: current suite passes locally (9/9). Run with the venv and `PYTHONPATH=.` (see below).
-- Still in progress: weighted consensus validation, code quality scoring, and problem type classification (currently returns `"general"`).
+- Tests: historical snapshot at this date indicated 9/9 passing locally.
+- At this time, weighted consensus validation, code quality scoring, and problem type classification were still in progress.
+
+## Status Notes (2025-12-06)
+
+- Solver pipeline is enabled and covered by integration tests, including a stubbed end-to-end
+  run of `solve.py` for 2024 Day 01 Part 1.
+- Weighted consensus and collaborative improvement flows are exercised by integration tests;
+  problem type classification is implemented and feeds model selection and learning.
+- Code quality scoring is implemented via `CodeQualityAnalyzer` and integrated into
+  `LearningDatabase.update_model_performance` calls.
+- Local model list is curated for M1 16GB-class hardware and checked against Ollama at startup;
+  if none of the configured models are installed, the solver raises a clear message listing the
+  models to install.
+- The current test suite passes locally (42/42) with `PYTHONPATH=. venv/bin/pytest`.
 
 ## Features in Development
 
