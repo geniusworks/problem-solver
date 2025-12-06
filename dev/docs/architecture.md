@@ -45,6 +45,9 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
    - Hardware compatibility management
    - Problem type classification feeding model and strategy selection
    - Code quality metrics recorded per attempt and used in model performance tracking
+   - Optional collaborative improvement phase that can be enabled via the
+     `ENABLE_COLLABORATIVE_IMPROVEMENT` environment flag (disabled by default for
+     typical AoC runs)
 
 ## Configuration Management
 

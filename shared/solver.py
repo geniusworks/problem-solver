@@ -108,6 +108,10 @@ class BaseSolver:
         self.learning_dir.mkdir(parents=True, exist_ok=True)
         self.strategy_optimizer = None
         self.db = None
+        # Enable or disable collaborative improvement via environment flag
+        self.enable_collaborative_improvement = os.getenv(
+            "ENABLE_COLLABORATIVE_IMPROVEMENT", "false"
+        ).lower() in {"1", "true", "yes", "on"}
         
         # Initialize all available models, preferring those actually installed in Ollama
         model_names = self._resolve_available_models()
@@ -361,8 +365,8 @@ class BaseSolver:
                     )
                     return consensus_answer
 
-            # If no consensus, try collaborative improvement
-            if len(answers) > 0:
+            # If no consensus, optionally try collaborative improvement
+            if len(answers) > 0 and self.enable_collaborative_improvement:
                 # Select best solution as starting point based on quality score
                 best_model = max(quality_scores.items(), key=lambda x: x[1])[0]
                 best_answer = answers[best_model]

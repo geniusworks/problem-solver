@@ -136,6 +136,8 @@ async def test_solver_uses_collaborative_improvement_when_no_consensus(monkeypat
     monkeypatch.setattr(solver_module.BaseSolver, "_get_top_models", fake_get_top_models)
 
     solver = solver_module.BaseSolver(tmp_path, debug=False)
+    # Explicitly enable collaborative improvement for this test scenario
+    solver.enable_collaborative_improvement = True
 
     primary_1 = DummyPrimaryModel(
         "primary-1",

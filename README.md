@@ -119,6 +119,13 @@ An intelligent system for solving algorithmic programming problems using LLMs an
    3. Go to Application/Storage -> Cookies
    4. Copy the value of the 'session' cookie
 
+   Optional environment flags:
+   - `ENABLE_COLLABORATIVE_IMPROVEMENT`: When set to `true` (or `1`, `yes`, `on`), the
+     solver will, after attempting consensus between primary models, run an additional
+     collaborative improvement phase using reviewer models. This is **disabled by
+     default** for normal AoC runs to keep solve times predictable; integration tests
+     exercise the collaborative path explicitly.
+
 4. Run the solver:
    ```bash
    # Activate virtual environment
