@@ -1,0 +1,52 @@
+sequenceDiagram
+    participant User as CLI/User
+    participant Solver as BaseSolver
+    participant Parser as Parser
+    participant Strategy as Strategy/Submission
+    participant Learning as Learning DB
+    participant LLM as LLM Provider(s)
+    participant Exec as SolutionExecutor
+
+    User->>Solver: solve_problem(year, day, part)
+    Solver->>Parser: parse_problem_text(part-specific AoC HTML)
+    Parser-->>Solver: ParsedProblem + examples
+
+    Solver->>Strategy: get_recommended_strategies(problem_text, characteristics)
+    Strategy-->>Solver: strategies + effectiveness
+
+    Solver->>Learning: get_top_models(problem_type, role)
+    Learning-->>Solver: primary/reviewer/validator model sets
+
+    loop For each primary model
+        Solver->>LLM: generate_solution(ParsedProblem, strategies)
+        LLM-->>Solver: candidate code
+        Solver->>Learning: update_model_performance(..., success/failure)
+    end
+
+    alt Consensus reached
+        Solver-->>User: consensus solution
+    else No consensus
+        note over Solver,Exec: Execution-based selection and repair loop
+        Solver->>Exec: test_solution(candidates, examples + full input)
+        Exec-->>Solver: example_results, full_result, full_answer
+
+        alt Any candidate passes examples + full input
+            Solver-->>User: chosen executable solution
+        else All candidates fail
+            loop Up to N repair iterations
+                Solver->>LLM: improve_solution(solution, execution feedback)
+                LLM-->>Solver: improved code
+                Solver->>Exec: test_solution(improved candidates,...)
+                Exec-->>Solver: updated results
+                alt Some candidate now passes
+                    break
+                end
+            end
+
+            alt Still no passing candidate
+                Solver-->>User: no solution found
+            else Passing candidate found
+                Solver-->>User: repaired executable solution
+            end
+        end
+    end

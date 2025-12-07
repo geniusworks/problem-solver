@@ -128,6 +128,21 @@ The learning system optimizes solution strategies based on past performance:
    - Strategies optimized
    - Future approach adjusted
 
+## AoC Part Handling Example (2024 Day 1)
+
+- The Advent of Code page for 2024 Day 1 contains two `<article class="day-desc">` blocks:
+  - The first article describes Part 1 and includes a single `<pre><code>` block with the
+    six-line example input and narrative ending in "a total distance of 11".
+  - The second article describes Part 2 and reuses the same example input while defining a
+    new "similarity score" computation.
+- `fetch_problem_text` selects the appropriate article **per part** and returns its HTML so
+  `parse_problem_text` can:
+  - Keep each `<pre><code>` block as a single example input
+  - Infer the expected output (e.g., `11` for Part 1, `31` for Part 2) from AoC-style prose
+    and emphasized `<em>` numbers.
+- `BaseSolver.solve_problem` always works from this part-specific parsed representation, so
+  Part 1 prompts never contain Part 2 instructions, and vice versa.
+
 ## Development Guidelines
 
 1. Configuration

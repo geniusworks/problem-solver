@@ -152,6 +152,34 @@ An intelligent system for solving algorithmic programming problems using LLMs an
    PYTHONPATH=. venv/bin/pytest -q
    ```
 
+### Advent of Code parts and examples
+
+When solving Advent of Code problems, the solver works at the **HTML article level**:
+
+- For each day, the AoC page contains one or two `<article class="day-desc">` blocks.
+- **Part 1** uses the first article; **Part 2** uses the second article (when present).
+- Only the selected article is passed into the parser and LLM prompts, so Part 1 is solved
+  without seeing Part 2 text, and vice versa.
+
+Example: **2024 Day 1 – Historian Hysteria**
+
+- The Part 1 article contains a single `<pre><code>` block with the six-line example list of
+  location IDs and prose that ends with "a total distance of 11".
+- The parser:
+  - Treats the entire `<pre><code>` block as one example input
+  - Infers the expected output `11` from the surrounding prose
+- When you run:
+  ```bash
+  venv/bin/python solve.py --year 2024 --day 1 --part 1 --force --debug
+  ```
+  the solver:
+  - Fetches/caches the Part 1 HTML article
+  - Extracts the example input and expected output `11`
+  - Uses only this Part 1 description and example when prompting local models
+
+This atomic handling ensures that real competition conditions are respected: Part 1 is solved
+without leaking any Part 2 information into the prompt.
+
 ## Solution File Structure
 
 Solutions are stored with a standardized structure:
