@@ -103,6 +103,8 @@ YOU MUST PROVIDE A COMPLETE, RUNNABLE PYTHON SOLUTION. NO EXCEPTIONS.
    - Close file handles properly
 
 3. Solution Requirements:
+   - Implement a single entrypoint function named solve (e.g. `def solve() -> int:`)
+   - Have solve() read from 'input.txt' (you may use helper functions, but solve() must drive the whole solution)
    - Process input EXACTLY as specified in the problem
    - Convert strings to appropriate types (int/float)
    - Use efficient data structures and algorithms
@@ -181,6 +183,29 @@ def generate_implementation_prompt(
             "- Pair corresponding elements in the sorted lists (smallest with smallest, second-smallest with second-smallest, etc.).\n"
             "- For each pair (x, y), compute abs(x - y) and sum these distances to get the final answer.\n"
             "Do NOT compute a similarity score or any other metric; follow this exact definition of total distance."
+        )
+
+    # AoC-style "Mull It Over" corrupted-memory puzzles with mul(X,Y) and
+    # do()/don't() toggles (e.g., 2024 Day 3).
+    if "corrupted" in text and "mul(" in text and "do()" in text and "don't()" in text:
+        clarifications.append(
+            "The input is a single corrupted string (possibly spanning multiple lines) "
+            "containing characters like 'mul(X,Y)', 'do()', and \"don't()\". "
+            "Treat the entire contents of input.txt as one continuous string and scan "
+            "left-to-right.\n"
+            "- A valid multiplication instruction is exactly of the form mul(X,Y) where "
+            "X and Y are 1-3 digit integers. Any other sequence that merely contains "
+            "these characters (missing commas, extra symbols, spaces, etc.) must be "
+            "ignored.\n"
+            "- For part 1: sum the products of all valid mul(X,Y) instructions that "
+            "appear anywhere in the string.\n"
+            "- For part 2: maintain a boolean flag mul_enabled starting as True. "
+            "When you encounter the literal substring do(), set mul_enabled = True. "
+            "When you encounter the literal substring don't(), set mul_enabled = False. "
+            "Only include mul(X,Y) products in the sum when mul_enabled is True.\n"
+            "Do NOT treat 'do', \"don't\", or 'mul' as separate tokens; they can appear "
+            "in the middle of other junk characters. Always work by scanning the raw "
+            "string for these exact substrings."
         )
 
     if clarifications:
