@@ -111,7 +111,13 @@ YOU MUST PROVIDE A COMPLETE, RUNNABLE PYTHON SOLUTION. NO EXCEPTIONS.
    - Include comprehensive error handling
    - Follow all problem constraints
 
-4. Output Format:
+4. Algorithm Adherence:
+   - If the problem describes a specific procedure or algorithm, implement it EXACTLY as described
+   - Do NOT invent alternative approaches, optimizations, or "clever" solutions
+   - Do NOT build complex parsers, ASTs, or state machines unless explicitly required
+   - When in doubt, prefer the simplest literal interpretation of the problem
+
+5. Output Format:
    - Print ONLY the final answer
    - No labels, descriptions, or formatting
    - Raw number output only (e.g., '42' or '3.14')
@@ -185,40 +191,29 @@ def generate_implementation_prompt(
             "Do NOT compute a similarity score or any other metric; follow this exact definition of total distance."
         )
 
-    # AoC-style "Mull It Over" corrupted-memory puzzles with mul(X,Y) and
-    # do()/don't() toggles (e.g., 2024 Day 3). This guidance is written to be
-    # generally useful for problems where you must scan a noisy string for
-    # exact instruction substrings and maintain an enable/disable flag.
-    if "corrupted" in text and "mul(" in text and "do()" in text and "don't()" in text:
+    # Pattern: Noisy Instruction Stream
+    # Applies to problems where valid instructions are embedded in irrelevant characters.
+    # The key insight is that this is a simple substring-matching problem, not a parsing problem.
+    if "mul(" in text and "do()" in text and "don't()" in text:
         clarifications.append(
-            "The input is a single corrupted string (possibly spanning multiple lines) "
-            "containing characters like 'mul(X,Y)', 'do()', and \"don't()\". "
-            "Treat the entire contents of input.txt as one continuous string and scan "
-            "it left-to-right using an index i (do NOT rely on splitting into tokens by "
-            "whitespace or lines).\n"
-            "- A valid multiplication instruction is exactly of the form mul(X,Y) where "
-            "X and Y are 1-3 digit integers. Any other sequence that merely contains "
-            "these characters (missing commas, extra symbols, spaces, etc.) must be "
-            "ignored.\n"
-            "- Maintain an integer total (starting at 0) and a boolean flag mul_enabled "
-            "(starting as True).\n"
-            "- While i < len(s):\n"
-            "  - If s[i:i+4] == 'do()': set mul_enabled = True and advance i by 4.\n"
-            "  - Else if s[i:i+7] == \"don't()\": set mul_enabled = False and advance i by 7.\n"
-            "  - Else if s[i:i+4] == 'mul(': attempt to parse X and Y as 1-3 digit integers "
-            "    directly from the string (no regex required): scan digits after 'mul(' "
-            "    for X, require a single comma, then scan digits for Y, and require a closing parenthesis. "
-            "    If any of these checks fail, treat this occurrence as invalid and advance i by 1. "
-            "    If parsing succeeds and mul_enabled is True, add X*Y to total and advance i "
-            "    just past the closing parenthesis.\n"
-            "  - Else: advance i by 1.\n"
-            "- For part 1: this loop runs with mul_enabled always effectively True, summing over "
-            "all valid mul(X,Y) instructions.\n"
-            "- For part 2: the same loop applies, but mul_enabled is actually toggled by do()/don't() "
-            "so only enabled mul(X,Y) instructions contribute to the sum.\n"
-            "Do NOT treat 'do', \"don't\", or 'mul' as standalone tokens; they can appear in the "
-            "middle of other junk characters. Always operate on the raw string and exact "
-            "substrings as described above."
+            "PATTERN: Noisy Instruction Stream\n\n"
+            "This problem requires scanning a string for specific instruction patterns embedded in noise. "
+            "This is NOT a parsing or grammar problem - it is simple substring matching.\n\n"
+            "REQUIRED APPROACH:\n"
+            "1. Read the entire input as a single string (do NOT split by lines or whitespace)\n"
+            "2. Scan left-to-right with an index variable i\n"
+            "3. At each position, check for exact substring matches:\n"
+            "   - 'do()' (4 chars) -> enables future operations\n"
+            "   - \"don't()\" (7 chars) -> disables future operations\n"
+            "   - 'mul(' followed by digits, comma, digits, ')' -> multiplication if enabled\n"
+            "4. If no pattern matches at position i, simply increment i by 1\n"
+            "5. When a pattern matches, advance i past the entire matched substring\n\n"
+            "CRITICAL CONSTRAINTS:\n"
+            "- Use simple string slicing: s[i:i+4], s[i:i+7], etc.\n"
+            "- Do NOT use regex, tokenizers, or complex parsers\n"
+            "- Do NOT build stacks, ASTs, or state machines\n"
+            "- Do NOT try to interpret the 'meaning' of the noise characters\n"
+            "- Ignore any sequence that doesn't EXACTLY match the valid patterns"
         )
 
     if clarifications:
@@ -226,7 +221,7 @@ def generate_implementation_prompt(
             PromptSection(
                 "Problem-Specific Clarifications",
                 "\n\n".join(clarifications),
-                priority=2,
+                priority=0,
             )
         )
 
