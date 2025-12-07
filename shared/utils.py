@@ -692,22 +692,16 @@ def save_solution_file(year: int, day: int, part: int, model_name: str, solution
         year: Problem year
         day: Problem day
         part: Problem part
-        model_name: Name of the model that generated the solution
+        model_name: Name of the model that generated the solution (ignored for filename)
         solution_code: The solution code to save
         
     Returns:
         Path to the solution file in the solutions directory (relative to repo root)
     """
-    # Clean up model name for filename (coerce to string defensively)
-    try:
-        model_name_str = model_name if isinstance(model_name, str) else str(model_name)
-    except Exception:
-        model_name_str = "unknown"
-    safe_model_name = re.sub(r'[^\w\-]', '_', model_name_str.lower())
-    
-    # Create solution filename
-    solution_filename = f"{year}_day{day:02d}_part{part}_{safe_model_name}.py"
-    
+    # Use a canonical solution filename independent of model name so that paths are
+    # stable across re-runs and different model choices.
+    solution_filename = f"{year}_day{day:02d}_part{part}.py"
+
     # Save to year directory
     year_dir = get_problem_dir(year, day)
     year_path = year_dir / solution_filename
