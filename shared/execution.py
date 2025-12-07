@@ -240,12 +240,16 @@ class SolutionExecutor:
                     # Set input file path and execute
                     result = await self.execute_solution(module_path, str(input_file))
 
-                    if (
-                        result.error
-                        or result.output.strip() != test_case.expected_output.strip()
-                    ):
+                    if result.error:
                         raise ExecutionError(
-                            f"Test case failed: {result.error or 'Output mismatch'}"
+                            f"Test case failed: {result.error}"
+                        )
+                    actual_output = result.output.strip()
+                    expected_output = test_case.expected_output.strip()
+                    if actual_output != expected_output:
+                        raise ExecutionError(
+                            f"Test case failed: Output mismatch. "
+                            f"Expected '{expected_output}', got '{actual_output}'"
                         )
 
                 except (IOError, OSError) as e:

@@ -32,6 +32,11 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
        actually installed tags
    - Dynamic Prompt Generation (`prompts.py`)
    - Strategy Selection (`shared/strategies.py`)
+   - **Model Fallback Mechanism**
+     - Top 3 models (by learning DB metrics) are tried first
+     - If all top models fail validation, remaining available models are tried sequentially
+     - First fallback model to pass validation proceeds to execution-based testing
+     - All model attempts (top and fallback) update the learning DB for future ranking
 
 3. **Solution Execution** (`shared/execution.py`)
    - Safe code execution environment
@@ -39,6 +44,8 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
    - Performance metrics collection
    - Execution-based candidate selection and iterative repair loop after consensus using
      example and full-input runs
+   - **Enhanced execution feedback**: Test failures include expected vs actual output values
+     to guide repair iterations
    - Non-force runs reuse existing validated canonical solution files (`YYYY_dayDD_partP.py`)
      by executing them once against the full input before falling back to a fresh multi-model
      solve when needed
