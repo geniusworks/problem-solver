@@ -32,6 +32,7 @@ An intelligent system for solving algorithmic programming problems using LLMs an
 - Debug output generation
 - Comprehensive attempt recording
 - Consensus-based validation
+- Execution-feedback repair loop using examples and full input before giving up
 
 ### Execution and Monitoring
 - Robust solution execution
@@ -66,7 +67,9 @@ An intelligent system for solving algorithmic programming problems using LLMs an
 
 ### Problem Analysis
 - `shared/parser.py`: Problem parsing and example extraction
-  - HTML-first example extraction
+  - HTML-first example extraction from AoC `<article class="day-desc">` content
+  - AoC-aware part handling (solves Part 1 and Part 2 atomically using the correct article)
+  - AoC-style example and expected-output inference from `<pre><code>` blocks and surrounding prose
   - Separate example storage (.examples.txt)
   - Fallback plain text parsing
 - `shared/problem_analysis.py`: Deep problem understanding
@@ -203,20 +206,23 @@ problem-solver/
 
 ## Status Notes (2025-12-06)
 
-- Solver pipeline is enabled and covered by integration tests, including a stubbed end-to-end
-  run of `solve.py` for 2024 Day 01 Part 1.
+- Solver pipeline is enabled and covered by integration tests, and has been exercised end-to-end
+  on a real AoC problem (2024 Day 01 Part 1) using live Advent of Code input.
+- Problem fetching and parsing now use AoC HTML articles per part, ensuring Part 1 and Part 2
+  are solved atomically with correct example and expected-output extraction from `<pre><code>`
+  blocks and surrounding prose.
 - Weighted consensus and collaborative improvement flows are exercised by integration tests;
   problem type classification is implemented and feeds model selection and learning.
 - After consensus (and optional collaborative improvement) fails to choose a solution, the
-  solver now uses execution-based selection: candidate solutions are executed against AoC
-  examples and full input via `SolutionExecutor.test_solution`, and any passing candidate is
-  selected before falling back to "no solution".
+  solver runs an execution-based selection and repair loop: candidate solutions are validated
+  against AoC examples and full input via `SolutionExecutor.test_solution`, with iterative
+  calls to `improve_solution` before finally giving up.
 - Code quality scoring is implemented via `CodeQualityAnalyzer` and integrated into
   `LearningDatabase.update_model_performance` calls.
 - Local model list is curated for M1 16GB-class hardware and checked against Ollama at startup;
   if none of the configured models are installed, the solver raises a clear message listing the
   models to install.
-- The current test suite passes locally (43/43) with `PYTHONPATH=. venv/bin/pytest`.
+- The current test suite passes locally (44/44) with `PYTHONPATH=. venv/bin/pytest`.
 
 ## Features in Development
 

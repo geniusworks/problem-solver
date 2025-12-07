@@ -10,7 +10,11 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
 
 1. **Problem Fetching & Parsing** (`shared/parser.py`)
    - Problem text and input parsing (`shared/parser.py`)
-     - HTML-first example extraction
+     - HTML-first example extraction from AoC `<article class="day-desc">` content
+     - AoC-aware part handling so Part 1 and Part 2 are solved atomically using the
+       correct per-part article
+     - AoC-style example and expected-output inference from `<pre><code>` blocks and
+       surrounding prose
      - Separate example storage (.examples.txt)
      - Fallback plain text parsing
    - Problem analysis and understanding (`shared/problem_analysis.py`)
@@ -33,7 +37,8 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
    - Safe code execution environment
    - Resource monitoring and limits
    - Performance metrics collection
-   - Execution-based candidate selection after consensus using example and full-input runs
+   - Execution-based candidate selection and iterative repair loop after consensus using
+     example and full-input runs
    - Attempt tracking and analysis
 
 4. **Learning System** (`learning/`)
