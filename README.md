@@ -223,14 +223,6 @@ problem-solver/
 - `dev/progress/checkpoint.md`: Development tracking
 - `dev/docs/architecture.md`: System architecture
 
-## Status Notes (2025-08-11)
-
-- Defensive fixes to prevent `.lower()` on non-strings implemented in `shared/strategies.py`, `learning/optimizer.py`, and `shared/llm/performance.py`.
-- Import hygiene: `shared/submission.py` now imports strategies from `shared/strategies`.
-- Filename safety: `shared/utils.py` coerces `model_name` to string before lowercasing.
-- Tests: historical snapshot at this date indicated 9/9 passing locally.
-- At this time, weighted consensus validation, code quality scoring, and problem type classification were still in progress.
-
 ## Status Notes (2025-12-06)
 
 **What works today (snapshot)**
