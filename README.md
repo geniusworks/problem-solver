@@ -1,6 +1,6 @@
 # Problem Solver
 
-An intelligent system for solving algorithmic programming problems using LLMs and strategic problem analysis.
+An intelligent system that uses Advent of Code problems as its primary testbed, attempting one-shot autonomous solutions with orchestrated local LLMs and strategic problem analysis.
 
 ## Features
 
@@ -223,34 +223,20 @@ problem-solver/
 - `dev/progress/checkpoint.md`: Development tracking
 - `dev/docs/architecture.md`: System architecture
 
-## Status Notes (2025-12-06)
+## Status Notes
 
 **What works today (snapshot)**
 
-- 2024 Day 01 Part 1 is solved end-to-end with local models and real AoC input
-  (answer: 2970687).
-- AoC HTML parsing is part-aware and reliably extracts examples plus expected values for
-  standard puzzles.
-- Execution-based selection and the repair loop are wired into `BaseSolver.solve_problem`
-  and covered by tests.
-
-- Solver pipeline is enabled and covered by integration tests, and has been exercised end-to-end
-  on a real AoC problem (2024 Day 01 Part 1) using live Advent of Code input.
-- Problem fetching and parsing now use AoC HTML articles per part, ensuring Part 1 and Part 2
-  are solved atomically with correct example and expected-output extraction from `<pre><code>`
-  blocks and surrounding prose.
-- Weighted consensus and collaborative improvement flows are exercised by integration tests;
-  problem type classification is implemented and feeds model selection and learning.
-- After consensus (and optional collaborative improvement) fails to choose a solution, the
-  solver runs an execution-based selection and repair loop: candidate solutions are validated
-  against AoC examples and full input via `SolutionExecutor.test_solution`, with iterative
-  calls to `improve_solution` before finally giving up.
-- Code quality scoring is implemented via `CodeQualityAnalyzer` and integrated into
-  `LearningDatabase.update_model_performance` calls.
-- Local model list is curated for M1 16GB-class hardware and checked against Ollama at startup;
-  if none of the configured models are installed, the solver raises a clear message listing the
-  models to install.
-- The current test suite passes locally (44/44) with `PYTHONPATH=. venv/bin/pytest`.
+- The end-to-end solving pipeline is enabled and exercised on real Advent of Code problems
+  using local models and cached AoC inputs.
+- AoC-aware HTML parsing and per-part article handling reliably extract examples and expected
+  outputs from `<pre><code>` blocks and surrounding prose.
+- Execution-based candidate selection, the iterative repair loop, and canonical solution
+  recording (including non-force reuse of existing `YYYY_dayDD_partP.py` files) are
+  implemented and form the core of the solver's behavior.
+- The learning system tracks code quality and model performance, and a curated set of local
+  models is validated against Ollama at startup to stay within typical developer hardware
+  constraints.
 
 ## Features in Development
 

@@ -46,15 +46,19 @@ Note: Execute the above steps only on explicit wrap-up request.
 - [ ] Update checkpoint with full understanding
 - [ ] Preserve core principle consistency
 
-## Current Status (2025-12-06)
+## Current Status (2025-12-07)
 
 ### Component Status
 - Authentication: Improved error handling and user feedback ⚡
 - Input Retrieval: Working with valid session token ✅
 - Core Solver: Pipeline working end-to-end; execution-based selection and repair loop
-  implemented; successfully solved 2024 Day 1 Part 1 ✅
+  implemented; successfully solving real AoC problems including 2024 Day 1 (parts 1–2),
+  Day 2 (parts 1–2), and Day 3 Part 1 ✅
 - Example Parsing: Fixed to correctly extract AoC-style examples from HTML <pre><code>
-  blocks and infer expected outputs from prose patterns ✅
+  blocks and infer expected outputs from prose patterns; validated on multiple 2024 days ✅
+- Solution Reuse: Non-force runs now reuse existing canonical per-day solution files
+  (`YYYY_dayDD_partP.py`) by executing them once against full input before falling back to a
+  fresh solve when needed ✅
 - Model Integration: Curated local model list for M1 16GB-class hardware; Ollama preflight
   check in place; model filtering against available models working ✅
 - Learning System: Database and schema implemented; model performance updates include
@@ -69,8 +73,8 @@ Note: Execute the above steps only on explicit wrap-up request.
   December runs.
 
 ### Next Steps
-1. Run additional AoC problems (2024 Day 2+, other years) to validate the parser and solver
-   across different problem styles.
+1. Run additional AoC problems (remaining 2024 days and earlier years) to validate the
+   parser and solver across different problem styles.
 2. Exercise collaborative improvement and repair loop on problems where initial attempts fail.
 3. Expand tests and coverage for solver, LLM integration, validator, quality, and learning
    modules based on feedback from real runs.
@@ -85,8 +89,11 @@ Note: Execute the above steps only on explicit wrap-up request.
   12-day event.
 
 ### Current Test Focus
-- Completed: 2024 Day 01 Part 1 solved successfully (answer: 2970687, model: qwen2.5-coder:7b)
-- Next: Try additional days/years to validate parser improvements work across problem styles.
+- Completed: 2024 Day 01 Part 1 solved successfully (answer: 2970687, model: qwen2.5-coder:7b);
+  additional AoC 2024 problems (Day 01 Part 2, Day 02 Parts 1–2, Day 03 Part 1) solved and
+  recorded under canonical solution files and `solutions/README.md`.
+- Next: Continue through remaining 2024 days and then earlier years to validate parser and
+  solver behavior across a broader range of problem styles.
 
 
 ### Active Development

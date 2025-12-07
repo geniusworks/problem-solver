@@ -39,6 +39,9 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
    - Performance metrics collection
    - Execution-based candidate selection and iterative repair loop after consensus using
      example and full-input runs
+   - Non-force runs reuse existing validated canonical solution files (`YYYY_dayDD_partP.py`)
+     by executing them once against the full input before falling back to a fresh multi-model
+     solve when needed
    - Attempt tracking and analysis
 
 4. **Learning System** (`learning/`)

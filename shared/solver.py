@@ -199,8 +199,15 @@ class BaseSolver:
                 existing_solution = await self._get_existing_solution(year, day, part)
                 if existing_solution:
                     logging.info("Using existing successful solution")
-                    return await self.solution_executor.execute_solution(
-                        existing_solution, year, day
+                    problem_id = f"{year}_day{day:02d}_part{part}"
+                    result = await self.solution_executor.run_against_full_input(
+                        problem_id, year, day, part, existing_solution
+                    )
+                    if result.error is None:
+                        return result.output.strip()
+                    logging.warning(
+                        "Existing solution failed on full input (%s); falling back to full solve",
+                        result.error,
                     )
 
             # Get problem text and parse it
@@ -702,34 +709,38 @@ class BaseSolver:
         Returns:
             The solution code if a successful solution exists, None otherwise
         """
-        solutions_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "solutions"
-        if not solutions_dir.exists():
-            return None
-            
-        # First check for final solution
-        solution_file = solutions_dir / f"part{part}.py"
-        if solution_file.exists():
-            with open(solution_file, "r") as f:
+        day_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}"
+
+        canonical_name = f"{year}_day{day:02d}_part{part}.py"
+        canonical_path = day_dir / canonical_name
+        if canonical_path.exists():
+            with open(canonical_path, "r") as f:
                 return f.read()
-                
-        # If no final solution, check attempts
-        attempts_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "attempts"
+
+        solutions_dir = day_dir / "solutions"
+        if solutions_dir.exists():
+            solution_file = solutions_dir / f"part{part}.py"
+            if solution_file.exists():
+                with open(solution_file, "r") as f:
+                    return f.read()
+
+        attempts_dir = day_dir / "attempts"
         if not attempts_dir.exists():
             return None
-            
-        # Check all attempt files
+
         for attempt_file in attempts_dir.glob("attempt_*.json"):
             try:
                 with open(attempt_file, "r") as f:
                     attempt_data = json.load(f)
-                    
-                # Check if this is for the right part and was successful
-                if (attempt_data["metadata"]["part"] == part and
-                    attempt_data["submission"]["success"]):
+
+                if (
+                    attempt_data["metadata"].get("part") == part
+                    and attempt_data["submission"].get("success")
+                ):
                     return attempt_data["code"]
             except (json.JSONDecodeError, KeyError):
                 continue
-                
+
         return None
 
     def _get_attempts_dir(self, year: int, day: int) -> Path:

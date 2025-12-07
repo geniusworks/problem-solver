@@ -40,5 +40,5 @@ sequenceDiagram
         Generator-->>LLM: Final structured prompt
         LLM->>LLM: Generate solution
         LLM->>Attempts: Record attempt immediately
-        Note over Attempts: Attempt includes:<br/>1. Model code (portable)<br/>2. Runtime code (local paths)<br/>3. Prompt used<br/>4. Model info<br/>5. Generation metrics<br/>6. Raw response<br/>7. Applied strategies
+        Note over Attempts: Attempt includes:<br/>1. Model code (using 'input.txt')<br/>2. Prompt used<br/>3. Model info<br/>4. Generation metrics<br/>5. Raw response<br/>6. Applied strategies
     end

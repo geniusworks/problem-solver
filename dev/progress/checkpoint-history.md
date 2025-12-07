@@ -12,6 +12,27 @@
 - **Result**: Successfully solved 2024 Day 1 Part 1 end-to-end with `qwen2.5-coder:7b` producing correct answer 2970687.
 - **Impact**: Solver pipeline now works correctly for AoC problems with standard example formats.
 
+## AoC 2024 Days 1–3, Canonical Solutions, and Non-Force Reuse (2025-12-07)
+- **Rationale**: After fixing AoC parsing and validating 2024 Day 1 Part 1, we needed stable
+  solution filenames and a reliable non-force path that reuses existing validated solutions
+  instead of regenerating code on every run.
+- **Changes**:
+  - Standardized solution filenames to a canonical form `YYYY_dayDD_partP.py` and ensured
+    they are saved both under `years/YYYY/dayDD/` and in the central `solutions/` directory.
+  - Updated `record_solution`/`save_solution_file` plumbing so validated solutions are logged
+    once in `solutions/README.md` with repository state and model metadata.
+  - Extended `BaseSolver._get_existing_solution` to look for canonical per-day solution files
+    and fall back to legacy per-day `solutions/partP.py` files and successful attempts.
+  - Changed the non-force branch of `BaseSolver.solve_problem` to execute any existing
+    solution once against the full input before triggering a full multi-model solve when that
+    execution fails.
+- **Result**: 2024 Day 1 (parts 1–2), Day 2 (parts 1–2), and Day 3 Part 1 are solved and
+  recorded under canonical solution files and `solutions/README.md`. Non-force runs now reuse
+  these validated solutions when possible instead of issuing fresh model generations.
+- **Impact**: The system behaves more like a real AoC assistant: stable paths for solutions,
+  reproducible logs of validated answers, and a cheap non-force path that avoids unnecessary
+  model work while still falling back to the full solver when existing code breaks.
+
 ## Unified Solver Roadmap (2025-12-05)
 - **Rationale**: Align progress tracking with the latest architecture review and provide a clear path to a production-ready solver.
 - **Impact**: Focuses work on enabling the full solver pipeline, validating weighted consensus and review flows, integrating code quality and problem type classification into learning, and improving coverage and observability.
