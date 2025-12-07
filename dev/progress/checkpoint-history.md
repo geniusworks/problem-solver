@@ -1,7 +1,17 @@
 # Checkpoint History
 
 # Key Decisions
- 
+
+## AoC Example Parsing Fix and First Successful Solve (2025-12-06)
+- **Rationale**: The parser was incorrectly splitting <pre><code> blocks into individual lines and inferring wrong expected outputs from intermediate numbers in AoC prose. This caused execution-based validation to reject correct solutions.
+- **Changes**:
+  - Fixed `_extract_examples` to keep each <pre><code> block as a single example
+  - Added AoC-style prose pattern matching for expected outputs (e.g., "total distance of 11")
+  - Changed `fetch_problem_text` to return HTML (not plain text) so parser uses HTML-aware extraction
+  - Fixed unit tests for model availability filtering in `_get_top_models`
+- **Result**: Successfully solved 2024 Day 1 Part 1 end-to-end with `qwen2.5-coder:7b` producing correct answer 2970687.
+- **Impact**: Solver pipeline now works correctly for AoC problems with standard example formats.
+
 ## Unified Solver Roadmap (2025-12-05)
 - **Rationale**: Align progress tracking with the latest architecture review and provide a clear path to a production-ready solver.
 - **Impact**: Focuses work on enabling the full solver pipeline, validating weighted consensus and review flows, integrating code quality and problem type classification into learning, and improving coverage and observability.

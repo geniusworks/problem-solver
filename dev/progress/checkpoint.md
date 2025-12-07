@@ -50,16 +50,17 @@ Note: Execute the above steps only on explicit wrap-up request.
 
 ### Component Status
 - Authentication: Improved error handling and user feedback ⚡
-- Input Retrieval: Ready for testing with valid session token ⚡
-- Core Solver: Pipeline enabled; integration tests for `solve.py` and solver flows are passing;
-  execution-based candidate selection fallback implemented ⚡
-- Model Integration: Curated local model list for M1 16GB-class hardware and Ollama preflight
-  check in place 🔄
-- Learning System: Database and schema implemented; model performance updates now include
+- Input Retrieval: Working with valid session token ✅
+- Core Solver: Pipeline working end-to-end; execution-based selection and repair loop
+  implemented; successfully solved 2024 Day 1 Part 1 ✅
+- Example Parsing: Fixed to correctly extract AoC-style examples from HTML <pre><code>
+  blocks and infer expected outputs from prose patterns ✅
+- Model Integration: Curated local model list for M1 16GB-class hardware; Ollama preflight
+  check in place; model filtering against available models working ✅
+- Learning System: Database and schema implemented; model performance updates include
   code quality metrics and problem type information 🔄
 
 ### Known Issues
-- No real Advent of Code runs have been executed end-to-end yet with live AoC inputs.
 - Collaborative improvement and validator flows have only been exercised on synthetic test
   problems.
 - Core solver, LLM integration, validator, quality, and learning modules still have
@@ -68,28 +69,24 @@ Note: Execute the above steps only on explicit wrap-up request.
   December runs.
 
 ### Next Steps
-1. Run a controlled end-to-end solve for at least one AoC problem (e.g., 2024 Day 01 Part 1)
-   using real inputs and the curated local model set.
-2. Observe and fix any issues encountered during real runs (network, session, model
-   failures, resource constraints).
+1. Run additional AoC problems (2024 Day 2+, other years) to validate the parser and solver
+   across different problem styles.
+2. Exercise collaborative improvement and repair loop on problems where initial attempts fail.
 3. Expand tests and coverage for solver, LLM integration, validator, quality, and learning
    modules based on feedback from real runs.
 4. Monitor performance and memory behavior on M1 16GB hardware for the curated model set
    and adjust model list or limits if needed.
 
 ### Active Priorities
-- [HIGH] Exercise the full solver pipeline end-to-end for at least one AoC problem
-  (2024 Day 01 as initial target).
-- [HIGH] Validate weighted consensus, validation, and reviewer/collaborative flows against
-  real problem runs.
+- [HIGH] Validate parser and solver on additional AoC problems to ensure robustness.
+- [HIGH] Exercise repair loop and collaborative improvement on harder problems.
 - [MED] Raise coverage on solver, LLM, validator, quality, and learning modules.
 - [LOW] Confirm AoC 2025 utilities and documentation behave correctly during the December
   12-day event.
 
 ### Current Test Focus
-- Working on: 2024 Day 01 Part 1 (next step: real run via `solve.py`).
-- Status: Integration tests for consensus and collaborative flows are passing; awaiting
-  real AoC trial.
+- Completed: 2024 Day 01 Part 1 solved successfully (answer: 2970687, model: qwen2.5-coder:7b)
+- Next: Try additional days/years to validate parser improvements work across problem styles.
 
 
 ### Active Development
