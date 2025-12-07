@@ -233,6 +233,15 @@ problem-solver/
 
 ## Status Notes (2025-12-06)
 
+**What works today (snapshot)**
+
+- 2024 Day 01 Part 1 is solved end-to-end with local models and real AoC input
+  (answer: 2970687).
+- AoC HTML parsing is part-aware and reliably extracts examples plus expected values for
+  standard puzzles.
+- Execution-based selection and the repair loop are wired into `BaseSolver.solve_problem`
+  and covered by tests.
+
 - Solver pipeline is enabled and covered by integration tests, and has been exercised end-to-end
   on a real AoC problem (2024 Day 01 Part 1) using live Advent of Code input.
 - Problem fetching and parsing now use AoC HTML articles per part, ensuring Part 1 and Part 2
