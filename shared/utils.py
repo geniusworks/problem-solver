@@ -316,11 +316,11 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, A
         logger.debug("Using cached problem text from %s", cache_file)
         with open(cache_file, "r", encoding="utf-8") as f:
             html = f.read()
-        
+
         # Parse HTML and extract examples
         soup = BeautifulSoup(html, "html.parser")
         state, part1_answer, part2_answer = await _get_problem_state(soup)
-        
+
         # Extract examples from HTML before converting to text
         examples = []
         for article in soup.find_all("article", class_="day-desc"):
@@ -329,6 +329,28 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, A
                 code = pre.find("code")
                 if code:
                     examples.append(code.get_text())
+
+        # Select the appropriate article HTML for the requested part so that
+        # each part is solved atomically. This avoids including Part Two
+        # instructions when solving Part One and vice versa.
+        # Return HTML (not just text) so parse_problem_text can use HTML parsing.
+        problem_text: str
+        articles = soup.find_all("article", class_="day-desc") if soup else []
+        if articles:
+            if part == 2 and len(articles) > 1:
+                article = articles[1]
+            else:
+                article = articles[0]
+            # Return the article's outer HTML so the parser can use HTML-aware extraction
+            problem_text = str(article)
+        else:
+            # Fallback to full page HTML if structure is unexpected
+            problem_text = html
+
+        # Return appropriate data based on part
+        if part == 2:
+            return problem_text, soup, part2_answer
+        return problem_text, soup, part1_answer
     else:
         logger.info(f"Fetching fresh problem text for year {year} day {day} part {part}")
         url = f"{config.AOC_BASE_URL}/{year}/day/{day}"
@@ -348,6 +370,23 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, A
                 if code:
                     examples.append(code.get_text())
 
+        # Select the appropriate article HTML for the requested part so that
+        # each part is solved atomically. This avoids including Part Two
+        # instructions when solving Part One and vice versa.
+        # Return HTML (not just text) so parse_problem_text can use HTML parsing.
+        problem_text: str
+        articles = soup.find_all("article", class_="day-desc") if soup else []
+        if articles:
+            if part == 2 and len(articles) > 1:
+                article = articles[1]
+            else:
+                article = articles[0]
+            # Return the article's outer HTML so the parser can use HTML-aware extraction
+            problem_text = str(article)
+        else:
+            # Fallback to full page HTML if structure is unexpected
+            problem_text = html
+
         # Save to cache
         meta = CacheMetadata(
             state=state,
@@ -363,10 +402,10 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, A
             with open(examples_path, "w", encoding="utf-8") as f:
                 f.write("\n---\n".join(examples))
     
-    # Return appropriate data based on part
-    if part == 2:
-        return html, soup, part2_answer
-    return html, soup, part1_answer
+        # Return appropriate data based on part
+        if part == 2:
+            return problem_text, soup, part2_answer
+        return problem_text, soup, part1_answer
 
 async def fetch_input_data(year: int, day: int, soup: Optional[BeautifulSoup] = None) -> str:
     """Fetch the input data from Advent of Code website."""

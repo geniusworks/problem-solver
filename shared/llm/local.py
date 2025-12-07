@@ -75,7 +75,11 @@ Final Question: {problem.final_question}""")
         strategy_prompt = create_strategy_prompt(strategy_objects)
         
         # Phase 3: Implementation
-        implementation_prompt = generate_implementation_prompt(problem, analyzer)
+        implementation_prompt = generate_implementation_prompt(
+            problem,
+            analyzer,
+            analysis.content,
+        )
         
         self.last_prompt = implementation_prompt
         

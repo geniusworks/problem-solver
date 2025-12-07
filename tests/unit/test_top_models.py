@@ -30,6 +30,9 @@ def test_get_top_models_uses_learning_db_and_problem_type(monkeypatch, tmp_path)
     monkeypatch.setattr(solver_module, "LearningDatabase", DummyLearningDatabase)
 
     solver = _make_solver(tmp_path)
+    # Ensure that DB-returned models are present in solver.models so they
+    # survive the availability filtering performed by _get_top_models.
+    solver.models.update({"db-model-1": object(), "db-model-2": object()})
 
     result = solver._get_top_models("math", "primary", limit=2, min_success_rate=0.7)
 

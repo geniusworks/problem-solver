@@ -44,6 +44,23 @@ class DummyPrimaryModel:
         return self._solution
 
 
+class RepairablePrimaryModel:
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self.calls = []
+
+    async def generate_solution(  # type: ignore[override]
+        self, parsed_problem, year: int, day: int, strategies, strategy_effectiveness
+    ) -> str:
+        return "def solve():\n    return 0\n  # bad-initial"
+
+    async def improve_solution(self, solution: str, problem, feedback=None) -> str:  # type: ignore[override]
+        self.calls.append((solution, feedback))
+        if "# good" in solution:
+            return solution
+        return "def solve():\n    return 2\n  # good"
+
+
 class DummyValidatorModel:
     async def validate_solution(self, solution: str, test_cases) -> bool:  # type: ignore[override]
         return True
@@ -180,5 +197,76 @@ async def test_solver_uses_execution_based_selection_when_no_consensus(
     assert "# good" in result
 
     # The recording executor should have been invoked at least once
+    assert RecordingExecutor.last_instance is not None
+    assert RecordingExecutor.last_instance.calls
+
+
+@pytest.mark.asyncio
+async def test_solver_uses_repair_loop_when_all_initial_candidates_fail(
+    monkeypatch, tmp_path
+):
+    async def fake_fetch_problem_text(year: int, day: int, part: int = 1):
+        return "Dummy problem text", None, None
+
+    async def fake_ensure_problem_files(year: int, day: int):
+        return {
+            "problem": tmp_path / "problem.txt",
+            "examples": tmp_path / "examples",
+            "input": tmp_path / "input.txt",
+        }
+
+    def fake_ensure_problem_directory_structure(workspace_dir, year: int, day: int):
+        day_dir = tmp_path
+        attempts_dir = tmp_path / "attempts"
+        examples_dir = tmp_path / "examples"
+        attempts_dir.mkdir(parents=True, exist_ok=True)
+        examples_dir.mkdir(parents=True, exist_ok=True)
+        return {"day": day_dir, "attempts": attempts_dir, "examples": examples_dir}
+
+    monkeypatch.setattr(solver_module, "fetch_problem_text", fake_fetch_problem_text)
+    monkeypatch.setattr(solver_module, "ensure_problem_files", fake_ensure_problem_files)
+    monkeypatch.setattr(
+        solver_module,
+        "ensure_problem_directory_structure",
+        fake_ensure_problem_directory_structure,
+    )
+    monkeypatch.setattr(
+        solver_module, "parse_problem_text", lambda text: DummyParsedProblem()
+    )
+
+    monkeypatch.setattr(cq, "CodeQualityAnalyzer", DummyCodeQualityAnalyzer)
+    monkeypatch.setattr(learning, "LearningDatabase", DummyLearningDatabase)
+    monkeypatch.setattr(solver_module, "SolutionExecutor", RecordingExecutor)
+    monkeypatch.setattr(solver_module, "record_solution", lambda *args, **kwargs: None)
+
+    def fake_get_top_models(
+        self, problem_type: str, role: str, limit: int = 3, min_success_rate: float = 0.5
+    ):  # type: ignore[override]
+        if role == "primary":
+            return ["primary-1", "primary-2"]
+        if role == "reviewer":
+            return []
+        if role == "validator":
+            return []
+        return []
+
+    monkeypatch.setattr(solver_module.BaseSolver, "_get_top_models", fake_get_top_models)
+
+    solver = solver_module.BaseSolver(tmp_path, debug=False)
+    solver.enable_collaborative_improvement = False
+
+    primary_1 = DummyPrimaryModel("primary-1", "def solve():\n    return -1\n  # bad")
+    primary_2 = RepairablePrimaryModel("primary-2")
+
+    solver.models = {
+        "primary-1": primary_1,
+        "primary-2": primary_2,
+    }
+
+    result = await solver.solve_problem(2022, 1, 1, force=True)
+
+    assert result is not None
+    assert "# good" in result
+    assert primary_2.calls
     assert RecordingExecutor.last_instance is not None
     assert RecordingExecutor.last_instance.calls

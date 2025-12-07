@@ -135,7 +135,8 @@ if __name__ == '__main__':
 
 def generate_implementation_prompt(
     problem: ParsedProblem,
-    analyzer: Optional[ProblemAnalyzer] = None
+    analyzer: Optional[ProblemAnalyzer] = None,
+    prior_analysis: Optional[str] = None,
 ) -> str:
     """Generate implementation prompt for a problem.
     
@@ -163,8 +164,61 @@ def generate_implementation_prompt(
         get_parsing_guidance(problem, strategies),
         get_strategy_guidance(strategies),
         get_implementation_requirements(),
-        PromptSection("Final Question", problem.final_question, priority=4)
+        PromptSection("Final Question", problem.final_question, priority=4),
     ]
+
+    # Add problem-specific clarifications for known AoC-style patterns.
+    text = (problem.description or "").lower()
+    clarifications = []
+
+    # AoC 2024 Day 1 Part 1-style "total distance between your lists" puzzle.
+    if "total distance between your lists" in text:
+        clarifications.append(
+            "This puzzle defines the total distance between the left and right lists as follows:\n"
+            "- Parse every line of input as two integers: a left value and a right value.\n"
+            "- Collect all left values into one list and all right values into another list.\n"
+            "- Sort both lists independently from smallest to largest.\n"
+            "- Pair corresponding elements in the sorted lists (smallest with smallest, second-smallest with second-smallest, etc.).\n"
+            "- For each pair (x, y), compute abs(x - y) and sum these distances to get the final answer.\n"
+            "Do NOT compute a similarity score or any other metric; follow this exact definition of total distance."
+        )
+
+    if clarifications:
+        sections.append(
+            PromptSection(
+                "Problem-Specific Clarifications",
+                "\n\n".join(clarifications),
+                priority=2,
+            )
+        )
+
+    # Include prior analysis from an earlier reasoning step when available.
+    if prior_analysis:
+        sections.append(
+            PromptSection(
+                "Problem Analysis (previous reasoning)",
+                prior_analysis,
+                priority=0,
+            )
+        )
+
+    # Add a generic, example-based correctness contract whenever examples exist.
+    if problem.examples:
+        contract_text = (
+            "Your solution will be automatically tested on the examples above.\n"
+            "- It must read the input in exactly the format shown in the examples.\n"
+            "- Unless the problem explicitly states there are only a fixed number of lines, "
+            "assume you should process all non-empty lines in the input file.\n"
+            "- When you run your code on each example input, it must produce exactly the "
+            "listed expected output (no extra text)."
+        )
+        sections.append(
+            PromptSection(
+                "Example-Based Correctness Contract",
+                contract_text,
+                priority=2,
+            )
+        )
     
     # Sort sections by priority
     sections.sort(key=lambda x: x.priority)

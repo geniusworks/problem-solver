@@ -441,49 +441,102 @@ class BaseSolver:
                         )
                     )
 
-                validated_candidates: List[Tuple[str, str]] = []
-                for model_name, solution in answers.items():
-                    try:
-                        example_results, full_result, full_answer = (
-                            await self.solution_executor.test_solution(
-                                solution_code=solution,
-                                year=year,
-                                day=day,
-                                part=part,
-                                test_cases=exec_test_cases,
-                                model_name=model_name,
-                                debug=self.debug,
+                max_repair_iterations = int(os.getenv("MAX_REPAIR_ITERATIONS", "2"))
+                current_candidates: Dict[str, str] = dict(answers)
+
+                for iteration in range(max_repair_iterations + 1):
+                    validated_candidates: List[Tuple[str, str]] = []
+                    feedback_by_model: Dict[str, str] = {}
+
+                    for model_name, solution in current_candidates.items():
+                        try:
+                            example_results, full_result, full_answer = (
+                                await self.solution_executor.test_solution(
+                                    solution_code=solution,
+                                    year=year,
+                                    day=day,
+                                    part=part,
+                                    test_cases=exec_test_cases,
+                                    model_name=model_name,
+                                    debug=self.debug,
+                                )
                             )
-                        )
 
-                        # All available example runs must be error-free (or there may be
-                        # no extracted examples at all), and we require a successful
-                        # full-input run with a non-empty answer.
-                        if example_results and any(
-                            r.error is not None for r in example_results
-                        ):
-                            continue
-                        if not full_result or full_result.error is not None:
-                            continue
-                        if not full_answer:
+                            # All available example runs must be error-free (or there may be
+                            # no extracted examples at all), and we require a successful
+                            # full-input run with a non-empty answer.
+                            if example_results and any(
+                                r.error is not None for r in example_results
+                            ):
+                                feedback_by_model[model_name] = self._build_execution_feedback(
+                                    model_name,
+                                    exec_test_cases,
+                                    example_results,
+                                    full_result,
+                                    full_answer,
+                                )
+                                continue
+                            if not full_result or full_result.error is not None:
+                                feedback_by_model[model_name] = self._build_execution_feedback(
+                                    model_name,
+                                    exec_test_cases,
+                                    example_results,
+                                    full_result,
+                                    full_answer,
+                                )
+                                continue
+                            if not full_answer:
+                                feedback_by_model[model_name] = self._build_execution_feedback(
+                                    model_name,
+                                    exec_test_cases,
+                                    example_results,
+                                    full_result,
+                                    full_answer,
+                                )
+                                continue
+
+                            validated_candidates.append((model_name, solution))
+                        except Exception:
                             continue
 
-                        validated_candidates.append((model_name, solution))
-                    except Exception:
-                        # Any execution failure disqualifies this candidate
-                        continue
+                    if validated_candidates:
+                        # If we have quality scores from earlier, prefer the highest; otherwise
+                        # fall back to the first validated candidate.
+                        if quality_scores:
+                            validated_candidates.sort(
+                                key=lambda item: quality_scores.get(item[0], 0.0),
+                                reverse=True,
+                            )
+                        chosen_model, chosen_solution = validated_candidates[0]
+                        record_solution(year, day, part, chosen_model, chosen_solution)
+                        return chosen_solution
 
-                if validated_candidates:
-                    # If we have quality scores from earlier, prefer the highest; otherwise
-                    # fall back to the first validated candidate.
-                    if quality_scores:
-                        validated_candidates.sort(
-                            key=lambda item: quality_scores.get(item[0], 0.0),
-                            reverse=True,
-                        )
-                    chosen_model, chosen_solution = validated_candidates[0]
-                    record_solution(year, day, part, chosen_model, chosen_solution)
-                    return chosen_solution
+                    if iteration >= max_repair_iterations:
+                        break
+
+                    improved_candidates: Dict[str, str] = {}
+                    for model_name, solution in current_candidates.items():
+                        if model_name not in feedback_by_model:
+                            continue
+                        model = self.models.get(model_name)
+                        improve_fn = getattr(model, "improve_solution", None) if model else None
+                        if not callable(improve_fn):
+                            continue
+                        try:
+                            improved_code = await improve_fn(
+                                solution,
+                                parsed_problem,
+                                feedback_by_model[model_name],
+                            )
+                            if improved_code and improved_code != solution:
+                                improved_candidates[model_name] = improved_code
+                        except Exception:
+                            continue
+
+                    if not improved_candidates:
+                        break
+
+                    current_candidates = improved_candidates
 
             # If we get here, we failed to solve the problem
             self._print_consensus_summary(answers, failures, None, [])
@@ -491,6 +544,46 @@ class BaseSolver:
 
         except Exception as e:
             raise  # Let the error propagate to the top level
+
+    def _build_execution_feedback(
+        self,
+        model_name: str,
+        exec_test_cases: List[TestCase],
+        example_results: List[Any],
+        full_result: Optional[Any],
+        full_answer: Optional[str],
+    ) -> str:
+        lines: List[str] = []
+        lines.append(f"Execution feedback for model {model_name}.")
+        if exec_test_cases:
+            lines.append("Example test results:")
+            max_examples = 3
+            for idx, (test_case, result) in enumerate(
+                zip(exec_test_cases, example_results), start=1
+            ):
+                if idx > max_examples:
+                    break
+                expected = str(getattr(test_case, "expected_output", "")).strip()
+                if getattr(result, "error", None):
+                    lines.append(
+                        f"- Example {idx}: ERROR: {getattr(result, 'error', '')}"
+                    )
+                else:
+                    actual = str(getattr(result, "output", "")).strip()
+                    lines.append(
+                        f"- Example {idx}: expected '{expected}', got '{actual}'"
+                    )
+        else:
+            if example_results and any(getattr(r, "error", None) for r in example_results):
+                lines.append("Execution failed on examples with no structured test cases.")
+        if full_result is not None:
+            if getattr(full_result, "error", None):
+                lines.append(f"Full input run ERROR: {getattr(full_result, 'error', '')}")
+            elif not full_answer:
+                lines.append("Full input run completed but produced an empty answer.")
+            else:
+                lines.append("Full input run completed but the answer is still not accepted.")
+        return "\n".join(lines)
 
     def _get_problem_type(self, characteristics: Dict[str, Any]) -> str:
         """Determine the problem type from characteristics.
@@ -514,17 +607,29 @@ class BaseSolver:
 
     def _get_top_models(self, problem_type: str, role: str, limit: int = 3, min_success_rate: float = 0.5) -> list[str]:
         """Get top performing models for a specific problem type and role."""
-        logging.info(f"Getting top models for problem_type={problem_type}, role={role}, limit={limit}, min_success_rate={min_success_rate}")
+        logging.info(
+            f"Getting top models for problem_type={problem_type}, role={role}, "
+            f"limit={limit}, min_success_rate={min_success_rate}"
+        )
         if not self.db:
             self.db = LearningDatabase(self.learning_dir)
-        models = self.db.get_top_models(problem_type, role, limit, min_success_rate)
-        if not models:
-            # Cold-start fallback: use available local models if DB has no entries meeting threshold
-            fallback = list(self.models.keys())[:limit]
-            logging.info(f"Top models: [] -> using fallback models {fallback}")
-            return fallback
-        logging.info(f"Top models: {models}")
-        return models
+
+        raw_models = self.db.get_top_models(problem_type, role, limit, min_success_rate)
+        if raw_models:
+            available = [m for m in raw_models if m in self.models]
+            missing = [m for m in raw_models if m not in self.models]
+            if missing:
+                logging.info(
+                    "Filtered out unavailable models for role %s: %s", role, missing
+                )
+            if available:
+                logging.info("Top models after filtering: %s", available[:limit])
+                return available[:limit]
+
+        # Cold-start or all suggested models unavailable: fall back to local models
+        fallback = list(self.models.keys())[:limit]
+        logging.info(f"Top models: [] -> using fallback models {fallback}")
+        return fallback
 
     def _get_weighted_consensus_answer(
         self, weighted_answers: Dict[str, Tuple[str, float]]

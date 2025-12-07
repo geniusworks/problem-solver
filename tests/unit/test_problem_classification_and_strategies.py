@@ -12,7 +12,13 @@ def _make_solver(tmp_path) -> solver_module.BaseSolver:
     solver.learning_dir = tmp_path / "learning"
     solver.learning_dir.mkdir(parents=True, exist_ok=True)
     solver.db = None
-    solver.models = {}
+    # Seed models with the names that our FakeLearningDatabase returns so
+    # that _get_top_models will keep them after filtering by availability.
+    solver.models = {
+        "grid-model-1": object(),
+        "math-model-1": object(),
+        "general-model-1": object(),
+    }
     return solver
 
 

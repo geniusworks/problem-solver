@@ -393,16 +393,37 @@ class SolutionExecutor:
         """
         try:
             problem_id = f"{year}_day{day:02d}_part{part}"
-            example_results = []
-            full_result = None
-            full_answer = None
+            example_results: List[ExecutionResult] = []
+            full_result: Optional[ExecutionResult] = None
+            full_answer: Optional[str] = None
 
             # Validate the solution code
-            is_valid, error = await self.prepare_solution(
-                problem_id, solution_code, test_cases or [], model_name=model_name
-            )
+            try:
+                is_valid, error = await self.prepare_solution(
+                    problem_id, solution_code, test_cases or [], model_name=model_name
+                )
+            except Exception as e:
+                message = str(e)
+                example_results.append(
+                    ExecutionResult(
+                        output="",
+                        error=f"Validation failed before examples: {message}",
+                    )
+                )
+                return example_results, None, None
+
             if not is_valid:
-                return [], None, None
+                example_results.append(
+                    ExecutionResult(
+                        output="",
+                        error=(
+                            f"Validation failed before examples: {error}"
+                            if error
+                            else "Validation failed before examples"
+                        ),
+                    )
+                )
+                return example_results, None, None
 
             # Run example tests
             for i, test_case in enumerate(test_cases or [], 1):

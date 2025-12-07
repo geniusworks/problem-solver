@@ -262,108 +262,116 @@ def _extract_examples_from_text(text: str) -> List[TestCase]:
 
 
 def _extract_examples(article: BeautifulSoup) -> List[TestCase]:
-    """Extract all examples from problem text with their context."""
+    """Extract all examples from problem text with their context.
+
+    AoC problems typically have one main example per part inside a <pre><code>
+    block, with the expected answer mentioned in subsequent prose (e.g.,
+    "a total distance of 11").
+    """
     logger.debug("Starting example extraction...")
     examples = []
 
     # Find all pre blocks
     pre_blocks = article.find_all("pre")
     logger.debug("Found %d pre blocks", len(pre_blocks))
-    
+
     for i, pre_block in enumerate(pre_blocks):
         try:
             # Get the code content
             code_block = pre_block.find("code")
             if not code_block:
                 continue
-                
+
             code_content = code_block.get_text().strip()
-            logger.debug("Pre block %d content length: %d", i+1, len(code_content))
-            
+            logger.debug("Pre block %d content length: %d", i + 1, len(code_content))
+
             # Find where this example occurs in the full article text
-            example_pos = article.get_text().find(code_content)
+            article_text = article.get_text()
+            example_pos = article_text.find(code_content)
             if example_pos == -1:
                 continue
-                
+
             # Get all text before this example in the article
-            context_before = article.get_text()[:example_pos].strip()
-            
-            # Get all text after this example until the next example or end
-            next_pos = len(article.get_text())
-            for next_block in pre_blocks[i+1:]:
+            context_before = article_text[:example_pos].strip()
+
+            # Get all text after this example until the next pre block or end
+            next_pos = len(article_text)
+            for next_block in pre_blocks[i + 1 :]:
                 next_content = next_block.find("code")
                 if next_content:
-                    pos = article.get_text().find(next_content.get_text())
+                    pos = article_text.find(next_content.get_text())
                     if pos != -1:
                         next_pos = pos
                         break
-            
-            context_after = article.get_text()[example_pos + len(code_content):next_pos].strip()
-            
-            # Look for expected output in various formats
-            answer = None
-            answer_type = None
-            context_text = context_after.lower()
-            
-            # Try to find output after various keywords
-            output_patterns = [
-                # Numeric patterns
-                (r'(?:answer|output|result)[: ]+([-+]?[0-9]*\.?[0-9]+)', 'numeric'),
-                # String patterns (in quotes)
-                (r'(?:answer|output|result)[: ]+["\']([^"\']*)["\'](\s|$)', 'string'),
-                # String patterns (without quotes)
-                (r'(?:answer|output|result)[: ]+([A-Za-z0-9_]+)\b', 'string'),
-                # List patterns
-                (r'(?:answer|output|result)[: ]+\[(.*?)\]', 'list'),
-                # Boolean patterns
-                (r'(?:answer|output|result)[: ]+(true|false)\b', 'boolean')
-            ]
-            
-            for pattern, type_name in output_patterns:
-                answer_match = re.search(pattern, context_text, re.IGNORECASE)
-                if answer_match:
-                    answer_str = answer_match.group(1).strip()
-                    if type_name == 'numeric':
-                        if '.' in answer_str:
-                            answer = float(answer_str)
-                            answer_type = 'float'
-                        else:
-                            answer = int(answer_str)
-                            answer_type = 'integer'
-                    elif type_name == 'string':
-                        answer = answer_str
-                        answer_type = 'string'
-                    elif type_name == 'list':
-                        answer = [x.strip() for x in answer_str.split(',')]
-                        answer_type = 'list'
-                    elif type_name == 'boolean':
-                        answer = answer_str.lower() == 'true'
-                        answer_type = 'boolean'
+
+            context_after = article_text[example_pos + len(code_content) : next_pos].strip()
+
+            # --- Improved expected-output extraction for AoC-style prose ---
+            # AoC often states the final answer as "a total X of Y" or "the answer is Y"
+            # at the end of the worked example. We search for common AoC phrasing and
+            # prefer the *last* number in an <em> or <code> tag near the summary line.
+            answer: Optional[str] = None
+            answer_type: Optional[str] = None
+
+            # Search in the HTML following the pre block for <em> or <code> containing
+            # the expected answer. AoC commonly wraps the answer in <em> inside <code>.
+            following_html = []
+            for sibling in pre_block.find_next_siblings():
+                # Stop at the next pre block
+                if sibling.name == "pre":
                     break
-            
-            # If no explicit answer found, look for a code block immediately after
-            if answer is None and i + 1 < len(pre_blocks):
-                next_code = pre_blocks[i + 1].find("code")
-                if next_code and len(context_after.split()) < 20:  # Only if there's minimal text between
-                    answer = next_code.get_text().strip()
-                    answer_type = 'output_block'
-            
-            # Clean up input data - split into lines and remove extra whitespace
-            input_lines = [line.strip() for line in code_content.split('\n') if line.strip()]
+                following_html.append(str(sibling))
+            following_soup = BeautifulSoup("".join(following_html), "html.parser")
+
+            # Look for AoC-style summary patterns in the following text
+            following_text = following_soup.get_text()
+            summary_patterns = [
+                # "a total distance of 11" / "total X of Y"
+                r"total\s+\w+\s+(?:of\s+)?(\d+)",
+                # "the answer is 11"
+                r"(?:the\s+)?answer\s+is\s+(\d+)",
+                # "similarity score ... is 31"
+                r"score\s+(?:\w+\s+)*is\s+(\d+)",
+                # Generic "is X" at end of sentence with emphasis
+                r"is\s+(\d+)[.!]?\s*$",
+            ]
+
+            for pattern in summary_patterns:
+                match = re.search(pattern, following_text, re.IGNORECASE)
+                if match:
+                    answer = match.group(1)
+                    answer_type = "integer"
+                    break
+
+            # Fallback: find emphasized numbers (<em> or <code><em>) in following HTML
+            if answer is None:
+                em_numbers = []
+                for em_tag in following_soup.find_all("em"):
+                    em_text = em_tag.get_text().strip()
+                    if re.fullmatch(r"\d+", em_text):
+                        em_numbers.append(em_text)
+                if em_numbers:
+                    # Prefer the last emphasized number (typically the final answer)
+                    answer = em_numbers[-1]
+                    answer_type = "integer"
+
+            # Keep the full multi-line input as a single example
             examples.append(
                 TestCase(
-                    input_data='\n'.join(input_lines),
+                    input_data=code_content,
                     expected_output=str(answer) if answer is not None else "",
                     expected_type=answer_type,
                     description=f"{context_before}\n\n{context_after}",
                     order=len(examples),
                     demonstrates=set(),
                     referenced_by=[],
-                    purpose=_determine_example_purpose(context_before, context_after)
+                    purpose=_determine_example_purpose(context_before, context_after),
                 )
             )
-            logger.debug("Added example with input and output")
-            
+            logger.debug(
+                "Added example %d with expected_output=%r", len(examples), answer
+            )
+
         except Exception as e:
             logger.error(f"Error processing pre block {i+1}: {e}")
             continue
@@ -528,18 +536,8 @@ def parse_problem_text(problem_text: str, examples_file: Optional[Path] = None) 
                     ))
                     logger.debug(f"Added example from pre block {i+1}")
 
-    # Try to find expected outputs in text
-    if problem.examples:
-        logger.debug("Looking for expected outputs in text...")
-        for example in problem.examples:
-            if not example.expected_output:
-                # Look for numbers following the example
-                search_text = article.get_text() if article else text_content
-                start_pos = search_text.find(example.input_data) + len(example.input_data)
-                text_after = search_text[start_pos:start_pos + 200]
-                numbers = re.findall(r'\b\d+\b', text_after)  # Look in next 200 chars
-                if numbers:
-                    example.expected_output = numbers[0]
-                    logger.debug(f"Found expected output: {example.expected_output}")
+    # Note: expected_output inference is now handled directly in _extract_examples
+    # using AoC-style prose patterns. Do not apply crude fallback here as it can
+    # pick up intermediate numbers instead of the final answer.
 
     return problem
