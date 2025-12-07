@@ -223,6 +223,18 @@ problem-solver/
 - `dev/progress/checkpoint.md`: Development tracking
 - `dev/docs/architecture.md`: System architecture
 
+### Technical Reference
+
+- **Core documentation**
+  - [dev/docs/architecture.md](dev/docs/architecture.md): High-level system architecture, data flow, and solver components.
+  - [dev/docs/contributing.md](dev/docs/contributing.md): Contribution guidelines, development workflow, and testing expectations.
+
+- **System diagrams**
+  - [dev/diagrams/information-flow.mmd](dev/diagrams/information-flow.mmd): End-to-end information flow and solver orchestration.
+  - [dev/diagrams/strategy-guidance.mmd](dev/diagrams/strategy-guidance.mmd): Strategy selection, guidance flow, and model roles.
+  - [dev/diagrams/execution-repair-loop.mmd](dev/diagrams/execution-repair-loop.mmd): Execution-feedback repair loop and iterative improvement cycle.
+  - [dev/diagrams/documentation-flow.mmd](dev/diagrams/documentation-flow.mmd): How documentation, progress tracking, and code stay in sync.
+
 ## Status Notes
 
 **What works today (snapshot)**
@@ -265,6 +277,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
 - Pull requests
 - Testing requirements
 - Documentation
+
+## Credits
+
+Developed by **Martin Diekhoff**.
 
 ## License
 
