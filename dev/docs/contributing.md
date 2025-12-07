@@ -2,6 +2,26 @@
 
 Thank you for your interest in contributing to the Problem Solver project! This document provides guidelines and best practices for contributing.
 
+## Core Principles
+
+These principles guide all development and improvement work on the Problem Solver:
+
+### 1. Solver Autonomy
+
+The solver must remain fully autonomous. All solutions must be generated through the LLM orchestration pipeline—never by hand-authoring canonical solution files outside that process.
+
+- **No manual solutions**: Do not create or commit hand-written solution files to compensate for LLM failures.
+- **No "super AI interventions"**: Fixes must not rely on external intelligence (human or otherwise) injecting solutions outside the pipeline.
+- **Fix upstream, not downstream**: When the solver fails, address the root cause by improving parsing, prompting, evaluation, consensus, or orchestration—not by bypassing the pipeline.
+
+### 2. General-Purpose Improvements
+
+All improvements must have general utility and advance the goal of autonomous, one-shot, locally orchestrated LLM intelligence. Avoid overfit one-offs.
+
+- **No problem-specific hacks**: Do not add code or prompts that are tailored to a single problem instance with no broader applicability.
+- **Pattern-class guidance is acceptable**: Problem-specific clarifications in prompts are fine when they apply to a recognizable *class* of problems (e.g., corrupted-memory parsing puzzles) and are triggered by heuristics on problem text—not hard-coded for a particular day.
+- **Preserve existing behavior**: Improvements must not regress earlier successes. Test broadly before merging.
+
 ## Code Style
 
 - Follow PEP 8 style guidelines for Python code

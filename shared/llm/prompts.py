@@ -186,26 +186,39 @@ def generate_implementation_prompt(
         )
 
     # AoC-style "Mull It Over" corrupted-memory puzzles with mul(X,Y) and
-    # do()/don't() toggles (e.g., 2024 Day 3).
+    # do()/don't() toggles (e.g., 2024 Day 3). This guidance is written to be
+    # generally useful for problems where you must scan a noisy string for
+    # exact instruction substrings and maintain an enable/disable flag.
     if "corrupted" in text and "mul(" in text and "do()" in text and "don't()" in text:
         clarifications.append(
             "The input is a single corrupted string (possibly spanning multiple lines) "
             "containing characters like 'mul(X,Y)', 'do()', and \"don't()\". "
             "Treat the entire contents of input.txt as one continuous string and scan "
-            "left-to-right.\n"
+            "it left-to-right using an index i (do NOT rely on splitting into tokens by "
+            "whitespace or lines).\n"
             "- A valid multiplication instruction is exactly of the form mul(X,Y) where "
             "X and Y are 1-3 digit integers. Any other sequence that merely contains "
             "these characters (missing commas, extra symbols, spaces, etc.) must be "
             "ignored.\n"
-            "- For part 1: sum the products of all valid mul(X,Y) instructions that "
-            "appear anywhere in the string.\n"
-            "- For part 2: maintain a boolean flag mul_enabled starting as True. "
-            "When you encounter the literal substring do(), set mul_enabled = True. "
-            "When you encounter the literal substring don't(), set mul_enabled = False. "
-            "Only include mul(X,Y) products in the sum when mul_enabled is True.\n"
-            "Do NOT treat 'do', \"don't\", or 'mul' as separate tokens; they can appear "
-            "in the middle of other junk characters. Always work by scanning the raw "
-            "string for these exact substrings."
+            "- Maintain an integer total (starting at 0) and a boolean flag mul_enabled "
+            "(starting as True).\n"
+            "- While i < len(s):\n"
+            "  - If s[i:i+4] == 'do()': set mul_enabled = True and advance i by 4.\n"
+            "  - Else if s[i:i+7] == \"don't()\": set mul_enabled = False and advance i by 7.\n"
+            "  - Else if s[i:i+4] == 'mul(': attempt to parse X and Y as 1-3 digit integers "
+            "    directly from the string (no regex required): scan digits after 'mul(' "
+            "    for X, require a single comma, then scan digits for Y, and require a closing parenthesis. "
+            "    If any of these checks fail, treat this occurrence as invalid and advance i by 1. "
+            "    If parsing succeeds and mul_enabled is True, add X*Y to total and advance i "
+            "    just past the closing parenthesis.\n"
+            "  - Else: advance i by 1.\n"
+            "- For part 1: this loop runs with mul_enabled always effectively True, summing over "
+            "all valid mul(X,Y) instructions.\n"
+            "- For part 2: the same loop applies, but mul_enabled is actually toggled by do()/don't() "
+            "so only enabled mul(X,Y) instructions contribute to the sum.\n"
+            "Do NOT treat 'do', \"don't\", or 'mul' as standalone tokens; they can appear in the "
+            "middle of other junk characters. Always operate on the raw string and exact "
+            "substrings as described above."
         )
 
     if clarifications:
