@@ -158,9 +158,9 @@ Note: Execute the above steps only on explicit wrap-up request.
 [ ] Fine-tune cold-start weights based on usage data
 
 ### Current Focus
-[ ] Enable and test the full solver pipeline end-to-end for at least one AoC problem (2024 Day 01).
-[ ] Exercise and refine weighted consensus, validation, and reviewer/collaborative flows.
-[ ] Implement and wire up problem type classification and code quality scoring.
+[x] Enable and test the full solver pipeline end-to-end for at least one AoC problem (2024 Day 01).
+[x] Exercise and refine weighted consensus, validation, and reviewer/collaborative flows (integration tests + real 2024 Day 01 run).
+[x] Implement and wire up problem type classification and code quality scoring.
 [ ] Improve test coverage for solver, LLM integration, validator, quality, and learning modules.
 
 ### Completed ✓ (Last 2 weeks)

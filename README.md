@@ -154,31 +154,30 @@ An intelligent system for solving algorithmic programming problems using LLMs an
 
 ### Advent of Code parts and examples
 
-When solving Advent of Code problems, the solver works at the **HTML article level**:
+For each AoC day, the puzzle page has one or two
+`<article class="day-desc">` blocks:
 
-- For each day, the AoC page contains one or two `<article class="day-desc">` blocks.
-- **Part 1** uses the first article; **Part 2** uses the second article (when present).
-- Only the selected article is passed into the parser and LLM prompts, so Part 1 is solved
-  without seeing Part 2 text, and vice versa.
+- **Part 1** uses the first article.
+- **Part 2** uses the second article (when present).
+
+Only the selected article is parsed and sent to the LLMs, so each part is solved in isolation.
 
 Example: **2024 Day 1 – Historian Hysteria**
 
-- The Part 1 article contains a single `<pre><code>` block with the six-line example list of
-  location IDs and prose that ends with "a total distance of 11".
+- The Part 1 article contains one `<pre><code>` block with the six-line example list of
+  location IDs and prose ending with "a total distance of 11".
 - The parser:
-  - Treats the entire `<pre><code>` block as one example input
-  - Infers the expected output `11` from the surrounding prose
-- When you run:
+  - Treats the whole block as a single example input.
+  - Infers the expected output `11` from the surrounding prose.
+- Running:
   ```bash
   venv/bin/python solve.py --year 2024 --day 1 --part 1 --force --debug
   ```
-  the solver:
-  - Fetches/caches the Part 1 HTML article
-  - Extracts the example input and expected output `11`
-  - Uses only this Part 1 description and example when prompting local models
+  fetches only the Part 1 article, extracts that example + `11`, and prompts local models
+  using only the Part 1 description.
 
-This atomic handling ensures that real competition conditions are respected: Part 1 is solved
-without leaking any Part 2 information into the prompt.
+This keeps prompts faithful to real competition conditions: no Part 2 text is visible while
+solving Part 1.
 
 ## Solution File Structure
 
