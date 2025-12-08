@@ -52,15 +52,18 @@ Note: Execute the above steps only on explicit wrap-up request.
 - Authentication: Improved error handling and user feedback ⚡
 - Input Retrieval: Working with valid session token ✅
 - Core Solver: Pipeline working end-to-end; execution-based selection and repair loop
-  implemented; successfully solving real AoC problems including 2024 Day 1 (parts 1–2),
-  Day 2 (parts 1–2), and Day 3 Part 1 ✅
+  implemented; execution-based model fallback added (tries all configured models when
+  top 3 fail execution validation); successfully solving real AoC problems including
+  2024 Day 1 (parts 1–2), Day 2 (parts 1–2), and Day 3 Part 1 ✅
 - Example Parsing: Fixed to correctly extract AoC-style examples from HTML <pre><code>
   blocks and infer expected outputs from prose patterns; validated on multiple 2024 days ✅
 - Solution Reuse: Non-force runs now reuse existing canonical per-day solution files
   (`YYYY_dayDD_partP.py`) by executing them once against full input before falling back to a
   fresh solve when needed ✅
-- Model Integration: Curated local model list for M1 16GB-class hardware; Ollama preflight
-  check in place; model filtering against available models working ✅
+- Model Integration: Curated local model list for M1 16GB-class hardware (6 models);
+  Ollama preflight check in place; model filtering against available models working ✅
+- Prompt Guidance: Refactored to follow Prompt Guidance Discipline principle—pattern-class
+  wisdom only, no overfit problem-specific guidance ✅
 - Learning System: Database and schema implemented; model performance updates include
   code quality metrics and problem type information 🔄
 
@@ -71,6 +74,8 @@ Note: Execute the above steps only on explicit wrap-up request.
   relatively low coverage (~30%).
 - AoC 2025 12-day format is supported in utilities but has not yet been validated with real
   December runs.
+- Day 3 Part 2 not yet solved—models struggle with the noisy instruction stream pattern
+  despite generic guidance; this is expected as we've removed overfit guidance.
 
 ### Next Steps
 1. Run additional AoC problems (remaining 2024 days and earlier years) to validate the
