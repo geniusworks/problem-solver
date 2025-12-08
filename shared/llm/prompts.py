@@ -110,6 +110,8 @@ YOU MUST PROVIDE A COMPLETE, RUNNABLE PYTHON SOLUTION. NO EXCEPTIONS.
    - Use efficient data structures and algorithms
    - Include comprehensive error handling
    - Follow all problem constraints
+   - Assume only the Python standard library is available; do NOT use third-party packages (for example: numpy, pandas, scipy, networkx) unless the problem statement explicitly requires them
+   - Every name you reference (modules, functions, classes, aliases like `np`, helpers, etc.) must be explicitly imported or defined at the top of the file; code must not rely on undefined names
 
 4. Algorithm Adherence:
    - If the problem describes a specific procedure or algorithm, implement it EXACTLY as described
@@ -225,6 +227,37 @@ def generate_implementation_prompt(
             "- Consider whether order matters (sorting, pairing, etc.)\n"
             "- Think about how elements from each sequence relate to each other\n"
             "- Watch for off-by-one errors when pairing elements"
+        )
+
+    # Pattern: 2D Grid / Word Search & Local Patterns
+    # Triggered when the problem describes letters or values arranged in rows/columns,
+    # a grid or map, or a word-search-style puzzle.
+    if any(
+        kw in text
+        for kw in [
+            "grid",
+            "word search",
+            "rows and columns",
+            "rows x",
+            "columns",
+            "two-dimensional",
+            "2d",
+            "matrix",
+            "map",
+        ]
+    ):
+        clarifications.append(
+            "PATTERN CLASS: 2D Grid / Word Search & Local Patterns\n\n"
+            "This problem likely involves scanning a 2D grid of characters or values for words or small fixed patterns. "
+            "Common wisdom for this pattern class:\n\n"
+            "- Represent the input as a list of equal-length strings: each line is a row, each character a cell\n"
+            "- Do not drop or filter characters (such as '.') unless the problem explicitly says to ignore them\n"
+            "- Compute rows = len(grid) and cols = len(grid[0]); use 0-based indexing consistently\n"
+            "- When searching for words, treat each cell as a potential starting point and step along allowed direction vectors\n"
+            "- If the problem allows multiple directions (horizontal, vertical, diagonal, forwards/backwards), implement all of them explicitly\n"
+            "- For small local shapes built from neighboring cells, iterate over all cells where the full shape could fit and check required offsets relative to that cell\n"
+            "- Carefully guard all index accesses so you never read outside the grid bounds\n"
+            "- Avoid hardcoding example grids, coordinates, or counts; your logic should handle arbitrary grids that follow the described format"
         )
 
     # Pattern: Multi-line Input Processing
