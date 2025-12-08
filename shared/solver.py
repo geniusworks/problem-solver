@@ -556,7 +556,7 @@ class BaseSolver:
                 logging.info("")
                 logging.info(
                     f"All primary models failed execution validation. "
-                    f"Trying {len(fallback_models)} fallback model(s)..."
+                    f"Trying {len(fallback_models)} fallback model(s): {fallback_models}"
                 )
                 
                 for model_name in fallback_models:

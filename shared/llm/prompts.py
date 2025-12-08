@@ -207,17 +207,34 @@ def generate_implementation_prompt(
             "- Keep solution simple: basic string operations usually suffice"
         )
 
-    # Pattern: Paired List Operations
+    # Pattern: Paired/Columnar Data
     # Triggered when problem involves two parallel lists/columns that need coordination.
     if any(kw in text for kw in ["two lists", "left list", "right list", "two columns", "pair"]):
         clarifications.append(
-            "PATTERN CLASS: Paired List Operations\n\n"
+            "PATTERN CLASS: Paired/Columnar Data\n\n"
             "This problem involves coordinating operations across two parallel sequences. "
             "Common wisdom for this pattern class:\n\n"
-            "- Parse input into two separate collections\n"
+            "- Input often has MANY lines, each containing values for both sequences\n"
+            "- Read ALL lines of input, not just the first one or two\n"
+            "- Parse each line to extract values for each sequence/column\n"
             "- Consider whether order matters (sorting, pairing, etc.)\n"
-            "- Think about how elements from each list relate to each other\n"
+            "- Think about how elements from each sequence relate to each other\n"
             "- Watch for off-by-one errors when pairing elements"
+        )
+
+    # Pattern: Multi-line Input Processing
+    # Generic guidance for problems where input spans many lines.
+    # This is a very common AoC pattern that models often get wrong.
+    if any(kw in text for kw in ["each line", "every line", "lines of", "per line"]):
+        clarifications.append(
+            "PATTERN CLASS: Multi-line Input Processing\n\n"
+            "This problem requires processing multiple lines of input. "
+            "Common wisdom for this pattern class:\n\n"
+            "- Read and process ALL lines in the input file, not just the first few\n"
+            "- Use a loop to iterate over lines: `for line in f:` or `f.readlines()`\n"
+            "- Don't assume a fixed number of lines unless explicitly stated\n"
+            "- Handle empty lines and trailing whitespace appropriately\n"
+            "- Parse each line according to its format before processing"
         )
 
     if clarifications:
