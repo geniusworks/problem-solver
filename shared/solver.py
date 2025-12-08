@@ -347,117 +347,6 @@ class BaseSolver:
                         role="primary"
                     )
 
-            # If no answers from top models, try fallback models
-            if not answers:
-                fallback_models = [
-                    name for name in self.models.keys()
-                    if name not in primary_models
-                ]
-                if fallback_models:
-                    logging.info("")
-                    logging.info(
-                        f"No solutions from top models. Trying {len(fallback_models)} fallback model(s)..."
-                    )
-                    
-                    for model_name in fallback_models:
-                        model = self.models[model_name]
-                        try:
-                            logging.info("")
-                            logging.info(f"Trying fallback model: {model_name}")
-                            logging.info("")
-
-                            start_time = datetime.now()
-                            
-                            solution = await model.generate_solution(
-                                parsed_problem,
-                                year,
-                                day,
-                                strategies=strategies,
-                                strategy_effectiveness=effectiveness
-                            )
-                            
-                            end_time = datetime.now()
-                            response_time = (end_time - start_time).total_seconds()
-                            
-                            from shared.quality.code_quality import CodeQualityAnalyzer
-                            analyzer = CodeQualityAnalyzer()
-                            quality_metrics = analyzer.analyze(solution)
-                            
-                            # Validate with validators
-                            is_valid = True
-                            validation_errors = []
-                            for validator_name in validator_models:
-                                if validator_name in self.models:
-                                    validator = self.models[validator_name]
-                                    try:
-                                        if not await validator.validate_solution(solution, parsed_problem.test_cases):
-                                            is_valid = False
-                                            validation_errors.append(f"Failed {validator_name} validation")
-                                    except Exception as e:
-                                        validation_errors.append(f"{validator_name} validation error: {str(e)}")
-                            
-                            if is_valid:
-                                answers[model_name] = solution
-                                logging.info(f"Fallback model {model_name} produced valid solution!")
-                                
-                                if not self.db:
-                                    from learning import LearningDatabase
-                                    self.db = LearningDatabase(self.learning_dir)
-                                self.db.update_model_performance(
-                                    model_name=model_name,
-                                    metrics={
-                                        "quality_score": quality_metrics.overall_score * 10.0,
-                                        "response_time": response_time,
-                                        "cost": 0.0,
-                                        "complexity_score": quality_metrics.cyclomatic_complexity,
-                                        "maintainability_score": quality_metrics.maintainability_index,
-                                        "error_handling_score": quality_metrics.error_handling_score
-                                    },
-                                    success=True,
-                                    problem_type=problem_type,
-                                    role="primary"
-                                )
-                                # First valid fallback solution - proceed to execution validation
-                                break
-                            else:
-                                failures.append((model_name, "; ".join(validation_errors)))
-                                if not self.db:
-                                    from learning import LearningDatabase
-                                    self.db = LearningDatabase(self.learning_dir)
-                                self.db.update_model_performance(
-                                    model_name=model_name,
-                                    metrics={
-                                        "quality_score": quality_metrics.overall_score * 10.0,
-                                        "response_time": response_time,
-                                        "cost": 0.0,
-                                        "complexity_score": quality_metrics.cyclomatic_complexity,
-                                        "maintainability_score": quality_metrics.maintainability_index,
-                                        "error_handling_score": quality_metrics.error_handling_score
-                                    },
-                                    success=False,
-                                    problem_type=problem_type,
-                                    role="primary"
-                                )
-                                
-                        except Exception as e:
-                            failures.append((model_name, str(e)))
-                            if not self.db:
-                                self.db = LearningDatabase(self.learning_dir)
-                            self.db.update_model_performance(
-                                model_name=model_name,
-                                metrics={
-                                    "quality_score": 0.0,
-                                    "response_time": 0.0,
-                                    "cost": 0.0,
-                                    "complexity_score": 0.0,
-                                    "maintainability_score": 0.0,
-                                    "error_handling_score": 0.0
-                                },
-                                success=False,
-                                problem_type=problem_type,
-                                role="primary"
-                            )
-
             # If we have answers, try to reach consensus
             consensus_answer: Optional[str] = None
             quality_scores: Dict[str, float] = {}
@@ -656,6 +545,117 @@ class BaseSolver:
 
                     current_candidates = improved_candidates
 
+            # If we get here, all primary model candidates failed execution validation.
+            # Try fallback models that weren't in the primary set.
+            fallback_models = [
+                name for name in self.models.keys()
+                if name not in primary_models
+            ]
+            
+            if fallback_models:
+                logging.info("")
+                logging.info(
+                    f"All primary models failed execution validation. "
+                    f"Trying {len(fallback_models)} fallback model(s)..."
+                )
+                
+                for model_name in fallback_models:
+                    model = self.models[model_name]
+                    try:
+                        logging.info("")
+                        logging.info(f"Trying fallback model: {model_name}")
+                        logging.info("")
+                        
+                        solution = await model.generate_solution(
+                            parsed_problem,
+                            year,
+                            day,
+                            strategies=strategies,
+                            strategy_effectiveness=effectiveness
+                        )
+                        
+                        # Run execution-based validation directly
+                        exec_test_cases_fb: List[TestCase] = []
+                        for example in getattr(parsed_problem, "examples", []) or []:
+                            input_data = getattr(example, "input_data", None)
+                            expected_output = getattr(example, "expected_output", None)
+                            if input_data is None or expected_output in (None, ""):
+                                continue
+                            exec_test_cases_fb.append(
+                                TestCase(
+                                    input_data=str(input_data),
+                                    expected_output=str(expected_output),
+                                    description=getattr(example, "description", None),
+                                )
+                            )
+                        
+                        example_results, full_result, full_answer = (
+                            await self.solution_executor.test_solution(
+                                solution_code=solution,
+                                year=year,
+                                day=day,
+                                part=part,
+                                test_cases=exec_test_cases_fb,
+                                model_name=model_name,
+                                debug=self.debug,
+                            )
+                        )
+                        
+                        # Check if this solution passes
+                        examples_ok = not example_results or all(
+                            r.error is None for r in example_results
+                        )
+                        full_ok = full_result and full_result.error is None and full_answer
+                        
+                        if examples_ok and full_ok:
+                            logging.info(f"Fallback model {model_name} produced valid solution!")
+                            
+                            # Update learning DB
+                            if not self.db:
+                                from learning import LearningDatabase
+                                self.db = LearningDatabase(self.learning_dir)
+                            self.db.update_model_performance(
+                                model_name=model_name,
+                                metrics={
+                                    "quality_score": 5.0,
+                                    "response_time": 0.0,
+                                    "cost": 0.0,
+                                    "complexity_score": 0.0,
+                                    "maintainability_score": 0.0,
+                                    "error_handling_score": 0.0
+                                },
+                                success=True,
+                                problem_type=problem_type,
+                                role="primary"
+                            )
+                            
+                            record_solution(year, day, part, model_name, solution)
+                            return solution
+                        else:
+                            logging.info(f"Fallback model {model_name} failed execution validation")
+                            # Update learning DB with failure
+                            if not self.db:
+                                from learning import LearningDatabase
+                                self.db = LearningDatabase(self.learning_dir)
+                            self.db.update_model_performance(
+                                model_name=model_name,
+                                metrics={
+                                    "quality_score": 0.0,
+                                    "response_time": 0.0,
+                                    "cost": 0.0,
+                                    "complexity_score": 0.0,
+                                    "maintainability_score": 0.0,
+                                    "error_handling_score": 0.0
+                                },
+                                success=False,
+                                problem_type=problem_type,
+                                role="primary"
+                            )
+                            
+                    except Exception as e:
+                        logging.warning(f"Fallback model {model_name} failed: {str(e)}")
+                        continue
+            
             # If we get here, we failed to solve the problem
             self._print_consensus_summary(answers, failures, None, [])
             return None
