@@ -200,13 +200,18 @@ def generate_implementation_prompt(
             "This problem likely involves finding valid patterns within a noisy or corrupted string. "
             "Common wisdom for this pattern class:\n\n"
             "- Read input as a single continuous string (don't split prematurely)\n"
+            "- Don't assume the content fits on one line; read the whole file as-is\n"
             "- Scan character-by-character from left to right\n"
             "- At each position, check if any valid pattern starts there\n"
             "- Match patterns exactly as specified - partial matches don't count\n"
             "- Advance past matched patterns; increment by 1 for non-matches\n"
-            "- Keep solution simple: basic string operations usually suffice"
+            "- Keep solution simple: basic string operations usually suffice\n"
+            "- When control tokens enable/disable processing, use a simple boolean flag and update it only when you exactly match the control token\n"
+            "- Avoid inventing delimiters or fixed-width slices; search for the literal tokens described\n"
+            "- Do not hardcode example inputs or compare the entire input to a known sample; handle arbitrary inputs that follow the described format"
         )
 
+    
     # Pattern: Paired/Columnar Data
     # Triggered when problem involves two parallel lists/columns that need coordination.
     if any(kw in text for kw in ["two lists", "left list", "right list", "two columns", "pair"]):
