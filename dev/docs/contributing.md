@@ -22,6 +22,24 @@ All improvements must have general utility and advance the goal of autonomous, o
 - **Pattern-class guidance is acceptable**: Problem-specific clarifications in prompts are fine when they apply to a recognizable *class* of problems (e.g., corrupted-memory parsing puzzles) and are triggered by heuristics on problem text—not hard-coded for a particular day.
 - **Preserve existing behavior**: Improvements must not regress earlier successes. Test broadly before merging.
 
+### 3. Prompt Guidance Discipline
+
+Prompt guidance must empower LLM problem-solving intuition without constraining it or giving away solutions. The ideal prompt guidance:
+
+- **Classifies** problems into recognizable algorithmic patterns (e.g., "linear string scanning", "graph traversal", "dynamic programming")
+- **Provides wisdom** about that pattern class—common pitfalls, efficient approaches, things to watch for
+- **Does NOT** restate the problem description or provide the solution algorithm
+- **Does NOT** include problem-specific values, character counts, or magic numbers
+- **Is more general** than any particular problem, yet concrete enough to narrow and amplify effort
+
+**The test**: If the guidance would essentially "give away" the solution to a specific problem, it's overfit. The LLM should derive the algorithm from the problem description itself. Guidance should bound and empower, not dictate.
+
+**Anti-patterns to avoid**:
+- Restating problem steps as "guidance"
+- Including exact string lengths, specific patterns, or solution pseudocode
+- Triggering on verbatim problem phrases (e.g., "total distance between your lists")
+- Adding guidance that only applies to one problem instance
+
 ## Code Style
 
 - Follow PEP 8 style guidelines for Python code

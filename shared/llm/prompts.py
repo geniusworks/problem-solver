@@ -175,51 +175,55 @@ def generate_implementation_prompt(
         PromptSection("Final Question", problem.final_question, priority=4),
     ]
 
-    # Add problem-specific clarifications for known AoC-style patterns.
+    # Add pattern-based guidance for recognized algorithmic problem classes.
+    # 
+    # IMPORTANT PRINCIPLE: Prompt guidance must be GENERIC to a problem CLASS,
+    # not specific to any particular problem. Good guidance:
+    # - Identifies the algorithmic pattern (e.g., "linear scan", "graph search")
+    # - Provides wisdom about common pitfalls and efficient approaches
+    # - Does NOT restate the problem or provide solution steps
+    # - Does NOT include problem-specific values, counts, or magic numbers
+    # - Empowers the LLM's problem-solving intuition without constraining it
+    #
+    # If guidance would essentially "give away" the solution, it's overfit.
+    # The LLM should derive the algorithm from the problem description.
+    
     text = (problem.description or "").lower()
     clarifications = []
 
-    # AoC 2024 Day 1 Part 1-style "total distance between your lists" puzzle.
-    if "total distance between your lists" in text:
+    # Pattern: Linear String Scanning
+    # Triggered when problem involves finding patterns/instructions in a noisy string.
+    # This is a broad pattern class, not specific to any one problem.
+    if any(kw in text for kw in ["scan", "corrupted", "memory", "instruction"]) and "(" in text:
         clarifications.append(
-            "This puzzle defines the total distance between the left and right lists as follows:\n"
-            "- Parse every line of input as two integers: a left value and a right value.\n"
-            "- Collect all left values into one list and all right values into another list.\n"
-            "- Sort both lists independently from smallest to largest.\n"
-            "- Pair corresponding elements in the sorted lists (smallest with smallest, second-smallest with second-smallest, etc.).\n"
-            "- For each pair (x, y), compute abs(x - y) and sum these distances to get the final answer.\n"
-            "Do NOT compute a similarity score or any other metric; follow this exact definition of total distance."
+            "PATTERN CLASS: Linear String Scanning\n\n"
+            "This problem likely involves finding valid patterns within a noisy or corrupted string. "
+            "Common wisdom for this pattern class:\n\n"
+            "- Read input as a single continuous string (don't split prematurely)\n"
+            "- Scan character-by-character from left to right\n"
+            "- At each position, check if any valid pattern starts there\n"
+            "- Match patterns exactly as specified - partial matches don't count\n"
+            "- Advance past matched patterns; increment by 1 for non-matches\n"
+            "- Keep solution simple: basic string operations usually suffice"
         )
 
-    # Pattern: Noisy Instruction Stream
-    # Applies to problems where valid instructions are embedded in irrelevant characters.
-    # The key insight is that this is a simple substring-matching problem, not a parsing problem.
-    if "mul(" in text and "do()" in text and "don't()" in text:
+    # Pattern: Paired List Operations
+    # Triggered when problem involves two parallel lists/columns that need coordination.
+    if any(kw in text for kw in ["two lists", "left list", "right list", "two columns", "pair"]):
         clarifications.append(
-            "PATTERN: Noisy Instruction Stream\n\n"
-            "This problem requires scanning a string for specific instruction patterns embedded in noise. "
-            "This is NOT a parsing or grammar problem - it is simple substring matching.\n\n"
-            "REQUIRED APPROACH:\n"
-            "1. Read the entire input as a single string (do NOT split by lines or whitespace)\n"
-            "2. Scan left-to-right with an index variable i\n"
-            "3. At each position, check for exact substring matches:\n"
-            "   - 'do()' (4 chars) -> enables future operations\n"
-            "   - \"don't()\" (7 chars) -> disables future operations\n"
-            "   - 'mul(' followed by digits, comma, digits, ')' -> multiplication if enabled\n"
-            "4. If no pattern matches at position i, simply increment i by 1\n"
-            "5. When a pattern matches, advance i past the entire matched substring\n\n"
-            "CRITICAL CONSTRAINTS:\n"
-            "- Use simple string slicing: s[i:i+4], s[i:i+7], etc.\n"
-            "- Do NOT use regex, tokenizers, or complex parsers\n"
-            "- Do NOT build stacks, ASTs, or state machines\n"
-            "- Do NOT try to interpret the 'meaning' of the noise characters\n"
-            "- Ignore any sequence that doesn't EXACTLY match the valid patterns"
+            "PATTERN CLASS: Paired List Operations\n\n"
+            "This problem involves coordinating operations across two parallel sequences. "
+            "Common wisdom for this pattern class:\n\n"
+            "- Parse input into two separate collections\n"
+            "- Consider whether order matters (sorting, pairing, etc.)\n"
+            "- Think about how elements from each list relate to each other\n"
+            "- Watch for off-by-one errors when pairing elements"
         )
 
     if clarifications:
         sections.append(
             PromptSection(
-                "Problem-Specific Clarifications",
+                "Pattern-Based Guidance",
                 "\n\n".join(clarifications),
                 priority=0,
             )
