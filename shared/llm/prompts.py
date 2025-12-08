@@ -115,6 +115,8 @@ YOU MUST PROVIDE A COMPLETE, RUNNABLE PYTHON SOLUTION. NO EXCEPTIONS.
 
 4. Algorithm Adherence:
    - If the problem describes a specific procedure or algorithm, implement it EXACTLY as described
+   - Implement a GENERAL algorithm that works for all valid inputs that match the described format, not just the provided examples
+   - Do NOT hardcode example inputs, example outputs, or final answers; do NOT branch on exact example strings or specific file contents
    - Do NOT invent alternative approaches, optimizations, or "clever" solutions
    - Do NOT build complex parsers, ASTs, or state machines unless explicitly required
    - When in doubt, prefer the simplest literal interpretation of the problem
@@ -302,7 +304,9 @@ def generate_implementation_prompt(
             "- Unless the problem explicitly states there are only a fixed number of lines, "
             "assume you should process all non-empty lines in the input file.\n"
             "- When you run your code on each example input, it must produce exactly the "
-            "listed expected output (no extra text)."
+            "listed expected output (no extra text).\n"
+            "- Passing these examples is NECESSARY but NOT SUFFICIENT: your code will also be run on additional inputs that follow the same format.\n"
+            "- Implement the general algorithm; do not special-case the exact example inputs or outputs, and do not hardcode final answers."
         )
         sections.append(
             PromptSection(

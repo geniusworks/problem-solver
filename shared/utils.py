@@ -23,6 +23,7 @@ from urllib3.util.retry import Retry
 from shared import config
 from shared.errors import ValidationError, SessionError, InputError
 from shared.parser import parse_problem_text
+from shared.overfit_detection import analyze_overfit_risk
 
 logger = logging.getLogger(__name__)
 
@@ -764,6 +765,23 @@ def record_solution(year: int, day: int, part: int, model_name: str, solution_co
             # Persist the header fix even when not adding a new row
             solutions_file.write_text(content)
         return  # Already recorded
+
+    # Run automatic overfit detection before recording anything. If the
+    # heuristics flag this solution as suspicious, log and return early so it
+    # is never treated as a validated canonical solution.
+    analysis = analyze_overfit_risk(year, day, part, solution_code)
+    if analysis.is_suspicious:
+        logger.warning(
+            "Refusing to record solution for year %d day %02d part %d due to "
+            "overfit heuristics: %s",
+            year,
+            day,
+            part,
+            "; ".join(analysis.reasons),
+        )
+        if header_added:
+            solutions_file.write_text(content)
+        return
 
     # Save solution file and get path
     solution_path = save_solution_file(year, day, part, model_name, solution_code)
