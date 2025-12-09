@@ -46,7 +46,7 @@ Note: Execute the above steps only on explicit wrap-up request.
 - [ ] Update checkpoint with full understanding
 - [ ] Preserve core principle consistency
 
-## Current Status (2025-12-07)
+## Current Status (2025-12-08)
 
 ### Component Status
 - Authentication: Improved error handling and user feedback ⚡
@@ -54,7 +54,7 @@ Note: Execute the above steps only on explicit wrap-up request.
 - Core Solver: Pipeline working end-to-end; execution-based selection and repair loop
   implemented; execution-based model fallback added (tries all configured models when
   top 3 fail execution validation); successfully solving real AoC problems including
-  2024 Day 1 (parts 1–2), Day 2 (parts 1–2), and Day 3 Part 1 ✅
+  2024 Day 1 (parts 1–2), Day 2 (parts 1–2), Day 3 Part 1, and Day 4 Part 1 ✅
 - Example Parsing: Fixed to correctly extract AoC-style examples from HTML <pre><code>
   blocks and infer expected outputs from prose patterns; validated on multiple 2024 days ✅
 - Solution Reuse: Non-force runs now reuse existing canonical per-day solution files
@@ -63,7 +63,10 @@ Note: Execute the above steps only on explicit wrap-up request.
 - Model Integration: Curated local model list for M1 16GB-class hardware (6 models);
   Ollama preflight check in place; model filtering against available models working ✅
 - Prompt Guidance: Refactored to follow Prompt Guidance Discipline principle—pattern-class
-  wisdom only, no overfit problem-specific guidance ✅
+  wisdom only, no overfit problem-specific guidance; added Reasoning Discipline, Overfit
+  Avoidance, and Reasoning Checklists to encourage methodical implementation ✅
+- Overfit Detection: Automatic static analysis to detect hardcoded example strings,
+  constant output stubs, and long string equality checks before recording solutions ✅
 - Learning System: Database and schema implemented; model performance updates include
   code quality metrics and problem type information 🔄
 
@@ -76,6 +79,9 @@ Note: Execute the above steps only on explicit wrap-up request.
   December runs.
 - Day 3 Part 2 not yet solved—models struggle with the noisy instruction stream pattern
   despite generic guidance; this is expected as we've removed overfit guidance.
+- Day 4 Part 2, Day 5 Parts 1–2, Day 6 Part 1 not yet solved—models misinterpret problem
+  requirements (e.g., using BFS flood fill instead of stated guard patrol simulation).
+- Current solver success rate: 6/10 attempted problem parts (Days 1–4 Part 1, Day 1–2 Part 2).
 
 ### Next Steps
 1. Run additional AoC problems (remaining 2024 days and earlier years) to validate the
@@ -94,11 +100,12 @@ Note: Execute the above steps only on explicit wrap-up request.
   12-day event.
 
 ### Current Test Focus
-- Completed: 2024 Day 01 Part 1 solved successfully (answer: 2970687, model: qwen2.5-coder:7b);
-  additional AoC 2024 problems (Day 01 Part 2, Day 02 Parts 1–2, Day 03 Part 1) solved and
-  recorded under canonical solution files and `solutions/README.md`.
-- Next: Continue through remaining 2024 days and then earlier years to validate parser and
-  solver behavior across a broader range of problem styles.
+- Completed: 2024 Days 1–4 Part 1 and Days 1–2 Part 2 solved and recorded.
+- Unsolved: Day 3 Part 2, Day 4 Part 2, Day 5 Parts 1–2, Day 6 Part 1.
+- Observation: Models struggle with problems requiring precise simulation of stated
+  procedures (guard patrol, topological sort with specific rules) vs. generic algorithms.
+- Next: Assess whether additional pattern-class guidance or model capability improvements
+  are needed for simulation-style problems.
 
 
 ### Active Development
