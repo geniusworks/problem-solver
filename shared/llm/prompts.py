@@ -117,11 +117,20 @@ YOU MUST PROVIDE A COMPLETE, RUNNABLE PYTHON SOLUTION. NO EXCEPTIONS.
    - If the problem describes a specific procedure or algorithm, implement it EXACTLY as described
    - Implement a GENERAL algorithm that works for all valid inputs that match the described format, not just the provided examples
    - Do NOT hardcode example inputs, example outputs, or final answers; do NOT branch on exact example strings or specific file contents
-   - Do NOT invent alternative approaches, optimizations, or "clever" solutions
+   - Do NOT invent alternative approaches, optimizations, or "clever" solutions that contradict the stated rules
    - Do NOT build complex parsers, ASTs, or state machines unless explicitly required
    - When in doubt, prefer the simplest literal interpretation of the problem
+   - Prefer a direct, step-by-step implementation of the stated rules over speculative shortcuts or formulas that are only justified by intuition
 
-5. Output Format:
+5. Reasoning Discipline and Overfit Avoidance:
+   - Base your algorithm strictly on the problem text and examples; do not rely on unstated assumptions or "magical" inferences
+   - Before you write code, mentally or on scratch structure the requirements: list the concrete rules, inputs, outputs, and invariants your solution must respect
+   - Work through those requirements methodically in your design so that each rule is explicitly handled somewhere in the logic
+   - Treat the examples as sanity checks, not as an exhaustive specification; expect additional, larger, and edge-case inputs
+   - Never write code that only matches specific example sequences, page numbers, grid fragments, or known final answers
+   - Any heuristics (sorting, greedy choices, pruning, etc.) must be justified by the stated rules, not just because they work on the example
+
+6. Output Format:
    - Print ONLY the final answer
    - No labels, descriptions, or formatting
    - Raw number output only (e.g., '42' or '3.14')
@@ -212,7 +221,9 @@ def generate_implementation_prompt(
             "- Keep solution simple: basic string operations usually suffice\n"
             "- When control tokens enable/disable processing, use a simple boolean flag and update it only when you exactly match the control token\n"
             "- Avoid inventing delimiters or fixed-width slices; search for the literal tokens described\n"
-            "- Do not hardcode example inputs or compare the entire input to a known sample; handle arbitrary inputs that follow the described format"
+            "- Do not hardcode example inputs or compare the entire input to a known sample; handle arbitrary inputs that follow the described format\n\n"
+            "Reasoning Checklist: Before coding, enumerate the rules (what tokens to find, what to do on match/no-match, any state changes). "
+            "Design data structures to track state. Then implement each rule explicitly."
         )
 
     
@@ -228,7 +239,9 @@ def generate_implementation_prompt(
             "- Parse each line to extract values for each sequence/column\n"
             "- Consider whether order matters (sorting, pairing, etc.)\n"
             "- Think about how elements from each sequence relate to each other\n"
-            "- Watch for off-by-one errors when pairing elements"
+            "- Watch for off-by-one errors when pairing elements\n\n"
+            "Reasoning Checklist: Before coding, list the operations required (parsing, sorting, pairing, aggregation). "
+            "Decide data structures for each sequence. Then implement each step explicitly."
         )
 
     # Pattern: 2D Grid / Word Search & Local Patterns
@@ -259,7 +272,9 @@ def generate_implementation_prompt(
             "- If the problem allows multiple directions (horizontal, vertical, diagonal, forwards/backwards), implement all of them explicitly\n"
             "- For small local shapes built from neighboring cells, iterate over all cells where the full shape could fit and check required offsets relative to that cell\n"
             "- Carefully guard all index accesses so you never read outside the grid bounds\n"
-            "- Avoid hardcoding example grids, coordinates, or counts; your logic should handle arbitrary grids that follow the described format"
+            "- Avoid hardcoding example grids, coordinates, or counts; your logic should handle arbitrary grids that follow the described format\n\n"
+            "Reasoning Checklist: Before coding, enumerate the rules (directions to search, pattern shape, boundary conditions). "
+            "Decide how to represent the grid and track visited/counted cells. Then implement each rule explicitly."
         )
 
     # Pattern: Multi-line Input Processing
@@ -274,7 +289,9 @@ def generate_implementation_prompt(
             "- Use a loop to iterate over lines: `for line in f:` or `f.readlines()`\n"
             "- Don't assume a fixed number of lines unless explicitly stated\n"
             "- Handle empty lines and trailing whitespace appropriately\n"
-            "- Parse each line according to its format before processing"
+            "- Parse each line according to its format before processing\n\n"
+            "Reasoning Checklist: Before coding, identify the per-line format and the aggregation or transformation required. "
+            "Decide data structures for accumulation. Then implement parsing and processing in a loop."
         )
 
     if clarifications:
@@ -306,7 +323,8 @@ def generate_implementation_prompt(
             "- When you run your code on each example input, it must produce exactly the "
             "listed expected output (no extra text).\n"
             "- Passing these examples is NECESSARY but NOT SUFFICIENT: your code will also be run on additional inputs that follow the same format.\n"
-            "- Implement the general algorithm; do not special-case the exact example inputs or outputs, and do not hardcode final answers."
+            "- Implement the general algorithm; do not special-case the exact example inputs or outputs, and do not hardcode final answers.\n"
+            "- Do not 'reverse engineer' a shortcut that only fits the examples; any reasoning or simplification must be justified by the stated rules, not by pattern-matching the sample."
         )
         sections.append(
             PromptSection(
