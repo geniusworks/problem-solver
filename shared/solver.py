@@ -19,6 +19,8 @@ from shared.strategies import get_strategies_for_problem, create_strategy_prompt
 from shared.submission import SubmissionManager, SubmissionResult
 from learning.database import LearningDatabase
 
+logger = logging.getLogger(__name__)
+
 class ModelRole(Enum):
     PRIMARY = 1
     REVIEWER = 2
@@ -448,6 +450,25 @@ class BaseSolver:
                         )
                     )
 
+                # Ground truth for the full input, when this problem has already
+                # been accepted on the user's AoC account. This is the strongest
+                # oracle available and needs no submission.
+                from shared.ground_truth import get_known_answer
+
+                known_answer = get_known_answer(year, day, part)
+
+                # A candidate can only be accepted if something can actually judge
+                # it. Without an oracle, acceptance would degrade to "ran without
+                # crashing", which is how stubs were previously recorded as solved.
+                if not exec_test_cases and known_answer is None:
+                    logger.error(
+                        "No correctness oracle for year %d day %02d part %d: no example "
+                        "has a known expected output and no accepted answer is cached. "
+                        "Refusing to accept any candidate as solved.",
+                        year, day, part,
+                    )
+                    return None
+
                 max_repair_iterations = int(os.getenv("MAX_REPAIR_ITERATIONS", "2"))
                 current_candidates: Dict[str, str] = dict(answers)
 
@@ -466,15 +487,22 @@ class BaseSolver:
                                     test_cases=exec_test_cases,
                                     model_name=model_name,
                                     debug=self.debug,
+                                    force_full_input=known_answer is not None,
                                 )
                             )
 
-                            # All available example runs must be error-free (or there may be
-                            # no extracted examples at all), and we require a successful
-                            # full-input run with a non-empty answer.
-                            if example_results and any(
+                            # Oracle hierarchy. The accepted AoC answer is authoritative
+                            # when we have it; examples are then advisory, because the
+                            # parser can mis-pair an expected output with the wrong
+                            # <pre> block (2024 day 5 part 1 attaches 143 to the updates
+                            # fragment; day 6 part 1 attaches 41 to the solution diagram)
+                            # and a bad example must never veto a correct answer.
+                            # Without ground truth, examples are the only oracle and
+                            # every one of them must pass.
+                            examples_failed = bool(example_results) and any(
                                 r.error is not None for r in example_results
-                            ):
+                            )
+                            if examples_failed and known_answer is None:
                                 feedback_by_model[model_name] = self._build_execution_feedback(
                                     model_name,
                                     exec_test_cases,
@@ -501,9 +529,29 @@ class BaseSolver:
                                     full_answer,
                                 )
                                 continue
+                            if known_answer is not None and full_answer.strip() != known_answer.strip():
+                                logger.info(
+                                    "%s rejected: produced %r, accepted answer is %r",
+                                    model_name, full_answer.strip(), known_answer.strip(),
+                                )
+                                feedback_by_model[model_name] = self._build_execution_feedback(
+                                    model_name,
+                                    exec_test_cases,
+                                    example_results,
+                                    full_result,
+                                    full_answer,
+                                )
+                                continue
 
                             validated_candidates.append((model_name, solution))
-                        except Exception:
+                        except Exception as e:
+                            # Do not swallow silently: a bug in the executor here is
+                            # indistinguishable from "the candidate failed", which
+                            # makes the solver look like it simply found no answer.
+                            logger.warning(
+                                "Error testing candidate from %s: %s: %s",
+                                model_name, type(e).__name__, e,
+                            )
                             continue
 
                     if validated_candidates:

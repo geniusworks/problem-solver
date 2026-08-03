@@ -128,7 +128,8 @@ class SolutionTester:
             return []
             
         examples = []
-        for example_file in sorted(examples_dir.glob("example_*.json")):
+        # rglob so both the legacy flat layout and per-part subdirectories are picked up.
+        for example_file in sorted(examples_dir.rglob("example_*.json")):
             with open(example_file) as f:
                 example_data = json.load(f)
                 examples.append(example_data)

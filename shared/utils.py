@@ -235,20 +235,28 @@ async def _get_problem_state(soup: BeautifulSoup) -> Tuple[ProblemState, Optiona
     """
     part1_answer = None
     part2_answer = None
-    
-    # Check for successful answers
-    success_elements = soup.find_all("p", class_="day-success")
-    for elem in success_elements:
-        text = elem.text.strip()
-        if "Your puzzle answer was" in text:
-            answer = re.search(r"Your puzzle answer was ([^.]+)", text)
-            if answer:
-                # If part 2 exists, first success is part 1
-                if part1_answer is None:
-                    part1_answer = answer.group(1).strip()
-                else:
-                    part2_answer = answer.group(1).strip()
-    
+    answers: List[str] = []
+
+    # AoC renders accepted answers as a plain <p> (no class) directly after each
+    # article: "Your puzzle answer was <code>2970687</code>." They appear in part
+    # order, so the first is Part 1 and the second is Part 2.
+    for elem in soup.find_all("p"):
+        text = elem.get_text().strip()
+        if "Your puzzle answer was" not in text:
+            continue
+        code = elem.find("code")
+        if code is not None:
+            answers.append(code.get_text().strip())
+            continue
+        match = re.search(r"Your puzzle answer was\s+([^.\s]+)", text)
+        if match:
+            answers.append(match.group(1).strip())
+
+    if answers:
+        part1_answer = answers[0]
+    if len(answers) > 1:
+        part2_answer = answers[1]
+
     # Determine state
     if part2_answer is not None:
         return ProblemState.COMPLETE, part1_answer, part2_answer
@@ -297,6 +305,19 @@ async def _save_cache(year: int, day: int, html: str, meta: CacheMetadata) -> No
             "part1_answer": meta.part1_answer,
             "part2_answer": meta.part2_answer
         }, f, indent=2)
+
+    # Mirror any accepted answers into the ground-truth store so the solver has a
+    # correctness oracle for the full input. Imported locally to avoid a cycle:
+    # shared.ground_truth depends on get_problem_dir from this module.
+    from shared.ground_truth import save_known_answers
+
+    known = {}
+    if meta.part1_answer:
+        known[1] = meta.part1_answer
+    if meta.part2_answer:
+        known[2] = meta.part2_answer
+    if known:
+        save_known_answers(year, day, known)
 
 async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, Any, Optional[str]]:
     """Fetch the problem text from Advent of Code website.
@@ -429,14 +450,37 @@ async def ensure_problem_files(year: int, day: int) -> Dict[str, Path]:
     problem_text = _extract_problem_text(soup)
     save_to_file(config.PROBLEM_FILE, problem_text, problem_dir)
 
-    # Extract and save examples from problem text
+    # Extract and save examples per part. The per-part article HTML is used rather
+    # than the whole-page plain text: the HTML path can infer expected outputs from
+    # <em> prose, and each part has its own expected answers for the same input.
     examples_file = cache_file.with_suffix(".examples.txt")
-    parsed_problem = parse_problem_text(problem_text, examples_file)
-    save_examples(parsed_problem.examples, problem_dir)
+    article_count = len(soup.find_all("article", class_="day-desc")) if soup else 0
 
-    # Fetch input data using the same soup object
-    input_data = await fetch_input_data(year, day, soup)
-    save_to_file(config.INPUT_FILE, input_data, problem_dir)
+    # Note: examples_file is deliberately not passed here. Supplying it routes the
+    # parser down the stored-plain-text path, which loses the expected outputs the
+    # HTML path infers from <em> prose.
+    part_one_examples: List[Any] = []
+    for part in range(1, max(article_count, 1) + 1):
+        part_html, _, _ = await fetch_problem_text(year, day, part)
+        parsed_part = parse_problem_text(part_html)
+        save_examples(parsed_part.examples, problem_dir, part=part)
+        if part == 1:
+            part_one_examples = parsed_part.examples
+
+    # Preserve the legacy flat layout for part 1 so existing consumers keep working,
+    # and keep writing problem.examples.txt for its own side effect.
+    parsed_problem = parse_problem_text(problem_text, examples_file)
+    save_examples(part_one_examples or parsed_problem.examples, problem_dir)
+
+    # Fetch input data using the same soup object. Puzzle input never changes, so a
+    # cached copy is reused rather than re-downloaded -- this keeps the pipeline
+    # usable offline and when the AoC session cookie has expired.
+    input_path = problem_dir / config.INPUT_FILE
+    if input_path.exists() and input_path.stat().st_size > 0:
+        logger.debug("Reusing cached input for %d day %02d", year, day)
+    else:
+        input_data = await fetch_input_data(year, day, soup)
+        save_to_file(config.INPUT_FILE, input_data, problem_dir)
 
     return {
         "problem": problem_dir / config.PROBLEM_FILE,
@@ -451,9 +495,17 @@ def parse_problem_text(problem_text: str, examples_file: Optional[Path] = None) 
     return _parse_problem_text(problem_text, examples_file)
 
 
-def save_examples(examples: List[Any], problem_dir: Path) -> None:
-    """Save examples to individual files in the examples directory."""
+def save_examples(examples: List[Any], problem_dir: Path, part: Optional[int] = None) -> None:
+    """Save examples to individual files in the examples directory.
+
+    Examples are part-specific -- 2024 day 1 uses the same input for both parts but
+    expects 11 for part 1 and 31 for part 2 -- so each part is written to its own
+    ``examples/part<N>/`` subdirectory. Passing ``part=None`` writes to the legacy
+    flat layout.
+    """
     examples_dir = problem_dir / config.EXAMPLES_DIR
+    if part is not None:
+        examples_dir = examples_dir / f"part{part}"
     examples_dir.mkdir(parents=True, exist_ok=True)
     
     # First save the metadata about all examples
@@ -717,6 +769,12 @@ def save_solution_file(year: int, day: int, part: int, model_name: str, solution
     
     return f"solutions/{solution_filename}"
 
+# Anchor in solutions/README.md marking the end of the verified-solutions table.
+# New rows are inserted immediately above it so they never land in the rejected
+# table that follows.
+VERIFIED_ROWS_MARKER = "<!-- end verified rows -->"
+
+
 def record_solution(year: int, day: int, part: int, model_name: str, solution_code: str) -> None:
     """Record a successful solution in solutions/README.md.
     
@@ -740,8 +798,8 @@ def record_solution(year: int, day: int, part: int, model_name: str, solution_co
 
     # Ensure file exists with a minimal header
     table_header = (
-        "| Year | Day | Part | Repository Hash | LLM Model(s) | Validation Time (UTC) | Solved By | Solution File |\n"
-        "|------|-----|------|-----------------|--------------|------------------------|-----------|---------------|\n"
+        "| Year | Day | Part | Answer | LLM Model(s) | Recorded (UTC) | Solution File |\n"
+        "|------|-----|------|--------|--------------|----------------|---------------|\n"
     )
     if not solutions_file.exists():
         initial = "# Advent of Code Solutions Log\n\n" + table_header
@@ -758,9 +816,12 @@ def record_solution(year: int, day: int, part: int, model_name: str, solution_co
         content = content[:insert_at] + ("\n" if insert_at and not content[insert_at-1] == "\n" else "") + table_header + content[insert_at:]
         header_added = True
 
-    # Check if this year/day/part already has a solution
+    # Check if this year/day/part already has a solution. Only the verified table
+    # counts: the ledger also lists rejected solutions below the marker, and a
+    # rejected entry must not block a later correct one from being recorded.
+    verified_section = content.split(VERIFIED_ROWS_MARKER, 1)[0]
     pattern = rf"(?m)^\s*\|\s*{year}\s*\|\s*{day}\s*\|\s*{part}\s*\|"
-    if re.search(pattern, content):
+    if re.search(pattern, verified_section):
         if header_added:
             # Persist the header fix even when not adding a new row
             solutions_file.write_text(content)
@@ -783,27 +844,56 @@ def record_solution(year: int, day: int, part: int, model_name: str, solution_co
             solutions_file.write_text(content)
         return
 
+    # Ground-truth gate: if we know the accepted answer for this problem, the code
+    # must actually produce it. Without this the ledger records anything that runs,
+    # which is how hardcoded stubs were previously logged as validated solutions.
+    from shared.verification import Verdict, verify_solution_code
+
+    result = verify_solution_code(solution_code, year, day, part)
+    if result.verdict is Verdict.WRONG:
+        logger.warning(
+            "Refusing to record solution for year %d day %02d part %d: produced %r, "
+            "accepted answer is %r",
+            year, day, part, result.actual, result.expected,
+        )
+        if header_added:
+            solutions_file.write_text(content)
+        return
+    if result.verdict is Verdict.ERROR:
+        logger.warning(
+            "Refusing to record solution for year %d day %02d part %d: failed to run (%s)",
+            year, day, part, (result.error or "").splitlines()[0][:200],
+        )
+        if header_added:
+            solutions_file.write_text(content)
+        return
+
     # Save solution file and get path
     solution_path = save_solution_file(year, day, part, model_name, solution_code)
-
-    # Get repository state and GitHub username
-    commit_hash, has_local_changes = get_repository_state()
-    repo_hash = f"{commit_hash} {'(modified)' if has_local_changes else ''}"
-    github_user = get_github_username()
 
     # Format current time in UTC
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
-    # Build new entry row
-    new_entry = f"|{year}|{day}|{part}|{repo_hash}|{model_name}|{timestamp}|{github_user}|{solution_path}|\n"
+    # Record the accepted answer when we know it, so the ledger itself carries the
+    # oracle rather than only a claim that something was validated.
+    from shared.ground_truth import get_known_answer
 
-    # Append the new row to the end of file
-    if not content.endswith("\n"):
-        content += "\n"
-    content += new_entry
+    answer = get_known_answer(year, day, part) or "unverified"
+
+    new_entry = (
+        f"|{year}|{day}|{part}|{answer}|{model_name}|{timestamp}|{solution_path}|\n"
+    )
+
+    # Insert into the verified table rather than appending at end-of-file: the
+    # ledger has a second table of rejected solutions below it.
+    if VERIFIED_ROWS_MARKER in content:
+        content = content.replace(VERIFIED_ROWS_MARKER, new_entry + VERIFIED_ROWS_MARKER, 1)
+    else:
+        if not content.endswith("\n"):
+            content += "\n"
+        content += new_entry
 
     # Write updated content
     solutions_file.write_text(content)
 
-    logger = logging.getLogger(__name__)
-    logger.info(f"Recorded validated solution for year {year} day {day} part {part}")
+    logger.info("Recorded validated solution for year %d day %d part %d", year, day, part)

@@ -1,10 +1,40 @@
 # Advent of Code Solutions Log
-| Year | Day | Part | Repository Hash | LLM Model(s) | Validation Time (UTC) | Solved By | Solution File |
-|------|-----|------|-----------------|--------------|------------------------|-----------|---------------|
-|2024|1|1|79d564fae93fc75449ac8530871c6bf66ac78c37 (modified)|deepseek-coder:6.7b|2025-12-08 01:46:55 UTC|Martin Diekhoff|solutions/2024_day01_part1.py|
-|2024|1|2|79d564fae93fc75449ac8530871c6bf66ac78c37 (modified)|qwen2.5-coder:7b|2025-12-08 01:54:44 UTC|Martin Diekhoff|solutions/2024_day01_part2.py|
-|2024|2|1|79d564fae93fc75449ac8530871c6bf66ac78c37 (modified)|llama3.1:8b|2025-12-08 02:09:18 UTC|Martin Diekhoff|solutions/2024_day02_part1.py|
-|2024|2|2|79d564fae93fc75449ac8530871c6bf66ac78c37 (modified)|deepseek-coder:6.7b|2025-12-08 02:14:07 UTC|Martin Diekhoff|solutions/2024_day02_part2.py|
-|2024|3|1|79d564fae93fc75449ac8530871c6bf66ac78c37 (modified)|deepseek-coder:6.7b|2025-12-08 02:20:18 UTC|Martin Diekhoff|solutions/2024_day03_part1.py|
-|2024|3|2|ac8f3fdd48195d91fe8cd8f29d61ef924396a9e3 (modified)|gemma3:latest|2025-12-08 03:47:18 UTC|Martin Diekhoff|solutions/2024_day03_part2.py|
-|2024|4|1|62c414e2e232f9479120ef3bd5d0ecb1d5605e2a (modified)|deepseek-coder:6.7b|2025-12-08 04:29:10 UTC|Martin Diekhoff|solutions/2024_day04_part1.py|
+
+Every row in the verified table below has been **executed against the real puzzle input
+and matched against the accepted AoC answer** stored in
+`years/<year>/day<NN>/answers.json`.
+
+Re-run the audit at any time:
+
+```bash
+venv/bin/python dev/verify_solutions.py
+```
+
+It exits non-zero if any recorded solution is wrong, errors, or cannot be verified.
+
+## Verified solutions
+
+| Year | Day | Part | Answer | LLM Model(s) | Recorded (UTC) | Solution File |
+|------|-----|------|--------|--------------|----------------|---------------|
+|2024|1|1|2970687|deepseek-coder:6.7b|2025-12-08 01:46:55 UTC|solutions/2024_day01_part1.py|
+|2024|1|2|23963899|qwen2.5-coder:7b|2025-12-08 01:54:44 UTC|solutions/2024_day01_part2.py|
+|2024|2|1|421|llama3.1:8b|2025-12-08 02:09:18 UTC|solutions/2024_day02_part1.py|
+|2024|3|1|174561379|deepseek-coder:6.7b|2025-12-08 02:20:18 UTC|solutions/2024_day03_part1.py|
+<!-- end verified rows -->
+
+## Rejected — previously recorded as solved, verified wrong
+
+These were accepted by the pre-oracle pipeline, whose acceptance criterion was only
+"ran without crashing and printed something". They are kept in `solutions/rejected/`
+and under `years/` as failure data for evaluating the verification harness.
+
+| Problem | Claimed | Correct | Failure mode |
+|---------|---------|---------|--------------|
+| 2024 day 02 part 2 | 86 | 476 | Never removes a level; ignores the 1–3 delta rule entirely |
+| 2024 day 03 part 2 | 0 | 106921067 | Hardcoded `if line == "<example>": return 48 else: return 0` |
+| 2024 day 04 part 1 | 2344 | 2401 | Searches 4 directions, two of which are the same diagonal; strips `.` from the grid |
+| 2024 day 05 part 2 | 0 | 5502 | Hardcoded lookup table over example strings |
+
+Day 3 Part 2 previously had a row in this table pointing at
+`solutions/2024_day03_part2.py`, a file that did not exist. The code behind it is
+preserved at `years/2024/day03/2024_day03_part2.py`.

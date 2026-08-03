@@ -53,6 +53,17 @@ class ExecutionResult:
     error: Optional[str] = None
 
 
+def _last_nonempty_line(output: str) -> str:
+    """Return the answer a solution printed.
+
+    Generated solutions sometimes emit progress or debug lines before the answer,
+    so the answer is taken from the last non-empty line rather than the whole
+    stream.
+    """
+    lines = [line.strip() for line in (output or "").splitlines() if line.strip()]
+    return lines[-1] if lines else ""
+
+
 async def execute_solution(code: str, input_data: str, timeout: int = 5) -> "ExecutionResult":
     """Execute inline solution code against provided input data.
 
@@ -223,46 +234,14 @@ class SolutionExecutor:
             if not hasattr(module, "solve"):
                 raise CompilationError("Solution must contain a solve() function")
 
-            # Run test cases
-            for test_case in test_cases:
-                # Create test input file in the same directory as the real input
-                year, day, part = re.match(r"(\d+)_day(\d+)_part(\d)", problem_id).groups()
-                input_dir = self.workspace_dir / "years" / year / f"day{int(day):02d}"
-                input_file = input_dir / "input.txt"
-
-                # Temporarily write test input
-                orig_content = None
-                if input_file.exists():
-                    orig_content = input_file.read_text()
-                input_file.write_text(test_case.input_data)
-
-                try:
-                    # Set input file path and execute
-                    result = await self.execute_solution(module_path, str(input_file))
-
-                    if result.error:
-                        raise ExecutionError(
-                            f"Test case failed: {result.error}"
-                        )
-                    actual_output = result.output.strip()
-                    expected_output = test_case.expected_output.strip()
-                    if actual_output != expected_output:
-                        raise ExecutionError(
-                            f"Test case failed: Output mismatch. "
-                            f"Expected '{expected_output}', got '{actual_output}'"
-                        )
-
-                except (IOError, OSError) as e:
-                    logger.error("IO error during test case execution: %s", str(e))
-                    raise ExecutionError(str(e)) from e
-
-                finally:
-                    # Restore original content
-                    if orig_content is not None:
-                        input_file.write_text(orig_content)
-                    else:
-                        input_file.unlink()
-
+            # Test cases are deliberately NOT run here. They are executed by
+            # _run_test_case, which compares against the expected output and writes
+            # its input to a scratch directory. The previous implementation ran them
+            # here by overwriting the real years/<year>/day<NN>/input.txt and
+            # restoring it in a finally block -- a kill mid-run permanently replaced
+            # the puzzle input with example data. It also raised on the first
+            # mismatch, which short-circuited the full-input run and hid correct
+            # solutions whenever an example was mis-parsed.
             return True, None
 
         except (SyntaxError, IndentationError) as e:
@@ -376,7 +355,8 @@ class SolutionExecutor:
         part: int,
         test_cases: Optional[List[TestCase]] = None,
         model_name: str = "",
-        debug: bool = False
+        debug: bool = False,
+        force_full_input: bool = False
     ) -> Tuple[List[ExecutionResult], Optional[ExecutionResult], Optional[str]]:
         """Test a solution against example cases and full input.
 
@@ -388,6 +368,7 @@ class SolutionExecutor:
             test_cases: Optional list of test cases. If None, uses default test cases.
             model_name: Name of the model that generated this solution
             debug: Whether to enable debug output
+            force_full_input: Run against the full input even if example runs failed
 
         Returns:
             Tuple containing:
@@ -441,8 +422,10 @@ class SolutionExecutor:
                         ExecutionResult(output="", error=f"Test case {i} error: {str(e)}")
                     )
 
-            # Run against full input if examples pass
-            if all(result.error is None for result in example_results):
+            # Run against full input if examples pass. When the caller holds a
+            # stronger oracle (the accepted AoC answer) it can ask for the full run
+            # anyway, so that a mis-parsed example cannot hide a correct solution.
+            if force_full_input or all(result.error is None for result in example_results):
                 try:
                     full_result = await self.run_against_full_input(
                         problem_id, year, day, part, solution_code
@@ -472,6 +455,27 @@ class SolutionExecutor:
 
         # Execute the solution
         result = await self.execute_solution(module_path, str(input_file))
+
+        if result.error is not None:
+            return result
+
+        # Compare against the expected answer. Without this an example run only
+        # proved the code did not crash, which is how hardcoded stubs and wrong
+        # algorithms were previously accepted as validated solutions.
+        expected = (test_case.expected_output or "").strip()
+        if not expected:
+            return result
+
+        actual = _last_nonempty_line(result.output)
+        if actual != expected:
+            return ExecutionResult(
+                output=result.output,
+                performance=result.performance,
+                error=(
+                    f"Test case {test_case_index} failed: "
+                    f"expected {expected!r}, got {actual!r}"
+                ),
+            )
 
         return result
 

@@ -99,6 +99,7 @@ PROBLEM_FILE = "problem.txt"
 LOGIC_FILE = "logic.txt"
 HTML_FILE = "problem.html"  # Cached HTML response
 META_FILE = "problem_meta.json"  # Cache metadata including state
+ANSWERS_FILE = "answers.json"  # Ground-truth accepted answers, keyed by part
 
 # Testing
 TEST_MODE = os.getenv("AOC_TEST_MODE", "false").lower() == "true"

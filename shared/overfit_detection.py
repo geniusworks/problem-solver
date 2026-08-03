@@ -87,7 +87,8 @@ def _load_example_inputs(year: int, day: int) -> List[str]:
         return []
 
     inputs: List[str] = []
-    for path in sorted(examples_dir.glob("example_*.json")):
+    # rglob so both the legacy flat layout and per-part subdirectories are picked up.
+    for path in sorted(examples_dir.rglob("example_*.json")):
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):  # pragma: no cover - defensive

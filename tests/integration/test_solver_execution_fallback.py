@@ -26,10 +26,24 @@ class DummyCodeQualityAnalyzer:
         return DummyQualityMetrics(0.5)
 
 
+class DummyExample:
+    """A worked example with a known expected output.
+
+    The solver refuses to accept any candidate for a problem with no correctness
+    oracle, so a realistic parsed problem must carry at least one example whose
+    expected output is known.
+    """
+
+    def __init__(self, input_data: str = "1 2 3", expected_output: str = "6") -> None:
+        self.input_data = input_data
+        self.expected_output = expected_output
+        self.description = "sum the numbers"
+
+
 class DummyParsedProblem:
     def __init__(self) -> None:
         self.description = "Simple test problem"
-        self.examples = []
+        self.examples = [DummyExample()]
         self.test_cases = []
 
 
@@ -102,6 +116,7 @@ class RecordingExecutor:
         test_cases=None,
         model_name: str = "",
         debug: bool = False,
+        force_full_input: bool = False,
     ):
         # Mark candidates containing "# good" as the only ones that pass
         self.calls.append((model_name, solution_code))
