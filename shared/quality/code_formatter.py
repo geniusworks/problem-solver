@@ -54,35 +54,20 @@ def format_code(source_code: str) -> Tuple[str, bool]:
         code = code.replace("\\n", "\n")  # Fix escaped newlines
         code = code.replace('\\"', '"')  # Fix escaped quotes
         
-        # Remove debug prints
-        code_lines = code.split('\n')
-        filtered_lines = []
-        in_solve_function = False
-        debug_print = False
-        
-        for line in code_lines:
-            # Track if we're in the solve function
-            if line.startswith('def solve('):
-                in_solve_function = True
-            elif in_solve_function and line and not line[0].isspace():
-                in_solve_function = False
-                
-            # Skip debug prints inside solve function
-            if in_solve_function and 'print(' in line and 'return' not in line:
-                debug_print = True
-                continue
-                
-            # If this was a multi-line debug print block, skip until we're out
-            if debug_print:
-                if line.strip() and not line.strip().startswith(('print', 'for', 'if')):
-                    debug_print = False
-                else:
-                    continue
-                    
-            filtered_lines.append(line)
-            
-        code = '\n'.join(filtered_lines)
-        
+        # Debug-print stripping was removed here, and must not come back in a
+        # line-based form.
+        #
+        # It deleted any line containing "print(" inside solve(), which silently
+        # destroys valid Python whenever the print is the only statement in its
+        # block -- `if cond:\n    print(x)` becomes `if cond:` with no body -- or
+        # whenever the call spans several lines. The result was a SyntaxError
+        # attributed to the model: the harness corrupted correct output and then
+        # scored the model as having failed, systematically understating it.
+        #
+        # Nothing needs stripping anyway. The answer is read from the last
+        # non-empty line of stdout (see _last_nonempty_line in shared/execution),
+        # so debug output printed before the answer is already harmless.
+
         # Fix f-strings with assignment expressions
         def fix_fstring_assignments(match):
             """Fix f-string that contains assignment expressions."""
