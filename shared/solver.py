@@ -936,11 +936,26 @@ class BaseSolver:
         best_answer = max(answer_groups.items(), key=lambda x: x[1])[0]
         best_weight = answer_groups[best_answer]
         
-        # Only return consensus if weight is significantly higher than others
+        # Only return consensus if weight is significantly higher than others.
+        #
+        # Every weight is a code-quality score, so all of them are 0.0 when
+        # quality analysis fails -- which is exactly what happens when the
+        # generated code is unparseable. Dividing here then raised
+        # ZeroDivisionError and aborted the whole solve, turning a recoverable
+        # bad-candidate case into a hard failure. With no usable weights there is
+        # no evidence of agreement, so there is no consensus.
         total_weight = sum(answer_groups.values())
-        if best_weight / total_weight >= 0.6:  # At least 60% agreement
+        if total_weight <= 0:
+            logger.warning(
+                "No usable quality weights for consensus (all %d candidate(s) scored "
+                "0.0); treating as no consensus.",
+                len(answer_groups),
+            )
+            return None
+
+        if best_weight / total_weight >= self.config.consensus_threshold:
             return best_answer
-            
+
         return None
 
     def _print_consensus_summary(self, answers: Dict[str, Any], failures: List[tuple], consensus_answer: Optional[str], consensus_models: List[str]) -> None:

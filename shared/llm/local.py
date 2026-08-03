@@ -15,6 +15,17 @@ from shared.utils import ensure_problem_directory_structure
 
 logger = logging.getLogger(__name__)
 
+# The `ollama run` CLI writes spinner and cursor-control escapes to the stream
+# while a long generation is in flight. They survive into the extracted code and
+# make it unparseable: compile() rejects it with "invalid non-printable character
+# U+001B", which surfaces far from the cause as a code-quality analysis failure.
+_ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
+
+def _strip_ansi(text: str) -> str:
+    """Remove terminal control sequences from captured subprocess output."""
+    return _ANSI_ESCAPE_RE.sub("", text)
+
 class OllamaProvider(LLMProvider):
     """Provider for Ollama local models."""
 
@@ -257,8 +268,8 @@ Final Question: {problem.final_question}""")
 
             logger.debug("Waiting for Ollama response...")
             stdout, stderr = await process.communicate()
-            stdout_text = stdout.decode() if stdout else ""
-            stderr_text = stderr.decode() if stderr else ""
+            stdout_text = _strip_ansi(stdout.decode() if stdout else "")
+            stderr_text = _strip_ansi(stderr.decode() if stderr else "")
 
             # Log raw response for debugging
             logger.debug("Raw Ollama response:")
