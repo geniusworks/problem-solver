@@ -1,0 +1,154 @@
+"""Every experimental variable in one object.
+
+Two configurations that differ in any field below may produce different results,
+so results are grouped by ``SolverConfig.fingerprint()``. Anything that changes
+solver behaviour belongs here rather than being read from the environment at the
+point of use -- otherwise a recorded result cannot be attributed to the settings
+that produced it.
+"""
+
+import hashlib
+import json
+import os
+from dataclasses import asdict, dataclass, field, replace
+from typing import Any, Dict, Optional, Tuple
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None or not raw.strip():
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
+@dataclass(frozen=True)
+class SolverConfig:
+    """A named, reproducible solver configuration."""
+
+    # --- identity -------------------------------------------------------
+    name: str = "default"
+
+    # --- model selection ------------------------------------------------
+    # None means "let the learning database rank the installed models".
+    models: Optional[Tuple[str, ...]] = None
+    provider: str = "ollama"
+    max_primary_models: int = 3
+    # A capability reference, never part of the normal solve path. Set it to
+    # answer "is this failing because the harness is broken or because the
+    # model is weak?" -- a reference model that fails through the harness but
+    # succeeds standalone indicates a harness bug.
+    reference_model: Optional[str] = None
+
+    # --- generation -----------------------------------------------------
+    temperature: Optional[float] = None
+    # >1 draws several samples from each model for self-consistency voting.
+    samples_per_model: int = 1
+    prompt_variant: str = "default"
+
+    # --- repair and fallback --------------------------------------------
+    max_repair_iterations: int = 2
+    enable_fallback_models: bool = True
+    enable_collaborative_improvement: bool = False
+
+    # --- consensus ------------------------------------------------------
+    # "answer" groups candidates by the value their code computes; "code"
+    # reproduces the historical behaviour of grouping by source text, which
+    # essentially never matched across different models.
+    consensus_on: str = "answer"
+    consensus_threshold: float = 0.6
+    min_consensus_models: int = 2
+
+    # --- verification ----------------------------------------------------
+    # Refuse to accept a candidate for a problem with no oracle (no example
+    # with a known expected output, and no cached accepted answer).
+    require_oracle: bool = True
+    submit_solutions: bool = False
+
+    # --- execution -------------------------------------------------------
+    execution_timeout: Optional[int] = None
+
+    # --- bookkeeping (excluded from the fingerprint) ---------------------
+    notes: str = field(default="", compare=False)
+
+    def __post_init__(self) -> None:
+        if self.consensus_on not in {"answer", "code"}:
+            raise ValueError(
+                f"consensus_on must be 'answer' or 'code', got {self.consensus_on!r}"
+            )
+        if not 0.0 < self.consensus_threshold <= 1.0:
+            raise ValueError(
+                f"consensus_threshold must be in (0, 1], got {self.consensus_threshold}"
+            )
+        if self.samples_per_model < 1:
+            raise ValueError("samples_per_model must be >= 1")
+        if self.max_repair_iterations < 0:
+            raise ValueError("max_repair_iterations must be >= 0")
+        if self.max_primary_models < 1:
+            raise ValueError("max_primary_models must be >= 1")
+
+    # -- serialisation ----------------------------------------------------
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Full configuration, including fields excluded from the fingerprint."""
+        data = asdict(self)
+        data["models"] = list(self.models) if self.models else None
+        return data
+
+    def fingerprint(self) -> str:
+        """Stable short hash of the behaviour-affecting fields.
+
+        ``name`` and ``notes`` are excluded: renaming a configuration must not
+        make it look like a different experiment.
+        """
+        payload = self.to_dict()
+        payload.pop("name", None)
+        payload.pop("notes", None)
+        canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:12]
+
+    def with_overrides(self, **changes: Any) -> "SolverConfig":
+        """Return a copy with fields replaced -- the unit of an A/B sweep."""
+        if "models" in changes and changes["models"] is not None:
+            changes["models"] = tuple(changes["models"])
+        return replace(self, **changes)
+
+    # -- construction -----------------------------------------------------
+
+    @classmethod
+    def from_env(cls, **overrides: Any) -> "SolverConfig":
+        """Build from the environment variables the solver historically read.
+
+        Keeps existing .env files working; explicit overrides win.
+        """
+        models = os.getenv("SOLVER_MODELS")
+        env_config: Dict[str, Any] = {
+            "max_repair_iterations": _env_int("MAX_REPAIR_ITERATIONS", 2),
+            "enable_collaborative_improvement": _env_flag(
+                "ENABLE_COLLABORATIVE_IMPROVEMENT", False
+            ),
+            "submit_solutions": _env_flag("SUBMIT_SOLUTIONS", False),
+        }
+        if models:
+            env_config["models"] = tuple(
+                m.strip() for m in models.split(",") if m.strip()
+            )
+        if os.getenv("REFERENCE_MODEL"):
+            env_config["reference_model"] = os.getenv("REFERENCE_MODEL")
+
+        env_config.update(overrides)
+        if env_config.get("models") is not None:
+            env_config["models"] = tuple(env_config["models"])
+        return cls(**env_config)
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.fingerprint()})"

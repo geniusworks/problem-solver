@@ -81,6 +81,80 @@ def test_record_improvement_writes_history(db):
     assert row == ("2024_day03_part1", 1, "gemma3", "collaborative", pytest.approx(0.42))
 
 
+class TestRunningSuccessRate:
+    """success_rate was overwritten with each attempt's boolean, not accumulated."""
+
+    def test_rate_accumulates_across_attempts(self, db):
+        for success in [True, True, True, False, True]:
+            db.update_model_performance("m1", {"quality_score": 6.0}, success=success)
+
+        with db.connect() as conn:
+            attempts, successes, rate = conn.execute(
+                "SELECT attempts, successes, success_rate FROM model_performance "
+                "WHERE model_name = 'm1'"
+            ).fetchone()
+
+        assert (attempts, successes) == (5, 4)
+        assert rate == pytest.approx(0.8)
+
+    def test_one_failure_does_not_erase_a_strong_record(self, db):
+        """Previously a single failure zeroed the rate and dropped the model."""
+        for _ in range(9):
+            db.update_model_performance("m2", {"quality_score": 5.0}, success=True)
+        db.update_model_performance("m2", {"quality_score": 5.0}, success=False)
+
+        with db.connect() as conn:
+            rate = conn.execute(
+                "SELECT success_rate FROM model_performance WHERE model_name = 'm2'"
+            ).fetchone()[0]
+
+        assert rate == pytest.approx(0.9)
+        assert rate >= 0.5, "model must survive the default min_success_rate filter"
+
+    def test_avg_quality_is_a_running_mean(self, db):
+        """avg_quality_score was set on INSERT and never updated again."""
+        for quality in [2.0, 4.0, 6.0]:
+            db.update_model_performance("m3", {"quality_score": quality}, success=True)
+
+        with db.connect() as conn:
+            avg, latest = conn.execute(
+                "SELECT avg_quality_score, quality_score FROM model_performance "
+                "WHERE model_name = 'm3'"
+            ).fetchone()
+
+        assert avg == pytest.approx(4.0)
+        assert latest == pytest.approx(6.0)
+
+    def test_pre_migration_rows_keep_zero_counters(self, db):
+        """Seeded/legacy rates are priors, not measurements -- don't fabricate history."""
+        with db.connect() as conn:
+            rows = conn.execute(
+                "SELECT attempts, successes FROM model_performance"
+            ).fetchall()
+
+        assert rows, "init_db should seed some rows"
+        assert all(row == (0, 0) for row in rows)
+
+    def test_first_real_observation_replaces_the_prior(self, db):
+        with db.connect() as conn:
+            seeded = conn.execute(
+                "SELECT model_name, role FROM model_performance LIMIT 1"
+            ).fetchone()
+        model, role = seeded
+
+        db.update_model_performance(model, {"quality_score": 5.0}, success=False, role=role)
+
+        with db.connect() as conn:
+            attempts, successes, rate = conn.execute(
+                "SELECT attempts, successes, success_rate FROM model_performance "
+                "WHERE model_name = ? AND role = ?",
+                (model, role),
+            ).fetchone()
+
+        assert (attempts, successes) == (1, 0)
+        assert rate == pytest.approx(0.0)
+
+
 def test_count_strategy_attempts_is_scoped_per_problem(db):
     db.record_strategy_result("2024_day01_part1", ["a"], True, {})
     db.record_strategy_result("2024_day01_part1", ["b"], False, {})
