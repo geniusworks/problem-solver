@@ -27,6 +27,14 @@ logger = logging.getLogger(__name__)
 
 ProblemSpec = Tuple[int, int, int]  # (year, day, part)
 
+VERDICT_TO_OUTCOME = {
+    Verdict.CORRECT: Outcome.SOLVED,
+    Verdict.WRONG: Outcome.WRONG,
+    Verdict.UNVERIFIED: Outcome.UNVERIFIED,
+    Verdict.ERROR: Outcome.ERROR,
+    Verdict.OVERFIT: Outcome.OVERFIT,
+}
+
 
 def problem_id(year: int, day: int, part: int) -> str:
     return f"{year}_day{day:02d}_part{part}"
@@ -91,13 +99,7 @@ def _classify(code: Optional[str], year: int, day: int, part: int) -> Tuple[Outc
         )
 
     result = verify_solution_code(code, year, day, part)
-    mapping = {
-        Verdict.CORRECT: Outcome.SOLVED,
-        Verdict.WRONG: Outcome.WRONG,
-        Verdict.UNVERIFIED: Outcome.UNVERIFIED,
-        Verdict.ERROR: Outcome.ERROR,
-    }
-    return mapping[result.verdict], result.actual, result.expected
+    return VERDICT_TO_OUTCOME[result.verdict], result.actual, result.expected
 
 
 async def run_problem(
@@ -220,7 +222,7 @@ def compare(experiments: Iterable[ExperimentResult]) -> str:
     if not rows:
         return "(no experiments)"
 
-    headers = ["config", "solved", "rate", "1st-try", "wrong", "unver", "mean-att", "wall(s)"]
+    headers = ["config", "solved", "rate", "1st-try", "wrong", "unver", "overfit", "mean-att", "wall(s)"]
     table = [headers]
     for e in rows:
         s = e.summary()
@@ -231,6 +233,7 @@ def compare(experiments: Iterable[ExperimentResult]) -> str:
             f"{s['first_try_rate']:.0%}",
             str(s["wrong"]),
             str(s["unverified"]),
+            str(s["overfit"]),
             "-" if s["mean_attempts_to_solve"] is None else f"{s['mean_attempts_to_solve']:.1f}",
             f"{s['total_wall_clock_seconds']:.0f}",
         ])

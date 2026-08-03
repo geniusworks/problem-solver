@@ -36,6 +36,7 @@ SYMBOL = {
     Outcome.SOLVED: "OK   ",
     Outcome.WRONG: "WRONG",
     Outcome.UNVERIFIED: "?    ",
+    Outcome.OVERFIT: "CHEAT",
     Outcome.NO_CANDIDATE: "none ",
     Outcome.ERROR: "ERROR",
 }
@@ -110,7 +111,8 @@ async def _dry_run(problems, config) -> ExperimentResult:
     """Score already-recorded solutions -- no model calls, no network."""
     from shared.experiment.results import AttemptRecord, ProblemResult
     from shared.experiment.runner import problem_id
-    from shared.verification import Verdict, verify_solution_file
+    from shared.experiment.runner import VERDICT_TO_OUTCOME
+    from shared.verification import verify_solution_file
 
     experiment = ExperimentResult(
         config_name=config.name,
@@ -118,12 +120,6 @@ async def _dry_run(problems, config) -> ExperimentResult:
         config=config.to_dict(),
         started_at=datetime.now(timezone.utc).isoformat(),
     )
-    mapping = {
-        Verdict.CORRECT: Outcome.SOLVED,
-        Verdict.WRONG: Outcome.WRONG,
-        Verdict.UNVERIFIED: Outcome.UNVERIFIED,
-        Verdict.ERROR: Outcome.ERROR,
-    }
 
     for year, day, part in problems:
         pid = problem_id(year, day, part)
@@ -135,7 +131,7 @@ async def _dry_run(problems, config) -> ExperimentResult:
             outcome, answer, expected = Outcome.NO_CANDIDATE, None, None
         else:
             verified = verify_solution_file(path, year, day, part)
-            outcome = mapping[verified.verdict]
+            outcome = VERDICT_TO_OUTCOME[verified.verdict]
             answer, expected = verified.actual, verified.expected
 
         result = ProblemResult(

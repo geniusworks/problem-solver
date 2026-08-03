@@ -22,6 +22,10 @@ class Outcome(str, Enum):
     UNVERIFIED = "unverified"  # produced an answer, but nothing could check it
     NO_CANDIDATE = "no_candidate"  # no model produced runnable code
     ERROR = "error"  # the harness itself failed
+    # Printed the accepted answer without computing it. Matching ground truth
+    # cannot distinguish this from a real solution, so it is tracked separately
+    # and never counted as solved -- otherwise solve rate is trivially gameable.
+    OVERFIT = "overfit"
 
 
 @dataclass
@@ -170,6 +174,10 @@ class ExperimentResult:
         return sum(1 for r in self.results if r.outcome is Outcome.UNVERIFIED)
 
     @property
+    def overfit(self) -> int:
+        return sum(1 for r in self.results if r.outcome is Outcome.OVERFIT)
+
+    @property
     def solve_rate(self) -> float:
         return self.solved / self.attempted if self.attempted else 0.0
 
@@ -191,9 +199,11 @@ class ExperimentResult:
         """Answers produced but not confirmed correct.
 
         The pre-oracle pipeline would have counted every one of these as a
-        success; tracking the gap keeps that failure mode visible.
+        success; tracking the gap keeps that failure mode visible. Overfit
+        solutions belong here too: they match ground truth exactly, so only
+        static analysis separates them from real solutions.
         """
-        return self.wrong + self.unverified
+        return self.wrong + self.unverified + self.overfit
 
     @property
     def total_wall_clock_seconds(self) -> float:
@@ -240,6 +250,7 @@ class ExperimentResult:
             "solved": self.solved,
             "wrong": self.wrong,
             "unverified": self.unverified,
+            "overfit": self.overfit,
             "solve_rate": round(self.solve_rate, 4),
             "first_try_rate": round(self.first_try_rate, 4),
             "mean_attempts_to_solve": (
