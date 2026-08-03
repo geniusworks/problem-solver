@@ -207,6 +207,31 @@ class ExperimentResult:
     def total_cost_usd(self) -> float:
         return sum(r.total_cost_usd for r in self.results)
 
+    def per_model(self) -> Dict[str, Dict[str, Any]]:
+        """Attempts and wins per model across the run.
+
+        This is what distinguishes a config that solved more because the
+        orchestration improved from one that solved more because a single strong
+        model carried it.
+        """
+        stats: Dict[str, Dict[str, Any]] = {}
+        for result in self.results:
+            for attempt in result.attempts:
+                entry = stats.setdefault(
+                    attempt.model,
+                    {"attempts": 0, "solved": 0, "wall_clock_seconds": 0.0},
+                )
+                entry["attempts"] += 1
+                entry["solved"] += int(attempt.succeeded)
+                entry["wall_clock_seconds"] += attempt.wall_clock_seconds
+
+        for entry in stats.values():
+            entry["solve_rate"] = (
+                round(entry["solved"] / entry["attempts"], 4) if entry["attempts"] else 0.0
+            )
+            entry["wall_clock_seconds"] = round(entry["wall_clock_seconds"], 1)
+        return dict(sorted(stats.items(), key=lambda kv: -kv[1]["solved"]))
+
     def summary(self) -> Dict[str, Any]:
         return {
             "config_name": self.config_name,
@@ -231,6 +256,7 @@ class ExperimentResult:
     def to_dict(self, include_replay: bool = False) -> Dict[str, Any]:
         return {
             "summary": self.summary(),
+            "per_model": self.per_model(),
             "config": self.config,
             "started_at": self.started_at,
             "finished_at": self.finished_at,

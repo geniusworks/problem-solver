@@ -199,6 +199,17 @@ async def async_main(args) -> int:
 
     print()
     print(compare(experiments))
+
+    for experiment in experiments:
+        per_model = experiment.per_model()
+        if len(per_model) <= 1:
+            continue
+        print(f"\nper-model ({experiment.config_name}):")
+        for model, stats in per_model.items():
+            print(
+                f"  {model:24} {stats['solved']}/{stats['attempts']} "
+                f"({stats['solve_rate']:.0%})  {stats['wall_clock_seconds']:.0f}s"
+            )
     print()
 
     # Non-zero when anything was claimed but not verified, so this can gate CI.

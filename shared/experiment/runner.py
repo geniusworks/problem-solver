@@ -138,19 +138,46 @@ async def run_problem(
         expected=expected,
         wall_clock_seconds=elapsed,
     )
-    result.attempts.append(
-        AttemptRecord(
-            model="solver",
-            problem_id=pid,
-            config_fingerprint=config.fingerprint(),
-            outcome=outcome,
-            answer=answer,
-            expected=expected,
-            error=error,
-            wall_clock_seconds=elapsed,
-            code=code,
+
+    # Prefer the solver's own per-model trace: it is what makes
+    # attempts-to-solve and first-try rate meaningful. Fall back to a single
+    # synthetic record for solvers that do not expose one (e.g. test doubles).
+    trace = list(getattr(solver, "attempts", None) or [])
+    if trace:
+        # Reconcile the solver's claims against independent verification. A
+        # trace entry claiming success on a problem the oracle says is wrong is
+        # the claimed/verified gap this harness exists to surface -- leaving it
+        # in place would let a bug in the solver's acceptance logic inflate
+        # attempts-to-solve and first-try rate.
+        if outcome is not Outcome.SOLVED:
+            for attempt in trace:
+                if attempt.succeeded:
+                    logger.warning(
+                        "%s: solver claimed %s solved it, independent verification "
+                        "says %s (answer %r, expected %r)",
+                        pid, attempt.model, outcome.value, answer, expected,
+                    )
+                    attempt.outcome = outcome
+                    attempt.error = (attempt.error or "") + " [claim not verified]"
+
+        result.attempts.extend(trace)
+        winner = next((a for a in trace if a.succeeded), None)
+        result.winning_model = winner.model if winner else None
+    else:
+        result.attempts.append(
+            AttemptRecord(
+                model="solver",
+                problem_id=pid,
+                config_fingerprint=config.fingerprint(),
+                outcome=outcome,
+                answer=answer,
+                expected=expected,
+                error=error,
+                wall_clock_seconds=elapsed,
+                code=code,
+            )
         )
-    )
+
     return result
 
 

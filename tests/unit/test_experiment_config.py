@@ -158,6 +158,36 @@ class TestMetrics:
         assert "prompt" not in attempt.to_dict()
         assert "prompt" in attempt.to_dict(include_replay=True)
 
+    def test_per_model_attributes_wins_and_cost(self):
+        """Distinguishes better orchestration from one strong model carrying the run."""
+        def attempt(model, outcome, seconds=0.0):
+            record = _attempt(outcome, model)
+            record.wall_clock_seconds = seconds
+            return record
+
+        results = [
+            ProblemResult("p1", 2024, 1, 1, "abc", outcome=Outcome.SOLVED, attempts=[
+                attempt("qwen", Outcome.WRONG, 90), attempt("deepseek", Outcome.SOLVED, 70),
+            ]),
+            ProblemResult("p2", 2024, 2, 1, "abc", outcome=Outcome.SOLVED, attempts=[
+                attempt("qwen", Outcome.SOLVED, 80),
+            ]),
+        ]
+        stats = ExperimentResult("c", "abc", {}, results).per_model()
+
+        assert stats["qwen"] == {
+            "attempts": 2, "solved": 1, "wall_clock_seconds": 170.0, "solve_rate": 0.5,
+        }
+        assert stats["deepseek"]["solved"] == 1
+        assert stats["deepseek"]["attempts"] == 1
+
+    def test_per_model_is_empty_without_attempts(self):
+        experiment = ExperimentResult("c", "abc", {}, [
+            ProblemResult("p1", 2024, 1, 1, "abc", outcome=Outcome.NO_CANDIDATE),
+        ])
+
+        assert experiment.per_model() == {}
+
     def test_save_round_trips(self, tmp_path):
         import json
 

@@ -118,6 +118,84 @@ class TestRunProblem:
         assert result.attempts[0].config_fingerprint == config.fingerprint()
 
 
+class _TracingSolver:
+    """Exposes a per-model trace, as BaseSolver does."""
+
+    def __init__(self, trace, result):
+        self.attempts = []
+        self._trace = trace
+        self._result = result
+
+    async def solve_problem(self, year, day, part, force=False):
+        from shared.experiment.results import AttemptRecord
+
+        for model, outcome in self._trace:
+            self.attempts.append(
+                AttemptRecord(
+                    model=model, problem_id="p", config_fingerprint="f", outcome=outcome
+                )
+            )
+        return self._result
+
+
+class TestAttemptTrace:
+    """attempts_to_solve is meaningless unless the real per-model trace is used."""
+
+    async def test_trace_drives_attempts_to_solve(self, monkeypatch):
+        import shared.experiment.runner as runner
+
+        monkeypatch.setattr(runner, "get_known_answer", lambda y, d, p: "476")
+        solver = _TracingSolver(
+            [("a", Outcome.WRONG), ("b", Outcome.NO_CANDIDATE), ("c", Outcome.SOLVED)],
+            result="476",
+        )
+
+        result = await runner.run_problem(solver, 2024, 2, 2, SolverConfig())
+
+        assert result.attempts_to_solve == 3
+        assert result.first_try is False
+        assert result.winning_model == "c"
+
+    async def test_first_try_when_the_first_model_wins(self, monkeypatch):
+        import shared.experiment.runner as runner
+
+        monkeypatch.setattr(runner, "get_known_answer", lambda y, d, p: "476")
+        solver = _TracingSolver([("a", Outcome.SOLVED)], result="476")
+
+        result = await runner.run_problem(solver, 2024, 2, 2, SolverConfig())
+
+        assert result.first_try is True
+        assert result.winning_model == "a"
+
+    async def test_unverified_claim_is_downgraded(self, monkeypatch):
+        """A solver bug must surface as a gap, not as an inflated solve rate."""
+        import shared.experiment.runner as runner
+
+        monkeypatch.setattr(runner, "get_known_answer", lambda y, d, p: "476")
+        solver = _TracingSolver([("overconfident", Outcome.SOLVED)], result="86")
+
+        result = await runner.run_problem(solver, 2024, 2, 2, SolverConfig())
+
+        assert result.outcome is Outcome.WRONG
+        assert result.attempts[0].outcome is Outcome.WRONG
+        assert "claim not verified" in result.attempts[0].error
+        assert result.attempts_to_solve is None
+        assert result.winning_model is None
+
+    async def test_solver_without_a_trace_still_works(self, monkeypatch):
+        """Test doubles and older solvers expose no .attempts."""
+        import shared.experiment.runner as runner
+
+        monkeypatch.setattr(runner, "get_known_answer", lambda y, d, p: "476")
+
+        result = await runner.run_problem(
+            _StubSolver(result="476"), 2024, 2, 2, SolverConfig()
+        )
+
+        assert result.outcome is Outcome.SOLVED
+        assert len(result.attempts) == 1
+
+
 class TestCompare:
     def test_renders_a_row_per_config(self):
         a = ExperimentResult("baseline", "aaa", {}, [

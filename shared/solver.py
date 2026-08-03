@@ -19,7 +19,7 @@ from shared.validator import SubmissionError
 from shared.strategies import get_strategies_for_problem, create_strategy_prompt
 from shared.submission import SubmissionManager, SubmissionResult
 from learning.database import LearningDatabase
-from shared.experiment import Outcome, SolverConfig
+from shared.experiment import AttemptRecord, Outcome, SolverConfig
 
 logger = logging.getLogger(__name__)
 
@@ -133,6 +133,9 @@ class BaseSolver:
         self.strategy_optimizer = None
         self.db = None
         self.enable_collaborative_improvement = self.config.enable_collaborative_improvement
+        # Per-model trace of the most recent solve, consumed by the experiment
+        # harness. Reset at the start of each solve_problem call.
+        self.attempts: List[AttemptRecord] = []
 
         # Initialize all available models, preferring those actually installed in Ollama
         model_names = self._resolve_available_models()
@@ -193,6 +196,7 @@ class BaseSolver:
         self, year: int, day: int, part: int, force: bool = False
     ) -> Optional[str]:
         """Solve an Advent of Code problem using model consensus."""
+        self.attempts = []
         try:
             # Validate year and day against current time
             current_date = datetime.now()
@@ -256,6 +260,9 @@ class BaseSolver:
             
             # Try each primary model and collect answers
             answers = {}
+            # Generation wall-clock per model: the only cost signal local
+            # models expose, since the Ollama CLI reports no token counts.
+            generation_times: Dict[str, float] = {}
             failures = []
             
             logging.info("")
@@ -287,6 +294,7 @@ class BaseSolver:
                     # Calculate metrics
                     end_time = datetime.now()
                     response_time = (end_time - start_time).total_seconds()
+                    generation_times[model_name] = response_time
                     
                     # Analyze code quality
                     from shared.quality.code_quality import CodeQualityAnalyzer
@@ -354,6 +362,13 @@ class BaseSolver:
                         
                 except Exception as e:
                     failures.append((model_name, str(e)))
+                    # A model that never produced usable code is a distinct
+                    # failure from one whose code ran and gave a wrong answer.
+                    self._record_attempt(
+                        model_name, year, day, part, Outcome.NO_CANDIDATE,
+                        stage="generate",
+                        error=f"{type(e).__name__}: {e}",
+                    )
                     if not self.db:
                         self.db = LearningDatabase(self.learning_dir)
                     self.db.update_model_performance(
@@ -495,6 +510,16 @@ class BaseSolver:
                                 model_name, solution, year, day, part,
                                 exec_test_cases, known_answer,
                             )
+                            self._record_attempt(
+                                model_name, year, day, part, verdict.outcome,
+                                stage="repair" if iteration else "generate",
+                                answer=verdict.answer,
+                                expected=known_answer,
+                                repair_iteration=iteration,
+                                wall_clock_seconds=generation_times.get(model_name, 0.0),
+                                quality_score=quality_scores.get(model_name),
+                                code=solution,
+                            )
                             if not verdict.accepted:
                                 if verdict.feedback:
                                     feedback_by_model[model_name] = verdict.feedback
@@ -588,6 +613,13 @@ class BaseSolver:
                             model_name, solution, year, day, part,
                             exec_test_cases, known_answer,
                         )
+                        self._record_attempt(
+                            model_name, year, day, part, verdict.outcome,
+                            stage="fallback",
+                            answer=verdict.answer,
+                            expected=known_answer,
+                            code=solution,
+                        )
 
                         if verdict.accepted:
                             logging.info(f"Fallback model {model_name} produced valid solution!")
@@ -655,6 +687,47 @@ class BaseSolver:
     # updated when the ground-truth oracle landed -- so a fallback model could
     # still return a wrong answer as the solution.
     # ------------------------------------------------------------------
+
+    def _record_attempt(
+        self,
+        model: str,
+        year: int,
+        day: int,
+        part: int,
+        outcome: Outcome,
+        *,
+        stage: str = "generate",
+        answer: Optional[str] = None,
+        expected: Optional[str] = None,
+        error: Optional[str] = None,
+        repair_iteration: int = 0,
+        wall_clock_seconds: float = 0.0,
+        quality_score: Optional[float] = None,
+        code: Optional[str] = None,
+    ) -> AttemptRecord:
+        """Append one model attempt to the current solve's trace.
+
+        Without this the harness can only see that a problem was solved, not how
+        many models it took -- which makes attempts-to-solve and first-try rate
+        meaningless. Recording is best-effort telemetry and never affects control
+        flow.
+        """
+        record = AttemptRecord(
+            model=model,
+            problem_id=f"{year}_day{day:02d}_part{part}",
+            config_fingerprint=self.config.fingerprint(),
+            outcome=outcome,
+            stage=stage,
+            answer=answer,
+            expected=expected,
+            error=error,
+            repair_iteration=repair_iteration,
+            wall_clock_seconds=wall_clock_seconds,
+            quality_score=quality_score,
+            code=code,
+        )
+        self.attempts.append(record)
+        return record
 
     @staticmethod
     def build_test_cases(parsed_problem: Any) -> List[TestCase]:
