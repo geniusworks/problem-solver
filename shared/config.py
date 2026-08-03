@@ -70,7 +70,17 @@ MAX_REQUESTS_PER_MINUTE = int(os.getenv("MAX_REQUESTS_PER_MINUTE", 20))
 REQUEST_COOLDOWN = int(os.getenv("REQUEST_COOLDOWN", 3))  # seconds
 
 # HTTP settings
-USER_AGENT = os.getenv("USER_AGENT", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15")
+#
+# Advent of Code's automation guidelines ask tools to identify themselves and to
+# include a way to make contact, rather than impersonating a browser. Contact
+# details are personal data and must never be committed: set AOC_CONTACT in .env
+# (untracked), or override USER_AGENT wholesale.
+_AOC_CONTACT = os.getenv("AOC_CONTACT", "").strip()
+_DEFAULT_USER_AGENT = "problem-solver (AoC LLM solver; https://github.com/topics/advent-of-code)"
+if _AOC_CONTACT:
+    _DEFAULT_USER_AGENT = f"problem-solver (AoC LLM solver; contact: {_AOC_CONTACT})"
+
+USER_AGENT = os.getenv("USER_AGENT", _DEFAULT_USER_AGENT)
 
 def get_model_config(model_name: str) -> Dict[str, Any]:
     """Get configuration for a specific model."""
