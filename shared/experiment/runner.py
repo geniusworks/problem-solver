@@ -7,6 +7,7 @@ makes a result trustworthy -- a bug in the solver's acceptance logic shows up as
 a claimed/verified gap rather than as a silently inflated solve rate.
 """
 
+import ast
 import logging
 import time
 from datetime import datetime, timezone
@@ -75,6 +76,24 @@ def parse_problem_set(spec: str) -> List[ProblemSpec]:
     return problems
 
 
+def _is_source_code(text: str) -> bool:
+    """Whether the solver returned source rather than a bare answer.
+
+    Parsing is used rather than substring-sniffing for "def solve": an answer
+    string that happened to contain that text would have been mis-scored, and
+    generated code that defines the entry point in an unexpected way would have
+    been treated as a bare answer and compared against ground truth as a string.
+    """
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return False
+    return any(
+        isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+        for node in ast.walk(tree)
+    )
+
+
 def _classify(code: Optional[str], year: int, day: int, part: int) -> Tuple[Outcome, Optional[str], Optional[str]]:
     """Independently judge what the solver returned.
 
@@ -88,7 +107,7 @@ def _classify(code: Optional[str], year: int, day: int, part: int) -> Tuple[Outc
     # solve_problem returns source on the generate paths but a bare answer on
     # the existing-solution reuse path. A bare answer is not re-runnable, so
     # score it directly against ground truth.
-    if "def solve" not in code:
+    if not _is_source_code(code):
         answer = code.strip()
         if expected is None:
             return Outcome.UNVERIFIED, answer, None

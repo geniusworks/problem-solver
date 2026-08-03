@@ -78,6 +78,18 @@ class DummyArgs:
 
 
 async def test_solve_entrypoint_end_to_end(monkeypatch, tmp_path, capsys):
+    # This test drives solve.async_main(), which resolves the workspace to the
+    # repo root rather than tmp_path, so it needs the cached puzzle data for
+    # 2024 day 1. That data lives under years/, which is gitignored -- skip
+    # rather than fail on a fresh clone.
+    from shared.ground_truth import get_known_answer
+    from shared.utils import get_problem_dir
+
+    if get_known_answer(2024, 1, 1) is None:
+        pytest.skip("no cached ground truth for 2024 day 1 part 1")
+    if not (get_problem_dir(2024, 1) / "input.txt").exists():
+        pytest.skip("no cached puzzle input for 2024 day 1")
+
     monkeypatch.setattr(solve_module, "parse_args", lambda: DummyArgs())
 
     async def fake_fetch_problem_text(year: int, day: int, part: int = 1):
