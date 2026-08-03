@@ -5,7 +5,12 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Optional, List, Tuple, Any
+from typing import Dict, Optional, List, Tuple, Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # Import-time only: shared.strategies is imported lazily at call sites to keep
+    # module import cheap, but the annotation still needs the name to resolve.
+    from shared.strategies import Strategy
 
 logger = logging.getLogger(__name__)
 
@@ -97,8 +102,11 @@ class SubmissionManager:
 
         # Record strategy result if metrics available
         if execution_metrics and strategies_used:
-            from learning.optimizer import StrategyResult, StrategyOptimizer, Strategy, ProblemCategory, SOLUTION_STRATEGIES, get_strategies_for_problem  # Lazy import
-            strategy_result = StrategyResult(
+            # StrategyResultForProblem, not StrategyResult: the latter takes
+            # (strategy_name, problem_characteristics, ...) and constructing it with
+            # these fields raised TypeError.
+            from learning.optimizer import StrategyResultForProblem, StrategyOptimizer  # Lazy import
+            strategy_result = StrategyResultForProblem(
                 problem_id=problem_key,
                 strategies_used=strategies_used,
                 success=result.was_correct,
@@ -114,7 +122,7 @@ class SubmissionManager:
                 self.learning_dir,
                 self.workspace_dir
             )
-            strategy_optimizer.record_result(strategy_result)
+            strategy_optimizer.record_problem_result(strategy_result)
 
     def get_recommended_strategies(
         self, problem_text: str, characteristics: Dict[str, Any]
@@ -154,10 +162,19 @@ class SubmissionManager:
         return strategies, effectiveness
 
     def _get_attempt_count(self, problem_key: str) -> int:
-        """Get the number of submission attempts for a problem."""
-        from learning.optimizer import StrategyResult  # Lazy import
-        return sum(1 for result in StrategyResult.results 
-                  if result.problem_id == problem_key)
+        """Get the number of recorded attempts for a problem.
+
+        Previously read StrategyResult.results, a class attribute that does not
+        exist, so any call raised AttributeError.
+        """
+        try:
+            if not self.learning_database:
+                from learning import LearningDatabase
+                self.learning_database = LearningDatabase(self.learning_dir)
+            return self.learning_database.count_strategy_attempts(problem_key)
+        except Exception as e:  # pragma: no cover - counting must never block a submission
+            logger.warning("Could not read attempt count for %s: %s", problem_key, e)
+            return 0
 
     def can_submit(self, year: int, day: int, part: int) -> Tuple[bool, Optional[int]]:
         """Check if we can submit a solution now."""

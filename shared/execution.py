@@ -1,6 +1,6 @@
 """Module for executing and validating generated solutions."""
 
-import importlib.util
+import ast
 import logging
 import re
 import subprocess
@@ -51,6 +51,51 @@ class ExecutionResult:
     output: str
     performance: Optional[PerformanceMetrics] = None
     error: Optional[str] = None
+
+
+def _build_resource_limiter(
+    max_memory_mb: int, max_processes: int, cpu_seconds: int
+) -> Optional[Any]:
+    """Build a preexec_fn that constrains generated code in the child process.
+
+    Applied limits, and what is genuinely enforced:
+
+    - RLIMIT_CPU     CPU-seconds. Backstops the wall-clock timeout against a busy
+                     loop that ignores SIGTERM.
+    - RLIMIT_FSIZE   Maximum file size the solution can write.
+    - RLIMIT_NPROC   Process count, so a runaway solution cannot fork-bomb.
+    - RLIMIT_AS      Address space. Works on Linux; **silently unavailable on
+                     macOS**, where setting it makes the interpreter fail to
+                     start. Memory is therefore not capped on darwin.
+
+    Returns None on platforms without the resource module (Windows).
+    """
+    try:
+        import resource
+    except ImportError:  # pragma: no cover - Windows
+        return None
+
+    max_memory_bytes = max(max_memory_mb, 1) * 1024 * 1024
+    max_file_bytes = 64 * 1024 * 1024
+
+    def _apply() -> None:
+        # Each limit is applied independently: an unsupported one must not
+        # prevent the others from taking effect.
+        for limit_name, value in (
+            ("RLIMIT_CPU", (cpu_seconds, cpu_seconds)),
+            ("RLIMIT_FSIZE", (max_file_bytes, max_file_bytes)),
+            ("RLIMIT_NPROC", (max_processes, max_processes)),
+            ("RLIMIT_AS", (max_memory_bytes, max_memory_bytes)),
+        ):
+            limit = getattr(resource, limit_name, None)
+            if limit is None:
+                continue
+            try:
+                resource.setrlimit(limit, value)
+            except (ValueError, OSError):
+                continue
+
+    return _apply
 
 
 def _last_nonempty_line(output: str) -> str:
@@ -210,29 +255,30 @@ class SolutionExecutor:
             # Log the formatted code for debugging
             logger.debug("Generated solution code:\n%s", formatted_code)
 
-            # Try to validate syntax before writing to file
+            # Validate syntax and structure by parsing, never by executing.
+            #
+            # This used to import the generated module with spec.loader.exec_module,
+            # which ran model-written code inside the solver's own process -- after
+            # load_dotenv() had already put AOC_SESSION and any API keys into
+            # os.environ, and before any timeout or subprocess isolation applied.
+            # An AST check answers the same question ("is there a solve function?")
+            # without running anything, and additionally cannot be fooled by
+            # module-level side effects.
             try:
-                compile(formatted_code, '<string>', 'exec')
+                tree = ast.parse(formatted_code)
             except SyntaxError as e:
                 raise CompilationError(f"Invalid Python syntax: {str(e)}")
 
+            has_solve = any(
+                isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and node.name == "solve"
+                for node in tree.body
+            )
+            if not has_solve:
+                raise CompilationError("Solution must contain a solve() function")
+
             # Write the solution to a temporary file
             module_path.write_text(formatted_code)
-
-            # Try to import it to check for syntax errors
-            spec = importlib.util.spec_from_file_location(
-                f"solution_{problem_id}", module_path
-            )
-            if not spec or not spec.loader:
-                raise CompilationError("Failed to create module specification")
-
-            module = importlib.util.module_from_spec(spec)
-            sys.modules[spec.name] = module
-            spec.loader.exec_module(module)
-
-            # Verify it has a solve function
-            if not hasattr(module, "solve"):
-                raise CompilationError("Solution must contain a solve() function")
 
             # Test cases are deliberately NOT run here. They are executed by
             # _run_test_case, which compares against the expected output and writes
@@ -273,15 +319,23 @@ class SolutionExecutor:
             # Resolve input path once so we can run in the same directory as the input file
             input_path_obj = Path(input_path).resolve()
 
-            # Create subprocess with resource limits and set working directory to input directory
+            # Run the module file directly and pass paths as argv.
+            #
+            # This previously interpolated module_path and input_path into a Python
+            # source string ("exec(open('...').read())"), so any path containing a
+            # quote broke out of the literal into executable code. It also passed
+            # limit=, which is asyncio's StreamReader buffer size, not a memory cap:
+            # generated code ran with no resource limits at all.
             process = await asyncio.create_subprocess_exec(
                 sys.executable,
-                "-c",
-                f"import sys; sys.argv=['{module_path}', '{input_path_obj}']; exec(open('{module_path}').read())",
+                str(Path(module_path).resolve()),
+                str(input_path_obj),
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                limit=max_memory * 1024 * 1024,  # Convert MB to bytes
                 cwd=str(input_path_obj.parent),  # Run in directory containing input.txt
+                preexec_fn=_build_resource_limiter(
+                    max_memory, max_processes, cpu_seconds=max(timeout, 1)
+                ),
             )
             
             try:
@@ -306,7 +360,16 @@ class SolutionExecutor:
                 return ExecutionResult(stdout.decode())
                 
             except asyncio.TimeoutError:
+                # Terminate, then reap. Calling terminate() without awaiting the
+                # process left zombies behind and produced "Task was destroyed but
+                # it is pending" warnings; a solution ignoring SIGTERM was never
+                # killed at all.
                 process.terminate()
+                try:
+                    await asyncio.wait_for(process.wait(), timeout=5)
+                except asyncio.TimeoutError:
+                    process.kill()
+                    await process.wait()
                 return ExecutionResult(
                     "", error=f"Solution timed out after {timeout} seconds"
                 )

@@ -281,7 +281,10 @@ class BaseSolver:
                         if validator_name in self.models:
                             validator = self.models[validator_name]
                             try:
-                                if not await validator.validate_solution(solution, parsed_problem.test_cases):
+                                # ParsedProblem exposes .examples; .test_cases does not
+                                # exist and raised AttributeError, which the enclosing
+                                # except turned into a silent validation failure.
+                                if not await validator.validate_solution(solution, parsed_problem.examples):
                                     is_valid = False
                                     validation_errors.append(f"Failed {validator_name} validation")
                             except Exception as e:
@@ -402,7 +405,7 @@ class BaseSolver:
                         # Record improvement attempt
                         if not self.db:
                             from learning import LearningDatabase
-                            self.db = LearningDatabase(learning_dir)
+                            self.db = LearningDatabase(self.learning_dir)
                         self.db.record_improvement(
                             problem_id=f"{year}_day{day:02d}_part{part}",
                             model_name=improved_candidate.author,
@@ -418,7 +421,7 @@ class BaseSolver:
                                 try:
                                     if not await validator.validate_solution(
                                         improved_candidate.solution,
-                                        parsed_problem.test_cases
+                                        parsed_problem.examples
                                     ):
                                         validation_success = False
                                         break
@@ -828,12 +831,6 @@ class BaseSolver:
         if best_weight / total_weight >= 0.6:  # At least 60% agreement
             return best_answer
             
-        return None
-
-
-
-        if len(consensus_answers) == 1 and max_count >= 2:
-            return consensus_answers[0]
         return None
 
     def _print_consensus_summary(self, answers: Dict[str, Any], failures: List[tuple], consensus_answer: Optional[str], consensus_models: List[str]) -> None:

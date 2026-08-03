@@ -1,5 +1,6 @@
 """Database management for the learning system."""
 
+import json
 import logging
 import sqlite3
 from contextlib import contextmanager
@@ -73,37 +74,107 @@ class LearningDatabase:
         success: bool,
         metrics: Dict[str, Any]
     ) -> None:
-        """Record the result of applying strategies to a problem."""
+        """Record the result of applying strategies to a problem.
+
+        Writes to strategy_results. The previous implementation targeted
+        model_performance using problem_id/attempts/successes/last_attempt columns,
+        none of which exist on that table, so any call raised OperationalError.
+        """
         with self.connect() as conn:
-            cursor = conn.cursor()
-            
-            # Check if the problem already exists
-            cursor.execute("SELECT problem_id FROM model_performance WHERE problem_id = ?", (problem_id,))            
-            existing_problem = cursor.fetchone()
-            
-            if existing_problem:
-                # Update existing problem record
-                cursor.execute(
-                    """
-                    UPDATE model_performance
-                    SET attempts = attempts + 1,
-                        successes = successes + ?,
-                        last_attempt = ?
-                    WHERE problem_id = ?
-                    """,
-                    (int(success), datetime.now(), problem_id)
-                )
-            else:
-                # Insert new problem record
-                cursor.execute(
-                    """
-                    INSERT INTO model_performance (problem_id, attempts, successes, last_attempt)
-                    VALUES (?, 1, ?, ?)
-                    """,
-                    (problem_id, int(success), datetime.now())
-                )
-            
-            # Commit the changes
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO strategy_results
+                    (problem_id, timestamp, strategies_used, success,
+                     execution_time, memory_usage, attempts, failure_points,
+                     generation_time, code_size)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    problem_id,
+                    datetime.now().isoformat(),
+                    json.dumps(list(strategies)),
+                    bool(success),
+                    metrics.get("execution_time"),
+                    metrics.get("memory_usage"),
+                    metrics.get("attempts"),
+                    json.dumps(metrics.get("failure_points", [])),
+                    metrics.get("generation_time"),
+                    metrics.get("code_size"),
+                ),
+            )
+            conn.commit()
+
+    def record_improvement(
+        self,
+        problem_id: str,
+        model_name: str,
+        improvement_type: str,
+        impact_score: float,
+        iteration: int = 0,
+    ) -> None:
+        """Record a collaborative-improvement round in improvement_history.
+
+        Called by BaseSolver's collaborative-improvement branch, which previously
+        referenced this method although it did not exist.
+        """
+        with self.connect() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO improvement_history
+                    (problem_id, iteration, model_name, improvement_type,
+                     impact_score, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    problem_id,
+                    iteration,
+                    model_name,
+                    improvement_type,
+                    impact_score,
+                    datetime.now().isoformat(),
+                ),
+            )
+            conn.commit()
+
+    def count_strategy_attempts(self, problem_id: str) -> int:
+        """Number of recorded strategy results for a problem."""
+        with self.connect() as conn:
+            cursor = conn.execute(
+                "SELECT COUNT(*) FROM strategy_results WHERE problem_id = ?",
+                (problem_id,),
+            )
+            row = cursor.fetchone()
+            return int(row[0]) if row else 0
+
+    def add_problem_result(self, result: Any) -> None:
+        """Record a StrategyResultForProblem.
+
+        Called by StrategyOptimizer.record_problem_result, which previously
+        referenced this method although it did not exist.
+        """
+        timestamp = getattr(result, "timestamp", None) or datetime.now()
+        if isinstance(timestamp, datetime):
+            timestamp = timestamp.isoformat()
+
+        with self.connect() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO strategy_results
+                    (problem_id, timestamp, strategies_used, success,
+                     execution_time, memory_usage, attempts, failure_points)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    result.problem_id,
+                    timestamp,
+                    json.dumps(list(result.strategies_used)),
+                    bool(result.success),
+                    result.execution_time,
+                    result.memory_usage,
+                    result.attempts,
+                    json.dumps(list(result.failure_points or [])),
+                ),
+            )
             conn.commit()
 
     def update_model_performance(

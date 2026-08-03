@@ -8,7 +8,9 @@ from typing import Optional, Dict, Union
 import aiohttp
 from bs4 import BeautifulSoup
 
-from .utils import get_session_cookie
+from pathlib import Path
+
+from .utils import get_session_cookie, fetch_problem_text
 from shared.errors import ValidationError, SessionError, SubmissionError
 from shared.config import RESOURCES_CONFIG, SUBMIT_SOLUTIONS
 from .submission import SubmissionManager, SubmissionResult
@@ -19,9 +21,16 @@ logger = logging.getLogger(__name__)
 class SolutionValidator:
     """Handles solution validation and submission workflow."""
 
-    def __init__(self):
-        """Initialize the solution validator."""
-        self.submission_manager = SubmissionManager()
+    def __init__(self, workspace_dir: Optional[Path] = None):
+        """Initialize the solution validator.
+
+        Args:
+            workspace_dir: Repository root used for submission history. Defaults to
+                the directory containing this package.
+        """
+        if workspace_dir is None:
+            workspace_dir = Path(__file__).resolve().parent.parent
+        self.submission_manager = SubmissionManager(workspace_dir)
         self.logger = logging.getLogger(__name__)
 
     def _parse_wait_time(self, message: str) -> int:
@@ -169,16 +178,13 @@ class SolutionValidator:
                 error_message="Solution submission is disabled. Set SUBMIT_SOLUTIONS=true in .env to enable."
             )
 
-        # Problem identifier
-        problem_id = f"{year}_day{day}_part{part}"
-
-        # Check rate limiting
-        can_submit, wait_time = self.submission_manager.can_submit(problem_id)
+        # Check rate limiting. can_submit returns the remaining wait in seconds.
+        can_submit, wait_seconds = self.submission_manager.can_submit(year, day, part)
         if not can_submit:
             return SubmissionResult(
                 was_correct=False,
-                cooldown_seconds=int(wait_time.total_seconds()),
-                error_message=f"Rate limited. Wait {wait_time} before trying again."
+                cooldown_seconds=wait_seconds,
+                error_message=f"Rate limited. Wait {wait_seconds}s before trying again."
             )
 
         # Submit solution
@@ -202,7 +208,7 @@ class SolutionValidator:
                     result = await self._parse_submission_response(html)
                     
                     # Record the submission attempt for rate limiting
-                    self.submission_manager.record_submission(problem_id, result)
+                    self.submission_manager.record_submission(year, day, part, result)
                     
                     return result
 

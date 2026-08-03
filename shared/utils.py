@@ -489,10 +489,9 @@ async def ensure_problem_files(year: int, day: int) -> Dict[str, Path]:
     }
 
 
-def parse_problem_text(problem_text: str, examples_file: Optional[Path] = None) -> Any:
-    """Parse problem text into structured data."""
-    from shared.parser import parse_problem_text as _parse_problem_text
-    return _parse_problem_text(problem_text, examples_file)
+# parse_problem_text is re-exported from shared.parser at the top of this module.
+# A second definition used to live here and silently shadowed that import; it only
+# delegated to the same function, so it has been removed.
 
 
 def save_examples(examples: List[Any], problem_dir: Path, part: Optional[int] = None) -> None:

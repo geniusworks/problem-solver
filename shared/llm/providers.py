@@ -1,12 +1,13 @@
 """Module for managing different LLM providers."""
 
 import json
+import os
 import logging
 import yaml
 from abc import ABC
 from dataclasses import dataclass
 from time import time
-from typing import AsyncGenerator, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 import aiohttp
 import anthropic
@@ -16,6 +17,11 @@ from shared.config import (
     MODELS_CONFIG, DEFAULT_TEMPERATURE, DEFAULT_MAX_TOKENS, DEFAULT_TIMEOUT
 )
 from shared.errors import ProviderError
+
+# The SDKs retry connection errors, 408, 409, 429 and 5xx with exponential
+# backoff. Two retries is their own default; raising it here would multiply
+# worst-case wall-clock by timeout x (max_retries + 1).
+DEFAULT_MAX_RETRIES = 2
 
 logger = logging.getLogger(__name__)
 
@@ -109,10 +115,27 @@ class ModelProvider(ABC):
 class AnthropicProvider(ModelProvider):
     """Provider for Anthropic's Claude models."""
 
-    def __init__(self, model_name: str, api_key: str):
-        """Initialize the provider."""
+    def __init__(
+        self,
+        model_name: str,
+        api_key: str,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        timeout: float = DEFAULT_TIMEOUT,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+    ):
+        """Initialize the provider.
+
+        super().__init__() was previously not called, so self.temperature and
+        self.max_tokens were never set and any read of them raised AttributeError.
+        """
+        super().__init__(temperature=temperature, max_tokens=max_tokens)
         self.model_name = model_name
-        self.client = anthropic.AsyncAnthropic(api_key=api_key)
+        # The SDK retries connection errors, 408, 409, 429 and 5xx with
+        # exponential backoff; there is no need to hand-roll a retry loop.
+        self.client = anthropic.AsyncAnthropic(
+            api_key=api_key, timeout=timeout, max_retries=max_retries
+        )
 
     async def generate(
         self,
@@ -125,15 +148,23 @@ class AnthropicProvider(ModelProvider):
     ) -> GenerationResult:
         """Generate text using Claude."""
         try:
-            response = await self.client.messages.create(
-                model=self.model_name,
-                messages=self._format_messages(prompt, system_prompt),
-                max_tokens=max_tokens,
-                temperature=temperature,
-                top_p=top_p,
+            # max_tokens is required by the Messages API; passing None errors.
+            # Anthropic takes the system prompt as a top-level parameter rather
+            # than a "system" role message.
+            request: Dict[str, Any] = {
+                "model": self.model_name,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": self.max_tokens if max_tokens is None else int(max_tokens),
+            }
+            if system_prompt:
+                request["system"] = system_prompt
+
+            response = await self.client.messages.create(**request)
+            text = next(
+                (block.text for block in response.content if block.type == "text"), ""
             )
             return GenerationResult(
-                content=response.content[0].text,
+                content=text,
                 total_tokens=response.usage.output_tokens,
             )
         except anthropic.RateLimitError as e:
@@ -156,16 +187,17 @@ class AnthropicProvider(ModelProvider):
     ) -> AsyncGenerator[str, None]:
         """Stream text using Claude."""
         try:
-            async with self.client.messages.stream(
-                model=self.model_name,
-                messages=self._format_messages(prompt, system_prompt),
-                max_tokens=max_tokens,
-                temperature=temperature,
-                top_p=top_p,
-            ) as stream:
-                async for chunk in stream:
-                    if chunk.content:
-                        yield chunk.content[0].text
+            request: Dict[str, Any] = {
+                "model": self.model_name,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": self.max_tokens if max_tokens is None else int(max_tokens),
+            }
+            if system_prompt:
+                request["system"] = system_prompt
+
+            async with self.client.messages.stream(**request) as stream:
+                async for text in stream.text_stream:
+                    yield text
         except anthropic.RateLimitError as e:
             raise RateLimitError(str(e)) from e
         except anthropic.APITimeoutError as e:
@@ -183,10 +215,25 @@ class AnthropicProvider(ModelProvider):
 class OpenAIProvider(ModelProvider):
     """Provider for OpenAI models."""
 
-    def __init__(self, model_name: str, api_key: str):
-        """Initialize the provider."""
+    def __init__(
+        self,
+        model_name: str,
+        api_key: str,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        timeout: float = DEFAULT_TIMEOUT,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+    ):
+        """Initialize the provider.
+
+        super().__init__() was previously not called, leaving self.temperature and
+        self.max_tokens unset; the client also had no timeout.
+        """
+        super().__init__(temperature=temperature, max_tokens=max_tokens)
         self.model_name = model_name
-        self.client = openai.AsyncClient(api_key=api_key)
+        self.client = openai.AsyncClient(
+            api_key=api_key, timeout=timeout, max_retries=max_retries
+        )
 
     async def generate(
         self,
@@ -202,13 +249,14 @@ class OpenAIProvider(ModelProvider):
             response = await self.client.chat.completions.create(
                 model=self.model_name,
                 messages=self._format_messages(prompt, system_prompt),
-                max_tokens=max_tokens,
-                temperature=temperature,
+                max_tokens=self.max_tokens if max_tokens is None else int(max_tokens),
+                temperature=self.temperature if temperature is None else float(temperature),
                 top_p=top_p,
             )
+            usage = response.usage
             return GenerationResult(
                 content=response.choices[0].message.content or "",
-                total_tokens=response.usage.total_tokens,
+                total_tokens=usage.total_tokens if usage else 0,
             )
         except openai.RateLimitError as e:
             raise RateLimitError(str(e)) from e
@@ -403,6 +451,21 @@ class OllamaProvider(ModelProvider):
         return config.get(model_key, {})
 
 
+REMOTE_PROVIDERS = frozenset({"anthropic", "openai"})
+
+
+def remote_providers_enabled() -> bool:
+    """Whether paid, remote providers may be constructed.
+
+    A present API key is deliberately NOT sufficient: a stray key left in .env
+    must never be able to start incurring cost. Opting in requires setting
+    ENABLE_REMOTE_PROVIDERS explicitly.
+    """
+    return os.getenv("ENABLE_REMOTE_PROVIDERS", "false").strip().lower() in (
+        "true", "1", "yes", "on",
+    )
+
+
 class ProviderFactory:
     """Factory for creating model providers."""
 
@@ -411,6 +474,13 @@ class ProviderFactory:
         provider_type: str, model_name: str, api_key: Optional[str] = None
     ) -> ModelProvider:
         """Create a model provider."""
+        if provider_type in REMOTE_PROVIDERS and not remote_providers_enabled():
+            raise ProviderError(
+                f"Remote provider '{provider_type}' is disabled. These providers bill "
+                f"per token, so having an API key configured is not enough to enable "
+                f"them: set ENABLE_REMOTE_PROVIDERS=true in .env to opt in."
+            )
+
         if provider_type == "anthropic":
             if not api_key:
                 raise ValueError("API key required for Anthropic provider")

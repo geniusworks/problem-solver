@@ -38,24 +38,28 @@ def measure_performance(func):
         start_time = time.time()
         start_memory = process.memory_info().rss / 1024 / 1024  # Convert to MB
         
+        # Bound before the try so the finally block cannot reference it unbound when
+        # func raises -- that turned any exception from func into UnboundLocalError,
+        # masking the original error.
+        result = None
         try:
             result = func(*args, **kwargs)
         finally:
             end_time = time.time()
             end_memory = process.memory_info().rss / 1024 / 1024
             cpu_percent = process.cpu_percent()
-            
+
             # Create performance metrics
             metrics = PerformanceMetrics(
                 execution_time=end_time - start_time,
                 peak_memory=max(end_memory - start_memory, 0),  # Avoid negative values
                 cpu_percent=cpu_percent
             )
-            
+
             # Attach metrics to result if it's a TestResult
             if isinstance(result, TestResult):
                 result.performance = metrics
-                
+
         return result
     return wrapper
 
