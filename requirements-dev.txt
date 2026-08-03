@@ -1,5 +1,15 @@
+# Development-only tooling. Install alongside requirements.txt:
+#   pip install -r requirements.txt -r requirements-dev.txt
 pytest==8.3.4
 pytest-asyncio==0.21.1
 pytest-cov==6.2.1
 pytest-xdist==3.8.0  # For parallel test execution
-beautifulsoup4==4.12.3
+
+# Static analysis and coverage. Not imported by the solver at runtime -- the
+# quality tools that *are* imported (black, autopep8, pylint, radon) live in
+# requirements.txt. beautifulsoup4 was pinned here too and is a runtime
+# dependency, so it is declared only in requirements.txt now.
+mypy>=1.7.1        # Type checking
+bandit>=1.7.5      # Security checking
+coverage==7.3.3    # Code coverage
+types-psutil>=5.9.5

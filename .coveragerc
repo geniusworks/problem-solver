@@ -1,3 +1,4 @@
 [run]
-omit =
-  shared/llm/models.py
+# Nothing is omitted. The previous `omit = shared/llm/models.py` entry hid a file
+# with a syntax error, which silently disabled five modules and stopped mypy from
+# checking anything. Do not add omissions to hide broken code.

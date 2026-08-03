@@ -13,10 +13,6 @@ from shared.solver import BaseSolver
 from shared.utils import setup_logging, SessionError
 
 
-class ProblemSolver:
-    """Main class for solving AoC problems with enhanced features."""
-
-
 def parse_args():
     """Parse command line arguments.
 

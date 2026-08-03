@@ -170,32 +170,7 @@ class CollaborativeImprovement:
         return "\n".join(history)
 
 
-class EnsembleWithCollaboration:
-    """Combines ensemble voting with collaborative improvement."""
-
-    def __init__(self, providers: List[LLMProvider], max_iterations: int = 3):
-        self.ensemble = ModelEnsemble(providers)
-        self.collaborator = CollaborativeImprovement(providers, max_iterations)
-
-    async def generate_and_improve(self, prompt: str) -> SolutionCandidate:
-        """Generate initial solutions and collaboratively improve them."""
-        # Get initial solutions from ensemble
-        initial_response = await self.ensemble.generate_solution(prompt)
-
-        if initial_response.error:
-            raise ValueError(
-                f"Failed to generate initial solution: {initial_response.error}"
-            )
-
-        # Improve the solution collaboratively
-        final_candidate = await self.collaborator.improve_solution(
-            initial_response.content
-        )
-
-        # Validate final solution
-        if not self.ensemble.validate_solution(
-            final_candidate.solution, []
-        ):  # TODO: Add test cases
-            raise ValueError("Final solution failed validation")
-
-        return final_candidate
+# EnsembleWithCollaboration was removed here. It referenced ModelEnsemble without
+# importing it, so constructing it always raised NameError, and nothing in the
+# codebase used it. Ensemble voting is being rebuilt deliberately in Phase 4 on top
+# of executed answers rather than generated source.
