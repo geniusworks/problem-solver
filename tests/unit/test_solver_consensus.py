@@ -18,20 +18,52 @@ def test_weighted_consensus_no_answers_returns_none():
     assert result is None
 
 
-def test_weighted_consensus_single_answer_always_selected():
+def test_single_candidate_is_not_consensus():
+    """A lone candidate holds 100% of the weight and used to clear the threshold
+    trivially, so its code was returned as "consensus" without any second opinion
+    and without ever being executed. One opinion is not agreement."""
     solver = _make_solver()
-    weighted_answers = {"model-a": ("42", 0.1)}
-    result = solver._get_weighted_consensus_answer(weighted_answers)
-    assert result == "42"
+
+    result = solver._get_weighted_consensus_answer({"model-a": ("42", 0.1)})
+
+    assert result is None
 
 
-def test_weighted_consensus_prefers_higher_weight_answer():
+def test_two_models_disagreeing_is_not_consensus():
+    """Distinct answers means nobody agrees, whatever the weights."""
     solver = _make_solver()
     weighted_answers = {
         "model-a": ("42", 0.7),
         "model-b": ("13", 0.3),
     }
+
     result = solver._get_weighted_consensus_answer(weighted_answers)
+
+    assert result is None
+
+
+def test_two_models_agreeing_reaches_consensus():
+    solver = _make_solver()
+    weighted_answers = {
+        "model-a": ("42", 0.6),
+        "model-b": ("42", 0.6),
+    }
+
+    result = solver._get_weighted_consensus_answer(weighted_answers)
+
+    assert result == "42"
+
+
+def test_majority_agreement_wins_over_a_lone_dissenter():
+    solver = _make_solver()
+    weighted_answers = {
+        "model-a": ("42", 0.5),
+        "model-b": ("42", 0.5),
+        "model-c": ("13", 0.4),
+    }
+
+    result = solver._get_weighted_consensus_answer(weighted_answers)
+
     assert result == "42"
 
 

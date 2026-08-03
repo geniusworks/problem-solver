@@ -4,10 +4,25 @@ import pytest
 import shared.quality.code_quality as cq
 
 
+class DummyExample:
+    """A worked example whose expected output the dummy solution reproduces.
+
+    The solver refuses to accept a candidate for a problem with no oracle, so a
+    realistic parsed problem must carry one. Previously this test passed only
+    because a single candidate short-circuited as "consensus" and was returned
+    without ever being executed.
+    """
+
+    def __init__(self) -> None:
+        self.input_data = "anything"
+        self.expected_output = "2970687"
+        self.description = "returns the accepted answer"
+
+
 class DummyParsedProblem:
     def __init__(self) -> None:
         self.description = "Dummy problem description"
-        self.examples = []
+        self.examples = [DummyExample()]
         self.test_cases = []
 
 
@@ -38,7 +53,16 @@ class DummyModel:
         strategies,
         strategy_effectiveness,
     ) -> str:
-        return "def solve(input_data: str) -> str:\n    return '42'\n"
+        # Must print the answer, as the prompt template requires of real
+        # generated solutions -- a solve() that only returns produces empty
+        # output and fails verification.
+        return (
+            "def solve():\n"
+            "    return '2970687'\n"
+            "\n"
+            'if __name__ == "__main__":\n'
+            "    print(solve())\n"
+        )
 
     async def validate_solution(self, solution: str, test_cases) -> bool:
         return True

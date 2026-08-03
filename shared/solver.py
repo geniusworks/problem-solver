@@ -24,6 +24,13 @@ from shared.experiment import AttemptRecord, Outcome, SolverConfig
 logger = logging.getLogger(__name__)
 
 
+def _known_answer(year: int, day: int, part: int) -> Optional[str]:
+    """Accepted AoC answer for this part, if it is cached locally."""
+    from shared.ground_truth import get_known_answer
+
+    return get_known_answer(year, day, part)
+
+
 @dataclass
 class CandidateVerdict:
     """Judgement on one generated candidate, from _verify_candidate."""
@@ -412,6 +419,30 @@ class BaseSolver:
                     weighted_answers[model_name] = (solution, weight)
                 
                 consensus_answer = self._get_weighted_consensus_answer(weighted_answers)
+                if consensus_answer:
+                    # Consensus is agreement about *code*, which says nothing
+                    # about whether the code is correct. This branch used to
+                    # return here without ever executing it, bypassing the whole
+                    # oracle. Verify before accepting.
+                    consensus_verdict = await self._verify_candidate(
+                        "consensus", consensus_answer, year, day, part,
+                        self.build_test_cases(parsed_problem),
+                        _known_answer(year, day, part),
+                    )
+                    self._record_attempt(
+                        "consensus", year, day, part, consensus_verdict.outcome,
+                        stage="consensus",
+                        answer=consensus_verdict.answer,
+                        code=consensus_answer,
+                    )
+                    if not consensus_verdict.accepted:
+                        logger.info(
+                            "Consensus candidate rejected by verification (%s); "
+                            "continuing to execution-based selection.",
+                            consensus_verdict.outcome.value,
+                        )
+                        consensus_answer = None
+
                 if consensus_answer:
                     # Record the consensus in the solution directory
                     record_solution(
@@ -924,18 +955,29 @@ class BaseSolver:
         if not weighted_answers:
             return None
             
-        # Group identical answers and sum their weights
+        # Group identical answers, summing weights and counting distinct models
         answer_groups: Dict[str, float] = {}
+        models_per_answer: Dict[str, int] = {}
         for model_name, (answer, weight) in weighted_answers.items():
-            if answer in answer_groups:
-                answer_groups[answer] += weight
-            else:
-                answer_groups[answer] = weight
-                
+            answer_groups[answer] = answer_groups.get(answer, 0.0) + weight
+            models_per_answer[answer] = models_per_answer.get(answer, 0) + 1
+
         # Find answer with highest total weight
         best_answer = max(answer_groups.items(), key=lambda x: x[1])[0]
         best_weight = answer_groups[best_answer]
-        
+
+        # Agreement requires more than one voter. A lone candidate holds 100% of
+        # the total weight, so it cleared the threshold trivially and was
+        # returned as "consensus" -- which is not consensus, it is a single
+        # unreviewed opinion.
+        agreeing = models_per_answer[best_answer]
+        if agreeing < self.config.min_consensus_models:
+            logger.info(
+                "No consensus: best answer has %d agreeing model(s), need %d.",
+                agreeing, self.config.min_consensus_models,
+            )
+            return None
+
         # Only return consensus if weight is significantly higher than others.
         #
         # Every weight is a code-quality score, so all of them are 0.0 when
