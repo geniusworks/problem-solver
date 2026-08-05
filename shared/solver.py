@@ -147,7 +147,9 @@ class BaseSolver:
         # Initialize all available models, preferring those actually installed in Ollama
         model_names = self._resolve_available_models()
         self.models = {
-            model: OllamaProvider(model=model, debug=debug)
+            model: OllamaProvider(
+                model=model, debug=debug, temperature=self.config.temperature
+            )
             for model in model_names
         }
 

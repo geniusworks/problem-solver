@@ -2,6 +2,9 @@
 
 import logging
 import asyncio
+import os
+
+import aiohttp
 from typing import Dict, List, Optional, Any
 import re
 from pathlib import Path
@@ -14,6 +17,10 @@ from datetime import datetime
 from shared.utils import ensure_problem_directory_structure
 
 logger = logging.getLogger(__name__)
+
+# Generous: a 9B model on consumer hardware can take several minutes for a
+# full solution prompt.
+OLLAMA_REQUEST_TIMEOUT = 900
 
 # The `ollama run` CLI writes spinner and cursor-control escapes to the stream
 # while a long generation is in flight. They survive into the extracted code and
@@ -38,10 +45,14 @@ class OllamaProvider(LLMProvider):
         "deepseek-coder:6.7b",
     ]
 
-    def __init__(self, model: str = "codellama:7b", debug: bool = False, **kwargs):
+    def __init__(self, model: str = "codellama:7b", debug: bool = False,
+                 temperature: Optional[float] = None, **kwargs):
         super().__init__(**kwargs)
         self.model = model
         self.debug = debug
+        # None leaves Ollama's default. Setting it is what makes drawing
+        # several independent samples from one model meaningful.
+        self.temperature = temperature
         self.model_info = {"name": model, "description": "Description of the model."}
         self.last_prompt = None
 
@@ -96,7 +107,9 @@ Final Question: {problem.final_question}""")
         
         start_time = datetime.now()
         try:
-            response = await self.generate(implementation_prompt)
+            response = await self.generate(
+                implementation_prompt, temperature=self.temperature
+            )
             generation_time = (datetime.now() - start_time).total_seconds()
             
             # Extract the code from the response
@@ -252,48 +265,60 @@ Final Question: {problem.final_question}""")
                         break
         return strategies
 
-    async def generate(self, prompt: str) -> LLMResponse:
-        """Generate using Ollama API."""
+    async def generate(
+        self, prompt: str, temperature: Optional[float] = None
+    ) -> LLMResponse:
+        """Generate via Ollama's HTTP API.
+
+        This previously shelled out to `ollama run`, which is the *interactive*
+        CLI: it renders to a terminal, wrapping lines with cursor-movement and
+        erase-line escapes. Capturing that as text corrupts the output --
+        `"is not\\x1b[3D\\x1b[K\\nnot fully"` becomes `"is not\\nnot fully"` once
+        the escapes are stripped, duplicating a word. In prose that reads oddly;
+        in generated code it is a syntax error, and it was the single largest
+        source of "the model produced malformed code" in this project. 30 of 145
+        recorded attempts still carry the signature.
+
+        /api/generate returns the completion as JSON, with no terminal layer.
+        """
+        host = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+        options: Dict[str, Any] = {}
+        if temperature is not None:
+            options["temperature"] = float(temperature)
+
+        payload: Dict[str, Any] = {
+            "model": self.model,
+            "prompt": prompt,
+            "stream": False,
+        }
+        if options:
+            payload["options"] = options
+
+        logger.debug("Requesting generation from %s for %s", host, self.model)
         try:
-            # Run Ollama with the prompt directly
-            logger.debug("Running Ollama command...")
-            process = await asyncio.create_subprocess_exec(
-                "/usr/local/bin/ollama",
-                "run",
-                self.model,
-                prompt,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
+            timeout = aiohttp.ClientTimeout(total=OLLAMA_REQUEST_TIMEOUT)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.post(f"{host}/api/generate", json=payload) as resp:
+                    if resp.status != 200:
+                        body = (await resp.text())[:400]
+                        raise RuntimeError(
+                            f"Ollama returned HTTP {resp.status} for {self.model}: {body}"
+                        )
+                    data = await resp.json()
 
-            logger.debug("Waiting for Ollama response...")
-            stdout, stderr = await process.communicate()
-            stdout_text = _strip_ansi(stdout.decode() if stdout else "")
-            stderr_text = _strip_ansi(stderr.decode() if stderr else "")
-
-            # Log raw response for debugging
-            logger.debug("Raw Ollama response:")
-            logger.debug(stdout_text)
-
-            # Filter out Ollama spinner messages
-            non_spinner_lines = [
-                line
-                for line in stderr_text.splitlines()
-                if not line.startswith("\r") and line.strip()
-            ]
-
-            if process.returncode != 0:
-                logger.warning("Ollama stderr: %s", "\n".join(non_spinner_lines))
-                logger.error("Ollama failed with return code %d", process.returncode)
-                raise Exception(f"Ollama failed: {stderr_text}")
+            content = data.get("response", "")
+            if not content:
+                raise RuntimeError(f"Ollama returned an empty response for {self.model}")
 
             return LLMResponse(
-                content=stdout_text,
+                content=content,
                 confidence=1.0,  # Local models don't provide confidence scores
                 metadata={
                     "model": self.model,
                     "provider": "ollama",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
+                    "eval_count": data.get("eval_count"),
+                    "prompt_eval_count": data.get("prompt_eval_count"),
                 }
             )
 
