@@ -37,6 +37,42 @@ def extract_code_block(text: str) -> str:
     return "\n".join(lines[start:end])
 
 
+def _parses(code: str) -> bool:
+    """Whether the code is already syntactically valid Python."""
+    try:
+        compile(code, "<string>", "exec")
+        return True
+    except SyntaxError:
+        return False
+
+
+def _format_valid(code: str) -> Tuple[str, bool]:
+    """Cosmetically format code that is already valid.
+
+    black and autopep8 are parser-based, so unlike the regex repairs they
+    cannot corrupt the program. If either fails, the original valid code is
+    returned rather than treating it as a formatting failure -- style is not
+    worth discarding a working solution over.
+    """
+    try:
+        formatted = autopep8.fix_code(code, options={"aggressive": 1})
+        if not _parses(formatted):
+            formatted = code
+    except Exception as e:
+        logger.warning("autopep8 failed: %s", e)
+        formatted = code
+
+    try:
+        mode = black.Mode(target_versions={black.TargetVersion.PY39}, line_length=88)
+        blacked = black.format_str(formatted, mode=mode)
+        if _parses(blacked):
+            return blacked, True
+    except Exception as e:
+        logger.debug("black formatting skipped: %s", e)
+
+    return formatted, True
+
+
 def format_code(source_code: str) -> Tuple[str, bool]:
     """Format Python code using black and autopep8.
 
@@ -50,10 +86,21 @@ def format_code(source_code: str) -> Tuple[str, bool]:
         # First extract actual code if needed
         code = extract_code_block(source_code)
 
-        # Fix common issues
-        code = code.replace("\\n", "\n")  # Fix escaped newlines
-        code = code.replace('\\"', '"')  # Fix escaped quotes
-        
+        # Only attempt the heuristic repairs below when the code does not
+        # already parse.
+        #
+        # Those repairs are regex and string substitutions that cannot tell
+        # context from content, so on valid input they corrupt more than they
+        # fix: unescaping turns a literal "\n" inside a string into a real
+        # newline, and the f-string rewrite below rewraps f"..." as f'...',
+        # which breaks any f-string containing an apostrophe. The harness then
+        # blamed the model for the resulting SyntaxError.
+        #
+        # Repairing malformed output is worth attempting. Repairing
+        # well-formed output is pure downside.
+        if _parses(code):
+            return _format_valid(code)
+
         # Debug-print stripping was removed here, and must not come back in a
         # line-based form.
         #
