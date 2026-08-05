@@ -316,22 +316,20 @@ class BaseSolver:
                     analyzer = CodeQualityAnalyzer()
                     quality_metrics = analyzer.analyze(solution)
                     
-                    # Validate solution
+                    # Every candidate enters the pool; correctness is decided by
+                    # execution against the oracle further down.
+                    #
+                    # There used to be a validator-model gate here, looping over
+                    # validator_models and calling validate_solution on each.
+                    # That method is an unimplemented stub returning True, so the
+                    # gate admitted everything while creating the appearance of
+                    # review -- the most misleading state for a check to be in.
+                    # Removed rather than left as ceremony; if model-based review
+                    # is reinstated it needs a real implementation and its own
+                    # measurement, which the experiment harness can now provide.
+                    validation_errors: List[str] = []
                     is_valid = True
-                    validation_errors = []
-                    for validator_name in validator_models:
-                        if validator_name in self.models:
-                            validator = self.models[validator_name]
-                            try:
-                                # ParsedProblem exposes .examples; .test_cases does not
-                                # exist and raised AttributeError, which the enclosing
-                                # except turned into a silent validation failure.
-                                if not await validator.validate_solution(solution, parsed_problem.examples):
-                                    is_valid = False
-                                    validation_errors.append(f"Failed {validator_name} validation")
-                            except Exception as e:
-                                validation_errors.append(f"{validator_name} validation error: {str(e)}")
-                    
+
                     if is_valid:
                         answers[model_name] = solution
                         

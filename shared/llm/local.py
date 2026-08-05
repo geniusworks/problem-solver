@@ -86,21 +86,22 @@ Examples:
 
 Final Question: {problem.final_question}""")
         
-        # Phase 2: Strategy Selection
-        if not strategies:
-            # If no strategies provided, get them from problem analysis
-            strategy_objects = get_strategies_for_problem(problem.description)
-        else:
-            # Convert provided strategy names to Strategy objects
-            strategy_objects = self._convert_to_strategy_objects(strategies, strategy_effectiveness)
-        
-        strategy_prompt = create_strategy_prompt(strategy_objects)
+        # Phase 2: Strategy Selection.
+        #
+        # Both branches go through the converter: get_strategies_for_problem
+        # returns names, and the attempt record below reads .name off each
+        # entry, so passing raw strings through here raised AttributeError.
+        selected = strategies or get_strategies_for_problem(problem.description)
+        strategy_objects = self._convert_to_strategy_objects(
+            selected, strategy_effectiveness
+        )
         
         # Phase 3: Implementation
         implementation_prompt = generate_implementation_prompt(
             problem,
             analyzer,
             analysis.content,
+            strategies=strategy_objects,
         )
         
         self.last_prompt = implementation_prompt
@@ -204,9 +205,15 @@ Final Question: {problem.final_question}""")
         
         Only adds the main block if needed. Does not modify the solution code itself.
         """
-        # Add missing main block if needed
+        # Use the same entry point the executor injects. This used to append
+        # its own block hardcoding solve(sys.argv[1]), which crashes with
+        # IndexError whenever the saved solution is run without arguments --
+        # exactly how dev/verify_solutions.py runs it -- and with TypeError when
+        # the model defined a zero-argument solve().
+        from shared.execution import STANDARD_MAIN_BLOCK
+
         if not re.search(r'if\s+__name__\s*==\s*[\'"]__main__[\'"]\s*:', code):
-            code += '\n\nif __name__ == "__main__":\n    import sys\n    print(solve(sys.argv[1]))'
+            code += "\n\n" + STANDARD_MAIN_BLOCK
         return code
 
     def _extract_code(self, text: str) -> Optional[str]:
@@ -253,16 +260,29 @@ Final Question: {problem.final_question}""")
         Returns:
             List of Strategy objects
         """
+        # Callers pass Strategy objects (BaseSolver gets them from
+        # SubmissionManager.get_recommended_strategies), but this compared
+        # strategy.name -- a string -- against the item itself. An object never
+        # equals a string, so the result was always empty: all 145 recorded
+        # attempts show "applied_strategies": []. Accept either form.
+        by_name = {
+            strategy.name: strategy
+            for category in SOLUTION_STRATEGIES.values()
+            for strategy in category
+        }
+
         strategies = []
-        for name in strategy_names:
-            # Search through all categories for the strategy
-            for category_strategies in SOLUTION_STRATEGIES.values():
-                for strategy in category_strategies:
-                    if strategy.name == name:
-                        if effectiveness and name in effectiveness:
-                            strategy.effectiveness = effectiveness[name]
-                        strategies.append(strategy)
-                        break
+        for item in strategy_names or []:
+            name = item if isinstance(item, str) else getattr(item, "name", None)
+            if not name:
+                continue
+            strategy = by_name.get(name) or (None if isinstance(item, str) else item)
+            if strategy is None:
+                logger.debug("Unknown strategy %r; ignoring", name)
+                continue
+            if effectiveness and name in effectiveness:
+                strategy.effectiveness = effectiveness[name]
+            strategies.append(strategy)
         return strategies
 
     async def generate(
