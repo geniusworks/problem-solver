@@ -77,6 +77,18 @@ class SolverConfig:
     # --- execution -------------------------------------------------------
     execution_timeout: Optional[int] = None
 
+    # Context window requested from Ollama. None uses the provider's
+    # prompt-sized default.
+    #
+    # This is a genuine open question, not a tuning knob. Ollama truncates to
+    # ~2048 tokens unless told otherwise, and this solver's prompts reach
+    # ~6962 -- so the default silently discards most of the problem. But
+    # raising it costs KV cache: on a 16GB M1, one measured run went 3/6 in
+    # 896s at the truncating default and 1/6 in 1760s at 16384. Two runs of
+    # six problems cannot separate that from the known run-to-run variance,
+    # which is exactly why it belongs in the config where it can be swept.
+    num_ctx: Optional[int] = None
+
     # --- bookkeeping (excluded from the fingerprint) ---------------------
     notes: str = field(default="", compare=False)
 

@@ -43,6 +43,7 @@ SYMBOL = {
 
 # Fields that are ints/floats/bools rather than strings, for --config parsing.
 _INT_FIELDS = {
+    "num_ctx",
     "max_primary_models", "samples_per_model", "max_repair_iterations",
     "min_consensus_models", "execution_timeout",
 }

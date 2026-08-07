@@ -148,7 +148,9 @@ class BaseSolver:
         model_names = self._resolve_available_models()
         self.models = {
             model: OllamaProvider(
-                model=model, debug=debug, temperature=self.config.temperature
+                model=model, debug=debug,
+                temperature=self.config.temperature,
+                num_ctx=self.config.num_ctx,
             )
             for model in model_names
         }

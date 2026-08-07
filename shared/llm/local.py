@@ -50,13 +50,16 @@ class OllamaProvider(LLMProvider):
     ]
 
     def __init__(self, model: str = "codellama:7b", debug: bool = False,
-                 temperature: Optional[float] = None, **kwargs):
+                 temperature: Optional[float] = None,
+                 num_ctx: Optional[int] = None, **kwargs):
         super().__init__(**kwargs)
         self.model = model
         self.debug = debug
         # None leaves Ollama's default. Setting it is what makes drawing
         # several independent samples from one model meaningful.
         self.temperature = temperature
+        # Explicit override; None sizes the window to the prompt.
+        self.num_ctx = num_ctx
         self.model_info = {"name": model, "description": "Description of the model."}
         self.last_prompt = None
 
@@ -335,7 +338,9 @@ Final Question: {problem.final_question}""")
         /api/generate returns the completion as JSON, with no terminal layer.
         """
         host = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
-        options: Dict[str, Any] = {"num_ctx": self._context_size(prompt)}
+        options: Dict[str, Any] = {
+            "num_ctx": self.num_ctx or self._context_size(prompt)
+        }
         if temperature is not None:
             options["temperature"] = float(temperature)
 
