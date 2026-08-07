@@ -22,6 +22,10 @@ logger = logging.getLogger(__name__)
 # full solution prompt.
 OLLAMA_REQUEST_TIMEOUT = 900
 
+# Room for the model to answer -- and, for reasoning models, to think first --
+# on top of the prompt itself.
+OLLAMA_OUTPUT_HEADROOM_TOKENS = 4096
+
 # The `ollama run` CLI writes spinner and cursor-control escapes to the stream
 # while a long generation is in flight. They survive into the extracted code and
 # make it unparseable: compile() rejects it with "invalid non-printable character
@@ -285,6 +289,35 @@ Final Question: {problem.final_question}""")
             strategies.append(strategy)
         return strategies
 
+    @staticmethod
+    def _context_size(prompt: str) -> int:
+        """Context window to request, sized to the prompt plus output headroom.
+
+        Ollama defaults to a ~2048-token context and silently truncates anything
+        longer -- it does not error, and the response looks normal. Measured on a
+        7883-token prompt: prompt_eval_count was 2050 by default and 7037 with
+        num_ctx set.
+
+        This solver's prompts run 6930-27849 characters (median ~3370 tokens,
+        max ~6962), so every generation it has ever made was produced from a
+        truncated prompt. The models were answering without having seen most of
+        the problem, which is the most likely explanation for years of
+        "the model misinterpreted the requirements".
+
+        Sized generously rather than exactly: reasoning models need room to think
+        *after* the prompt, and running out mid-reasoning is what left qwen3.5:9b
+        with no answer on 17 generations.
+        """
+        estimated_prompt_tokens = len(prompt) // 3  # conservative chars-per-token
+        wanted = estimated_prompt_tokens + OLLAMA_OUTPUT_HEADROOM_TOKENS
+
+        # Round up to a power-of-two-ish step so the KV cache is reused across
+        # calls instead of being reallocated for every slightly different prompt.
+        for size in (8192, 16384, 32768):
+            if wanted <= size:
+                return size
+        return 32768
+
     async def generate(
         self, prompt: str, temperature: Optional[float] = None
     ) -> LLMResponse:
@@ -302,7 +335,7 @@ Final Question: {problem.final_question}""")
         /api/generate returns the completion as JSON, with no terminal layer.
         """
         host = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
-        options: Dict[str, Any] = {}
+        options: Dict[str, Any] = {"num_ctx": self._context_size(prompt)}
         if temperature is not None:
             options["temperature"] = float(temperature)
 

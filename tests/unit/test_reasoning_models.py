@@ -96,3 +96,48 @@ class TestReasoningModels:
     async def test_non_200_is_reported(self):
         with pytest.raises(RuntimeError, match="HTTP 500"):
             await _generate({}, status=500)
+
+
+class TestContextSizing:
+    """Ollama silently truncates to ~2048 tokens unless num_ctx is set.
+
+    Measured on a 7883-token prompt: prompt_eval_count was 2050 by default and
+    7037 with num_ctx set. This solver's prompts run to ~6962 tokens, so every
+    generation it ever made was produced from a truncated prompt -- the models
+    were answering without having seen most of the problem.
+    """
+
+    @pytest.mark.parametrize("chars,minimum", [
+        (6930, 8192),    # smallest real prompt
+        (13480, 16384),  # median real prompt
+        (27849, 16384),  # largest real prompt
+    ])
+    def test_real_prompt_sizes_get_enough_context(self, chars, minimum):
+        size = OllamaProvider._context_size("x" * chars)
+
+        assert size >= minimum
+        # must exceed the prompt itself, or the tail is discarded
+        assert size > chars // 3
+
+    def test_headroom_is_left_for_the_answer(self):
+        """Reasoning models need room to think *after* the prompt."""
+        prompt = "x" * 12000
+        size = OllamaProvider._context_size(prompt)
+
+        assert size - (len(prompt) // 3) >= 4096
+
+    def test_never_below_the_default_that_caused_truncation(self):
+        assert OllamaProvider._context_size("short") >= 8192
+
+    async def test_num_ctx_is_sent_to_ollama(self):
+        captured = {}
+
+        class _CapturingSession(_FakeSession):
+            def post(self, url, json=None, **kw):
+                captured.update(json or {})
+                return _FakeResponse({"response": "ok"})
+
+        with patch("aiohttp.ClientSession", lambda **kw: _CapturingSession({})):
+            await OllamaProvider(model="m").generate("x" * 12000)
+
+        assert captured["options"]["num_ctx"] >= 8192
