@@ -1,0 +1,98 @@
+"""Reasoning models split their output; reading only one field loses answers.
+
+Ollama returns chain-of-thought in `thinking` and the answer in `response`. How
+long a model reasons varies a lot run to run -- the same prompt produced 1.7k
+characters of thinking once and 17k the next -- and when reasoning exhausts the
+output budget, `response` comes back empty with done_reason == "length".
+
+Reading only `response` scored qwen3.5:9b at 0 of 6 problems. That measured this
+provider, not the model.
+"""
+
+from unittest.mock import patch
+
+import pytest
+
+from shared.llm.local import OllamaProvider
+
+
+class _FakeResponse:
+    def __init__(self, payload, status=200):
+        self._payload = payload
+        self.status = status
+
+    async def json(self):
+        return self._payload
+
+    async def text(self):
+        return ""
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
+        return False
+
+
+class _FakeSession:
+    def __init__(self, payload, status=200):
+        self._payload = payload
+        self._status = status
+
+    def post(self, *args, **kwargs):
+        return _FakeResponse(self._payload, self._status)
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
+        return False
+
+
+async def _generate(payload, status=200):
+    with patch("aiohttp.ClientSession", lambda **kw: _FakeSession(payload, status)):
+        return await OllamaProvider(model="test-model").generate("prompt")
+
+
+class TestReasoningModels:
+    async def test_answer_is_preferred_over_reasoning(self):
+        result = await _generate({"response": "the answer", "thinking": "musing"})
+
+        assert result.content == "the answer"
+        assert result.metadata["thinking_chars"] == len("musing")
+
+    async def test_reasoning_is_used_when_the_budget_ran_out(self):
+        """Models often write the code inside their reasoning; recover it."""
+        code = "```python\ndef solve():\n    return 1\n```"
+
+        result = await _generate(
+            {"response": "", "thinking": code, "done_reason": "length"}
+        )
+
+        assert result.content == code
+        assert result.metadata["done_reason"] == "length"
+
+    async def test_extraction_still_works_off_the_reasoning_fallback(self):
+        code_block = "```python\ndef solve():\n    return 7\n```"
+        result = await _generate({"response": "", "thinking": code_block})
+
+        extracted = OllamaProvider(model="m")._extract_code(result.content)
+
+        assert extracted and "def solve" in extracted
+
+    async def test_both_fields_empty_raises_with_the_reason(self):
+        with pytest.raises(RuntimeError, match="done_reason=length"):
+            await _generate({"response": "", "thinking": "", "done_reason": "length"})
+
+    async def test_token_counts_are_recorded(self):
+        """Cost accounting was stubbed at zero while the CLI was in use."""
+        result = await _generate(
+            {"response": "x", "eval_count": 110, "prompt_eval_count": 900}
+        )
+
+        assert result.metadata["eval_count"] == 110
+        assert result.metadata["prompt_eval_count"] == 900
+
+    async def test_non_200_is_reported(self):
+        with pytest.raises(RuntimeError, match="HTTP 500"):
+            await _generate({}, status=500)

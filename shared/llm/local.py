@@ -326,9 +326,32 @@ Final Question: {problem.final_question}""")
                         )
                     data = await resp.json()
 
-            content = data.get("response", "")
+            # Reasoning models split their output: chain-of-thought goes to
+            # `thinking`, the answer to `response`. How long they think varies a
+            # lot run to run -- the same prompt produced 1.7k chars of thinking
+            # once and 17k the next time -- and when reasoning exhausts the
+            # output budget `response` comes back empty with
+            # done_reason == "length". Reading only `response` scored
+            # qwen3.5:9b at 0/6, which measured this provider, not the model.
+            content = data.get("response") or ""
+            thinking = data.get("thinking") or ""
+            done_reason = data.get("done_reason")
+
+            if not content and thinking:
+                # Models often write the code inside their reasoning, so this is
+                # usually recoverable. Warn rather than fail silently.
+                logger.warning(
+                    "%s produced no answer (done_reason=%s) but %d chars of "
+                    "reasoning; falling back to the reasoning text.",
+                    self.model, done_reason, len(thinking),
+                )
+                content = thinking
+
             if not content:
-                raise RuntimeError(f"Ollama returned an empty response for {self.model}")
+                raise RuntimeError(
+                    f"Ollama returned no content for {self.model} "
+                    f"(done_reason={done_reason})"
+                )
 
             return LLMResponse(
                 content=content,
@@ -339,6 +362,8 @@ Final Question: {problem.final_question}""")
                     "timestamp": datetime.now().isoformat(),
                     "eval_count": data.get("eval_count"),
                     "prompt_eval_count": data.get("prompt_eval_count"),
+                    "done_reason": done_reason,
+                    "thinking_chars": len(thinking),
                 }
             )
 
