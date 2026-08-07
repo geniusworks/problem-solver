@@ -67,3 +67,5 @@ years/*
 
 # Keep example config
 !.env.example
+# Experiment run artifacts (regenerate with experiment.py)
+dev/experiments/

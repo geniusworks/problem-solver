@@ -158,6 +158,7 @@ def generate_implementation_prompt(
     problem: ParsedProblem,
     analyzer: Optional[ProblemAnalyzer] = None,
     prior_analysis: Optional[str] = None,
+    strategies: Optional[List[Strategy]] = None,
 ) -> str:
     """Generate implementation prompt for a problem.
     
@@ -170,14 +171,20 @@ def generate_implementation_prompt(
     Returns:
         Formatted implementation prompt
     """
-    # Get relevant strategies
-    strategy_names = get_strategies_for_problem(problem.description)
-    strategies = []
-    for category in SOLUTION_STRATEGIES.values():
-        for strategy in category:
-            if strategy.name in strategy_names:
-                strategies.append(strategy)
-    
+    # Prefer strategies chosen by the caller -- BaseSolver ranks them using the
+    # learning database's recorded effectiveness. This function used to always
+    # re-derive its own set from description keywords and ignore the argument,
+    # so the strategy-effectiveness machinery never influenced a single prompt.
+    # Fall back to keyword derivation when the caller supplies nothing.
+    if not strategies:
+        strategy_names = get_strategies_for_problem(problem.description)
+        strategies = [
+            strategy
+            for category in SOLUTION_STRATEGIES.values()
+            for strategy in category
+            if strategy.name in strategy_names
+        ]
+
     # Generate prompt sections
     sections = [
         PromptSection("Problem", problem.description, priority=0),

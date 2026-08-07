@@ -43,11 +43,13 @@ CREATE TABLE IF NOT EXISTS model_performance (
     model_name TEXT NOT NULL,
     problem_type TEXT NOT NULL,      -- Category of problem
     role TEXT NOT NULL,              -- Model's role (primary, reviewer, etc.)
-    success_rate REAL NOT NULL,      -- 0.0 to 1.0
+    success_rate REAL NOT NULL,      -- successes/attempts once attempts > 0
     response_time REAL NOT NULL,
     cost REAL NOT NULL,
-    quality_score REAL NOT NULL,
-    avg_quality_score REAL NOT NULL DEFAULT 0.0,
+    quality_score REAL NOT NULL,     -- most recent attempt
+    avg_quality_score REAL NOT NULL DEFAULT 0.0,  -- running mean over attempts
+    attempts INTEGER NOT NULL DEFAULT 0,
+    successes INTEGER NOT NULL DEFAULT 0,
     UNIQUE(model_name, problem_type, role)
 );
 

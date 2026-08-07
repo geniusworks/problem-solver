@@ -6,6 +6,8 @@ reports three outcomes rather than a boolean -- a solution with no known answer 
 UNVERIFIED, which is not the same as CORRECT and must never be recorded as solved.
 """
 
+import ast
+import logging
 import re
 import subprocess
 import sys
@@ -22,12 +24,19 @@ SOLUTION_FILENAME_RE = re.compile(r"(\d{4})_day(\d{1,2})_part(\d)\.py$")
 
 DEFAULT_TIMEOUT = 60
 
+logger = logging.getLogger(__name__)
+
 
 class Verdict(Enum):
     CORRECT = "correct"
     WRONG = "wrong"
     ERROR = "error"
     UNVERIFIED = "unverified"  # ran fine, but no ground truth to compare against
+    # Produced the accepted answer, but by hardcoding it rather than computing
+    # it. A ground-truth oracle cannot catch this on its own -- the output is
+    # correct by construction -- so it must be checked separately or every
+    # solve-rate measurement is gameable.
+    OVERFIT = "overfit"
 
 
 @dataclass
@@ -40,6 +49,7 @@ class VerificationResult:
     actual: Optional[str] = None
     expected: Optional[str] = None
     error: Optional[str] = None
+    overfit_reasons: Optional[list] = None
 
     @property
     def ok(self) -> bool:
@@ -141,8 +151,96 @@ def verify_solution_file(
     lines = [line.strip() for line in (output or "").splitlines() if line.strip()]
     actual = lines[-1] if lines else ""
 
-    verdict = Verdict.CORRECT if actual == expected.strip() else Verdict.WRONG
+    if actual != expected.strip():
+        return VerificationResult(
+            year=year, day=day, part=part, path=path,
+            verdict=Verdict.WRONG, actual=actual, expected=expected.strip(),
+        )
+
+    # The answer matches -- but a solution that prints the accepted answer
+    # without computing it also matches, by construction. Ground truth cannot
+    # distinguish the two, so check for hardcoding before calling it correct.
+    # Only worth doing on an otherwise-correct answer: an overfit solution that
+    # gets the wrong answer is simply wrong.
+    reasons = _overfit_reasons(path, year, day, part, expected.strip())
+    if reasons:
+        return VerificationResult(
+            year=year, day=day, part=part, path=path,
+            verdict=Verdict.OVERFIT, actual=actual, expected=expected.strip(),
+            overfit_reasons=reasons,
+        )
+
     return VerificationResult(
         year=year, day=day, part=part, path=path,
-        verdict=verdict, actual=actual, expected=expected.strip(),
+        verdict=Verdict.CORRECT, actual=actual, expected=expected.strip(),
     )
+
+
+# Below this many characters an answer could plausibly be an incidental
+# constant in real code (a grid size, a small count), so matching it as a
+# literal is not evidence of anything.
+_ANSWER_LITERAL_MIN_LEN = 4
+
+
+def answer_appears_as_literal(source: str, expected: str) -> bool:
+    """Whether the accepted answer is written verbatim into the source.
+
+    This is the signal that catches what the structural heuristics miss. A
+    solution can read input.txt, do arithmetic on it, and still `return 2970687`
+    -- that defeats "constant-output stub" detection while remaining entirely
+    hardcoded. But a genuine solution *computes* its answer; it has no reason to
+    contain it. Short answers are exempt because they collide with ordinary
+    constants.
+    """
+    expected = (expected or "").strip()
+    if len(expected) < _ANSWER_LITERAL_MIN_LEN:
+        return False
+
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return False
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Constant):
+            continue
+        value = node.value
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, (int, float)) and str(value) == expected:
+            return True
+        if isinstance(value, str) and value.strip() == expected:
+            return True
+    return False
+
+
+def _overfit_reasons(
+    path: Path, year: int, day: int, part: int, expected: Optional[str] = None
+) -> list:
+    """Static-analysis reasons this solution looks hardcoded, if any.
+
+    Never raises: a detector failure must not turn a real result into an error.
+    """
+    reasons: list = []
+    try:
+        source = path.read_text(encoding="utf-8")
+    except OSError as e:  # pragma: no cover - defensive
+        logger.warning("Could not read %s for overfit analysis: %s", path, e)
+        return reasons
+
+    try:
+        from shared.overfit_detection import analyze_overfit_risk
+
+        analysis = analyze_overfit_risk(year, day, part, source)
+        if analysis.is_suspicious:
+            reasons.extend(analysis.reasons)
+    except Exception as e:  # pragma: no cover - defensive
+        logger.warning("Overfit analysis failed for %s: %s", path, e)
+
+    if expected and answer_appears_as_literal(source, expected):
+        reasons.append(
+            f"The accepted answer {expected!r} appears verbatim as a literal in the "
+            f"source; a solution that computes its answer has no reason to contain it."
+        )
+
+    return reasons

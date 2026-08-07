@@ -4,6 +4,7 @@ import logging
 import os
 import json
 from pathlib import Path
+from dataclasses import dataclass, field
 from typing import List, Tuple, Optional, Dict, Any, Union
 from datetime import datetime
 from enum import Enum
@@ -18,8 +19,27 @@ from shared.validator import SubmissionError
 from shared.strategies import get_strategies_for_problem, create_strategy_prompt
 from shared.submission import SubmissionManager, SubmissionResult
 from learning.database import LearningDatabase
+from shared.experiment import AttemptRecord, Outcome, SolverConfig
 
 logger = logging.getLogger(__name__)
+
+
+def _known_answer(year: int, day: int, part: int) -> Optional[str]:
+    """Accepted AoC answer for this part, if it is cached locally."""
+    from shared.ground_truth import get_known_answer
+
+    return get_known_answer(year, day, part)
+
+
+@dataclass
+class CandidateVerdict:
+    """Judgement on one generated candidate, from _verify_candidate."""
+
+    accepted: bool
+    outcome: Outcome
+    answer: Optional[str] = None
+    feedback: Optional[str] = None
+    example_results: List[Any] = field(default_factory=list)
 
 class ModelRole(Enum):
     PRIMARY = 1
@@ -93,43 +113,62 @@ class ModelSelector:
 class BaseSolver:
     """Base class for solving AoC problems."""
 
-    def __init__(self, workspace_dir: Path, debug: bool = False) -> None:
+    def __init__(
+        self,
+        workspace_dir: Path,
+        debug: bool = False,
+        config: Optional[SolverConfig] = None,
+    ) -> None:
         """Initialize the base solver.
 
         Args:
             workspace_dir: Workspace directory path
             debug: Enable debug output
+            config: Experimental configuration. Defaults to SolverConfig.from_env(),
+                which reads the environment variables the solver historically used,
+                so existing .env files keep working.
         """
         self.workspace_dir = workspace_dir
         self.debug = debug
+        self.config = config if config is not None else SolverConfig.from_env()
         self.solution_executor = SolutionExecutor(workspace_dir)
         self.submission_manager = SubmissionManager(workspace_dir)
-        
+
         # Initialize learning system
         self.learning_dir = workspace_dir / "learning"
         self.learning_dir.mkdir(parents=True, exist_ok=True)
         self.strategy_optimizer = None
         self.db = None
-        # Enable or disable collaborative improvement via environment flag
-        self.enable_collaborative_improvement = os.getenv(
-            "ENABLE_COLLABORATIVE_IMPROVEMENT", "false"
-        ).lower() in {"1", "true", "yes", "on"}
-        
+        self.enable_collaborative_improvement = self.config.enable_collaborative_improvement
+        # Per-model trace of the most recent solve, consumed by the experiment
+        # harness. Reset at the start of each solve_problem call.
+        self.attempts: List[AttemptRecord] = []
+
         # Initialize all available models, preferring those actually installed in Ollama
         model_names = self._resolve_available_models()
         self.models = {
-            model: OllamaProvider(model=model, debug=debug)
+            model: OllamaProvider(
+                model=model, debug=debug,
+                temperature=self.config.temperature,
+                num_ctx=self.config.num_ctx,
+            )
             for model in model_names
         }
 
     def _resolve_available_models(self) -> List[str]:
-        """Determine which configured local models are available via Ollama.
+        """Determine which models to use, preferring those installed in Ollama.
 
-        If Ollama is unreachable or returns an unexpected response, fall back to the
-        statically configured AVAILABLE_MODELS list. If Ollama is reachable but none
-        of the configured models are installed, raise a clear error so users know
-        which models to install.
+        The candidate list is SolverConfig.models when set, otherwise the curated
+        OllamaProvider.AVAILABLE_MODELS. Making the config authoritative here is
+        what allows an A/B across model sets -- previously the field existed,
+        changed the config fingerprint, and had no effect on which models ran.
+
+        If Ollama is unreachable or returns an unexpected response, fall back to
+        the candidate list unfiltered. If Ollama is reachable but none of the
+        candidates are installed, raise a clear error naming them.
         """
+        candidates = list(self.config.models or OllamaProvider.AVAILABLE_MODELS)
+
         host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
         url = f"{host.rstrip('/')}/api/tags"
 
@@ -144,36 +183,37 @@ class BaseSolver:
             }
 
             if not installed:
-                # Nothing reported; keep configured list
-                return list(OllamaProvider.AVAILABLE_MODELS)
+                # Nothing reported; keep the candidate list
+                return candidates
 
-            # Intersect configured models with installed models, preserving order
+            # Intersect candidates with installed models, preserving order
             filtered = [
                 model
-                for model in OllamaProvider.AVAILABLE_MODELS
+                for model in candidates
                 if model in installed
             ]
 
             if not filtered:
-                configured = ", ".join(OllamaProvider.AVAILABLE_MODELS)
+                wanted = ", ".join(candidates)
                 raise RuntimeError(
-                    "No configured local models are installed in Ollama at "
-                    f"{host}. Please install at least one of: {configured}"
+                    "None of the requested models are installed in Ollama at "
+                    f"{host}. Please install at least one of: {wanted}"
                 )
 
             return filtered
         except RequestException:
-            # Ollama not reachable; keep configured list so environments without
-            # Ollama can still run tests and other parts of the system.
-            return list(OllamaProvider.AVAILABLE_MODELS)
+            # Ollama not reachable; keep the candidate list so environments
+            # without Ollama can still run tests and other parts of the system.
+            return candidates
         except ValueError:
-            # Malformed JSON or unexpected response; fall back to configured list
-            return list(OllamaProvider.AVAILABLE_MODELS)
+            # Malformed JSON or unexpected response; fall back to candidates
+            return candidates
 
     async def solve_problem(
         self, year: int, day: int, part: int, force: bool = False
     ) -> Optional[str]:
         """Solve an Advent of Code problem using model consensus."""
+        self.attempts = []
         try:
             # Validate year and day against current time
             current_date = datetime.now()
@@ -237,6 +277,9 @@ class BaseSolver:
             
             # Try each primary model and collect answers
             answers = {}
+            # Generation wall-clock per model: the only cost signal local
+            # models expose, since the Ollama CLI reports no token counts.
+            generation_times: Dict[str, float] = {}
             failures = []
             
             logging.info("")
@@ -268,28 +311,27 @@ class BaseSolver:
                     # Calculate metrics
                     end_time = datetime.now()
                     response_time = (end_time - start_time).total_seconds()
+                    generation_times[model_name] = response_time
                     
                     # Analyze code quality
                     from shared.quality.code_quality import CodeQualityAnalyzer
                     analyzer = CodeQualityAnalyzer()
                     quality_metrics = analyzer.analyze(solution)
                     
-                    # Validate solution
+                    # Every candidate enters the pool; correctness is decided by
+                    # execution against the oracle further down.
+                    #
+                    # There used to be a validator-model gate here, looping over
+                    # validator_models and calling validate_solution on each.
+                    # That method is an unimplemented stub returning True, so the
+                    # gate admitted everything while creating the appearance of
+                    # review -- the most misleading state for a check to be in.
+                    # Removed rather than left as ceremony; if model-based review
+                    # is reinstated it needs a real implementation and its own
+                    # measurement, which the experiment harness can now provide.
+                    validation_errors: List[str] = []
                     is_valid = True
-                    validation_errors = []
-                    for validator_name in validator_models:
-                        if validator_name in self.models:
-                            validator = self.models[validator_name]
-                            try:
-                                # ParsedProblem exposes .examples; .test_cases does not
-                                # exist and raised AttributeError, which the enclosing
-                                # except turned into a silent validation failure.
-                                if not await validator.validate_solution(solution, parsed_problem.examples):
-                                    is_valid = False
-                                    validation_errors.append(f"Failed {validator_name} validation")
-                            except Exception as e:
-                                validation_errors.append(f"{validator_name} validation error: {str(e)}")
-                    
+
                     if is_valid:
                         answers[model_name] = solution
                         
@@ -335,6 +377,13 @@ class BaseSolver:
                         
                 except Exception as e:
                     failures.append((model_name, str(e)))
+                    # A model that never produced usable code is a distinct
+                    # failure from one whose code ran and gave a wrong answer.
+                    self._record_attempt(
+                        model_name, year, day, part, Outcome.NO_CANDIDATE,
+                        stage="generate",
+                        error=f"{type(e).__name__}: {e}",
+                    )
                     if not self.db:
                         self.db = LearningDatabase(self.learning_dir)
                     self.db.update_model_performance(
@@ -372,6 +421,30 @@ class BaseSolver:
                     weighted_answers[model_name] = (solution, weight)
                 
                 consensus_answer = self._get_weighted_consensus_answer(weighted_answers)
+                if consensus_answer:
+                    # Consensus is agreement about *code*, which says nothing
+                    # about whether the code is correct. This branch used to
+                    # return here without ever executing it, bypassing the whole
+                    # oracle. Verify before accepting.
+                    consensus_verdict = await self._verify_candidate(
+                        "consensus", consensus_answer, year, day, part,
+                        self.build_test_cases(parsed_problem),
+                        _known_answer(year, day, part),
+                    )
+                    self._record_attempt(
+                        "consensus", year, day, part, consensus_verdict.outcome,
+                        stage="consensus",
+                        answer=consensus_verdict.answer,
+                        code=consensus_answer,
+                    )
+                    if not consensus_verdict.accepted:
+                        logger.info(
+                            "Consensus candidate rejected by verification (%s); "
+                            "continuing to execution-based selection.",
+                            consensus_verdict.outcome.value,
+                        )
+                        consensus_answer = None
+
                 if consensus_answer:
                     # Record the consensus in the solution directory
                     record_solution(
@@ -437,42 +510,33 @@ class BaseSolver:
             # If we still have answers but no consensus or collaborative improvement result,
             # run each candidate through execution-based validation against examples and
             # full input, and prefer the first that passes.
+            # The oracle is established once, outside the candidate loops, because
+            # the fallback path below needs it too -- it previously had no access
+            # to the ground-truth answer and judged candidates on its own weaker
+            # criterion.
+            exec_test_cases: List[TestCase] = self.build_test_cases(parsed_problem)
+
+            # Ground truth for the full input, when this problem has already been
+            # accepted on the user's AoC account. The strongest oracle available,
+            # and it needs no submission.
+            from shared.ground_truth import get_known_answer
+
+            known_answer = get_known_answer(year, day, part)
+
+            # A candidate can only be accepted if something can actually judge it.
+            # Without an oracle, acceptance degrades to "ran without crashing",
+            # which is how stubs were previously recorded as solved.
+            if self.config.require_oracle and not exec_test_cases and known_answer is None:
+                logger.error(
+                    "No correctness oracle for year %d day %02d part %d: no example "
+                    "has a known expected output and no accepted answer is cached. "
+                    "Refusing to accept any candidate as solved.",
+                    year, day, part,
+                )
+                return None
+
             if answers:
-                # Build execution test cases from parsed examples when available
-                exec_test_cases: List[TestCase] = []
-                for example in getattr(parsed_problem, "examples", []) or []:
-                    input_data = getattr(example, "input_data", None)
-                    expected_output = getattr(example, "expected_output", None)
-                    if input_data is None or expected_output in (None, ""):
-                        continue
-                    exec_test_cases.append(
-                        TestCase(
-                            input_data=str(input_data),
-                            expected_output=str(expected_output),
-                            description=getattr(example, "description", None),
-                        )
-                    )
-
-                # Ground truth for the full input, when this problem has already
-                # been accepted on the user's AoC account. This is the strongest
-                # oracle available and needs no submission.
-                from shared.ground_truth import get_known_answer
-
-                known_answer = get_known_answer(year, day, part)
-
-                # A candidate can only be accepted if something can actually judge
-                # it. Without an oracle, acceptance would degrade to "ran without
-                # crashing", which is how stubs were previously recorded as solved.
-                if not exec_test_cases and known_answer is None:
-                    logger.error(
-                        "No correctness oracle for year %d day %02d part %d: no example "
-                        "has a known expected output and no accepted answer is cached. "
-                        "Refusing to accept any candidate as solved.",
-                        year, day, part,
-                    )
-                    return None
-
-                max_repair_iterations = int(os.getenv("MAX_REPAIR_ITERATIONS", "2"))
+                max_repair_iterations = self.config.max_repair_iterations
                 current_candidates: Dict[str, str] = dict(answers)
 
                 for iteration in range(max_repair_iterations + 1):
@@ -481,69 +545,23 @@ class BaseSolver:
 
                     for model_name, solution in current_candidates.items():
                         try:
-                            example_results, full_result, full_answer = (
-                                await self.solution_executor.test_solution(
-                                    solution_code=solution,
-                                    year=year,
-                                    day=day,
-                                    part=part,
-                                    test_cases=exec_test_cases,
-                                    model_name=model_name,
-                                    debug=self.debug,
-                                    force_full_input=known_answer is not None,
-                                )
+                            verdict = await self._verify_candidate(
+                                model_name, solution, year, day, part,
+                                exec_test_cases, known_answer,
                             )
-
-                            # Oracle hierarchy. The accepted AoC answer is authoritative
-                            # when we have it; examples are then advisory, because the
-                            # parser can mis-pair an expected output with the wrong
-                            # <pre> block (2024 day 5 part 1 attaches 143 to the updates
-                            # fragment; day 6 part 1 attaches 41 to the solution diagram)
-                            # and a bad example must never veto a correct answer.
-                            # Without ground truth, examples are the only oracle and
-                            # every one of them must pass.
-                            examples_failed = bool(example_results) and any(
-                                r.error is not None for r in example_results
+                            self._record_attempt(
+                                model_name, year, day, part, verdict.outcome,
+                                stage="repair" if iteration else "generate",
+                                answer=verdict.answer,
+                                expected=known_answer,
+                                repair_iteration=iteration,
+                                wall_clock_seconds=generation_times.get(model_name, 0.0),
+                                quality_score=quality_scores.get(model_name),
+                                code=solution,
                             )
-                            if examples_failed and known_answer is None:
-                                feedback_by_model[model_name] = self._build_execution_feedback(
-                                    model_name,
-                                    exec_test_cases,
-                                    example_results,
-                                    full_result,
-                                    full_answer,
-                                )
-                                continue
-                            if not full_result or full_result.error is not None:
-                                feedback_by_model[model_name] = self._build_execution_feedback(
-                                    model_name,
-                                    exec_test_cases,
-                                    example_results,
-                                    full_result,
-                                    full_answer,
-                                )
-                                continue
-                            if not full_answer:
-                                feedback_by_model[model_name] = self._build_execution_feedback(
-                                    model_name,
-                                    exec_test_cases,
-                                    example_results,
-                                    full_result,
-                                    full_answer,
-                                )
-                                continue
-                            if known_answer is not None and full_answer.strip() != known_answer.strip():
-                                logger.info(
-                                    "%s rejected: produced %r, accepted answer is %r",
-                                    model_name, full_answer.strip(), known_answer.strip(),
-                                )
-                                feedback_by_model[model_name] = self._build_execution_feedback(
-                                    model_name,
-                                    exec_test_cases,
-                                    example_results,
-                                    full_result,
-                                    full_answer,
-                                )
+                            if not verdict.accepted:
+                                if verdict.feedback:
+                                    feedback_by_model[model_name] = verdict.feedback
                                 continue
 
                             validated_candidates.append((model_name, solution))
@@ -625,40 +643,24 @@ class BaseSolver:
                             strategy_effectiveness=effectiveness
                         )
                         
-                        # Run execution-based validation directly
-                        exec_test_cases_fb: List[TestCase] = []
-                        for example in getattr(parsed_problem, "examples", []) or []:
-                            input_data = getattr(example, "input_data", None)
-                            expected_output = getattr(example, "expected_output", None)
-                            if input_data is None or expected_output in (None, ""):
-                                continue
-                            exec_test_cases_fb.append(
-                                TestCase(
-                                    input_data=str(input_data),
-                                    expected_output=str(expected_output),
-                                    description=getattr(example, "description", None),
-                                )
-                            )
-                        
-                        example_results, full_result, full_answer = (
-                            await self.solution_executor.test_solution(
-                                solution_code=solution,
-                                year=year,
-                                day=day,
-                                part=part,
-                                test_cases=exec_test_cases_fb,
-                                model_name=model_name,
-                                debug=self.debug,
-                            )
+                        # Same verifier as the primary path. This branch used to
+                        # carry its own copy of the acceptance check, which was
+                        # never updated when the ground-truth oracle landed -- so
+                        # a fallback model could return a wrong answer as the
+                        # solution even when the accepted answer was known.
+                        verdict = await self._verify_candidate(
+                            model_name, solution, year, day, part,
+                            exec_test_cases, known_answer,
                         )
-                        
-                        # Check if this solution passes
-                        examples_ok = not example_results or all(
-                            r.error is None for r in example_results
+                        self._record_attempt(
+                            model_name, year, day, part, verdict.outcome,
+                            stage="fallback",
+                            answer=verdict.answer,
+                            expected=known_answer,
+                            code=solution,
                         )
-                        full_ok = full_result and full_result.error is None and full_answer
-                        
-                        if examples_ok and full_ok:
+
+                        if verdict.accepted:
                             logging.info(f"Fallback model {model_name} produced valid solution!")
                             
                             # Update learning DB
@@ -713,6 +715,147 @@ class BaseSolver:
 
         except Exception as e:
             raise  # Let the error propagate to the top level
+
+    # ------------------------------------------------------------------
+    # Pipeline stages
+    #
+    # solve_problem was a single ~540-line method. These are the stages it
+    # decomposes into, each independently testable. The important one is
+    # _verify_candidate: the main loop and the fallback loop previously each
+    # had their own copy of the acceptance logic, and only the main one was
+    # updated when the ground-truth oracle landed -- so a fallback model could
+    # still return a wrong answer as the solution.
+    # ------------------------------------------------------------------
+
+    def _record_attempt(
+        self,
+        model: str,
+        year: int,
+        day: int,
+        part: int,
+        outcome: Outcome,
+        *,
+        stage: str = "generate",
+        answer: Optional[str] = None,
+        expected: Optional[str] = None,
+        error: Optional[str] = None,
+        repair_iteration: int = 0,
+        wall_clock_seconds: float = 0.0,
+        quality_score: Optional[float] = None,
+        code: Optional[str] = None,
+    ) -> AttemptRecord:
+        """Append one model attempt to the current solve's trace.
+
+        Without this the harness can only see that a problem was solved, not how
+        many models it took -- which makes attempts-to-solve and first-try rate
+        meaningless. Recording is best-effort telemetry and never affects control
+        flow.
+        """
+        record = AttemptRecord(
+            model=model,
+            problem_id=f"{year}_day{day:02d}_part{part}",
+            config_fingerprint=self.config.fingerprint(),
+            outcome=outcome,
+            stage=stage,
+            answer=answer,
+            expected=expected,
+            error=error,
+            repair_iteration=repair_iteration,
+            wall_clock_seconds=wall_clock_seconds,
+            quality_score=quality_score,
+            code=code,
+        )
+        self.attempts.append(record)
+        return record
+
+    @staticmethod
+    def build_test_cases(parsed_problem: Any) -> List[TestCase]:
+        """Examples usable as an oracle: those with a known expected output."""
+        cases: List[TestCase] = []
+        for example in getattr(parsed_problem, "examples", []) or []:
+            input_data = getattr(example, "input_data", None)
+            expected_output = getattr(example, "expected_output", None)
+            if input_data is None or expected_output in (None, ""):
+                continue
+            cases.append(
+                TestCase(
+                    input_data=str(input_data),
+                    expected_output=str(expected_output),
+                    description=getattr(example, "description", None),
+                )
+            )
+        return cases
+
+    async def _verify_candidate(
+        self,
+        model_name: str,
+        solution: str,
+        year: int,
+        day: int,
+        part: int,
+        test_cases: List[TestCase],
+        known_answer: Optional[str],
+    ) -> "CandidateVerdict":
+        """Run one candidate and judge it against the best available oracle.
+
+        Oracle hierarchy: the accepted AoC answer wins when known, because the
+        parser can mis-pair an expected output with the wrong <pre> block and a
+        bad example must never veto a correct answer. Without ground truth,
+        every example must pass -- they are the only oracle available.
+        """
+        example_results, full_result, full_answer = (
+            await self.solution_executor.test_solution(
+                solution_code=solution,
+                year=year,
+                day=day,
+                part=part,
+                test_cases=test_cases,
+                model_name=model_name,
+                debug=self.debug,
+                force_full_input=known_answer is not None,
+            )
+        )
+
+        def _reject(outcome: Outcome) -> "CandidateVerdict":
+            return CandidateVerdict(
+                accepted=False,
+                outcome=outcome,
+                answer=full_answer,
+                feedback=self._build_execution_feedback(
+                    model_name, test_cases, example_results, full_result, full_answer
+                ),
+                example_results=example_results,
+            )
+
+        examples_failed = bool(example_results) and any(
+            r.error is not None for r in example_results
+        )
+        if examples_failed and known_answer is None:
+            return _reject(Outcome.WRONG)
+        if not full_result or full_result.error is not None:
+            return _reject(Outcome.ERROR)
+        if not full_answer:
+            return _reject(Outcome.NO_CANDIDATE)
+
+        if known_answer is not None:
+            if full_answer.strip() != known_answer.strip():
+                logger.info(
+                    "%s rejected: produced %r, accepted answer is %r",
+                    model_name, full_answer.strip(), known_answer.strip(),
+                )
+                return _reject(Outcome.WRONG)
+            outcome = Outcome.SOLVED
+        else:
+            # Examples all passed, but nothing confirms the full-input answer.
+            outcome = Outcome.UNVERIFIED
+
+        return CandidateVerdict(
+            accepted=True,
+            outcome=outcome,
+            answer=full_answer,
+            feedback=None,
+            example_results=example_results,
+        )
 
     def _build_execution_feedback(
         self,
@@ -814,23 +957,49 @@ class BaseSolver:
         if not weighted_answers:
             return None
             
-        # Group identical answers and sum their weights
+        # Group identical answers, summing weights and counting distinct models
         answer_groups: Dict[str, float] = {}
+        models_per_answer: Dict[str, int] = {}
         for model_name, (answer, weight) in weighted_answers.items():
-            if answer in answer_groups:
-                answer_groups[answer] += weight
-            else:
-                answer_groups[answer] = weight
-                
+            answer_groups[answer] = answer_groups.get(answer, 0.0) + weight
+            models_per_answer[answer] = models_per_answer.get(answer, 0) + 1
+
         # Find answer with highest total weight
         best_answer = max(answer_groups.items(), key=lambda x: x[1])[0]
         best_weight = answer_groups[best_answer]
-        
-        # Only return consensus if weight is significantly higher than others
+
+        # Agreement requires more than one voter. A lone candidate holds 100% of
+        # the total weight, so it cleared the threshold trivially and was
+        # returned as "consensus" -- which is not consensus, it is a single
+        # unreviewed opinion.
+        agreeing = models_per_answer[best_answer]
+        if agreeing < self.config.min_consensus_models:
+            logger.info(
+                "No consensus: best answer has %d agreeing model(s), need %d.",
+                agreeing, self.config.min_consensus_models,
+            )
+            return None
+
+        # Only return consensus if weight is significantly higher than others.
+        #
+        # Every weight is a code-quality score, so all of them are 0.0 when
+        # quality analysis fails -- which is exactly what happens when the
+        # generated code is unparseable. Dividing here then raised
+        # ZeroDivisionError and aborted the whole solve, turning a recoverable
+        # bad-candidate case into a hard failure. With no usable weights there is
+        # no evidence of agreement, so there is no consensus.
         total_weight = sum(answer_groups.values())
-        if best_weight / total_weight >= 0.6:  # At least 60% agreement
+        if total_weight <= 0:
+            logger.warning(
+                "No usable quality weights for consensus (all %d candidate(s) scored "
+                "0.0); treating as no consensus.",
+                len(answer_groups),
+            )
+            return None
+
+        if best_weight / total_weight >= self.config.consensus_threshold:
             return best_answer
-            
+
         return None
 
     def _print_consensus_summary(self, answers: Dict[str, Any], failures: List[tuple], consensus_answer: Optional[str], consensus_models: List[str]) -> None:

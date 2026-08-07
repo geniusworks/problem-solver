@@ -37,6 +37,42 @@ def extract_code_block(text: str) -> str:
     return "\n".join(lines[start:end])
 
 
+def _parses(code: str) -> bool:
+    """Whether the code is already syntactically valid Python."""
+    try:
+        compile(code, "<string>", "exec")
+        return True
+    except SyntaxError:
+        return False
+
+
+def _format_valid(code: str) -> Tuple[str, bool]:
+    """Cosmetically format code that is already valid.
+
+    black and autopep8 are parser-based, so unlike the regex repairs they
+    cannot corrupt the program. If either fails, the original valid code is
+    returned rather than treating it as a formatting failure -- style is not
+    worth discarding a working solution over.
+    """
+    try:
+        formatted = autopep8.fix_code(code, options={"aggressive": 1})
+        if not _parses(formatted):
+            formatted = code
+    except Exception as e:
+        logger.warning("autopep8 failed: %s", e)
+        formatted = code
+
+    try:
+        mode = black.Mode(target_versions={black.TargetVersion.PY39}, line_length=88)
+        blacked = black.format_str(formatted, mode=mode)
+        if _parses(blacked):
+            return blacked, True
+    except Exception as e:
+        logger.debug("black formatting skipped: %s", e)
+
+    return formatted, True
+
+
 def format_code(source_code: str) -> Tuple[str, bool]:
     """Format Python code using black and autopep8.
 
@@ -50,39 +86,35 @@ def format_code(source_code: str) -> Tuple[str, bool]:
         # First extract actual code if needed
         code = extract_code_block(source_code)
 
-        # Fix common issues
-        code = code.replace("\\n", "\n")  # Fix escaped newlines
-        code = code.replace('\\"', '"')  # Fix escaped quotes
-        
-        # Remove debug prints
-        code_lines = code.split('\n')
-        filtered_lines = []
-        in_solve_function = False
-        debug_print = False
-        
-        for line in code_lines:
-            # Track if we're in the solve function
-            if line.startswith('def solve('):
-                in_solve_function = True
-            elif in_solve_function and line and not line[0].isspace():
-                in_solve_function = False
-                
-            # Skip debug prints inside solve function
-            if in_solve_function and 'print(' in line and 'return' not in line:
-                debug_print = True
-                continue
-                
-            # If this was a multi-line debug print block, skip until we're out
-            if debug_print:
-                if line.strip() and not line.strip().startswith(('print', 'for', 'if')):
-                    debug_print = False
-                else:
-                    continue
-                    
-            filtered_lines.append(line)
-            
-        code = '\n'.join(filtered_lines)
-        
+        # Only attempt the heuristic repairs below when the code does not
+        # already parse.
+        #
+        # Those repairs are regex and string substitutions that cannot tell
+        # context from content, so on valid input they corrupt more than they
+        # fix: unescaping turns a literal "\n" inside a string into a real
+        # newline, and the f-string rewrite below rewraps f"..." as f'...',
+        # which breaks any f-string containing an apostrophe. The harness then
+        # blamed the model for the resulting SyntaxError.
+        #
+        # Repairing malformed output is worth attempting. Repairing
+        # well-formed output is pure downside.
+        if _parses(code):
+            return _format_valid(code)
+
+        # Debug-print stripping was removed here, and must not come back in a
+        # line-based form.
+        #
+        # It deleted any line containing "print(" inside solve(), which silently
+        # destroys valid Python whenever the print is the only statement in its
+        # block -- `if cond:\n    print(x)` becomes `if cond:` with no body -- or
+        # whenever the call spans several lines. The result was a SyntaxError
+        # attributed to the model: the harness corrupted correct output and then
+        # scored the model as having failed, systematically understating it.
+        #
+        # Nothing needs stripping anyway. The answer is read from the last
+        # non-empty line of stdout (see _last_nonempty_line in shared/execution),
+        # so debug output printed before the answer is already harmless.
+
         # Fix f-strings with assignment expressions
         def fix_fstring_assignments(match):
             """Fix f-string that contains assignment expressions."""

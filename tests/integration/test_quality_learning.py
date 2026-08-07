@@ -46,7 +46,13 @@ class RecordingLearningDatabase:
 class DummyParsedProblem:
     def __init__(self) -> None:
         self.description = "Simple test problem"
-        self.examples = [types.SimpleNamespace(input_data="example-input")]
+        self.examples = [
+            types.SimpleNamespace(
+                input_data="example-input",
+                expected_output="2970687",
+                description="matches the accepted answer",
+            )
+        ]
         self.test_cases = []
 
 
@@ -55,7 +61,13 @@ class DummyPrimaryModel:
         self.name = name
 
     async def generate_solution(self, parsed_problem, year: int, day: int, strategies, strategy_effectiveness) -> str:  # type: ignore[override]
-        return "def solve(input_data: str) -> str:\n    return '42'\n"
+        return (
+            "def solve():\n"
+            "    return '2970687'\n"
+            "\n"
+            'if __name__ == "__main__":\n'
+            "    print(solve())\n"
+        )
 
 
 class DummySubmissionManager:
@@ -114,6 +126,14 @@ async def test_solver_records_quality_metrics_in_learning_db(monkeypatch, tmp_pa
     monkeypatch.setattr(solver_module, "record_solution", lambda *args, **kwargs: None)
 
     solver = solver_module.BaseSolver(tmp_path, debug=False)
+
+    # The executor runs candidates against the real puzzle input, so it must
+    # exist under the workspace. Without it the full-input run errors and no
+    # candidate can be accepted -- which the consensus short-circuit used to
+    # hide by returning before any execution happened.
+    input_path = tmp_path / "years" / "2022" / "day01" / "input.txt"
+    input_path.parent.mkdir(parents=True, exist_ok=True)
+    input_path.write_text("example-input\n")
 
     primary_model = DummyPrimaryModel("primary-1")
     solver.models = {"primary-1": primary_model}

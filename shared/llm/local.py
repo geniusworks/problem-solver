@@ -2,6 +2,9 @@
 
 import logging
 import asyncio
+import os
+
+import aiohttp
 from typing import Dict, List, Optional, Any
 import re
 from pathlib import Path
@@ -15,6 +18,25 @@ from shared.utils import ensure_problem_directory_structure
 
 logger = logging.getLogger(__name__)
 
+# Generous: a 9B model on consumer hardware can take several minutes for a
+# full solution prompt.
+OLLAMA_REQUEST_TIMEOUT = 900
+
+# Room for the model to answer -- and, for reasoning models, to think first --
+# on top of the prompt itself.
+OLLAMA_OUTPUT_HEADROOM_TOKENS = 4096
+
+# The `ollama run` CLI writes spinner and cursor-control escapes to the stream
+# while a long generation is in flight. They survive into the extracted code and
+# make it unparseable: compile() rejects it with "invalid non-printable character
+# U+001B", which surfaces far from the cause as a code-quality analysis failure.
+_ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
+
+def _strip_ansi(text: str) -> str:
+    """Remove terminal control sequences from captured subprocess output."""
+    return _ANSI_ESCAPE_RE.sub("", text)
+
 class OllamaProvider(LLMProvider):
     """Provider for Ollama local models."""
 
@@ -27,10 +49,17 @@ class OllamaProvider(LLMProvider):
         "deepseek-coder:6.7b",
     ]
 
-    def __init__(self, model: str = "codellama:7b", debug: bool = False, **kwargs):
+    def __init__(self, model: str = "codellama:7b", debug: bool = False,
+                 temperature: Optional[float] = None,
+                 num_ctx: Optional[int] = None, **kwargs):
         super().__init__(**kwargs)
         self.model = model
         self.debug = debug
+        # None leaves Ollama's default. Setting it is what makes drawing
+        # several independent samples from one model meaningful.
+        self.temperature = temperature
+        # Explicit override; None sizes the window to the prompt.
+        self.num_ctx = num_ctx
         self.model_info = {"name": model, "description": "Description of the model."}
         self.last_prompt = None
 
@@ -64,28 +93,31 @@ Examples:
 
 Final Question: {problem.final_question}""")
         
-        # Phase 2: Strategy Selection
-        if not strategies:
-            # If no strategies provided, get them from problem analysis
-            strategy_objects = get_strategies_for_problem(problem.description)
-        else:
-            # Convert provided strategy names to Strategy objects
-            strategy_objects = self._convert_to_strategy_objects(strategies, strategy_effectiveness)
-        
-        strategy_prompt = create_strategy_prompt(strategy_objects)
+        # Phase 2: Strategy Selection.
+        #
+        # Both branches go through the converter: get_strategies_for_problem
+        # returns names, and the attempt record below reads .name off each
+        # entry, so passing raw strings through here raised AttributeError.
+        selected = strategies or get_strategies_for_problem(problem.description)
+        strategy_objects = self._convert_to_strategy_objects(
+            selected, strategy_effectiveness
+        )
         
         # Phase 3: Implementation
         implementation_prompt = generate_implementation_prompt(
             problem,
             analyzer,
             analysis.content,
+            strategies=strategy_objects,
         )
         
         self.last_prompt = implementation_prompt
         
         start_time = datetime.now()
         try:
-            response = await self.generate(implementation_prompt)
+            response = await self.generate(
+                implementation_prompt, temperature=self.temperature
+            )
             generation_time = (datetime.now() - start_time).total_seconds()
             
             # Extract the code from the response
@@ -180,9 +212,15 @@ Final Question: {problem.final_question}""")
         
         Only adds the main block if needed. Does not modify the solution code itself.
         """
-        # Add missing main block if needed
+        # Use the same entry point the executor injects. This used to append
+        # its own block hardcoding solve(sys.argv[1]), which crashes with
+        # IndexError whenever the saved solution is run without arguments --
+        # exactly how dev/verify_solutions.py runs it -- and with TypeError when
+        # the model defined a zero-argument solve().
+        from shared.execution import STANDARD_MAIN_BLOCK
+
         if not re.search(r'if\s+__name__\s*==\s*[\'"]__main__[\'"]\s*:', code):
-            code += '\n\nif __name__ == "__main__":\n    import sys\n    print(solve(sys.argv[1]))'
+            code += "\n\n" + STANDARD_MAIN_BLOCK
         return code
 
     def _extract_code(self, text: str) -> Optional[str]:
@@ -229,60 +267,141 @@ Final Question: {problem.final_question}""")
         Returns:
             List of Strategy objects
         """
+        # Callers pass Strategy objects (BaseSolver gets them from
+        # SubmissionManager.get_recommended_strategies), but this compared
+        # strategy.name -- a string -- against the item itself. An object never
+        # equals a string, so the result was always empty: all 145 recorded
+        # attempts show "applied_strategies": []. Accept either form.
+        by_name = {
+            strategy.name: strategy
+            for category in SOLUTION_STRATEGIES.values()
+            for strategy in category
+        }
+
         strategies = []
-        for name in strategy_names:
-            # Search through all categories for the strategy
-            for category_strategies in SOLUTION_STRATEGIES.values():
-                for strategy in category_strategies:
-                    if strategy.name == name:
-                        if effectiveness and name in effectiveness:
-                            strategy.effectiveness = effectiveness[name]
-                        strategies.append(strategy)
-                        break
+        for item in strategy_names or []:
+            name = item if isinstance(item, str) else getattr(item, "name", None)
+            if not name:
+                continue
+            strategy = by_name.get(name) or (None if isinstance(item, str) else item)
+            if strategy is None:
+                logger.debug("Unknown strategy %r; ignoring", name)
+                continue
+            if effectiveness and name in effectiveness:
+                strategy.effectiveness = effectiveness[name]
+            strategies.append(strategy)
         return strategies
 
-    async def generate(self, prompt: str) -> LLMResponse:
-        """Generate using Ollama API."""
+    @staticmethod
+    def _context_size(prompt: str) -> int:
+        """Context window to request, sized to the prompt plus output headroom.
+
+        Ollama defaults to a ~2048-token context and silently truncates anything
+        longer -- it does not error, and the response looks normal. Measured on a
+        7883-token prompt: prompt_eval_count was 2050 by default and 7037 with
+        num_ctx set.
+
+        This solver's prompts run 6930-27849 characters (median ~3370 tokens,
+        max ~6962), so every generation it has ever made was produced from a
+        truncated prompt. The models were answering without having seen most of
+        the problem, which is the most likely explanation for years of
+        "the model misinterpreted the requirements".
+
+        Sized generously rather than exactly: reasoning models need room to think
+        *after* the prompt, and running out mid-reasoning is what left qwen3.5:9b
+        with no answer on 17 generations.
+        """
+        estimated_prompt_tokens = len(prompt) // 3  # conservative chars-per-token
+        wanted = estimated_prompt_tokens + OLLAMA_OUTPUT_HEADROOM_TOKENS
+
+        # Round up to a power-of-two-ish step so the KV cache is reused across
+        # calls instead of being reallocated for every slightly different prompt.
+        for size in (8192, 16384, 32768):
+            if wanted <= size:
+                return size
+        return 32768
+
+    async def generate(
+        self, prompt: str, temperature: Optional[float] = None
+    ) -> LLMResponse:
+        """Generate via Ollama's HTTP API.
+
+        This previously shelled out to `ollama run`, which is the *interactive*
+        CLI: it renders to a terminal, wrapping lines with cursor-movement and
+        erase-line escapes. Capturing that as text corrupts the output --
+        `"is not\\x1b[3D\\x1b[K\\nnot fully"` becomes `"is not\\nnot fully"` once
+        the escapes are stripped, duplicating a word. In prose that reads oddly;
+        in generated code it is a syntax error, and it was the single largest
+        source of "the model produced malformed code" in this project. 30 of 145
+        recorded attempts still carry the signature.
+
+        /api/generate returns the completion as JSON, with no terminal layer.
+        """
+        host = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+        options: Dict[str, Any] = {
+            "num_ctx": self.num_ctx or self._context_size(prompt)
+        }
+        if temperature is not None:
+            options["temperature"] = float(temperature)
+
+        payload: Dict[str, Any] = {
+            "model": self.model,
+            "prompt": prompt,
+            "stream": False,
+        }
+        if options:
+            payload["options"] = options
+
+        logger.debug("Requesting generation from %s for %s", host, self.model)
         try:
-            # Run Ollama with the prompt directly
-            logger.debug("Running Ollama command...")
-            process = await asyncio.create_subprocess_exec(
-                "/usr/local/bin/ollama",
-                "run",
-                self.model,
-                prompt,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
+            timeout = aiohttp.ClientTimeout(total=OLLAMA_REQUEST_TIMEOUT)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.post(f"{host}/api/generate", json=payload) as resp:
+                    if resp.status != 200:
+                        body = (await resp.text())[:400]
+                        raise RuntimeError(
+                            f"Ollama returned HTTP {resp.status} for {self.model}: {body}"
+                        )
+                    data = await resp.json()
 
-            logger.debug("Waiting for Ollama response...")
-            stdout, stderr = await process.communicate()
-            stdout_text = stdout.decode() if stdout else ""
-            stderr_text = stderr.decode() if stderr else ""
+            # Reasoning models split their output: chain-of-thought goes to
+            # `thinking`, the answer to `response`. How long they think varies a
+            # lot run to run -- the same prompt produced 1.7k chars of thinking
+            # once and 17k the next time -- and when reasoning exhausts the
+            # output budget `response` comes back empty with
+            # done_reason == "length". Reading only `response` scored
+            # qwen3.5:9b at 0/6, which measured this provider, not the model.
+            content = data.get("response") or ""
+            thinking = data.get("thinking") or ""
+            done_reason = data.get("done_reason")
 
-            # Log raw response for debugging
-            logger.debug("Raw Ollama response:")
-            logger.debug(stdout_text)
+            if not content and thinking:
+                # Models often write the code inside their reasoning, so this is
+                # usually recoverable. Warn rather than fail silently.
+                logger.warning(
+                    "%s produced no answer (done_reason=%s) but %d chars of "
+                    "reasoning; falling back to the reasoning text.",
+                    self.model, done_reason, len(thinking),
+                )
+                content = thinking
 
-            # Filter out Ollama spinner messages
-            non_spinner_lines = [
-                line
-                for line in stderr_text.splitlines()
-                if not line.startswith("\r") and line.strip()
-            ]
-
-            if process.returncode != 0:
-                logger.warning("Ollama stderr: %s", "\n".join(non_spinner_lines))
-                logger.error("Ollama failed with return code %d", process.returncode)
-                raise Exception(f"Ollama failed: {stderr_text}")
+            if not content:
+                raise RuntimeError(
+                    f"Ollama returned no content for {self.model} "
+                    f"(done_reason={done_reason})"
+                )
 
             return LLMResponse(
-                content=stdout_text,
+                content=content,
                 confidence=1.0,  # Local models don't provide confidence scores
                 metadata={
                     "model": self.model,
                     "provider": "ollama",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
+                    "eval_count": data.get("eval_count"),
+                    "prompt_eval_count": data.get("prompt_eval_count"),
+                    "done_reason": done_reason,
+                    "thinking_chars": len(thinking),
                 }
             )
 

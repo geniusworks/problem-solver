@@ -50,22 +50,43 @@ class LearningDatabase:
         finally:
             conn.close()
 
+    # Columns added after the original schema shipped, with their DDL.
+    _MIGRATIONS = {
+        "avg_quality_score": "REAL NOT NULL DEFAULT 0.0",
+        # attempts/successes make success_rate a real running rate. Without them
+        # success_rate was overwritten with 1.0/0.0 on every update, so it meant
+        # "did the most recent attempt succeed" and a model that had succeeded
+        # nine times was excluded from ranking after a single failure.
+        "attempts": "INTEGER NOT NULL DEFAULT 0",
+        "successes": "INTEGER NOT NULL DEFAULT 0",
+    }
+
     def _ensure_schema(self) -> None:
-        """Apply lightweight schema migrations if needed.
-        Currently ensures 'avg_quality_score' exists on model_performance.
-        """
+        """Apply lightweight schema migrations if needed."""
         with self.connect() as conn:
             cursor = conn.cursor()
-            # Inspect model_performance columns
             cursor.execute("PRAGMA table_info(model_performance)")
             cols = {row[1] for row in cursor.fetchall()}
-            
-            # Add missing avg_quality_score column if absent
-            if 'avg_quality_score' not in cols:
-                cursor.execute(
-                    "ALTER TABLE model_performance ADD COLUMN avg_quality_score REAL NOT NULL DEFAULT 0.0"
-                )
+
+            added = False
+            for column, ddl in self._MIGRATIONS.items():
+                if column not in cols:
+                    cursor.execute(
+                        f"ALTER TABLE model_performance ADD COLUMN {column} {ddl}"
+                    )
+                    added = True
+
+            if added:
                 conn.commit()
+
+            # Pre-migration rows keep attempts = successes = 0 on purpose.
+            #
+            # Their stored success_rate was a last-attempt boolean (or a synthetic
+            # cold-start value from seed_model_performance), not a measured rate,
+            # so backfilling counters from it would fabricate history -- a seeded
+            # 0.5 would round into a perfect 1/1 record. Leaving the counters at
+            # zero keeps success_rate as a prior estimate that the first real
+            # observation replaces outright.
     
     def record_strategy_result(
         self,
@@ -206,20 +227,31 @@ class LearningDatabase:
             )
             exists = cursor.fetchone() is not None
             
+            quality = float(metrics.get('quality_score', 0.0))
+
             if exists:
-                # Update existing record
+                # Accumulate counters and derive the rate from them, rather than
+                # overwriting success_rate with this attempt's boolean. Also keep
+                # avg_quality_score as a true running mean; it was previously set
+                # only on INSERT and never updated.
                 cursor.execute(
                     """UPDATE model_performance
-                       SET success_rate = ?,
+                       SET attempts = attempts + 1,
+                           successes = successes + ?,
+                           success_rate = CAST(successes + ? AS REAL) / (attempts + 1),
+                           avg_quality_score =
+                               ((avg_quality_score * attempts) + ?) / (attempts + 1),
                            response_time = ?,
                            cost = ?,
                            quality_score = ?
                        WHERE model_name = ? AND problem_type = ? AND role = ?""",
                     (
-                        1.0 if success else 0.0,
+                        int(success),
+                        int(success),
+                        quality,
                         metrics.get('response_time', 0.0),
                         metrics.get('cost', 0.0),
-                        metrics.get('quality_score', 0.0),
+                        quality,
                         model_name,
                         problem_type,
                         role
@@ -229,9 +261,10 @@ class LearningDatabase:
                 # Insert new record
                 cursor.execute(
                     """INSERT INTO model_performance
-                       (model_name, problem_type, role, success_rate, 
-                        response_time, cost, quality_score, avg_quality_score)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                       (model_name, problem_type, role, success_rate,
+                        response_time, cost, quality_score, avg_quality_score,
+                        attempts, successes)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         model_name,
                         problem_type,
@@ -239,11 +272,13 @@ class LearningDatabase:
                         1.0 if success else 0.0,
                         metrics.get('response_time', 0.0),
                         metrics.get('cost', 0.0),
-                        metrics.get('quality_score', 0.0),
-                        metrics.get('quality_score', 0.0)  # Initial avg same as current
+                        quality,
+                        quality,  # Initial avg same as current
+                        1,
+                        int(success),
                     )
                 )
-            
+
             conn.commit()
 
     def store_result(
