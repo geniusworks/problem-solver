@@ -100,6 +100,9 @@ def parse_args(argv=None):
         "--out", type=Path, default=None,
         help="Directory to write result JSON into (default: dev/experiments)",
     )
+    parser.add_argument("--trials", type=int, default=1, metavar="N",
+                        help="Run each problem N times; the pipeline is non-deterministic, "
+                             "so a single run is not evidence (default 1)")
     parser.add_argument("--include-replay", action="store_true",
                         help="Persist prompts and generated code for replay")
     parser.add_argument("--dry-run", action="store_true",
@@ -176,15 +179,17 @@ async def async_main(args) -> int:
             experiment = await _dry_run(problems, config)
         else:
             def report(result):
+                trial = f"[t{result.trial}] " if args.trials > 1 else ""
                 print(
-                    f"  {SYMBOL[result.outcome]}  {result.problem_id:22} "
+                    f"  {trial}{SYMBOL[result.outcome]}  {result.problem_id:22} "
                     f"{str(result.answer or '-'):>16}  "
                     f"expected {result.expected or '-'}  "
                     f"({result.wall_clock_seconds:.1f}s)"
                 )
 
             experiment = await run_experiment(
-                problems, config, REPO_ROOT, debug=args.debug, on_result=report
+                problems, config, REPO_ROOT, debug=args.debug,
+                on_result=report, trials=args.trials,
             )
 
         experiments.append(experiment)
@@ -198,15 +203,25 @@ async def async_main(args) -> int:
     print(compare(experiments))
 
     for experiment in experiments:
+        # Per-problem stability is the point of running trials: a problem solved
+        # 2 of 5 times says something a single run cannot.
+        if experiment.trials > 1:
+            print(f"\nper-problem ({experiment.config_name}, {experiment.trials} trials):")
+            for pid, s in experiment.per_problem().items():
+                mark = " " if s["stable"] else "~"  # ~ = flips across trials
+                print(
+                    f"  {mark} {pid:22} {s['solved']}/{s['trials']} "
+                    f"({s['solve_rate']:.0%})  {','.join(s['outcomes'])}"
+                )
+
         per_model = experiment.per_model()
-        if len(per_model) <= 1:
-            continue
-        print(f"\nper-model ({experiment.config_name}):")
-        for model, stats in per_model.items():
-            print(
-                f"  {model:24} {stats['solved']}/{stats['attempts']} "
-                f"({stats['solve_rate']:.0%})  {stats['wall_clock_seconds']:.0f}s"
-            )
+        if len(per_model) > 1:
+            print(f"\nper-model ({experiment.config_name}):")
+            for model, stats in per_model.items():
+                print(
+                    f"  {model:24} {stats['solved']}/{stats['attempts']} "
+                    f"({stats['solve_rate']:.0%})  {stats['wall_clock_seconds']:.0f}s"
+                )
     print()
 
     # Non-zero when anything was claimed but not verified, so this can gate CI.

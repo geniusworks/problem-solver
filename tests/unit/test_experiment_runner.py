@@ -5,6 +5,8 @@ gap rather than as an inflated solve rate -- which is exactly how the pre-oracle
 pipeline reported three wrong answers as validated solutions.
 """
 
+from pathlib import Path
+
 import pytest
 
 from shared.experiment import Outcome, SolverConfig
@@ -212,3 +214,87 @@ class TestCompare:
 
     def test_handles_no_experiments(self):
         assert compare([]) == "(no experiments)"
+
+
+class TestTrialStamping:
+    async def test_run_problem_stamps_trial_index(self):
+        result = await run_problem(_StubSolver(result=None), 2024, 1, 1, SolverConfig(), trial=3)
+
+        assert result.trial == 3
+        assert result.attempts[0].sample_index == 3
+
+
+class _CountingSolver:
+    """Solves day 1 always, day 2 on alternating trials, day 3 never."""
+
+    def __init__(self, *a, **k):
+        self.attempts = []
+        self._seen = {}
+
+    async def solve_problem(self, year, day, part, force=False):
+        self.attempts = []
+        n = self._seen.get(day, 0)
+        self._seen[day] = n + 1
+        if day == 1:
+            return "42"
+        if day == 2:
+            return "42" if n % 2 == 0 else "99"  # flips
+        return None
+
+
+class TestRunExperimentTrials:
+    async def test_trials_produce_n_results_per_problem(self, monkeypatch):
+        import shared.solver as solver_module
+        import shared.experiment.runner as runner
+
+        monkeypatch.setattr(solver_module, "BaseSolver", _CountingSolver)
+        monkeypatch.setattr(runner, "get_known_answer", lambda y, d, p: "42")
+
+        exp = await runner.run_experiment(
+            [(2024, 1, 1), (2024, 2, 1), (2024, 3, 1)],
+            SolverConfig(), Path("."), trials=4,
+        )
+
+        assert exp.trials == 4
+        assert exp.attempted == 12          # 3 problems x 4 trials
+        assert exp.distinct_problems == 3
+
+        per = exp.per_problem()
+        assert per["2024_day01_part1"]["solved"] == 4
+        assert per["2024_day01_part1"]["stable"] is True
+        assert per["2024_day02_part1"]["solved"] == 2   # alternates
+        assert per["2024_day02_part1"]["stable"] is False
+        assert per["2024_day03_part1"]["solved"] == 0
+
+        assert exp.solved_at_least_once == 2   # days 1 and 2
+        assert exp.solved_every_time == 1      # only day 1
+
+
+class TestTrialAggregation:
+    def _result(self, pid, outcome, trial):
+        from shared.experiment.results import ProblemResult
+        return ProblemResult(pid, 2024, 1, 1, "fp", outcome=outcome, trial=trial,
+                             expected="42")
+
+    def test_solve_rate_is_over_all_trials(self):
+        from shared.experiment.results import ExperimentResult
+        results = [
+            self._result("p1", Outcome.SOLVED, 0),
+            self._result("p1", Outcome.NO_CANDIDATE, 1),
+        ]
+        exp = ExperimentResult("c", "fp", {}, results, trials=2)
+
+        assert exp.solve_rate == pytest.approx(0.5)  # 1 of 2 trials
+        assert exp.distinct_problems == 1
+        assert exp.solved_at_least_once == 1
+        assert exp.solved_every_time == 0
+
+    def test_single_trial_still_reports_cleanly(self):
+        from shared.experiment.results import ExperimentResult
+        exp = ExperimentResult("c", "fp", {}, [self._result("p1", Outcome.SOLVED, 0)], trials=1)
+
+        per = exp.per_problem()["p1"]
+        assert per == {
+            "trials": 1, "solved": 1, "solve_rate": 1.0,
+            "stable": True, "outcomes": ["solved"], "expected": "42",
+        }

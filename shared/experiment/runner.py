@@ -128,8 +128,13 @@ async def run_problem(
     part: int,
     config: SolverConfig,
     force: bool = True,
+    trial: int = 0,
 ) -> ProblemResult:
-    """Solve one problem and independently verify the result."""
+    """Solve one problem once and independently verify the result.
+
+    `trial` is the 0-indexed repeat number, stamped onto the result and its
+    attempts so multiple runs of the same problem can be grouped and replayed.
+    """
     pid = problem_id(year, day, part)
     started = time.monotonic()
     code: Optional[str] = None
@@ -154,6 +159,7 @@ async def run_problem(
         day=day,
         part=part,
         config_fingerprint=config.fingerprint(),
+        trial=trial,
         outcome=outcome,
         answer=answer,
         expected=expected,
@@ -181,6 +187,8 @@ async def run_problem(
                     attempt.outcome = outcome
                     attempt.error = (attempt.error or "") + " [claim not verified]"
 
+        for attempt in trace:
+            attempt.sample_index = trial
         result.attempts.extend(trace)
         winner = next((a for a in trace if a.succeeded), None)
         result.winning_model = winner.model if winner else None
@@ -195,6 +203,7 @@ async def run_problem(
                 expected=expected,
                 error=error,
                 wall_clock_seconds=elapsed,
+                sample_index=trial,
                 code=code,
             )
         )
@@ -208,28 +217,33 @@ async def run_experiment(
     workspace_dir: Path,
     debug: bool = False,
     on_result=None,
+    trials: int = 1,
 ) -> ExperimentResult:
-    """Run a problem set under one configuration.
+    """Run a problem set under one configuration, `trials` times each.
 
     on_result, if given, is called with each ProblemResult as it completes --
-    useful for progress output on long sweeps.
+    useful for progress output on long sweeps. Trials are the outer loop so that
+    partial progress covers every problem at least once before repeating.
     """
     from shared.solver import BaseSolver
 
+    trials = max(1, trials)
     solver = BaseSolver(workspace_dir, debug=debug, config=config)
 
     experiment = ExperimentResult(
         config_name=config.name,
         config_fingerprint=config.fingerprint(),
         config=config.to_dict(),
+        trials=trials,
         started_at=datetime.now(timezone.utc).isoformat(),
     )
 
-    for year, day, part in problems:
-        result = await run_problem(solver, year, day, part, config)
-        experiment.results.append(result)
-        if on_result is not None:
-            on_result(result)
+    for trial in range(trials):
+        for year, day, part in problems:
+            result = await run_problem(solver, year, day, part, config, trial=trial)
+            experiment.results.append(result)
+            if on_result is not None:
+                on_result(result)
 
     experiment.finished_at = datetime.now(timezone.utc).isoformat()
     return experiment
@@ -241,19 +255,21 @@ def compare(experiments: Iterable[ExperimentResult]) -> str:
     if not rows:
         return "(no experiments)"
 
-    headers = ["config", "solved", "rate", "1st-try", "wrong", "unver", "overfit", "mean-att", "wall(s)"]
+    headers = ["config", "solved", "rate", "any/all", "wrong", "unver", "overfit", "wall(s)"]
     table = [headers]
     for e in rows:
         s = e.summary()
+        # "any/all" reads as: distinct problems solved in at least one trial /
+        # solved in every trial. The gap between them is the variance.
+        any_all = f"{s['solved_at_least_once']}/{s['solved_every_time']} of {s['distinct_problems']}"
         table.append([
             f"{s['config_name']} ({s['config_fingerprint']})",
             f"{s['solved']}/{s['attempted']}",
             f"{s['solve_rate']:.0%}",
-            f"{s['first_try_rate']:.0%}",
+            any_all,
             str(s["wrong"]),
             str(s["unverified"]),
             str(s["overfit"]),
-            "-" if s["mean_attempts_to_solve"] is None else f"{s['mean_attempts_to_solve']:.1f}",
             f"{s['total_wall_clock_seconds']:.0f}",
         ])
 
