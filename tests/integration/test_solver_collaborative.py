@@ -84,7 +84,15 @@ class DummyParsedProblem:
 
 
 @pytest.mark.asyncio
-async def test_solver_uses_collaborative_improvement_when_no_consensus(monkeypatch, tmp_path):
+async def test_collaborative_improvement_is_oracle_gated(monkeypatch, tmp_path):
+    """The collaborative path must not return an unverified candidate.
+
+    It used to run the stub validator (validate_solution -> return True) and
+    return the "improved" code without executing it -- the same oracle-bypass
+    hole that was closed on the consensus path. Here the improvement cannot
+    verify (2022 day 1 has no cached input/answer), so the solver must reject it
+    and fall through, even though improvement was attempted and recorded.
+    """
     async def fake_fetch_problem_text(year: int, day: int, part: int = 1):
         return "Dummy problem text", None, None
 
@@ -129,9 +137,7 @@ async def test_solver_uses_collaborative_improvement_when_no_consensus(monkeypat
             return ["primary-1", "primary-2"]
         if role == "reviewer":
             return ["reviewer-1"]
-        if role == "validator":
-            return ["validator-1"]
-        return []
+        return []  # the "validator" role is gone
 
     monkeypatch.setattr(solver_module.BaseSolver, "_get_top_models", fake_get_top_models)
 
@@ -147,23 +153,21 @@ async def test_solver_uses_collaborative_improvement_when_no_consensus(monkeypat
         "primary-2",
         "def solve(input_data: str) -> str:\n    return 'B'\n",
     )
-    validator = DummyValidatorModel("validator-1")
     reviewer = DummyValidatorModel("reviewer-1")
 
     solver.models = {
         "primary-1": primary_1,
         "primary-2": primary_2,
-        "validator-1": validator,
         "reviewer-1": reviewer,
     }
 
     result = await solver.solve_problem(2022, 1, 1, force=True)
 
-    assert result is not None
-    assert "# improved" in result
+    # The unverified "improvement" is NOT returned -- the oracle-bypass is closed.
+    assert result is None
 
+    # ...but improvement was still attempted and its impact recorded.
     assert DummyCollaborativeImprovement.last_instance is not None
     assert DummyCollaborativeImprovement.last_instance.calls
-
     assert isinstance(solver.db, DummyLearningDatabase)
     assert solver.db.improvements

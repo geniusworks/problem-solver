@@ -272,9 +272,11 @@ class BaseSolver:
             # Get top performing models for each role based on problem type
             problem_type = self._get_problem_type(characteristics)
             primary_models = self._get_top_models(problem_type, "primary", limit=3)
+            # Reviewer models feed the (default-off) collaborative-improvement
+            # path. The old "validator" role is gone: it drove a stub that always
+            # returned True; acceptance is decided by execution against the oracle.
             reviewer_models = self._get_top_models(problem_type, "reviewer", limit=3)
-            validator_models = self._get_top_models(problem_type, "validator", limit=3)
-            
+
             # Try each primary model and collect answers
             answers = {}
             # Generation wall-clock per model: the only cost signal local
@@ -486,23 +488,25 @@ class BaseSolver:
                             impact_score=impact_score
                         )
                         
-                        # Validate improved solution
-                        validation_success = True
-                        for validator_name in validator_models:
-                            if validator_name in self.models:
-                                validator = self.models[validator_name]
-                                try:
-                                    if not await validator.validate_solution(
-                                        improved_candidate.solution,
-                                        parsed_problem.examples
-                                    ):
-                                        validation_success = False
-                                        break
-                                except Exception:
-                                    validation_success = False
-                                    break
-                                    
-                        if validation_success:
+                        # Accept the improved candidate only if it passes the same
+                        # oracle as every other path. This previously ran the
+                        # stub validator (validate_solution -> return True) and
+                        # returned unverified code -- the exact oracle-bypass hole
+                        # closed on the consensus path. Verification, not a fake
+                        # gate, decides acceptance.
+                        improved_verdict = await self._verify_candidate(
+                            improved_candidate.author or "collaborative",
+                            improved_candidate.solution,
+                            year, day, part,
+                            self.build_test_cases(parsed_problem),
+                            _known_answer(year, day, part),
+                        )
+                        if improved_verdict.accepted:
+                            record_solution(
+                                year, day, part,
+                                improved_candidate.author or "collaborative",
+                                improved_candidate.solution,
+                            )
                             return improved_candidate.solution
                 except Exception as e:
                     logging.warning(f"Collaborative improvement failed: {str(e)}")
