@@ -150,6 +150,9 @@ async def test_solver_records_quality_metrics_in_learning_db(monkeypatch, tmp_pa
     model_name, metrics, success, problem_type, role = db.update_calls[0]
 
     assert model_name == "primary-1"
+    # success reflects the *verified* outcome, not merely that code was
+    # generated: the candidate prints the accepted answer, so the oracle
+    # accepts it. Recording moved out of the generation loop for this reason.
     assert success is True
     assert role == "primary"
 
@@ -157,11 +160,10 @@ async def test_solver_records_quality_metrics_in_learning_db(monkeypatch, tmp_pa
     assert isinstance(problem_type, str)
     assert problem_type
 
-    # Metrics should reflect the DummyCodeQualityAnalyzer outputs
+    # The recorded metrics dict carries only what the DB persists:
+    # quality_score (0-10), response_time, cost. The other quality sub-scores
+    # were computed but never stored, so recording them was theatre.
     assert metrics["quality_score"] == pytest.approx(0.8 * 10.0)
-    assert metrics["complexity_score"] == pytest.approx(3.0)
-    assert metrics["maintainability_score"] == pytest.approx(75.0)
-    assert metrics["error_handling_score"] == pytest.approx(0.6)
     assert metrics["cost"] == pytest.approx(0.0)
     assert isinstance(metrics["response_time"], float)
     assert metrics["response_time"] >= 0.0

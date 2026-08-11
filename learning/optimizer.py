@@ -39,20 +39,26 @@ class StrategyOptimizer:
     
     def __init__(self, learning_dir: Path, workspace_dir: Path):
         """Initialize the strategy optimizer.
-        
+
         Args:
-            learning_dir: Directory for storing learning data
-            workspace_dir: Directory for storing database
+            learning_dir: Directory for storing learning data, including the
+                single ``solver.db`` this and ``BaseSolver`` share.
+            workspace_dir: Retained for call-site compatibility; not used to
+                locate the database.
         """
         self.learning_dir = learning_dir
         self.learning_dir.mkdir(parents=True, exist_ok=True)
         self.results_file = learning_dir / "strategy_results.json"
         self.results: List[StrategyResult] = []
         self._load_results()
-        
+
         self.workspace_dir = workspace_dir
         from .database import LearningDatabase  # Lazy import
-        self.db = LearningDatabase(workspace_dir)
+        # One database only: learning_dir/solver.db, the same file BaseSolver
+        # writes to. This previously passed workspace_dir, creating a second,
+        # always-empty ./solver.db that the optimizer read from and nothing
+        # populated -- so strategy effectiveness was computed over zero rows.
+        self.db = LearningDatabase(learning_dir)
         self.problem_results: List[StrategyResultForProblem] = []
 
     def _load_results(self) -> None:

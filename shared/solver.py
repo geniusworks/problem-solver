@@ -318,93 +318,30 @@ class BaseSolver:
                     end_time = datetime.now()
                     response_time = (end_time - start_time).total_seconds()
                     generation_times[model_name] = response_time
-                    
-                    # Analyze code quality
-                    from shared.quality.code_quality import CodeQualityAnalyzer
-                    analyzer = CodeQualityAnalyzer()
-                    quality_metrics = analyzer.analyze(solution)
-                    
-                    # Every candidate enters the pool; correctness is decided by
-                    # execution against the oracle further down.
-                    #
-                    # There used to be a validator-model gate here, looping over
-                    # validator_models and calling validate_solution on each.
-                    # That method is an unimplemented stub returning True, so the
-                    # gate admitted everything while creating the appearance of
-                    # review -- the most misleading state for a check to be in.
-                    # Removed rather than left as ceremony; if model-based review
-                    # is reinstated it needs a real implementation and its own
-                    # measurement, which the experiment harness can now provide.
-                    validation_errors: List[str] = []
-                    is_valid = True
 
-                    if is_valid:
-                        answers[model_name] = solution
-                        
-                        # Record successful attempt in learning system
-                        if not self.db:
-                            from learning import LearningDatabase
-                            self.db = LearningDatabase(self.learning_dir)
-                        self.db.update_model_performance(
-                            model_name=model_name,
-                            metrics={
-                                "quality_score": quality_metrics.overall_score * 10.0,  # Convert to 0-10 scale
-                                "response_time": response_time,
-                                "cost": 0.0,  # Local models have no cost
-                                "complexity_score": quality_metrics.cyclomatic_complexity,
-                                "maintainability_score": quality_metrics.maintainability_index,
-                                "error_handling_score": quality_metrics.error_handling_score
-                            },
-                            success=True,
-                            problem_type=problem_type,
-                            role="primary"
-                        )
-                    else:
-                        failures.append((model_name, "; ".join(validation_errors)))
-                        
-                        # Record failed attempt in learning system
-                        if not self.db:
-                            from learning import LearningDatabase
-                            self.db = LearningDatabase(self.learning_dir)
-                        self.db.update_model_performance(
-                            model_name=model_name,
-                            metrics={
-                                "quality_score": quality_metrics.overall_score * 10.0,
-                                "response_time": response_time,
-                                "cost": 0.0,
-                                "complexity_score": quality_metrics.cyclomatic_complexity,
-                                "maintainability_score": quality_metrics.maintainability_index,
-                                "error_handling_score": quality_metrics.error_handling_score
-                            },
-                            success=False,
-                            problem_type=problem_type,
-                            role="primary"
-                        )
-                        
+                    # Every candidate enters the pool; correctness is decided by
+                    # execution against the oracle further down, and the model's
+                    # performance is recorded there against that verdict -- not
+                    # here, where it has only produced text. (Code quality is
+                    # computed once, later, for the candidates that survive.)
+                    #
+                    # There used to be a validator-model gate here calling the
+                    # stub validate_solution (return True), which admitted
+                    # everything while looking like review. Removed.
+                    answers[model_name] = solution
+
                 except Exception as e:
                     failures.append((model_name, str(e)))
                     # A model that never produced usable code is a distinct
-                    # failure from one whose code ran and gave a wrong answer.
+                    # failure from one whose code ran and gave a wrong answer,
+                    # and it is a real (verified) failure to record.
                     self._record_attempt(
                         model_name, year, day, part, Outcome.NO_CANDIDATE,
                         stage="generate",
                         error=f"{type(e).__name__}: {e}",
                     )
-                    if not self.db:
-                        self.db = LearningDatabase(self.learning_dir)
-                    self.db.update_model_performance(
-                        model_name=model_name,
-                        metrics={
-                            "quality_score": 0.0,
-                            "response_time": 0.0,
-                            "cost": 0.0,
-                            "complexity_score": 0.0,
-                            "maintainability_score": 0.0,
-                            "error_handling_score": 0.0
-                        },
-                        success=False,
-                        problem_type=problem_type,
-                        role="primary"
+                    self._record_model_performance(
+                        model_name, success=False, problem_type=problem_type
                     )
 
             # If we have answers, try to reach consensus
@@ -567,6 +504,17 @@ class BaseSolver:
                                 quality_score=quality_scores.get(model_name),
                                 code=solution,
                             )
+                            # Record the model's verified performance once, on its
+                            # initial candidate (repair iterations re-test the same
+                            # models and would double-count).
+                            if iteration == 0:
+                                self._record_model_performance(
+                                    model_name,
+                                    success=verdict.accepted,
+                                    problem_type=problem_type,
+                                    quality_score=(quality_scores.get(model_name) or 0.0) * 10.0,
+                                    response_time=generation_times.get(model_name, 0.0),
+                                )
                             if not verdict.accepted:
                                 if verdict.feedback:
                                     feedback_by_model[model_name] = verdict.feedback
@@ -668,51 +616,23 @@ class BaseSolver:
                             code=solution,
                         )
 
+                        # Record the fallback model's verified outcome the same
+                        # way the primary path does -- against the verdict, not at
+                        # generation time.
+                        self._record_model_performance(
+                            model_name,
+                            success=verdict.accepted,
+                            problem_type=problem_type,
+                            response_time=generation_times.get(model_name, 0.0),
+                        )
+
                         if verdict.accepted:
                             logging.info(f"Fallback model {model_name} produced valid solution!")
-                            
-                            # Update learning DB
-                            if not self.db:
-                                from learning import LearningDatabase
-                                self.db = LearningDatabase(self.learning_dir)
-                            self.db.update_model_performance(
-                                model_name=model_name,
-                                metrics={
-                                    "quality_score": 5.0,
-                                    "response_time": 0.0,
-                                    "cost": 0.0,
-                                    "complexity_score": 0.0,
-                                    "maintainability_score": 0.0,
-                                    "error_handling_score": 0.0
-                                },
-                                success=True,
-                                problem_type=problem_type,
-                                role="primary"
-                            )
-                            
                             record_solution(year, day, part, model_name, solution)
                             return solution
                         else:
                             logging.info(f"Fallback model {model_name} failed execution validation")
-                            # Update learning DB with failure
-                            if not self.db:
-                                from learning import LearningDatabase
-                                self.db = LearningDatabase(self.learning_dir)
-                            self.db.update_model_performance(
-                                model_name=model_name,
-                                metrics={
-                                    "quality_score": 0.0,
-                                    "response_time": 0.0,
-                                    "cost": 0.0,
-                                    "complexity_score": 0.0,
-                                    "maintainability_score": 0.0,
-                                    "error_handling_score": 0.0
-                                },
-                                success=False,
-                                problem_type=problem_type,
-                                role="primary"
-                            )
-                            
+
                     except Exception as e:
                         logging.warning(f"Fallback model {model_name} failed: {str(e)}")
                         continue
@@ -734,6 +654,39 @@ class BaseSolver:
     # updated when the ground-truth oracle landed -- so a fallback model could
     # still return a wrong answer as the solution.
     # ------------------------------------------------------------------
+
+    def _record_model_performance(
+        self,
+        model_name: str,
+        success: bool,
+        problem_type: str,
+        quality_score: float = 0.0,
+        response_time: float = 0.0,
+        role: str = "primary",
+    ) -> None:
+        """Record a model's *verified* performance in the learning DB.
+
+        `success` must reflect whether the candidate was accepted by the oracle,
+        not whether the model merely produced code. This used to be recorded at
+        generation time with success=True for anything that generated, so
+        success_rate measured "returned parseable text", and it was the sole key
+        _get_top_models ranked on. The five hand-built copies of this write are
+        consolidated here so the signal is defined in one place.
+        """
+        if not self.db:
+            from learning import LearningDatabase  # patchable via learning.LearningDatabase
+            self.db = LearningDatabase(self.learning_dir)
+        self.db.update_model_performance(
+            model_name=model_name,
+            metrics={
+                "quality_score": quality_score,
+                "response_time": response_time,
+                "cost": 0.0,
+            },
+            success=success,
+            problem_type=problem_type,
+            role=role,
+        )
 
     def _record_attempt(
         self,
