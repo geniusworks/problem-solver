@@ -26,17 +26,6 @@ OLLAMA_REQUEST_TIMEOUT = 900
 # on top of the prompt itself.
 OLLAMA_OUTPUT_HEADROOM_TOKENS = 4096
 
-# The `ollama run` CLI writes spinner and cursor-control escapes to the stream
-# while a long generation is in flight. They survive into the extracted code and
-# make it unparseable: compile() rejects it with "invalid non-printable character
-# U+001B", which surfaces far from the cause as a code-quality analysis failure.
-_ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
-
-
-def _strip_ansi(text: str) -> str:
-    """Remove terminal control sequences from captured subprocess output."""
-    return _ANSI_ESCAPE_RE.sub("", text)
-
 class OllamaProvider(LLMProvider):
     """Provider for Ollama local models."""
 

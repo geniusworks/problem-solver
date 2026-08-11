@@ -94,24 +94,3 @@ class TestModelResolution:
         b = SolverConfig(name="phi4", models=("phi4:latest",))
 
         assert a.fingerprint() != b.fingerprint()
-
-
-class TestAnsiStripping:
-    """`ollama run` writes spinner and cursor escapes into the captured stream."""
-
-    def test_escapes_are_removed_so_code_compiles(self):
-        from shared.llm.local import _strip_ansi
-
-        dirty = "\x1b[?25l\x1b[2Kdef solve():\n    return 42\n\x1b[?25h"
-
-        clean = _strip_ansi(dirty)
-
-        assert "\x1b" not in clean
-        compile(clean, "<test>", "exec")  # raised "non-printable character U+001B"
-
-    def test_plain_text_is_untouched(self):
-        from shared.llm.local import _strip_ansi
-
-        code = "def solve():\n    return 1\n"
-
-        assert _strip_ansi(code) == code
