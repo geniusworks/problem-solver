@@ -13,7 +13,7 @@ from shared.execution import SolutionExecutor, TestCase
 from shared.llm.local import OllamaProvider
 from shared.parser import parse_problem_text
 from shared.utils import fetch_problem_text, ensure_problem_files, ensure_problem_directory_structure, record_solution
-from shared.submission import SubmissionManager
+from shared.strategy_recommender import StrategyRecommender
 from learning.database import LearningDatabase
 from shared.experiment import AttemptRecord, Outcome, SolverConfig
 
@@ -62,7 +62,7 @@ class BaseSolver:
         self.solution_executor = SolutionExecutor(
             workspace_dir, timeout=self.config.execution_timeout
         )
-        self.submission_manager = SubmissionManager(workspace_dir)
+        self.strategy_recommender = StrategyRecommender(workspace_dir)
 
         # Initialize learning system
         self.learning_dir = workspace_dir / "learning"
@@ -195,7 +195,7 @@ class BaseSolver:
             characteristics = self._analyze_problem_characteristics(parsed_problem)
             
             # Get recommended strategies
-            strategies, effectiveness = self.submission_manager.get_recommended_strategies(
+            strategies, effectiveness = self.strategy_recommender.get_recommended_strategies(
                 problem_text, characteristics
             )
             
