@@ -72,7 +72,7 @@ One canonical taxonomy for problem types (three exist today: `strategies.Problem
 
 ---
 
-## Milestone A — Trustworthy measurement (FIRST)
+## Milestone A — Trustworthy measurement (FIRST) — ✅ LANDED (PR #2)
 
 Nothing is evaluable at n=1 against the observed variance. Smallest change, unblocks everything.
 
@@ -88,10 +88,18 @@ Nothing is evaluable at n=1 against the observed variance. Smallest change, unbl
 **Verify:** `experiment.py --problems 2024:1-3 --trials 5` emits per-problem k/5 and a variance
 column; the summary states solve rate with a range, not a point.
 
-## Milestone B — Make the instrument sound (small, high-trust)
+## Milestone B — Make the instrument sound (small, high-trust) — ✅ LANDED
 
 A platform with hollow config fields and a live oracle bypass can't be trusted for the experiments
 to come.
+
+> **Done.** (1) The collaborative path's stub-validator gate now routes through `_verify_candidate`.
+> (2) Six inert fields removed from the fingerprint; three (`max_primary_models`,
+> `enable_fallback_models`, `execution_timeout`) wired to real behaviour; `consensus_on` gone until
+> Milestone E. (3) One database only — `StrategyOptimizer` reads `learning/solver.db`; the dead root
+> `./solver.db` is deleted. (4) `success_rate` records from the verified verdict via a single helper,
+> `_record_model_performance`, not at generation time. All verify criteria met (tests, `pylint -E`,
+> `verify_solutions` 4/4).
 
 1. **Close the correctness hole:** delete the stub-validator gate at `shared/solver.py:491-499`;
    route the collaborative path's acceptance through `_verify_candidate` like every other path (or
