@@ -58,8 +58,15 @@ the historical/architecture sections below are pre-refactor and are rewritten as
   untrustworthy — most importantly, generation now goes through Ollama's HTTP API instead of the
   interactive `ollama run` CLI (whose terminal redraws were corrupting generated code), and prompts
   are no longer silently truncated to ~2048 tokens.
-- **Milestone A (this PR):** repeat-trials in the harness (`--trials N`), reporting a pipeline as a
-  distribution rather than a point estimate.
+- **Milestone A (PR #2, merged):** repeat-trials in the harness (`--trials N`), reporting a pipeline
+  as a distribution rather than a point estimate.
+- **Milestone B (this PR) — the instrument is now sound:** closed the last oracle-bypass (the
+  collaborative path's stub-validator gate now routes through `_verify_candidate` like every other
+  path); made the config honest (six inert fields removed from the fingerprint, three wired to real
+  behaviour — `max_primary_models`, `enable_fallback_models`, `execution_timeout`); unified the two
+  learning databases onto `learning/solver.db`; and fixed `success_rate` to record from the
+  *verified* outcome instead of at generation time. Model performance is now defined by one helper,
+  `_record_model_performance`, against the oracle verdict.
 
 ### Verified reality (not claims — measured)
 - Recorded solutions: **4 verified correct** (2024 d1 p1/p2, d2 p1, d3 p1). See `solutions/README.md`.
@@ -72,10 +79,6 @@ the historical/architecture sections below are pre-refactor and are rewritten as
   parseable solution it is correct. The bottleneck is producing a candidate, not model capability.
 
 ### Next (per PLAN.md)
-- **Milestone B — make the instrument sound:** close the live validator-stub hole
-  (`shared/solver.py:491-503`), strip the 9 inert `SolverConfig` fields that still enter the
-  fingerprint, unify the two learning databases, and fix `success_rate` (it currently records
-  success at generation time, before verification).
 - **Milestone C — structural consolidation:** delete ~1,400 lines of unreachable code, decompose the
   1,290-line `solve_problem`, de-grab-bag `shared/utils.py`, rewrite the architecture doc + diagrams.
 - **Milestone D — generation robustness:** attack the `no_candidate` rate (extraction, poison

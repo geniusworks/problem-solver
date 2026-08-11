@@ -155,6 +155,26 @@ class TestRunningSuccessRate:
         assert rate == pytest.approx(0.0)
 
 
+def test_optimizer_shares_the_learning_dir_database(tmp_path):
+    """One database only: the optimizer must read the file the solver writes.
+
+    It previously located its DB from workspace_dir, creating a second,
+    always-empty ./solver.db -- so strategy effectiveness was computed over
+    zero rows while the real performance data sat in learning/solver.db.
+    """
+    from learning.optimizer import StrategyOptimizer
+
+    learning_dir = tmp_path / "learning"
+    workspace_dir = tmp_path  # deliberately different from learning_dir
+
+    optimizer = StrategyOptimizer(learning_dir, workspace_dir)
+
+    assert optimizer.db.db_path == learning_dir / "solver.db"
+    assert not (workspace_dir / "solver.db").exists(), (
+        "constructing the optimizer must not create a second root database"
+    )
+
+
 def test_count_strategy_attempts_is_scoped_per_problem(db):
     db.record_strategy_result("2024_day01_part1", ["a"], True, {})
     db.record_strategy_result("2024_day01_part1", ["b"], False, {})
