@@ -5,19 +5,15 @@ import os
 import json
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional, Dict, Any, Union
+from typing import List, Tuple, Optional, Dict, Any
 from datetime import datetime
-from enum import Enum
 import requests
 from requests import RequestException
-from shared.errors import ValidationError, ExecutionError
 from shared.execution import SolutionExecutor, TestCase
 from shared.llm.local import OllamaProvider
 from shared.parser import parse_problem_text
-from shared.utils import fetch_problem_text, ensure_input_file, ensure_problem_files, ensure_problem_directory_structure, record_solution
-from shared.validator import SubmissionError
-from shared.strategies import get_strategies_for_problem, create_strategy_prompt
-from shared.submission import SubmissionManager, SubmissionResult
+from shared.utils import fetch_problem_text, ensure_problem_files, ensure_problem_directory_structure, record_solution
+from shared.submission import SubmissionManager
 from learning.database import LearningDatabase
 from shared.experiment import AttemptRecord, Outcome, SolverConfig
 
@@ -40,74 +36,6 @@ class CandidateVerdict:
     answer: Optional[str] = None
     feedback: Optional[str] = None
     example_results: List[Any] = field(default_factory=list)
-
-class ModelRole(Enum):
-    PRIMARY = 1
-    REVIEWER = 2
-    VALIDATOR = 3
-
-
-class AttemptResult:
-    def __init__(
-        self,
-        model_name: str,
-        role: ModelRole,
-        response_time: float,
-        code_quality: float,
-        was_successful: bool,
-        cost: float
-    ) -> None:
-        self.model_name = model_name
-        self.role = role
-        self.response_time = response_time
-        self.code_quality = code_quality
-        self.was_successful = was_successful
-        self.cost = cost
-
-
-class ModelSelector:
-    def __init__(self, metrics_file: str, models_per_role: int) -> None:
-        self.metrics_file = metrics_file
-        self.models_per_role = models_per_role
-        self.metrics = self._load_metrics()
-
-    def _load_metrics(self) -> Dict[str, Any]:
-        try:
-            with open(self.metrics_file, "r") as f:
-                return json.load(f)
-        except FileNotFoundError:
-            return {
-                ModelRole.PRIMARY.name: [],
-                ModelRole.REVIEWER.name: [],
-                ModelRole.VALIDATOR.name: []
-            }
-
-    def save_metrics(self) -> None:
-        with open(self.metrics_file, "w") as f:
-            json.dump(self.metrics, f, indent=2)
-
-    def get_models_for_role(self, role: ModelRole) -> List[str]:
-        return [m["model_name"] for m in self.metrics[role.name]]
-
-    def record_attempt(self, result: AttemptResult) -> None:
-        role_metrics = self.metrics[result.role.name]
-        existing_metric = next((m for m in role_metrics if m["model_name"] == result.model_name), None)
-        if existing_metric:
-            existing_metric["response_time"] = (existing_metric["response_time"] + result.response_time) / 2
-            existing_metric["code_quality"] = (existing_metric["code_quality"] + result.code_quality) / 2
-            existing_metric["success_rate"] = (existing_metric["success_rate"] + result.was_successful) / 2
-            existing_metric["cost"] = (existing_metric["cost"] + result.cost) / 2
-        else:
-            role_metrics.append({
-                "model_name": result.model_name,
-                "response_time": result.response_time,
-                "code_quality": result.code_quality,
-                "success_rate": result.was_successful,
-                "cost": result.cost
-            })
-        role_metrics.sort(key=lambda m: m["response_time"] + m["cost"])
-        self.metrics[result.role.name] = role_metrics[:self.models_per_role]
-        self.save_metrics()
 
 
 class BaseSolver:
@@ -1029,185 +957,6 @@ class BaseSolver:
 
         return None
 
-    def _get_attempts_dir(self, year: int, day: int) -> Path:
-        """Get the attempts directory for a given year and day."""
-        return self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "attempts"
-
-    def _count_attempts(self, year: int, day: int) -> int:
-        """Count the number of attempts for a given year and day."""
-        attempts_dir = self._get_attempts_dir(year, day)
-        return len(list(attempts_dir.glob("attempt_*.json")))
-
-    async def _save_solution(
-        self,
-        code: str,
-        prompt: str,
-        model_info: Dict[str, Any],
-        test_results: Dict[str, Any],
-        submission_result: Dict[str, Any],
-        year: int,
-        day: int,
-        part: int,
-        strategies: List[Dict[str, Any]],
-        analysis: Dict[str, Any]
-    ) -> None:
-        """Save solution details to JSON file."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        solution_data = {
-            "code": code,
-            "prompt": prompt,
-            "model": model_info,
-            "test_results": test_results,
-            "status": {
-                "examples_passed": test_results["examples"]["passed"],
-                "full_passed": test_results["full_input"]["passed"],
-                "part": part,
-                "attempt_number": self._count_attempts(year, day) + 1
-            },
-            "submission": {
-                "submitted": submission_result is not None,
-                "success": submission_result.get("success", False) if submission_result else False,
-                "message": submission_result.get("message", "") if submission_result else "",
-                "timestamp": timestamp
-            },
-            "metadata": {
-                "timestamp": timestamp,
-                "year": year,
-                "day": day,
-                "part": part,
-                "execution_time": test_results.get("execution_time"),
-                "memory_usage": test_results.get("memory_usage")
-            },
-            "strategy_analysis": {
-                "applied_strategies": strategies,
-                "problem_analysis": analysis["problem_characteristics"],
-                "optimization_notes": analysis["optimization_suggestions"],
-                "improvements_made": [],  # List of improvements made in this attempt
-                "known_issues": [],       # List of known issues with this attempt
-                "next_steps": []          # Suggested next steps if this attempt failed
-            }
-        }
-        
-        # Create attempts directory if it doesn't exist
-        attempts_dir = self._get_attempts_dir(year, day)
-        attempts_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Save attempt file
-        attempt_file = attempts_dir / f"attempt_{timestamp}.json"
-        with open(attempt_file, "w") as f:
-            json.dump(solution_data, f, indent=2)
-            
-        # If the solution was successful, also save it to solutions/
-        if solution_data["submission"]["success"]:
-            solutions_dir = self.workspace_dir / "years" / str(year) / f"day{day:02d}" / "solutions"
-            solutions_dir.mkdir(parents=True, exist_ok=True)
-            
-            # Create the final solution file
-            part_num = solution_data["metadata"]["part"]
-            solution_file = solutions_dir / f"part{part_num}.py"
-            
-            # Add documentation to the solution code
-            solution_code = f'''"""
-Solution for Part {part_num}
-
-Generated on: {timestamp}
-Model used: {model_info["name"]}
-Performance:
-- Example cases: {"✓" if test_results["examples"]["passed"] else "✗"}
-- Full input: {"✓" if test_results["full_input"]["passed"] else "✗"}
-
-Problem characteristics:
-{json.dumps(analysis["problem_characteristics"], indent=2)}
-
-Strategy analysis:
-{json.dumps(strategies, indent=2)}
-"""
-
-{code}
-'''
-            with open(solution_file, "w") as f:
-                f.write(solution_code)
-
-    async def _save_attempt(
-        self,
-        code: str,
-        prompt: str,
-        model_info: Dict[str, Any],
-        test_results: Optional[Dict[str, Any]],
-        submission_result: Optional[Dict[str, Any]],
-        year: int,
-        day: int,
-        part: int,
-        strategies: List[Dict[str, Any]],
-        analysis: Dict[str, Any],
-        status: str,
-        error: Optional[str] = None
-    ) -> None:
-        """Save attempt details to JSON file.
-        
-        Args:
-            code: Generated solution code
-            prompt: Prompt used to generate solution
-            model_info: Information about the model used
-            test_results: Results from testing, if any
-            submission_result: Results from submission, if any
-            year: Problem year
-            day: Problem day
-            part: Problem part
-            strategies: Applied strategies
-            analysis: Problem analysis
-            status: Current status (e.g., 'generated', 'failed_execution', 'no_consensus', 'submitted')
-            error: Error message if any
-        """
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        attempt_data = {
-            "code": code,
-            "prompt": prompt,
-            "model": model_info,
-            "test_results": test_results or {},
-            "status": {
-                "phase": status,
-                "error": error,
-                "examples_passed": test_results.get("examples", {}).get("passed", False) if test_results else False,
-                "full_passed": test_results.get("full_input", {}).get("passed", False) if test_results else False,
-                "part": part,
-                "attempt_number": self._count_attempts(year, day) + 1
-            },
-            "submission": submission_result or {
-                "submitted": False,
-                "success": False,
-                "message": "",
-                "timestamp": timestamp
-            },
-            "metadata": {
-                "timestamp": timestamp,
-                "year": year,
-                "day": day,
-                "part": part,
-                "execution_time": test_results.get("execution_time") if test_results else None,
-                "memory_usage": test_results.get("memory_usage") if test_results else None
-            },
-            "strategy_analysis": {
-                "applied_strategies": strategies,
-                "problem_analysis": analysis.get("problem_characteristics", {}),
-                "optimization_notes": analysis.get("optimization_suggestions", []),
-                "improvements_made": [],
-                "known_issues": [],
-                "next_steps": []
-            }
-        }
-        
-        # Create attempts directory if it doesn't exist
-        attempts_dir = self._get_attempts_dir(year, day)
-        attempts_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Save attempt file
-        attempt_file = attempts_dir / f"attempt_{timestamp}.json"
-        with open(attempt_file, "w") as f:
-            json.dump(attempt_data, f, indent=2)
-
     def _analyze_problem_characteristics(self, problem: Any) -> Dict[str, float]:
         """Analyze problem characteristics for strategy selection."""
         characteristics = {}
@@ -1228,24 +977,3 @@ Strategy analysis:
         
         return characteristics
 
-
-async def solve_problem(year: int, day: int, part: int) -> Union[str, int]:
-    """Solve the specified Advent of Code problem.
-    
-    Args:
-        year: The year of the problem
-        day: The day of the problem
-        part: The part of the problem (1 or 2)
-        
-    Returns:
-        The solution to the problem
-        
-    Raises:
-        ValidationError: If the problem parameters are invalid
-        SessionError: If there is an issue with the session
-        InputError: If there is an issue with the input
-        SubmissionError: If there is an issue with submission
-        ExecutionError: If there is an issue executing the solution
-    """
-    solver = BaseSolver(Path.cwd())
-    return await solver.solve_problem(year, day, part)
