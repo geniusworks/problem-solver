@@ -21,22 +21,20 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
    - Test case extraction and validation (see `tests/`)
 
 2. **Solution Generation** (`shared/llm/`)
-   - Model Management (`shared/llm/models.py`)
-     - Role-based model registry
-     - Hardware-aware model selection
-     - Performance tracking per role
-     - Model characteristics and capabilities
-   - Provider Integration (`shared/llm/local.py`)
-     - Local Ollama provider with curated model list for typical developer hardware
-     - Preflight check against Ollama `/api/tags` to intersect configured models with
-       actually installed tags
-   - Dynamic Prompt Generation (`prompts.py`)
-   - Strategy Selection (`shared/strategies.py`)
-   - **Model Fallback Mechanism**
-     - Top 3 models (by learning DB metrics) are tried first
-     - If all top models fail validation, remaining available models are tried sequentially
-     - First fallback model to pass validation proceeds to execution-based testing
-     - All model attempts (top and fallback) update the learning DB for future ranking
+   - Provider (`shared/llm/local.py`) — the only provider is the local Ollama
+     one (`OllamaProvider`), talking to Ollama's HTTP `/api/generate`. Reasoning
+     models that split `thinking` from `response` are handled; `num_ctx` is a
+     swept config field. The remote-provider and LM-Studio scaffolding was
+     removed as unreachable.
+   - Preflight check against Ollama `/api/tags` intersects the configured/curated
+     model list with the tags actually installed (`_resolve_available_models`).
+   - Dynamic prompt generation (`shared/llm/prompts.py`)
+   - Strategy recommendation (`shared/strategy_recommender.py` +
+     `shared/strategies.py`) — seeds generation with candidate strategies and
+     their learning-DB effectiveness.
+   - **Model fallback** — the top `max_primary_models` (by learning-DB metrics)
+     are tried first; if all fail verification the remaining installed models are
+     tried; every attempt records its *verified* outcome to the learning DB.
 
 3. **Solution Execution** (`shared/execution.py`)
    - Safe code execution environment
@@ -52,28 +50,35 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
    - Attempt tracking and analysis
 
 4. **Learning System** (`learning/`)
-   - Strategy effectiveness tracking
-   - Solution pattern library
-   - Cross-problem pattern recognition
-   - Performance optimization system
-   - Model role performance tracking
-   - Role-based model selection
-   - Hardware compatibility management
-   - Problem type classification feeding model and strategy selection
-   - Code quality metrics recorded per attempt and used in model performance tracking
-   - Optional collaborative improvement phase that can be enabled via the
-     `ENABLE_COLLABORATIVE_IMPROVEMENT` environment flag (disabled by default for
-     typical AoC runs)
+   - One SQLite database (`learning/solver.db`) for model performance and
+     strategy effectiveness — recorded from the *verified* outcome, not at
+     generation time.
+   - Strategy effectiveness tracking and problem-type classification feeding
+     model/strategy selection.
+   - Optional collaborative improvement phase, enabled via the
+     `ENABLE_COLLABORATIVE_IMPROVEMENT` flag (off by default). Any candidate it
+     produces goes through the same oracle verification as every other path.
+
+5. **Measurement Platform** (`shared/experiment/`, `shared/verification.py`,
+   `shared/ground_truth.py`, `shared/overfit_detection.py`) — the core product.
+   - `SolverConfig` (a frozen, fingerprinted config), `ExperimentResult`/
+     `ProblemResult`/`AttemptRecord`, and `run_experiment`/`run_problem` in
+     `shared/experiment/`; driven by `experiment.py` (`--trials N` for
+     repeat-trials, since the pipeline is non-deterministic).
+   - A correctness **oracle**: candidates are judged against cached accepted AoC
+     answers (`shared/ground_truth.py`) and worked examples, with an overfit gate
+     (`shared/overfit_detection.py`). Claimed vs. verified is tracked separately;
+     nothing is counted as solved without independent verification.
 
 ## Configuration Management
 
 Configuration is layered to separate shared defaults from local settings:
 
 ### YAML Configuration (Shared Defaults)
-- `config/models.yaml`: Model capabilities and default parameters
-- `config/hardware.yaml`: Hardware profiles and capabilities
-- `config/resources.yaml`: Resource limits and timeouts
-- `config/cache.yaml`: Cache behavior settings
+- `config/resources.yaml`: Resource limits and timeouts (live)
+- `config/models.yaml`, `config/hardware.yaml`, `config/cache.yaml`: legacy —
+  the code that read them (the remote-provider registry, `HardwareManager`) has
+  been deleted; these files are pending removal in a later cleanup.
 
 ### Environment Configuration (Local Settings)
 - API keys and credentials
@@ -104,9 +109,13 @@ Core functionality including:
 - HTTP requests
 
 #### Solution Management
-- `execution.py`: Safe code execution
-- `validator.py`: Solution validation
-- `testing.py`: Solution testing framework
+- `execution.py`: safe code execution + `PerformanceMetrics` (relocated here
+  from the deleted `testing.py`)
+- `solver.py`: `BaseSolver.solve_problem`, the generate → verify → repair →
+  fallback pipeline
+- `submission/` (top-level package): the real AoC answer submitter, **isolated
+  and deliberately unwired** — kept for the solver phase (Milestone F), not
+  called from the solve loop
 
 ### Learning System (`learning/`)
 

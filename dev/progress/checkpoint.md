@@ -60,13 +60,21 @@ the historical/architecture sections below are pre-refactor and are rewritten as
   are no longer silently truncated to ~2048 tokens.
 - **Milestone A (PR #2, merged):** repeat-trials in the harness (`--trials N`), reporting a pipeline
   as a distribution rather than a point estimate.
-- **Milestone B (this PR) — the instrument is now sound:** closed the last oracle-bypass (the
+- **Milestone B (PR #3, merged) — the instrument is now sound:** closed the last oracle-bypass (the
   collaborative path's stub-validator gate now routes through `_verify_candidate` like every other
   path); made the config honest (six inert fields removed from the fingerprint, three wired to real
   behaviour — `max_primary_models`, `enable_fallback_models`, `execution_timeout`); unified the two
   learning databases onto `learning/solver.db`; and fixed `success_rate` to record from the
   *verified* outcome instead of at generation time. Model performance is now defined by one helper,
   `_record_model_performance`, against the oracle verdict.
+- **Milestone C1 (this PR) — deletion + isolation:** removed ~1,400 lines of dead/misplaced code
+  (solver selector/saver clusters + module entrypoint, `providers.py`, `hardware.py`,
+  `learning/strategies.py`, `testing.py`, `LMStudioProvider`, the simulated submit stub); relocated
+  `PerformanceMetrics` to `execution.py`; extracted `StrategyRecommender` from the misnamed
+  `SubmissionManager`; isolated the real, unwired AoC submitter into a top-level `submission/`
+  package. A reachability audit corrected several stale plan claims (collaborative.py is live and
+  stays; `SubmissionError` lives in `errors.py`). Suite 165 green. The `utils` split (C2) and
+  `solve_problem` decomposition (C3) are separate follow-up PRs.
 
 ### Verified reality (not claims — measured)
 - Recorded solutions: **4 verified correct** (2024 d1 p1/p2, d2 p1, d3 p1). See `solutions/README.md`.
@@ -79,10 +87,14 @@ the historical/architecture sections below are pre-refactor and are rewritten as
   parseable solution it is correct. The bottleneck is producing a candidate, not model capability.
 
 ### Next (per PLAN.md)
-- **Milestone C — structural consolidation:** delete ~1,400 lines of unreachable code, decompose the
-  1,290-line `solve_problem`, de-grab-bag `shared/utils.py`, rewrite the architecture doc + diagrams.
-- **Milestone D — generation robustness:** attack the `no_candidate` rate (extraction, poison
-  examples), the measured bottleneck.
+- **Milestone C2 — de-grab-bag `shared/utils.py`:** split into `shared/aoc/` + `shared/ledger.py` and
+  break the `utils → verification → ground_truth → utils` cycle. Next up.
+- **Milestone C3 — decompose `solve_problem`:** into typed, tested stage-methods (not a package).
+  Maintainability hygiene; moves no *measured* number, so it does not block D.
+- **Milestone D — generation robustness (the measured bottleneck):** attack the `no_candidate` rate
+  (robust extraction, poison examples, token accounting). Recommended priority over C3, since the
+  baseline says generation robustness — not code structure — is what stands between the platform and
+  results.
 
 
 ### Active Development

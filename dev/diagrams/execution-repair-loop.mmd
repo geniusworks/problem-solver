@@ -2,10 +2,10 @@ sequenceDiagram
     participant User as CLI/User
     participant Solver as BaseSolver
     participant Parser as Parser
-    participant Strategy as Strategy/Submission
+    participant Strategy as Strategy Recommender
     participant Learning as Learning DB
     participant LLM as LLM Provider(s)
-    participant Exec as SolutionExecutor
+    participant Exec as SolutionExecutor + Oracle
 
     User->>Solver: solve_problem(year, day, part)
     Solver->>Parser: parse_problem_text(part-specific AoC HTML)
@@ -15,13 +15,13 @@ sequenceDiagram
     Strategy-->>Solver: strategies + effectiveness
 
     Solver->>Learning: get_top_models(problem_type, role)
-    Learning-->>Solver: primary/reviewer/validator model sets
+    Learning-->>Solver: primary/reviewer model sets
 
     loop For each primary model
         Solver->>LLM: generate_solution(ParsedProblem, strategies)
-        LLM-->>Solver: candidate code
-        Solver->>Learning: update_model_performance(..., success/failure)
+        LLM-->>Solver: candidate code (enters pool; not yet judged)
     end
+    note over Solver,Learning: Model performance is recorded later, from the<br/>VERIFIED outcome in the execution loop -- not here.
 
     alt Consensus reached
         Solver-->>User: consensus solution
