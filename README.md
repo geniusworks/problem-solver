@@ -77,9 +77,8 @@ An intelligent system that uses Advent of Code problems as its primary testbed, 
 
 ### LLM Integration
 - `shared/llm/base.py`: Base LLM provider interface
-- `shared/llm/local.py`: Local LLM implementation (Ollama)
+- `shared/llm/local.py`: Local LLM implementation (Ollama HTTP API)
 - `shared/llm/prompts.py`: Dynamic prompt generation
-- `shared/llm/models.py`: Model management and selection
 - `learning/database.py`: Model performance tracking
 
 ### Solution Management
@@ -272,7 +271,7 @@ problem-solver/
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
+See [dev/docs/contributing.md](dev/docs/contributing.md) for guidelines on:
 - Code style
 - Pull requests
 - Testing requirements

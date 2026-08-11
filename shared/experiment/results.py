@@ -97,6 +97,11 @@ class ProblemResult:
     expected: Optional[str] = None
     winning_model: Optional[str] = None
 
+    # Which repeat of this problem produced this record (0-indexed). The pipeline
+    # is non-deterministic enough that a single run is not evidence, so problems
+    # are run several times and grouped by problem_id at the aggregate level.
+    trial: int = 0
+
     attempts: List[AttemptRecord] = field(default_factory=list)
     wall_clock_seconds: float = 0.0
 
@@ -132,6 +137,7 @@ class ProblemResult:
             "day": self.day,
             "part": self.part,
             "config_fingerprint": self.config_fingerprint,
+            "trial": self.trial,
             "outcome": self.outcome.value,
             "answer": self.answer,
             "expected": self.expected,
@@ -151,11 +157,14 @@ class ExperimentResult:
     config_name: str
     config_fingerprint: str
     config: Dict[str, Any]
+    # One entry per (problem, trial). With trials > 1 there are several entries
+    # per distinct problem; per-problem stability is reported via per_problem().
     results: List[ProblemResult] = field(default_factory=list)
+    trials: int = 1
     started_at: Optional[str] = None
     finished_at: Optional[str] = None
 
-    # -- headline metrics -------------------------------------------------
+    # -- headline metrics (over all problem-trials) -----------------------
 
     @property
     def attempted(self) -> int:
@@ -242,16 +251,66 @@ class ExperimentResult:
             entry["wall_clock_seconds"] = round(entry["wall_clock_seconds"], 1)
         return dict(sorted(stats.items(), key=lambda kv: -kv[1]["solved"]))
 
+    # -- per-problem stability across trials ------------------------------
+
+    def per_problem(self) -> Dict[str, Dict[str, Any]]:
+        """For each distinct problem: how many trials solved it, and whether it
+        was stable.
+
+        A pipeline that solves a problem 2 of 5 times is telling you something a
+        single run cannot. `stable` means every trial agreed (all solved or none);
+        a flipping problem is the honest signature of the variance the config note
+        warns about.
+        """
+        by_problem: Dict[str, List[ProblemResult]] = {}
+        for r in self.results:
+            by_problem.setdefault(r.problem_id, []).append(r)
+
+        stats: Dict[str, Dict[str, Any]] = {}
+        for pid, runs in by_problem.items():
+            solved = sum(1 for r in runs if r.solved)
+            outcomes = [r.outcome.value for r in runs]
+            stats[pid] = {
+                "trials": len(runs),
+                "solved": solved,
+                "solve_rate": round(solved / len(runs), 4) if runs else 0.0,
+                "stable": len(set(outcomes)) == 1,
+                "outcomes": outcomes,
+                "expected": next((r.expected for r in runs if r.expected), None),
+            }
+        return dict(sorted(stats.items()))
+
+    @property
+    def distinct_problems(self) -> int:
+        return len({r.problem_id for r in self.results})
+
+    @property
+    def solved_at_least_once(self) -> int:
+        """Distinct problems solved in *any* trial (best-case capability)."""
+        return sum(1 for s in self.per_problem().values() if s["solved"] > 0)
+
+    @property
+    def solved_every_time(self) -> int:
+        """Distinct problems solved in *every* trial (reliable capability)."""
+        return sum(
+            1 for s in self.per_problem().values()
+            if s["solved"] == s["trials"] and s["trials"] > 0
+        )
+
     def summary(self) -> Dict[str, Any]:
         return {
             "config_name": self.config_name,
             "config_fingerprint": self.config_fingerprint,
+            "trials": self.trials,
+            "distinct_problems": self.distinct_problems,
             "attempted": self.attempted,
             "solved": self.solved,
             "wrong": self.wrong,
             "unverified": self.unverified,
             "overfit": self.overfit,
             "solve_rate": round(self.solve_rate, 4),
+            "solved_at_least_once": self.solved_at_least_once,
+            "solved_every_time": self.solved_every_time,
             "first_try_rate": round(self.first_try_rate, 4),
             "mean_attempts_to_solve": (
                 round(self.mean_attempts_to_solve, 2)
@@ -267,6 +326,7 @@ class ExperimentResult:
     def to_dict(self, include_replay: bool = False) -> Dict[str, Any]:
         return {
             "summary": self.summary(),
+            "per_problem": self.per_problem(),
             "per_model": self.per_model(),
             "config": self.config,
             "started_at": self.started_at,

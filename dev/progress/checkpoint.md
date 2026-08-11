@@ -46,66 +46,40 @@ Note: Execute the above steps only on explicit wrap-up request.
 - [ ] Update checkpoint with full understanding
 - [ ] Preserve core principle consistency
 
-## Current Status (2025-12-08)
+## Current Status (2026-08-11)
 
-### Component Status
-- Authentication: Improved error handling and user feedback ⚡
-- Input Retrieval: Working with valid session token ✅
-- Core Solver: Pipeline working end-to-end; execution-based selection and repair loop
-  implemented; execution-based model fallback added (tries all configured models when
-  top 3 fail execution validation); successfully solving real AoC problems including
-  2024 Day 1 (parts 1–2), Day 2 (parts 1–2), Day 3 Part 1, and Day 4 Part 1 ✅
-- Example Parsing: Fixed to correctly extract AoC-style examples from HTML <pre><code>
-  blocks and infer expected outputs from prose patterns; validated on multiple 2024 days ✅
-- Solution Reuse: Non-force runs now reuse existing canonical per-day solution files
-  (`YYYY_dayDD_partP.py`) by executing them once against full input before falling back to a
-  fresh solve when needed ✅
-- Model Integration: Curated local model list for M1 16GB-class hardware (6 models);
-  Ollama preflight check in place; model filtering against available models working ✅
-- Prompt Guidance: Refactored to follow Prompt Guidance Discipline principle—pattern-class
-  wisdom only, no overfit problem-specific guidance; added Reasoning Discipline, Overfit
-  Avoidance, and Reasoning Checklists to encourage methodical implementation ✅
-- Overfit Detection: Automatic static analysis to detect hardcoded example strings,
-  constant output stubs, and long string equality checks before recording solutions ✅
-- Learning System: Database and schema implemented; model performance updates include
-  code quality metrics and problem type information 🔄
+**Authoritative roadmap: `PLAN.md` at the repo root.** This section is the live status snapshot;
+the historical/architecture sections below are pre-refactor and are rewritten as Milestone C lands.
 
-### Known Issues
-- Collaborative improvement and validator flows have only been exercised on synthetic test
-  problems.
-- Core solver, LLM integration, validator, quality, and learning modules still have
-  relatively low coverage (~30%).
-- AoC 2025 12-day format is supported in utilities but has not yet been validated with real
-  December runs.
-- Day 3 Part 2 not yet solved—models struggle with the noisy instruction stream pattern
-  despite generic guidance; this is expected as we've removed overfit guidance.
-- Day 4 Part 2, Day 5 Parts 1–2, Day 6 Part 1 not yet solved—models misinterpret problem
-  requirements (e.g., using BFS flood fill instead of stated guard patrol simulation).
-- Current solver success rate: 6/10 attempted problem parts (Days 1–4 Part 1, Day 1–2 Part 2).
+### Where the project is
+- **PR #1 (merged):** added a correctness oracle (`shared/verification.py`, `shared/ground_truth.py`,
+  `shared/overfit_detection.py`), the experiment harness (`shared/experiment/`, `experiment.py`),
+  and independent verification. Fixed the harness bugs that had made every prior measurement
+  untrustworthy — most importantly, generation now goes through Ollama's HTTP API instead of the
+  interactive `ollama run` CLI (whose terminal redraws were corrupting generated code), and prompts
+  are no longer silently truncated to ~2048 tokens.
+- **Milestone A (this PR):** repeat-trials in the harness (`--trials N`), reporting a pipeline as a
+  distribution rather than a point estimate.
 
-### Next Steps
-1. Run additional AoC problems (remaining 2024 days and earlier years) to validate the
-   parser and solver across different problem styles.
-2. Exercise collaborative improvement and repair loop on problems where initial attempts fail.
-3. Expand tests and coverage for solver, LLM integration, validator, quality, and learning
-   modules based on feedback from real runs.
-4. Monitor performance and memory behavior on M1 16GB hardware for the curated model set
-   and adjust model list or limits if needed.
+### Verified reality (not claims — measured)
+- Recorded solutions: **4 verified correct** (2024 d1 p1/p2, d2 p1, d3 p1). See `solutions/README.md`.
+  The earlier "6/10" figure was never true; three recorded solutions were wrong and are quarantined
+  in `solutions/rejected/`.
+- **First multi-run baseline** (`dev/progress/baseline-2024-d1-3.md`): qwen2.5-coder:7b, 2024 d1–3,
+  5 trials — **12/30 solved (40%); 4 of 6 problems solvable, 0 of 6 reliable.** Four of six flip
+  across identical runs; single-run numbers are noise.
+- **Every failure is `no_candidate`, never `wrong` or `overfit`.** When the pipeline emits a
+  parseable solution it is correct. The bottleneck is producing a candidate, not model capability.
 
-### Active Priorities
-- [HIGH] Validate parser and solver on additional AoC problems to ensure robustness.
-- [HIGH] Exercise repair loop and collaborative improvement on harder problems.
-- [MED] Raise coverage on solver, LLM, validator, quality, and learning modules.
-- [LOW] Confirm AoC 2025 utilities and documentation behave correctly during the December
-  12-day event.
-
-### Current Test Focus
-- Completed: 2024 Days 1–4 Part 1 and Days 1–2 Part 2 solved and recorded.
-- Unsolved: Day 3 Part 2, Day 4 Part 2, Day 5 Parts 1–2, Day 6 Part 1.
-- Observation: Models struggle with problems requiring precise simulation of stated
-  procedures (guard patrol, topological sort with specific rules) vs. generic algorithms.
-- Next: Assess whether additional pattern-class guidance or model capability improvements
-  are needed for simulation-style problems.
+### Next (per PLAN.md)
+- **Milestone B — make the instrument sound:** close the live validator-stub hole
+  (`shared/solver.py:491-503`), strip the 9 inert `SolverConfig` fields that still enter the
+  fingerprint, unify the two learning databases, and fix `success_rate` (it currently records
+  success at generation time, before verification).
+- **Milestone C — structural consolidation:** delete ~1,400 lines of unreachable code, decompose the
+  1,290-line `solve_problem`, de-grab-bag `shared/utils.py`, rewrite the architecture doc + diagrams.
+- **Milestone D — generation robustness:** attack the `no_candidate` rate (extraction, poison
+  examples), the measured bottleneck.
 
 
 ### Active Development
