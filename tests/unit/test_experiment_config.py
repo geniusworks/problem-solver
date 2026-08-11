@@ -13,8 +13,8 @@ class TestFingerprint:
     def test_behaviour_change_changes_the_fingerprint(self):
         base = SolverConfig()
         assert base.with_overrides(max_repair_iterations=5).fingerprint() != base.fingerprint()
-        assert base.with_overrides(consensus_on="code").fingerprint() != base.fingerprint()
-        assert base.with_overrides(samples_per_model=3).fingerprint() != base.fingerprint()
+        assert base.with_overrides(max_primary_models=6).fingerprint() != base.fingerprint()
+        assert base.with_overrides(enable_fallback_models=False).fingerprint() != base.fingerprint()
 
     def test_renaming_does_not_change_the_fingerprint(self):
         """Otherwise a rename looks like a different experiment."""
@@ -34,10 +34,8 @@ class TestValidation:
     @pytest.mark.parametrize(
         "kwargs",
         [
-            {"consensus_on": "vibes"},
             {"consensus_threshold": 0.0},
             {"consensus_threshold": 1.5},
-            {"samples_per_model": 0},
             {"max_repair_iterations": -1},
             {"max_primary_models": 0},
         ],
@@ -76,14 +74,14 @@ class TestFromEnv:
 
     def test_defaults_are_safe(self, monkeypatch):
         for var in ("MAX_REPAIR_ITERATIONS", "ENABLE_COLLABORATIVE_IMPROVEMENT",
-                    "SOLVER_MODELS", "SUBMIT_SOLUTIONS", "REFERENCE_MODEL"):
+                    "SOLVER_MODELS"):
             monkeypatch.delenv(var, raising=False)
 
         config = SolverConfig.from_env()
 
-        assert config.submit_solutions is False
         assert config.require_oracle is True
-        assert config.reference_model is None
+        assert config.enable_collaborative_improvement is False
+        assert config.max_primary_models == 3
 
 
 def _attempt(outcome: Outcome, model: str = "m") -> AttemptRecord:
@@ -200,3 +198,25 @@ class TestMetrics:
         data = json.loads(path.read_text())
         assert data["summary"]["solved"] == 1
         assert data["results"][0]["outcome"] == "solved"
+
+
+class TestConfigHonesty:
+    """Every field in the fingerprint must change what a run does.
+
+    A field that enters fingerprint() but changes no behaviour gives two
+    byte-identical runs two identities -- the hollow-A/B trap. Knobs for unbuilt
+    features were removed rather than left inert.
+    """
+
+    def test_no_removed_placeholder_fields(self):
+        config = SolverConfig()
+        for gone in ("consensus_on", "samples_per_model", "prompt_variant",
+                     "submit_solutions", "reference_model", "provider"):
+            assert not hasattr(config, gone), f"{gone} should have been removed"
+
+    def test_wired_fields_are_behavioural(self):
+        base = SolverConfig()
+        # These now drive real behaviour (model count, fallback gate, exec timeout).
+        assert base.with_overrides(max_primary_models=6).fingerprint() != base.fingerprint()
+        assert base.with_overrides(enable_fallback_models=False).fingerprint() != base.fingerprint()
+        assert base.with_overrides(execution_timeout=30).fingerprint() != base.fingerprint()

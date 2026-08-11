@@ -131,7 +131,9 @@ class BaseSolver:
         self.workspace_dir = workspace_dir
         self.debug = debug
         self.config = config if config is not None else SolverConfig.from_env()
-        self.solution_executor = SolutionExecutor(workspace_dir)
+        self.solution_executor = SolutionExecutor(
+            workspace_dir, timeout=self.config.execution_timeout
+        )
         self.submission_manager = SubmissionManager(workspace_dir)
 
         # Initialize learning system
@@ -271,7 +273,9 @@ class BaseSolver:
             
             # Get top performing models for each role based on problem type
             problem_type = self._get_problem_type(characteristics)
-            primary_models = self._get_top_models(problem_type, "primary", limit=3)
+            primary_models = self._get_top_models(
+                problem_type, "primary", limit=self.config.max_primary_models
+            )
             # Reviewer models feed the (default-off) collaborative-improvement
             # path. The old "validator" role is gone: it drove a stub that always
             # returned True; acceptance is decided by execution against the oracle.
@@ -624,8 +628,8 @@ class BaseSolver:
                 name for name in self.models.keys()
                 if name not in primary_models
             ]
-            
-            if fallback_models:
+
+            if fallback_models and self.config.enable_fallback_models:
                 logging.info("")
                 logging.info(
                     f"All primary models failed execution validation. "

@@ -38,22 +38,20 @@ class SolverConfig:
     # --- identity -------------------------------------------------------
     name: str = "default"
 
+    # Only fields that affect solver behaviour today live here. Anything that
+    # enters fingerprint() must change what a run does, or two byte-identical
+    # runs get two identities and every A/B built on them is hollow. Knobs for
+    # unbuilt features (self-consistency sampling, prompt variants, answer-based
+    # consensus, remote providers, submission) are re-added with their features
+    # in later milestones, wired -- not before.
+
     # --- model selection ------------------------------------------------
     # None means "let the learning database rank the installed models".
     models: Optional[Tuple[str, ...]] = None
-    provider: str = "ollama"
     max_primary_models: int = 3
-    # A capability reference, never part of the normal solve path. Set it to
-    # answer "is this failing because the harness is broken or because the
-    # model is weak?" -- a reference model that fails through the harness but
-    # succeeds standalone indicates a harness bug.
-    reference_model: Optional[str] = None
 
     # --- generation -----------------------------------------------------
     temperature: Optional[float] = None
-    # >1 draws several samples from each model for self-consistency voting.
-    samples_per_model: int = 1
-    prompt_variant: str = "default"
 
     # --- repair and fallback --------------------------------------------
     max_repair_iterations: int = 2
@@ -61,10 +59,8 @@ class SolverConfig:
     enable_collaborative_improvement: bool = False
 
     # --- consensus ------------------------------------------------------
-    # "answer" groups candidates by the value their code computes; "code"
-    # reproduces the historical behaviour of grouping by source text, which
-    # essentially never matched across different models.
-    consensus_on: str = "answer"
+    # Threshold and quorum for the (source-text) consensus check. consensus_on
+    # returns when answer-based consensus is built (Milestone E).
     consensus_threshold: float = 0.6
     min_consensus_models: int = 2
 
@@ -72,7 +68,6 @@ class SolverConfig:
     # Refuse to accept a candidate for a problem with no oracle (no example
     # with a known expected output, and no cached accepted answer).
     require_oracle: bool = True
-    submit_solutions: bool = False
 
     # --- execution -------------------------------------------------------
     execution_timeout: Optional[int] = None
@@ -93,16 +88,10 @@ class SolverConfig:
     notes: str = field(default="", compare=False)
 
     def __post_init__(self) -> None:
-        if self.consensus_on not in {"answer", "code"}:
-            raise ValueError(
-                f"consensus_on must be 'answer' or 'code', got {self.consensus_on!r}"
-            )
         if not 0.0 < self.consensus_threshold <= 1.0:
             raise ValueError(
                 f"consensus_threshold must be in (0, 1], got {self.consensus_threshold}"
             )
-        if self.samples_per_model < 1:
-            raise ValueError("samples_per_model must be >= 1")
         if self.max_repair_iterations < 0:
             raise ValueError("max_repair_iterations must be >= 0")
         if self.max_primary_models < 1:
@@ -148,14 +137,11 @@ class SolverConfig:
             "enable_collaborative_improvement": _env_flag(
                 "ENABLE_COLLABORATIVE_IMPROVEMENT", False
             ),
-            "submit_solutions": _env_flag("SUBMIT_SOLUTIONS", False),
         }
         if models:
             env_config["models"] = tuple(
                 m.strip() for m in models.split(",") if m.strip()
             )
-        if os.getenv("REFERENCE_MODEL"):
-            env_config["reference_model"] = os.getenv("REFERENCE_MODEL")
 
         env_config.update(overrides)
         if env_config.get("models") is not None:

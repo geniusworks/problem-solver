@@ -102,7 +102,7 @@ class DummyLearningDatabase:
 class RecordingExecutor:
     last_instance = None
 
-    def __init__(self, workspace_dir):  # type: ignore[override]
+    def __init__(self, workspace_dir, timeout=None):  # type: ignore[override]
         self.workspace_dir = workspace_dir
         self.calls = []
         RecordingExecutor.last_instance = self

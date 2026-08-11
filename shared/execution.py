@@ -209,13 +209,16 @@ async def execute_solution(code: str, input_data: str, timeout: int = 5) -> "Exe
 class SolutionExecutor:
     """Handles execution and validation of generated solutions."""
 
-    def __init__(self, workspace_dir: Path) -> None:
+    def __init__(self, workspace_dir: Path, timeout: Optional[int] = None) -> None:
         """Initialize the solution executor.
-        
+
         Args:
             workspace_dir: Workspace directory path
+            timeout: Per-execution timeout in seconds. None falls back to the
+                configured default (resources.yaml execution.timeout_seconds).
         """
         self.workspace_dir = workspace_dir
+        self.timeout = timeout
         self.temp_manager = TempFileManager(workspace_dir)
         self.performance_monitor = PerformanceMonitor()
 
@@ -322,7 +325,9 @@ class SolutionExecutor:
         """
         try:
             # Get resource limits from config
-            timeout = RESOURCES_CONFIG.get("execution", {}).get("timeout_seconds", DEFAULT_EXECUTION_TIMEOUT)
+            timeout = self.timeout or RESOURCES_CONFIG.get("execution", {}).get(
+                "timeout_seconds", DEFAULT_EXECUTION_TIMEOUT
+            )
             max_memory = RESOURCES_CONFIG.get("execution", {}).get("max_memory_mb", 512)
             max_processes = RESOURCES_CONFIG.get("execution", {}).get("max_processes", 1)
 

@@ -44,13 +44,13 @@ SYMBOL = {
 # Fields that are ints/floats/bools rather than strings, for --config parsing.
 _INT_FIELDS = {
     "num_ctx",
-    "max_primary_models", "samples_per_model", "max_repair_iterations",
+    "max_primary_models", "max_repair_iterations",
     "min_consensus_models", "execution_timeout",
 }
 _FLOAT_FIELDS = {"consensus_threshold", "temperature"}
 _BOOL_FIELDS = {
     "enable_fallback_models", "enable_collaborative_improvement",
-    "require_oracle", "submit_solutions",
+    "require_oracle",
 }
 
 
@@ -90,11 +90,6 @@ def parse_args(argv=None):
     parser.add_argument(
         "--config", action="append", default=[], metavar="K=V,...",
         help="Configuration overrides; repeat to compare configurations",
-    )
-    parser.add_argument(
-        "--reference-model", default=None,
-        help="Capability reference, run outside the normal solve path. Use it to "
-             "tell a harness bug from a model limitation.",
     )
     parser.add_argument(
         "--out", type=Path, default=None,
@@ -166,8 +161,6 @@ async def async_main(args) -> int:
     problems = parse_problem_set(args.problems)
     specs = args.config or ["name=default"]
     configs = [parse_config(spec) for spec in specs]
-    if args.reference_model:
-        configs = [c.with_overrides(reference_model=args.reference_model) for c in configs]
 
     out_dir = args.out or (REPO_ROOT / "dev" / "experiments")
     experiments: List[ExperimentResult] = []
