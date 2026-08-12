@@ -1,5 +1,6 @@
 """Local LLM providers."""
 
+import ast
 import logging
 import asyncio
 import os
@@ -51,6 +52,10 @@ class OllamaProvider(LLMProvider):
         self.num_ctx = num_ctx
         self.model_info = {"name": model, "description": "Description of the model."}
         self.last_prompt = None
+        # Token usage of the most recent generate_solution call (analysis + impl
+        # generate() calls summed), read by the solver to fill AttemptRecord.
+        # These were structurally zero in every result JSON before this.
+        self.last_token_usage: Dict[str, int] = {"input_tokens": 0, "output_tokens": 0}
 
     async def generate_solution(
         self, 
@@ -81,7 +86,8 @@ Examples:
 {format_test_cases(problem.examples)}
 
 Final Question: {problem.final_question}""")
-        
+        analysis_in, analysis_out = self._tokens(analysis)
+
         # Phase 2: Strategy Selection.
         #
         # Both branches go through the converter: get_strategies_for_problem
@@ -108,7 +114,15 @@ Final Question: {problem.final_question}""")
                 implementation_prompt, temperature=self.temperature
             )
             generation_time = (datetime.now() - start_time).total_seconds()
-            
+
+            # Total token usage across both model calls (analysis + impl), for
+            # the solver to record on the attempt.
+            impl_in, impl_out = self._tokens(response)
+            self.last_token_usage = {
+                "input_tokens": analysis_in + impl_in,
+                "output_tokens": analysis_out + impl_out,
+            }
+
             # Extract the code from the response
             code = self._extract_code(response.content)
             
@@ -167,7 +181,12 @@ Final Question: {problem.final_question}""")
             
         except Exception as e:
             generation_time = (datetime.now() - start_time).total_seconds()
-            
+            # The implementation call failed; only the analysis call spent tokens.
+            self.last_token_usage = {
+                "input_tokens": analysis_in,
+                "output_tokens": analysis_out,
+            }
+
             # Record the failed attempt
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             attempt_data = {
@@ -212,39 +231,93 @@ Final Question: {problem.final_question}""")
             code += "\n\n" + STANDARD_MAIN_BLOCK
         return code
 
+    # A code fence: ``` or ~~~, an optional language tag, then the body up to
+    # the closing fence. Deliberately permissive about the tag -- the old
+    # extractor accepted only ```python and returned nothing for ```py, bare
+    # ```, ~~~, or unfenced code, which is a large part of the no-candidate rate.
+    _FENCE_RE = re.compile(
+        r"(?:```|~~~)[ \t]*[A-Za-z0-9_+.-]*[ \t]*\r?\n(.*?)(?:```|~~~)",
+        re.DOTALL,
+    )
+    # Lines that plausibly begin a Python code region (used to peel prose off
+    # unfenced responses before AST-validating what's left).
+    _CODE_START_RE = re.compile(r"^\s*(?:import |from |def |async def |class |@|if __name__)")
+
     def _extract_code(self, text: str) -> Optional[str]:
-        """Extract Python code from response text."""
-        logger.debug("Looking for code between python markers...")
-        
-        # First try to find code between ```python markers
-        pattern = r"```python\s*(.*?)\s*```"
-        matches = re.findall(pattern, text, re.DOTALL)
-        if matches:
-            logger.debug("Found code between markers")
-            return matches[0].strip()
-            
-        # If no markers, try to find indented code blocks
-        code_lines = []
-        in_code = False
-        for line in text.split("\n"):
-            if line.strip().startswith("def "):
-                in_code = True
-            elif (
-                in_code
-                and line
-                and not line.startswith(" ")
-                and not line.startswith("if ")
-            ):
-                break
-            if in_code:
-                code_lines.append(line)
+        """Extract runnable Python from a model response.
 
-        if code_lines:
-            logger.debug("Found code based on Python syntax")
-            return "\n".join(code_lines)
+        Every candidate region is validated with ``ast.parse`` and, among those
+        that parse, the one that actually defines ``solve()`` wins. This is
+        robust to fence variations (```python, ```py, bare ```, ~~~) and to
+        unfenced responses -- including reasoning models' ``thinking`` text,
+        which is prose wrapped around code. Returns None only when nothing in
+        the response parses as Python.
+        """
+        if not text or not text.strip():
+            return None
 
-        logger.debug("No code found in response")
-        return None
+        candidates = [body for body in self._FENCE_RE.findall(text) if body.strip()]
+        candidates.append(text)  # unfenced fallback: prose+code, or pure code
+
+        best: Optional[str] = None
+        best_key = (-1, -1)  # (defines_solve, length)
+        for candidate in candidates:
+            for block in self._parseable_blocks(candidate):
+                key = (1 if self._defines_solve(block) else 0, len(block))
+                if key > best_key:
+                    best, best_key = block, key
+
+        if best is None:
+            logger.debug("No parseable Python found in response")
+        return best
+
+    @classmethod
+    def _parseable_blocks(cls, text: str):
+        """Yield parseable Python regions in *text*, longest-first per start.
+
+        If the whole thing parses, that is the region. Otherwise prose is likely
+        wrapped around the code, so scan from each line that looks like the start
+        of a code construct and shrink the end until a region parses.
+        """
+        stripped = text.strip()
+        if cls._parses(stripped):
+            yield stripped
+            return
+
+        lines = text.split("\n")
+        n = len(lines)
+        starts = [i for i, line in enumerate(lines) if cls._CODE_START_RE.match(line)]
+        for start in starts:
+            for end in range(n, start, -1):
+                block = "\n".join(lines[start:end]).strip()
+                if block and cls._parses(block):
+                    yield block
+                    break  # first hit from this start is the longest region
+
+    @staticmethod
+    def _tokens(response: LLMResponse) -> tuple:
+        """(input_tokens, output_tokens) from a response's Ollama metadata."""
+        md = response.metadata or {}
+        return (md.get("prompt_eval_count") or 0, md.get("eval_count") or 0)
+
+    @staticmethod
+    def _parses(code: str) -> bool:
+        try:
+            ast.parse(code)
+            return True
+        except (SyntaxError, ValueError):
+            return False
+
+    @staticmethod
+    def _defines_solve(code: str) -> bool:
+        try:
+            tree = ast.parse(code)
+        except (SyntaxError, ValueError):
+            return False
+        return any(
+            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "solve"
+            for node in ast.walk(tree)
+        )
 
     def _convert_to_strategy_objects(self, strategy_names: List[str], effectiveness: Optional[Dict[str, float]] = None) -> List[Strategy]:
         """Convert strategy names to Strategy objects.

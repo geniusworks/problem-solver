@@ -93,6 +93,16 @@ class TestReasoningModels:
         assert result.metadata["eval_count"] == 110
         assert result.metadata["prompt_eval_count"] == 900
 
+    async def test_tokens_helper_reads_metadata(self):
+        result = await _generate(
+            {"response": "x", "eval_count": 110, "prompt_eval_count": 900}
+        )
+        assert OllamaProvider._tokens(result) == (900, 110)
+
+    async def test_tokens_helper_defaults_to_zero_when_absent(self):
+        result = await _generate({"response": "x"})
+        assert OllamaProvider._tokens(result) == (0, 0)
+
     async def test_non_200_is_reported(self):
         with pytest.raises(RuntimeError, match="HTTP 500"):
             await _generate({}, status=500)

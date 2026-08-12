@@ -51,6 +51,9 @@ class DummyPrimaryModel:
     def __init__(self, name: str, solution: str) -> None:
         self.name = name
         self._solution = solution
+        # Real OllamaProvider exposes this after generate_solution; the solver
+        # reads it to record token cost on the attempt.
+        self.last_token_usage = {"input_tokens": 900, "output_tokens": 110}
 
     async def generate_solution(  # type: ignore[override]
         self, parsed_problem, year: int, day: int, strategies, strategy_effectiveness
@@ -214,6 +217,12 @@ async def test_solver_uses_execution_based_selection_when_no_consensus(
     # The recording executor should have been invoked at least once
     assert RecordingExecutor.last_instance is not None
     assert RecordingExecutor.last_instance.calls
+
+    # Token cost the model reported must reach the attempt trace, not be the
+    # structural zero every result JSON carried before.
+    generate_attempts = [a for a in solver.attempts if a.stage in ("generate", "repair")]
+    assert generate_attempts
+    assert all(a.input_tokens == 900 and a.output_tokens == 110 for a in generate_attempts)
 
 
 @pytest.mark.asyncio

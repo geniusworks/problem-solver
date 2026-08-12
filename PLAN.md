@@ -6,11 +6,17 @@ PR #1 turned the solver from an unmeasurable pipeline into one with a correctnes
 experiment harness, and independent verification. Two full-codebase audits (structural + pipeline)
 now show where it stands.
 
-**The empirical reframe.** Across recorded runs, **when the model produces a candidate it is ~9:1
-correct** (9 solved, 1 wrong). The dominant failure is *no candidate at all* plus outcomes flipping
-across byte-identical configs. So the bottleneck is **generation robustness and run-to-run
-variance — not model capability, not orchestration sophistication.** "The 7B models are too weak"
-was never measured; it was inferred from a broken instrument.
+**The empirical reframe (updated after the Milestone D1 A/B).** The original reframe read this
+project's early numbers as *"when the model produces a candidate it is ~9:1 correct; the dominant
+failure is no candidate at all."* The D1 A/B (`dev/progress/milestone-d-extraction.md`) showed that
+was a **problem-level rollup artifact**: a problem whose every candidate is wrong or errors returns
+None from the solver and is recorded as `no_candidate`, erasing the wrong/error attempts underneath.
+With robust extraction surfacing candidates and honest attempt-level accounting, the same 2024 d1–3
+config produces **51 attempts: 13 solved / 21 wrong / 16 error / 1 no_candidate**. So the real
+bottleneck is **code correctness — 41% wrong, 31% runtime errors — not extraction or "no candidate".**
+Model capability and run-to-run variance are still in play, but the lever moved: from *getting a
+candidate at all* to *getting a candidate that runs and is right*. Milestones D/E are re-pointed
+accordingly (reduce runtime errors; then self-consistency/consensus for the wrong answers).
 
 **What the audits found still wrong** (file:line):
 - **Live correctness hole:** `shared/solver.py:491-503` still runs the stub `validate_solution`
@@ -183,21 +189,40 @@ clean; `dev/verify_solutions.py` 4/4.
 
 Attack the no-candidate rate. Every change A/B'd through Milestone A's `--trials`.
 
-- **Robust extraction:** `_extract_code` (`shared/llm/local.py:226-258`) only accepts ` ```python `
-  fences. Accept bare ` ``` `, `~~~`, and AST-scan the whole response for a `solve` def as a last
-  resort — including the reasoning-model `thinking` fallback text.
-- **Remove poison examples:** `years/2024/day05/examples/part1/example_2.json` (`143` paired with
-  updates-only input), `day06/part1/example_6.json` (`41` on the solution diagram),
-  `day06/part2/{1,6}.json`. These reach the model via `format_test_cases` *and* misdirect the repair
-  loop via `_build_execution_feedback`. Fix the parser pairing or drop these example files.
-- **A/B the double-generation:** `generate_solution` makes two model calls (Phase-1 analysis +
-  Phase-3 impl); Phase-1 prose is bolted verbatim into the impl prompt and can balloon it into the
-  `num_ctx`-worse zone. Wire `prompt_variant` and measure single-call vs two-call.
-- **Token/cost accounting:** thread `eval_count`/`prompt_eval_count` (`local.py:397-404`) into
-  `AttemptRecord.input_tokens/output_tokens` — today structurally zero in every result JSON.
+### D1 — Robust extraction — ✅ DONE (PR: milestone-d-generation-robustness)
 
-**Verify:** a `--trials 5` baseline before/after shows the no-candidate rate drop with the solve
-rate steady or up; result JSONs carry non-zero token counts.
+`_extract_code` accepted only ` ```python ` fences with a line-heuristic fallback that broke on
+module-level `class`/`for`/`import`. Rewrote it around `ast.parse`: gather every fenced block (any
+fence — ` ```python `, ` ```py `, bare ` ``` `, `~~~` — or none), plus the whole response as an
+unfenced candidate; validate each region by parsing it; prefer the one that defines `solve()`.
+Handles reasoning models' `thinking` prose+code. Returns None only when nothing parses. 12 tests.
+
+### D2 — Token/cost accounting — ✅ DONE (same PR)
+
+`AttemptRecord.input_tokens/output_tokens` were structurally zero everywhere. `OllamaProvider` now
+sums both model calls (analysis + impl) into `last_token_usage`; `BaseSolver` threads it through
+`_record_attempt` on the primary/repair/fallback/no-candidate paths.
+
+### D3 — Poison examples — DOWNGRADED (finding, not the planned fix)
+
+The plan called for dropping mis-paired example files (`2024 d5 p1 ex2` = `143` on an updates-only
+fragment; `d6 p1 ex6` = `41` on the solution diagram). **But `years/` is gitignored** (cache
+artifacts, not committable) **and the acceptance-veto harm is already guarded**: `_verify_candidate`
+only lets examples veto when there is *no* ground truth (`solver.py:744-748`); when the accepted
+answer is cached, only `full_answer == known_answer` decides. So a poison example cannot reject a
+correct candidate on any problem we can actually score. The residual harm is repair-*feedback*
+misdirection (`_build_execution_feedback` still cites the bad example). Left as a targeted follow-up
+— suppress example-mismatch feedback when ground truth exists — to be justified by the D1 A/B first.
+
+### D4 — A/B the double-generation — follow-up
+
+`generate_solution` makes two model calls (analysis + impl); the analysis prose is bolted into the
+impl prompt and can balloon it toward the `num_ctx`-worse zone. Wire a prompt variant and measure
+single-call vs two-call through `--trials`.
+
+**Verify:** a `--trials 5` run of the 2024 d1-3 baseline config on this branch, compared to the
+recorded 12/30 baseline (all failures `no_candidate`), shows the no-candidate rate drop with no
+regression into `wrong`; result JSONs now carry non-zero token counts.
 
 ## Milestone E — Orchestration as measured experiments (re-add with evidence)
 
