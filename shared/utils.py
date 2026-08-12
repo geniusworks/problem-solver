@@ -69,38 +69,16 @@ def setup_logging(year: Optional[int] = None, day: Optional[int] = None):
     logging.getLogger("asyncio").setLevel(logging.INFO)
 
 
-def get_aoc_day_count(year: int) -> int:
-    """Return the number of Advent of Code days for a given year."""
-    return 25 if year < 2025 else 12
-
-
-def get_problem_year_day() -> Tuple[int, int]:
-    """
-    Get the current Advent of Code year and day.
-    If we're in December, use the current year and day.
-    Otherwise, default to the most recent December.
-    """
-    now = datetime.now()
-
-    if now.month == 12:
-        year = now.year
-        day = min(now.day, get_aoc_day_count(year))
-    else:
-        year = now.year - 1
-        day = get_aoc_day_count(year)
-    return year, day
-
-
-def get_problem_dir(year: int, day: int) -> Path:
-    """Get the directory path for the given year and day."""
-    return config.BASE_DIR / f"years/{year}/day{day:02d}"
-
-
-def create_problem_dir(year: int, day: int) -> Path:
-    """Create the problem directory if it doesn't exist."""
-    problem_dir = get_problem_dir(year, day)
-    problem_dir.mkdir(parents=True, exist_ok=True)
-    return problem_dir
+# Path primitives now live in shared.paths (a leaf module with no back-edges),
+# which is what broke the utils -> verification -> ground_truth -> utils cycle.
+# Re-imported here so this module's own callers keep working during the split.
+from shared.paths import (  # noqa: E402
+    get_aoc_day_count,
+    get_problem_year_day,
+    get_problem_dir,
+    create_problem_dir,
+    get_input_path,
+)
 
 
 async def validate_session_cookie(session_cookie: str) -> Tuple[bool, str]:
@@ -542,11 +520,6 @@ def save_to_file(filename: str, content: str, problem_dir: Path) -> None:
         f.write(content)
     logger = logging.getLogger(__name__)
     logger.info(f"Saved {filename}")
-
-
-def get_input_path(year: int, day: int) -> Path:
-    """Get the path to the input file for the given year and day."""
-    return get_problem_dir(year, day) / config.INPUT_FILE
 
 
 async def ensure_input_file(workspace_dir: Path, year: int, day: int) -> Path:

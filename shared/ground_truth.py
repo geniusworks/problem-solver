@@ -22,7 +22,7 @@ from typing import Dict, Optional
 from bs4 import BeautifulSoup
 
 from shared import config
-from shared.utils import get_problem_dir
+from shared.paths import get_problem_dir
 
 logger = logging.getLogger(__name__)
 

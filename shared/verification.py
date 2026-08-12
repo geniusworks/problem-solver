@@ -18,7 +18,7 @@ from typing import Optional
 
 from shared import config
 from shared.ground_truth import get_known_answer
-from shared.utils import get_problem_dir
+from shared.paths import get_problem_dir
 
 SOLUTION_FILENAME_RE = re.compile(r"(\d{4})_day(\d{1,2})_part(\d)\.py$")
 
