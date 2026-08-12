@@ -20,6 +20,7 @@ It exits non-zero if any recorded solution is wrong, errors, or cannot be verifi
 |2024|1|2|23963899|qwen2.5-coder:7b|2025-12-08 01:54:44 UTC|solutions/2024_day01_part2.py|
 |2024|2|1|421|llama3.1:8b|2025-12-08 02:09:18 UTC|solutions/2024_day02_part1.py|
 |2024|3|1|174561379|deepseek-coder:6.7b|2025-12-08 02:20:18 UTC|solutions/2024_day03_part1.py|
+|2024|6|1|5331|qwen2.5-coder:7b|2026-08-12 17:29:53 UTC|solutions/2024_day06_part1.py|
 <!-- end verified rows -->
 
 ## Rejected — previously recorded as solved, verified wrong
