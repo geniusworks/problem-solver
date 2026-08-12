@@ -320,6 +320,7 @@ class BaseSolver:
                         stage="consensus",
                         answer=consensus_verdict.answer,
                         code=consensus_answer,
+                        error=None if consensus_verdict.accepted else consensus_verdict.feedback,
                     )
                     if not consensus_verdict.accepted:
                         logger.info(
@@ -447,6 +448,10 @@ class BaseSolver:
                                 code=solution,
                                 input_tokens=tokens.get("input_tokens", 0),
                                 output_tokens=tokens.get("output_tokens", 0),
+                                # Persist why a candidate failed (traceback / expected-vs-got).
+                                # error is kept in the result JSON without --include-replay, so
+                                # the wrong-vs-error split is diagnosable from every run.
+                                error=None if verdict.accepted else verdict.feedback,
                             )
                             # Record the model's verified performance once, on its
                             # initial candidate (repair iterations re-test the same
@@ -563,6 +568,7 @@ class BaseSolver:
                             code=solution,
                             input_tokens=fb_tokens.get("input_tokens", 0),
                             output_tokens=fb_tokens.get("output_tokens", 0),
+                            error=None if verdict.accepted else verdict.feedback,
                         )
 
                         # Record the fallback model's verified outcome the same

@@ -6,6 +6,7 @@ import shared.solver as solver_module
 import shared.quality.code_quality as cq
 import learning
 from shared.execution import ExecutionResult
+from shared.experiment import Outcome
 
 
 class DummyQualityMetrics:
@@ -294,3 +295,10 @@ async def test_solver_uses_repair_loop_when_all_initial_candidates_fail(
     assert primary_2.calls
     assert RecordingExecutor.last_instance is not None
     assert RecordingExecutor.last_instance.calls
+
+    # A failed candidate must persist WHY it failed, so the wrong-vs-error split
+    # is diagnosable from the result JSON without --include-replay. The recording
+    # executor surfaces "boom" for the bad candidate.
+    failed = [a for a in solver.attempts if a.outcome is not Outcome.SOLVED]
+    assert failed
+    assert any(a.error and "boom" in a.error for a in failed)
