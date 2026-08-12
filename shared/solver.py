@@ -215,6 +215,7 @@ class BaseSolver:
             # Generation wall-clock per model: the only cost signal local
             # models expose, since the Ollama CLI reports no token counts.
             generation_times: Dict[str, float] = {}
+            generation_tokens: Dict[str, Dict[str, int]] = {}
             failures = []
             
             logging.info("")
@@ -247,6 +248,11 @@ class BaseSolver:
                     end_time = datetime.now()
                     response_time = (end_time - start_time).total_seconds()
                     generation_times[model_name] = response_time
+                    # Token usage the model just reported (analysis + impl calls),
+                    # so the attempt records real cost rather than a structural 0.
+                    generation_tokens[model_name] = getattr(
+                        model, "last_token_usage", {"input_tokens": 0, "output_tokens": 0}
+                    )
 
                     # Every candidate enters the pool; correctness is decided by
                     # execution against the oracle further down, and the model's
@@ -263,11 +269,17 @@ class BaseSolver:
                     failures.append((model_name, str(e)))
                     # A model that never produced usable code is a distinct
                     # failure from one whose code ran and gave a wrong answer,
-                    # and it is a real (verified) failure to record.
+                    # and it is a real (verified) failure to record. It still
+                    # spent tokens getting there, so record them.
+                    tokens = getattr(
+                        model, "last_token_usage", {"input_tokens": 0, "output_tokens": 0}
+                    )
                     self._record_attempt(
                         model_name, year, day, part, Outcome.NO_CANDIDATE,
                         stage="generate",
                         error=f"{type(e).__name__}: {e}",
+                        input_tokens=tokens.get("input_tokens", 0),
+                        output_tokens=tokens.get("output_tokens", 0),
                     )
                     self._record_model_performance(
                         model_name, success=False, problem_type=problem_type
@@ -423,6 +435,7 @@ class BaseSolver:
                                 model_name, solution, year, day, part,
                                 exec_test_cases, known_answer,
                             )
+                            tokens = generation_tokens.get(model_name, {})
                             self._record_attempt(
                                 model_name, year, day, part, verdict.outcome,
                                 stage="repair" if iteration else "generate",
@@ -432,6 +445,8 @@ class BaseSolver:
                                 wall_clock_seconds=generation_times.get(model_name, 0.0),
                                 quality_score=quality_scores.get(model_name),
                                 code=solution,
+                                input_tokens=tokens.get("input_tokens", 0),
+                                output_tokens=tokens.get("output_tokens", 0),
                             )
                             # Record the model's verified performance once, on its
                             # initial candidate (repair iterations re-test the same
@@ -537,12 +552,17 @@ class BaseSolver:
                             model_name, solution, year, day, part,
                             exec_test_cases, known_answer,
                         )
+                        fb_tokens = getattr(
+                            model, "last_token_usage", {"input_tokens": 0, "output_tokens": 0}
+                        )
                         self._record_attempt(
                             model_name, year, day, part, verdict.outcome,
                             stage="fallback",
                             answer=verdict.answer,
                             expected=known_answer,
                             code=solution,
+                            input_tokens=fb_tokens.get("input_tokens", 0),
+                            output_tokens=fb_tokens.get("output_tokens", 0),
                         )
 
                         # Record the fallback model's verified outcome the same
@@ -633,6 +653,8 @@ class BaseSolver:
         wall_clock_seconds: float = 0.0,
         quality_score: Optional[float] = None,
         code: Optional[str] = None,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
     ) -> AttemptRecord:
         """Append one model attempt to the current solve's trace.
 
@@ -654,6 +676,8 @@ class BaseSolver:
             wall_clock_seconds=wall_clock_seconds,
             quality_score=quality_score,
             code=code,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
         )
         self.attempts.append(record)
         return record

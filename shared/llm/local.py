@@ -52,6 +52,10 @@ class OllamaProvider(LLMProvider):
         self.num_ctx = num_ctx
         self.model_info = {"name": model, "description": "Description of the model."}
         self.last_prompt = None
+        # Token usage of the most recent generate_solution call (analysis + impl
+        # generate() calls summed), read by the solver to fill AttemptRecord.
+        # These were structurally zero in every result JSON before this.
+        self.last_token_usage: Dict[str, int] = {"input_tokens": 0, "output_tokens": 0}
 
     async def generate_solution(
         self, 
@@ -82,7 +86,8 @@ Examples:
 {format_test_cases(problem.examples)}
 
 Final Question: {problem.final_question}""")
-        
+        analysis_in, analysis_out = self._tokens(analysis)
+
         # Phase 2: Strategy Selection.
         #
         # Both branches go through the converter: get_strategies_for_problem
@@ -109,7 +114,15 @@ Final Question: {problem.final_question}""")
                 implementation_prompt, temperature=self.temperature
             )
             generation_time = (datetime.now() - start_time).total_seconds()
-            
+
+            # Total token usage across both model calls (analysis + impl), for
+            # the solver to record on the attempt.
+            impl_in, impl_out = self._tokens(response)
+            self.last_token_usage = {
+                "input_tokens": analysis_in + impl_in,
+                "output_tokens": analysis_out + impl_out,
+            }
+
             # Extract the code from the response
             code = self._extract_code(response.content)
             
@@ -168,7 +181,12 @@ Final Question: {problem.final_question}""")
             
         except Exception as e:
             generation_time = (datetime.now() - start_time).total_seconds()
-            
+            # The implementation call failed; only the analysis call spent tokens.
+            self.last_token_usage = {
+                "input_tokens": analysis_in,
+                "output_tokens": analysis_out,
+            }
+
             # Record the failed attempt
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             attempt_data = {
@@ -275,6 +293,12 @@ Final Question: {problem.final_question}""")
                 if block and cls._parses(block):
                     yield block
                     break  # first hit from this start is the longest region
+
+    @staticmethod
+    def _tokens(response: LLMResponse) -> tuple:
+        """(input_tokens, output_tokens) from a response's Ollama metadata."""
+        md = response.metadata or {}
+        return (md.get("prompt_eval_count") or 0, md.get("eval_count") or 0)
 
     @staticmethod
     def _parses(code: str) -> bool:
