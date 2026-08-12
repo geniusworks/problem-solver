@@ -87,8 +87,9 @@ the historical/architecture sections below are pre-refactor and are rewritten as
   parseable solution it is correct. The bottleneck is producing a candidate, not model capability.
 
 ### Next (per PLAN.md)
-- **Milestone C2 — de-grab-bag `shared/utils.py`:** split into `shared/aoc/` + `shared/ledger.py` and
-  break the `utils → verification → ground_truth → utils` cycle. Next up.
+- **Milestone C2 (this PR) — DONE:** retired the `shared/utils.py` grab-bag into `paths.py` (leaf) +
+  `aoc.py` (AoC I/O) + `ledger.py` (oracle-gated record/save) + `logging_setup.py`, and broke the
+  `utils → verification → ground_truth → utils` import cycle. Deleted 4 dead helpers.
 - **Milestone C3 — decompose `solve_problem`:** into typed, tested stage-methods (not a package).
   Maintainability hygiene; moves no *measured* number, so it does not block D.
 - **Milestone D — generation robustness (the measured bottleneck):** attack the `no_candidate` rate

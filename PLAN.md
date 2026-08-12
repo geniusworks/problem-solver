@@ -148,13 +148,18 @@ does **not** instantiate an ABC ("cannot pass" was false); it just tested dead c
 lives in `shared/errors.py`, not `validator.py`. The "~1,400 lines unreachable" figure held for
 deletion but excludes the preserved submitter and collaborative path.
 
-### C2 — De-grab-bag `shared/utils.py` — follow-up PR
+### C2 — De-grab-bag `shared/utils.py` — ✅ SHIPPED (PR: milestone-c2-utils-split)
 
-Split `utils.py` (898 lines, 7 responsibilities) into `shared/aoc/` (fetch/cache/session) and
-`shared/ledger.py` (record/save). Kill the mid-file re-imports (`:672-674`) and the
-`utils → verification → ground_truth → utils` cycle (deferred imports at `:312`, `:849`, `:878`) by
-moving the ledger's oracle calls up a layer. Mostly code movement, but enough importer churn to
-deserve its own review. **Do this next.**
+The 898-line, 7-responsibility grab-bag — which also sat at the bottom of a
+`utils → verification → ground_truth → utils` import cycle — is retired, split into four
+single-purpose modules: `shared/paths.py` (leaf path primitives), `shared/aoc.py` (AoC session/HTTP/
+fetch/cache), `shared/ledger.py` (oracle-gated record/save), and `shared/logging_setup.py`. Moving
+the leaf primitives (`get_problem_dir` et al.) out to `paths.py` removed the back-edge and dissolved
+the cycle; the ledger now imports verification/ground_truth at the top cleanly. Four confirmed-dead
+functions (`get_github_username`, `get_repository_state`, `download_input`, `read_input`) were
+deleted along the way. Single `aoc.py` module rather than an `aoc/` package — the same
+"don't add package ceremony this size doesn't need" call as C3. Suite green (165), pylint -E clean,
+verify_solutions 4/4.
 
 ### C3 — Decompose `solve_problem` — follow-up PR (or fold into Milestone D)
 

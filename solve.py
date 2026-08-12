@@ -10,7 +10,8 @@ from pathlib import Path
 from typing import NoReturn
 
 from shared.solver import BaseSolver
-from shared.utils import setup_logging, SessionError
+from shared.logging_setup import setup_logging
+from shared.errors import SessionError
 
 
 def parse_args():

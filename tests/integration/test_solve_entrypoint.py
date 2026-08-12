@@ -86,7 +86,7 @@ async def test_solve_entrypoint_end_to_end(monkeypatch, tmp_path, capsys):
     # 2024 day 1. That data lives under years/, which is gitignored -- skip
     # rather than fail on a fresh clone.
     from shared.ground_truth import get_known_answer
-    from shared.utils import get_problem_dir
+    from shared.paths import get_problem_dir
 
     if get_known_answer(2024, 1, 1) is None:
         pytest.skip("no cached ground truth for 2024 day 1 part 1")
