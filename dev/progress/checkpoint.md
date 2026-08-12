@@ -108,13 +108,17 @@ the historical/architecture sections below are pre-refactor and are rewritten as
   **capability** ceiling, not variance. Cost: 2.4× wall clock, ~2× tokens. Zero regression.
 
 ### Next (per PLAN.md)
-- **Answer-based consensus (Milestone E follow-up):** with self-consistency's candidate-pool /
-  executed-answer plumbing in place, add majority-vote over the executed answer for the *no-oracle*
-  case — the selector the submission phase (F) needs.
-- **The capability ceiling (d2 p2, d3 p2):** stably 0/3 even under 3× sampling. Needs a stronger
-  model or a different technique, not more samples — a question for a bigger-model A/B.
-- **Milestone C3 — decompose `solve_problem`:** typed, tested stage-methods (not a package).
-  Maintainability hygiene; moves no *measured* number. Still a follow-up, done opportunistically.
+- **Answer-based consensus — DONE (this PR):** `_select_candidate` votes on the executed answer for
+  the no-oracle case; justified offline (plurality == correct 10/11 on samp3 data). Its live A/B
+  belongs with F (unseen problems).
+- **The capability ceiling (d2 p2, d3 p2):** stably 0/3 even under 3× sampling — genuinely
+  capability-limited. A bigger-model A/B is the test, but **blocked on hardware**: qwen2.5-coder:32b
+  swaps on 16 GB (120 s timeout for 40 tokens); phi4/qwen3.5:9b run but at ~5 min/generation a full
+  self-consistency A/B is 8 h+. Needs either more RAM or a much smaller problem/sample scope.
+- **Milestone F — submission phase:** wire `submission/` (unwired) for unseen problems, gated on
+  `SUBMIT_SOLUTIONS`; this is where answer-based consensus gets its live A/B.
+- **Milestone C3 — decompose `solve_problem`:** typed, tested stage-methods. Maintainability hygiene;
+  moves no *measured* number. Follow-up, done opportunistically.
 
 
 ### Active Development

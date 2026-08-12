@@ -481,7 +481,9 @@ class BaseSolver:
                                     feedback_by_model[cand_id] = verdict.feedback
                                 continue
 
-                            validated_candidates.append((cand_id, solution))
+                            # Keep the executed answer too: without an oracle it
+                            # is what answer-based consensus votes on.
+                            validated_candidates.append((cand_id, solution, verdict.answer))
                         except Exception as e:
                             # Do not swallow silently: a bug in the executor here is
                             # indistinguishable from "the candidate failed", which
@@ -493,14 +495,9 @@ class BaseSolver:
                             continue
 
                     if validated_candidates:
-                        # If we have quality scores from earlier, prefer the highest; otherwise
-                        # fall back to the first validated candidate.
-                        if quality_scores:
-                            validated_candidates.sort(
-                                key=lambda item: quality_scores.get(item[0], 0.0),
-                                reverse=True,
-                            )
-                        chosen_cand, chosen_solution = validated_candidates[0]
+                        chosen_cand, chosen_solution = self._select_candidate(
+                            validated_candidates, quality_scores, known_answer
+                        )
                         record_solution(
                             year, day, part,
                             candidate_models.get(chosen_cand, chosen_cand),
@@ -625,6 +622,51 @@ class BaseSolver:
     # updated when the ground-truth oracle landed -- so a fallback model could
     # still return a wrong answer as the solution.
     # ------------------------------------------------------------------
+
+    def _select_candidate(
+        self,
+        validated: List[Tuple[str, str, Optional[str]]],
+        quality_scores: Dict[str, float],
+        known_answer: Optional[str],
+    ) -> Tuple[str, str]:
+        """Choose one candidate from those that passed verification.
+
+        With a ground-truth oracle every validated candidate already produced
+        the accepted answer, so code quality just breaks the tie. Without one
+        (the submission-phase case), group candidates by their executed answer
+        and prefer the plurality -- answer-based consensus. On the samp3 A/B data
+        this picked the correct answer for 10 of 11 solved problem-trials; the
+        one miss was two wrong candidates agreeing, which is the technique's
+        inherent failure mode, so a quorum of min_consensus_models is required
+        before consensus overrides quality.
+        """
+        def best_by_quality(items: List[Tuple[str, str, Optional[str]]]) -> Tuple[str, str]:
+            ranked = sorted(
+                items, key=lambda it: quality_scores.get(it[0], 0.0), reverse=True
+            )
+            return ranked[0][0], ranked[0][1]
+
+        if known_answer is not None:
+            return best_by_quality(validated)
+
+        from collections import Counter
+        counts = Counter(
+            (ans or "").strip() for _, _, ans in validated if ans and ans.strip()
+        )
+        if counts:
+            top_answer, top_n = counts.most_common(1)[0]
+            if top_n >= self.config.min_consensus_models:
+                agreeing = [
+                    it for it in validated if (it[2] or "").strip() == top_answer
+                ]
+                logger.info(
+                    "answer-based consensus selected %r (%d of %d candidates agree)",
+                    top_answer, top_n, len(validated),
+                )
+                return best_by_quality(agreeing)
+
+        # No answer reached quorum: fall back to the highest-quality candidate.
+        return best_by_quality(validated)
 
     def _record_model_performance(
         self,

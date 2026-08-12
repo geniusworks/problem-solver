@@ -235,9 +235,12 @@ Only now, and only what measures a positive delta through the harness.
   recording); `samples_per_model=1` is an exact identity. Folded in a prompt-hardening tweak for the
   "correct logic, wrong wrapper" 30% of errors (pin the entrypoint name to exactly `solve`, forbid
   example-usage blocks). A/B'd samp1 vs samp3 (both temperature 0.7, hardened) on 2024 d1-3.
-- **Real answer-based consensus — follow-up:** group by the *executed answer*, require ≥2 agreeing
-  candidates, accept the plurality when there is no oracle (the submission-phase selector). The
-  candidate-pool/executed-answer plumbing from self-consistency is the foundation.
+- **Real answer-based consensus — ✅ DONE (PR: milestone-e-answer-consensus).** `_select_candidate`
+  groups validated candidates by their *executed* answer and prefers the plurality (quorum
+  `min_consensus_models`) when there is no oracle; with an oracle, quality still breaks the tie.
+  Justified by an offline analysis of the samp3 data: plurality vote would have picked the correct
+  answer for **10 of 11** solved problem-trials (`dev/progress/milestone-e-answer-consensus.md`). Its
+  live A/B belongs with F, where unseen problems make the plurality answer the only signal.
 - Anything else (roles, collaborative review, strategy learning) is re-added *only* if a harness
   A/B justifies it.
 
