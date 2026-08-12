@@ -2,14 +2,11 @@
 
 import json
 import logging
-import time
-import requests
 import os
 import asyncio
 import re
 from datetime import datetime
 from pathlib import Path
-from shared.errors import SessionError
 from typing import Tuple, Dict, Any, Optional, List
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -21,9 +18,8 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from shared import config
-from shared.errors import ValidationError, SessionError, InputError
+from shared.errors import SessionError
 from shared.parser import parse_problem_text
-from shared.overfit_detection import analyze_overfit_risk
 
 logger = logging.getLogger(__name__)
 
@@ -73,11 +69,8 @@ def setup_logging(year: Optional[int] = None, day: Optional[int] = None):
 # which is what broke the utils -> verification -> ground_truth -> utils cycle.
 # Re-imported here so this module's own callers keep working during the split.
 from shared.paths import (  # noqa: E402
-    get_aoc_day_count,
-    get_problem_year_day,
     get_problem_dir,
     create_problem_dir,
-    get_input_path,
 )
 
 
@@ -543,58 +536,6 @@ async def ensure_input_file(workspace_dir: Path, year: int, day: int) -> Path:
     return input_file
 
 
-def read_input(year: int, day: int) -> str:
-    """Read the input file for the given year and day."""
-    input_path = get_input_path(year, day)
-    if not input_path.exists():
-        raise InputError(f"Input file not found: {input_path}")
-    return input_path.read_text(encoding="utf-8").strip()
-
-
-def download_input(year: int, day: int) -> str:
-    """Download input from Advent of Code website."""
-    try:
-        # Get and validate session cookie
-        session_cookie = get_session_cookie()
-        
-        # Create directory if it doesn't exist
-        input_dir = Path(f"{year}/day{day:02d}")
-        input_dir.mkdir(parents=True, exist_ok=True)
-
-        # Download input if it doesn't exist
-        input_file = input_dir / "input.txt"
-        if not input_file.exists():
-            url = f"https://adventofcode.com/{year}/day/{day}/input"
-            logging.info(f"Attempting to download input from: {url}")
-            try:
-                response = requests.get(
-                    url,
-                    cookies={"session": session_cookie},
-                    headers={"User-Agent": config.USER_AGENT},
-                    timeout=30,
-                )
-                logging.info(f"Response status: {response.status_code}")
-                logging.info(f"Response headers: {response.headers}")
-                if response.status_code == 400:
-                    raise SessionError("Authentication failed: Your session token appears to be invalid or expired. Please update AOC_SESSION in your .env file with a valid session cookie from adventofcode.com")
-                response.raise_for_status()
-            except requests.exceptions.RequestException as e:
-                logging.error(f"Request failed: {str(e)}")
-                if "404" in str(e):
-                    raise InputError(f"Input for year {year} day {day} is not available yet")
-                raise SessionError(f"Failed to download input: {str(e)}")
-            input_file.write_text(response.text, encoding="utf-8")
-
-        return input_file.read_text(encoding="utf-8")
-        
-    except requests.exceptions.RequestException as e:
-        if "404" in str(e):
-            raise InputError(f"Input for year {year} day {day} is not available yet")
-        if "400" in str(e):
-            raise SessionError("Authentication failed: Your session token appears to be invalid or expired. Please update AOC_SESSION in your .env file with a valid session cookie from adventofcode.com")
-        raise SessionError(f"Failed to download input: {str(e)}")
-
-
 def _extract_problem_text(soup: BeautifulSoup) -> str:
     """Extract problem text from BeautifulSoup object."""
     article = soup.find("article", class_="day-desc")
@@ -641,231 +582,3 @@ def ensure_problem_directory_structure(workspace_dir: Path, year: int, day: int)
         "attempts": attempts_dir,
         "examples": examples_dir
     }
-
-import subprocess
-from datetime import datetime, timezone
-import re
-
-def get_github_username() -> str:
-    """Attempt to get the user's GitHub username through various methods."""
-    try:
-        # First try GitHub CLI
-        result = subprocess.run(
-            ["gh", "auth", "status"],
-            capture_output=True,
-            text=True
-        )
-        if result.returncode == 0:
-            # Extract username from gh output
-            match = re.search(r"Logged in to github.com as (\w+)", result.stdout)
-            if match:
-                return match.group(1)
-    except FileNotFoundError:
-        pass  # gh CLI not installed
-        
-    try:
-        # Try getting GitHub email
-        email = subprocess.check_output(
-            ["git", "config", "user.email"],
-            text=True
-        ).strip()
-        
-        # If it's a GitHub email, extract username
-        match = re.match(r"(.+)@users.noreply.github.com", email)
-        if match:
-            return match.group(1)
-    except subprocess.CalledProcessError:
-        pass
-        
-    try:
-        # Fall back to git user.name
-        return subprocess.check_output(
-            ["git", "config", "user.name"],
-            text=True
-        ).strip()
-    except subprocess.CalledProcessError:
-        return "unknown"
-
-def get_repository_state() -> Tuple[str, bool]:
-    """Get the current repository state including uncommitted changes.
-    
-    Returns:
-        Tuple of (commit_hash, has_local_changes)
-    """
-    try:
-        # Get current commit hash
-        commit_hash = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"],
-            text=True
-        ).strip()
-        
-        # Check for uncommitted changes
-        status = subprocess.check_output(
-            ["git", "status", "--porcelain"],
-            text=True
-        )
-        has_local_changes = bool(status.strip())
-        
-        return commit_hash, has_local_changes
-    except subprocess.CalledProcessError:
-        return "unknown", False
-
-def save_solution_file(year: int, day: int, part: int, model_name: str, solution_code: str) -> str:
-    """Save a successful solution to both the year directory and solutions directory.
-    
-    Args:
-        year: Problem year
-        day: Problem day
-        part: Problem part
-        model_name: Name of the model that generated the solution (ignored for filename)
-        solution_code: The solution code to save
-        
-    Returns:
-        Path to the solution file in the solutions directory (relative to repo root)
-    """
-    # Use a canonical solution filename independent of model name so that paths are
-    # stable across re-runs and different model choices.
-    solution_filename = f"{year}_day{day:02d}_part{part}.py"
-
-    # Save to year directory
-    year_dir = get_problem_dir(year, day)
-    year_path = year_dir / solution_filename
-    year_path.write_text(solution_code)
-    
-    # Save to solutions directory
-    root_dir = Path(__file__).parent.parent
-    solutions_dir = root_dir / "solutions"
-    solutions_dir.mkdir(exist_ok=True)
-    solution_path = solutions_dir / solution_filename
-    solution_path.write_text(solution_code)
-    
-    return f"solutions/{solution_filename}"
-
-# Anchor in solutions/README.md marking the end of the verified-solutions table.
-# New rows are inserted immediately above it so they never land in the rejected
-# table that follows.
-VERIFIED_ROWS_MARKER = "<!-- end verified rows -->"
-
-
-def record_solution(year: int, day: int, part: int, model_name: str, solution_code: str) -> None:
-    """Record a successful solution in solutions/README.md.
-    
-    This function is called automatically by the solver when a solution is validated.
-    It should never be called manually. The solutions/README.md file is maintained
-    automatically as a historical record of validated solutions.
-    
-    Args:
-        year: Problem year
-        day: Problem day
-        part: Problem part (1 or 2)
-        model_name: Name of the model that generated the solution
-        solution_code: The solution code to save
-        
-    Note:
-        This function will only record a solution once per year/day/part combination.
-        It is safe to call multiple times as it will ignore duplicate entries.
-    """
-    solutions_file = Path(__file__).parent.parent / "solutions" / "README.md"
-    solutions_file.parent.mkdir(parents=True, exist_ok=True)
-
-    # Ensure file exists with a minimal header
-    table_header = (
-        "| Year | Day | Part | Answer | LLM Model(s) | Recorded (UTC) | Solution File |\n"
-        "|------|-----|------|--------|--------------|----------------|---------------|\n"
-    )
-    if not solutions_file.exists():
-        initial = "# Advent of Code Solutions Log\n\n" + table_header
-        solutions_file.write_text(initial)
-
-    # Read existing content
-    content = solutions_file.read_text()
-
-    # Ensure the table header is present (handle both "|Year" and "| Year")
-    header_added = False
-    if not re.search(r"(?m)^\s*\|\s*Year\s*\|\s*Day\s*\|\s*Part\s*\|", content):
-        # Insert header after title line if present; otherwise prepend
-        insert_at = content.find("\n") + 1 if content.startswith("# Advent of Code Solutions Log") else 0
-        content = content[:insert_at] + ("\n" if insert_at and not content[insert_at-1] == "\n" else "") + table_header + content[insert_at:]
-        header_added = True
-
-    # Check if this year/day/part already has a solution. Only the verified table
-    # counts: the ledger also lists rejected solutions below the marker, and a
-    # rejected entry must not block a later correct one from being recorded.
-    verified_section = content.split(VERIFIED_ROWS_MARKER, 1)[0]
-    pattern = rf"(?m)^\s*\|\s*{year}\s*\|\s*{day}\s*\|\s*{part}\s*\|"
-    if re.search(pattern, verified_section):
-        if header_added:
-            # Persist the header fix even when not adding a new row
-            solutions_file.write_text(content)
-        return  # Already recorded
-
-    # Run automatic overfit detection before recording anything. If the
-    # heuristics flag this solution as suspicious, log and return early so it
-    # is never treated as a validated canonical solution.
-    analysis = analyze_overfit_risk(year, day, part, solution_code)
-    if analysis.is_suspicious:
-        logger.warning(
-            "Refusing to record solution for year %d day %02d part %d due to "
-            "overfit heuristics: %s",
-            year,
-            day,
-            part,
-            "; ".join(analysis.reasons),
-        )
-        if header_added:
-            solutions_file.write_text(content)
-        return
-
-    # Ground-truth gate: if we know the accepted answer for this problem, the code
-    # must actually produce it. Without this the ledger records anything that runs,
-    # which is how hardcoded stubs were previously logged as validated solutions.
-    from shared.verification import Verdict, verify_solution_code
-
-    result = verify_solution_code(solution_code, year, day, part)
-    if result.verdict is Verdict.WRONG:
-        logger.warning(
-            "Refusing to record solution for year %d day %02d part %d: produced %r, "
-            "accepted answer is %r",
-            year, day, part, result.actual, result.expected,
-        )
-        if header_added:
-            solutions_file.write_text(content)
-        return
-    if result.verdict is Verdict.ERROR:
-        logger.warning(
-            "Refusing to record solution for year %d day %02d part %d: failed to run (%s)",
-            year, day, part, (result.error or "").splitlines()[0][:200],
-        )
-        if header_added:
-            solutions_file.write_text(content)
-        return
-
-    # Save solution file and get path
-    solution_path = save_solution_file(year, day, part, model_name, solution_code)
-
-    # Format current time in UTC
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-
-    # Record the accepted answer when we know it, so the ledger itself carries the
-    # oracle rather than only a claim that something was validated.
-    from shared.ground_truth import get_known_answer
-
-    answer = get_known_answer(year, day, part) or "unverified"
-
-    new_entry = (
-        f"|{year}|{day}|{part}|{answer}|{model_name}|{timestamp}|{solution_path}|\n"
-    )
-
-    # Insert into the verified table rather than appending at end-of-file: the
-    # ledger has a second table of rejected solutions below it.
-    if VERIFIED_ROWS_MARKER in content:
-        content = content.replace(VERIFIED_ROWS_MARKER, new_entry + VERIFIED_ROWS_MARKER, 1)
-    else:
-        if not content.endswith("\n"):
-            content += "\n"
-        content += new_entry
-
-    # Write updated content
-    solutions_file.write_text(content)
-
-    logger.info("Recorded validated solution for year %d day %d part %d", year, day, part)

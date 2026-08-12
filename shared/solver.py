@@ -12,7 +12,8 @@ from requests import RequestException
 from shared.execution import SolutionExecutor, TestCase
 from shared.llm.local import OllamaProvider
 from shared.parser import parse_problem_text
-from shared.utils import fetch_problem_text, ensure_problem_files, ensure_problem_directory_structure, record_solution
+from shared.utils import fetch_problem_text, ensure_problem_files, ensure_problem_directory_structure
+from shared.ledger import record_solution
 from shared.strategy_recommender import StrategyRecommender
 from learning.database import LearningDatabase
 from shared.experiment import AttemptRecord, Outcome, SolverConfig
