@@ -67,14 +67,21 @@ the historical/architecture sections below are pre-refactor and are rewritten as
   learning databases onto `learning/solver.db`; and fixed `success_rate` to record from the
   *verified* outcome instead of at generation time. Model performance is now defined by one helper,
   `_record_model_performance`, against the oracle verdict.
-- **Milestone C1 (this PR) — deletion + isolation:** removed ~1,400 lines of dead/misplaced code
-  (solver selector/saver clusters + module entrypoint, `providers.py`, `hardware.py`,
+- **Milestone C1 (PR #4, merged) — deletion + isolation:** removed ~1,400 lines of dead/misplaced
+  code (solver selector/saver clusters + module entrypoint, `providers.py`, `hardware.py`,
   `learning/strategies.py`, `testing.py`, `LMStudioProvider`, the simulated submit stub); relocated
   `PerformanceMetrics` to `execution.py`; extracted `StrategyRecommender` from the misnamed
   `SubmissionManager`; isolated the real, unwired AoC submitter into a top-level `submission/`
-  package. A reachability audit corrected several stale plan claims (collaborative.py is live and
-  stays; `SubmissionError` lives in `errors.py`). Suite 165 green. The `utils` split (C2) and
-  `solve_problem` decomposition (C3) are separate follow-up PRs.
+  package.
+- **Milestone C2 (PR #5, merged) — utils de-grab-bag:** retired the 898-line `shared/utils.py` into
+  `paths.py` (leaf) + `aoc.py` (AoC I/O) + `ledger.py` (oracle-gated record/save) +
+  `logging_setup.py`, breaking the `utils → verification → ground_truth → utils` import cycle.
+- **Milestone D1+D2 (this PR) — generation robustness + token accounting:** rewrote `_extract_code`
+  around `ast.parse` (fence-agnostic, prefers a `solve()`-defining region, handles reasoning
+  `thinking` text) to attack the `no_candidate` rate directly; threaded real Ollama token counts
+  into `AttemptRecord` (previously structurally zero). D3 (poison examples) downgraded — the
+  acceptance-veto is already guarded by the ground-truth oracle. Empirical `--trials 5` A/B vs the
+  baseline is running. C3 (decompose `solve_problem`) remains a follow-up.
 
 ### Verified reality (not claims — measured)
 - Recorded solutions: **4 verified correct** (2024 d1 p1/p2, d2 p1, d3 p1). See `solutions/README.md`.
