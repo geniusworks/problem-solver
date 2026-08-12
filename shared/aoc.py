@@ -1,4 +1,10 @@
-"""Utility functions for Advent of Code solutions."""
+"""Advent of Code I/O: session/auth, HTTP, and problem fetching + caching.
+
+The AoC-facing half of the old shared/utils.py grab-bag. Path primitives moved
+to shared.paths, the solution ledger to shared.ledger, and logging setup to
+shared.logging_setup; what remains here is one cohesive concern -- talking to
+adventofcode.com and caching what comes back.
+"""
 
 import json
 import logging
@@ -50,28 +56,9 @@ session.mount("https://", adapter)
 session.mount("http://", adapter)
 
 
-def setup_logging(year: Optional[int] = None, day: Optional[int] = None):
-    """Configure logging for the application."""
-    # Configure basic logging with stream handler only
-    logging.basicConfig(
-        level=os.getenv("LOG_LEVEL", "INFO"),
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[logging.StreamHandler()]
-    )
-    
-    # Set specific logger levels
-    logging.getLogger("blib2to3").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.INFO)
-    logging.getLogger("asyncio").setLevel(logging.INFO)
-
-
-# Path primitives now live in shared.paths (a leaf module with no back-edges),
-# which is what broke the utils -> verification -> ground_truth -> utils cycle.
-# Re-imported here so this module's own callers keep working during the split.
-from shared.paths import (  # noqa: E402
-    get_problem_dir,
-    create_problem_dir,
-)
+# Path primitives live in shared.paths (a leaf module); this module uses two of
+# them for its cache/fetch paths.
+from shared.paths import get_problem_dir, create_problem_dir
 
 
 async def validate_session_cookie(session_cookie: str) -> Tuple[bool, str]:

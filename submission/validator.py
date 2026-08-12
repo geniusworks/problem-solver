@@ -8,7 +8,7 @@ from pathlib import Path
 import aiohttp
 from bs4 import BeautifulSoup
 
-from shared.utils import get_session_cookie, fetch_problem_text
+from shared.aoc import get_session_cookie, fetch_problem_text
 from shared.errors import ValidationError, SessionError, SubmissionError
 from shared.config import SUBMIT_SOLUTIONS
 from .manager import SubmissionManager, SubmissionResult

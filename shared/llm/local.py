@@ -14,7 +14,7 @@ from shared.llm.prompts import generate_implementation_prompt, format_test_cases
 from shared.problem_analysis import ProblemAnalyzer
 import json
 from datetime import datetime
-from shared.utils import ensure_problem_directory_structure
+from shared.aoc import ensure_problem_directory_structure
 
 logger = logging.getLogger(__name__)
 
