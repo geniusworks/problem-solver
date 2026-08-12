@@ -101,12 +101,13 @@ See `.env.example` for available environment variables.
 - Provider-specific error handling
 - Validation error types
 
-#### Utilities (`utils.py`)
-Core functionality including:
-- Problem fetching and caching
-- File management
-- Session handling
-- HTTP requests
+#### Core utilities (formerly the `utils.py` grab-bag, now split by concern)
+- `paths.py`: problem path primitives — the repo's leaf layer, imports only
+  config, so verification/ground_truth/ledger can depend on it without a cycle
+- `aoc.py`: Advent of Code I/O — session/auth, HTTP, problem fetch + caching
+- `ledger.py`: the solution ledger — `record_solution`/`save_solution_file`,
+  oracle-gated so nothing is recorded without producing the accepted answer
+- `logging_setup.py`: application logging configuration
 
 #### Solution Management
 - `execution.py`: safe code execution + `PerformanceMetrics` (relocated here
