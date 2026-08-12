@@ -228,11 +228,16 @@ regression into `wrong`; result JSONs now carry non-zero token counts.
 
 Only now, and only what measures a positive delta through the harness.
 
-- **Real answer-based consensus:** group by the *executed answer*, require ≥2 agreeing models,
-  reinstate `consensus_on`. A/B vs single-model.
-- **Self-consistency sampling:** N samples from one model at temperature>0, majority vote on the
-  executed answer (`samples_per_model`). Likely the highest-value trick for weak models; cheap
-  locally.
+- **Self-consistency sampling — IN PROGRESS (PR: milestone-e-self-consistency).** `samples_per_model`
+  draws N candidates per model instead of one; at temperature > 0 the draws differ, giving several
+  shots at the oracle in one run — the direct attack on the measured run-to-run variance (4 of 6
+  problems flipped). Keyed the candidate pool by candidate id (with a candidate→model map for
+  recording); `samples_per_model=1` is an exact identity. Folded in a prompt-hardening tweak for the
+  "correct logic, wrong wrapper" 30% of errors (pin the entrypoint name to exactly `solve`, forbid
+  example-usage blocks). A/B'd samp1 vs samp3 (both temperature 0.7, hardened) on 2024 d1-3.
+- **Real answer-based consensus — follow-up:** group by the *executed answer*, require ≥2 agreeing
+  candidates, accept the plurality when there is no oracle (the submission-phase selector). The
+  candidate-pool/executed-answer plumbing from self-consistency is the foundation.
 - Anything else (roles, collaborative review, strategy learning) is re-added *only* if a harness
   A/B justifies it.
 
