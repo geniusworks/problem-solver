@@ -39,6 +39,38 @@ class CandidateVerdict:
     example_results: List[Any] = field(default_factory=list)
 
 
+@dataclass
+class _Prep:
+    """Output of the setup stage: what the later stages need, or an early answer.
+
+    ``solved`` is set only when an already-recorded solution ran clean on the
+    full input, in which case solve_problem returns it without generating.
+    """
+
+    solved: Optional[str] = None
+    parsed_problem: Any = None
+    strategies: Any = None
+    effectiveness: Any = None
+    problem_type: str = ""
+    primary_models: List[str] = field(default_factory=list)
+    reviewer_models: List[str] = field(default_factory=list)
+
+
+@dataclass
+class _Candidates:
+    """Output of the generation stage: the candidate pool and its bookkeeping.
+
+    Keyed by candidate id (self-consistency draws several per model);
+    ``candidate_models`` maps each back to the model that produced it.
+    """
+
+    answers: Dict[str, str] = field(default_factory=dict)
+    candidate_models: Dict[str, str] = field(default_factory=dict)
+    generation_times: Dict[str, float] = field(default_factory=dict)
+    generation_tokens: Dict[str, Dict[str, int]] = field(default_factory=dict)
+    failures: List[Any] = field(default_factory=list)
+
+
 class BaseSolver:
     """Base class for solving AoC problems."""
 
@@ -161,138 +193,24 @@ class BaseSolver:
             logging.info(f"Attempting solution for {year}, day {day:02d}, part {part}")
             logging.info("")
 
-            # Create standard directory structure
-            dirs = ensure_problem_directory_structure(self.workspace_dir, year, day)
-            
-            # Ensure all problem files exist
-            problem_files = await ensure_problem_files(year, day)
-            
-            # Check for existing successful solution unless force=True
-            if not force:
-                existing_solution = await self._get_existing_solution(year, day, part)
-                if existing_solution:
-                    logging.info("Using existing successful solution")
-                    problem_id = f"{year}_day{day:02d}_part{part}"
-                    result = await self.solution_executor.run_against_full_input(
-                        problem_id, year, day, part, existing_solution
-                    )
-                    if result.error is None:
-                        return result.output.strip()
-                    logging.warning(
-                        "Existing solution failed on full input (%s); falling back to full solve",
-                        result.error,
-                    )
+            # Stage 1 -- setup: fetch/parse, characterise, pick models (or reuse
+            # an already-recorded solution).
+            prep = await self._prepare_problem(year, day, part, force)
+            if prep.solved is not None:
+                return prep.solved
+            parsed_problem = prep.parsed_problem
+            strategies, effectiveness = prep.strategies, prep.effectiveness
+            problem_type = prep.problem_type
+            primary_models, reviewer_models = prep.primary_models, prep.reviewer_models
 
-            # Get problem text and parse it
-            problem_text, _, previous_answer = await fetch_problem_text(year, day, part)
-            parsed_problem = parse_problem_text(problem_text)
-
-            # Temporary for debugging purposes
-            if self.debug:
-                logging.info("Problem text for part %d:", part)
-                logging.info(problem_text)
-
-            # Analyze problem characteristics
-            characteristics = self._analyze_problem_characteristics(parsed_problem)
-            
-            # Get recommended strategies
-            strategies, effectiveness = self.strategy_recommender.get_recommended_strategies(
-                problem_text, characteristics
-            )
-            
-            # Get top performing models for each role based on problem type
-            problem_type = self._get_problem_type(characteristics)
-            primary_models = self._get_top_models(
-                problem_type, "primary", limit=self.config.max_primary_models
-            )
-            # Reviewer models feed the (default-off) collaborative-improvement
-            # path. The old "validator" role is gone: it drove a stub that always
-            # returned True; acceptance is decided by execution against the oracle.
-            reviewer_models = self._get_top_models(problem_type, "reviewer", limit=3)
-
-            # Try each primary model and collect answers. With self-consistency
-            # (samples_per_model > 1) a model contributes several candidates, so
-            # the pool is keyed by candidate id, not model name; candidate_models
-            # maps each back to the model that produced it, which is what the
-            # learning DB and the ledger must record against.
-            answers = {}
-            candidate_models: Dict[str, str] = {}
-            # Generation wall-clock per candidate: the only cost signal local
-            # models expose, since the Ollama CLI reports no token counts.
-            generation_times: Dict[str, float] = {}
-            generation_tokens: Dict[str, Dict[str, int]] = {}
-            failures = []
-            
-            logging.info("")
-            logging.info(f"Attempting solution with top {len(primary_models)} primary model(s)")
-
-            for model_name in primary_models:
-                if model_name not in self.models:
-                    logging.warning(f"Model {model_name} not available, skipping")
-                    continue
-                    
-                model = self.models[model_name]
-                # Self-consistency: draw samples_per_model candidates from this
-                # model. Each draw is independent -- a sample that raises records
-                # its own no-candidate failure and does not abort the rest.
-                for sample_idx in range(self.config.samples_per_model):
-                    cand_id = (
-                        model_name if self.config.samples_per_model == 1
-                        else f"{model_name}#s{sample_idx}"
-                    )
-                    candidate_models[cand_id] = model_name
-                    try:
-                        logging.info("")
-                        logging.info(f"Trying primary model: {cand_id}")
-                        logging.info("")
-
-                        # Record start time for performance tracking
-                        start_time = datetime.now()
-
-                        # Generate solution
-                        solution = await model.generate_solution(
-                            parsed_problem,
-                            year,
-                            day,
-                            strategies=strategies,
-                            strategy_effectiveness=effectiveness
-                        )
-
-                        # Calculate metrics
-                        end_time = datetime.now()
-                        response_time = (end_time - start_time).total_seconds()
-                        generation_times[cand_id] = response_time
-                        # Token usage the model just reported (analysis + impl
-                        # calls), so the attempt records real cost, not a zero.
-                        generation_tokens[cand_id] = getattr(
-                            model, "last_token_usage", {"input_tokens": 0, "output_tokens": 0}
-                        )
-
-                        # Every candidate enters the pool; correctness is decided
-                        # by execution against the oracle further down, and the
-                        # model's performance is recorded there against that
-                        # verdict -- not here, where it has only produced text.
-                        answers[cand_id] = solution
-
-                    except Exception as e:
-                        failures.append((cand_id, str(e)))
-                        # A model that never produced usable code is a distinct
-                        # failure from one whose code ran and gave a wrong answer,
-                        # and it is a real (verified) failure to record. It still
-                        # spent tokens getting there, so record them.
-                        tokens = getattr(
-                            model, "last_token_usage", {"input_tokens": 0, "output_tokens": 0}
-                        )
-                        self._record_attempt(
-                            model_name, year, day, part, Outcome.NO_CANDIDATE,
-                            stage="generate",
-                            error=f"{type(e).__name__}: {e}",
-                            input_tokens=tokens.get("input_tokens", 0),
-                            output_tokens=tokens.get("output_tokens", 0),
-                        )
-                        self._record_model_performance(
-                            model_name, success=False, problem_type=problem_type
-                        )
+            # Stage 2 -- generation: draw the candidate pool (self-consistency
+            # samples fan out here).
+            cands = await self._generate_candidates(prep, year, day, part)
+            answers = cands.answers
+            candidate_models = cands.candidate_models
+            generation_times = cands.generation_times
+            generation_tokens = cands.generation_tokens
+            failures = cands.failures
 
             # If we have answers, try to reach consensus
             consensus_answer: Optional[str] = None
@@ -611,6 +529,133 @@ class BaseSolver:
 
         except Exception as e:
             raise  # Let the error propagate to the top level
+
+    # ------------------------------------------------------------------
+    # solve_problem stages (extracted for readability; see the orchestrator above)
+    # ------------------------------------------------------------------
+
+    async def _prepare_problem(
+        self, year: int, day: int, part: int, force: bool
+    ) -> _Prep:
+        """Setup: reuse an existing solution, else fetch/parse and pick models."""
+        ensure_problem_directory_structure(self.workspace_dir, year, day)
+        await ensure_problem_files(year, day)
+
+        if not force:
+            existing_solution = await self._get_existing_solution(year, day, part)
+            if existing_solution:
+                logging.info("Using existing successful solution")
+                problem_id = f"{year}_day{day:02d}_part{part}"
+                result = await self.solution_executor.run_against_full_input(
+                    problem_id, year, day, part, existing_solution
+                )
+                if result.error is None:
+                    return _Prep(solved=result.output.strip())
+                logging.warning(
+                    "Existing solution failed on full input (%s); falling back to full solve",
+                    result.error,
+                )
+
+        problem_text, _, _ = await fetch_problem_text(year, day, part)
+        parsed_problem = parse_problem_text(problem_text)
+        if self.debug:
+            logging.info("Problem text for part %d:", part)
+            logging.info(problem_text)
+
+        characteristics = self._analyze_problem_characteristics(parsed_problem)
+        strategies, effectiveness = self.strategy_recommender.get_recommended_strategies(
+            problem_text, characteristics
+        )
+        problem_type = self._get_problem_type(characteristics)
+        primary_models = self._get_top_models(
+            problem_type, "primary", limit=self.config.max_primary_models
+        )
+        # Reviewer models feed the (default-off) collaborative-improvement path.
+        # The old "validator" role is gone: it drove a stub that always returned
+        # True; acceptance is decided by execution against the oracle.
+        reviewer_models = self._get_top_models(problem_type, "reviewer", limit=3)
+
+        return _Prep(
+            parsed_problem=parsed_problem,
+            strategies=strategies,
+            effectiveness=effectiveness,
+            problem_type=problem_type,
+            primary_models=primary_models,
+            reviewer_models=reviewer_models,
+        )
+
+    async def _generate_candidates(
+        self, prep: _Prep, year: int, day: int, part: int
+    ) -> _Candidates:
+        """Draw the candidate pool. Self-consistency fans out samples here.
+
+        Each draw is independent -- a sample that raises records its own
+        no-candidate failure and does not abort the rest. The pool is keyed by
+        candidate id; candidate_models maps each back to the producing model,
+        which is what the learning DB and ledger record against.
+        """
+        cands = _Candidates()
+        logging.info("")
+        logging.info(
+            f"Attempting solution with top {len(prep.primary_models)} primary model(s)"
+        )
+
+        for model_name in prep.primary_models:
+            if model_name not in self.models:
+                logging.warning(f"Model {model_name} not available, skipping")
+                continue
+
+            model = self.models[model_name]
+            for sample_idx in range(self.config.samples_per_model):
+                cand_id = (
+                    model_name if self.config.samples_per_model == 1
+                    else f"{model_name}#s{sample_idx}"
+                )
+                cands.candidate_models[cand_id] = model_name
+                try:
+                    logging.info("")
+                    logging.info(f"Trying primary model: {cand_id}")
+                    logging.info("")
+
+                    start_time = datetime.now()
+                    solution = await model.generate_solution(
+                        prep.parsed_problem,
+                        year,
+                        day,
+                        strategies=prep.strategies,
+                        strategy_effectiveness=prep.effectiveness,
+                    )
+                    cands.generation_times[cand_id] = (
+                        datetime.now() - start_time
+                    ).total_seconds()
+                    # Token usage the model just reported (analysis + impl calls),
+                    # so the attempt records real cost, not a zero.
+                    cands.generation_tokens[cand_id] = getattr(
+                        model, "last_token_usage", {"input_tokens": 0, "output_tokens": 0}
+                    )
+                    # Every candidate enters the pool; correctness is decided by
+                    # execution against the oracle further down.
+                    cands.answers[cand_id] = solution
+
+                except Exception as e:
+                    cands.failures.append((cand_id, str(e)))
+                    # A candidate that never produced usable code is a distinct,
+                    # real (verified) failure to record; it still spent tokens.
+                    tokens = getattr(
+                        model, "last_token_usage", {"input_tokens": 0, "output_tokens": 0}
+                    )
+                    self._record_attempt(
+                        model_name, year, day, part, Outcome.NO_CANDIDATE,
+                        stage="generate",
+                        error=f"{type(e).__name__}: {e}",
+                        input_tokens=tokens.get("input_tokens", 0),
+                        output_tokens=tokens.get("output_tokens", 0),
+                    )
+                    self._record_model_performance(
+                        model_name, success=False, problem_type=prep.problem_type
+                    )
+
+        return cands
 
     # ------------------------------------------------------------------
     # Pipeline stages
