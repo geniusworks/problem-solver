@@ -103,8 +103,15 @@ YOU MUST PROVIDE A COMPLETE, RUNNABLE PYTHON SOLUTION. NO EXCEPTIONS.
    - Close file handles properly
 
 3. Solution Requirements:
-   - Implement a single entrypoint function named solve (e.g. `def solve() -> int:`)
-   - Have solve() read from 'input.txt' (you may use helper functions, but solve() must drive the whole solution)
+   - The entrypoint MUST be a function named EXACTLY `solve` (not `main`, `part1`,
+     `sum_...`, or any descriptive name) that takes NO arguments: `def solve() -> int:`.
+     The grader calls `solve()` and reads what it prints; a differently-named function
+     is treated as no solution at all.
+   - `solve()` must read its input from 'input.txt' in the current directory. Do NOT
+     accept the input as a parameter, and do NOT include example-usage blocks, sample
+     input strings, or a hardcoded `data = "..."`. The real input.txt is supplied at
+     run time; anything you hardcode is ignored and will make the solution fail.
+   - You may use helper functions, but `solve()` must drive the whole solution.
    - Process input EXACTLY as specified in the problem
    - Convert strings to appropriate types (int/float)
    - Use efficient data structures and algorithms
