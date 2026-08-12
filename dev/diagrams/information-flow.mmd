@@ -2,14 +2,14 @@ sequenceDiagram
     participant AoC as Advent of Code Website
     participant Cache as Local Cache
     participant Parser as Problem Parser
-    participant Strategy as Strategy Analyzer
+    participant Strategy as Strategy Recommender
     participant Learning as Learning System
-    participant LLM as LLM Provider
-    participant Attempts as Attempts Directory
+    participant LLM as LLM Provider (Ollama)
     participant Executor as Solution Executor
-    participant Submit as Submission Manager
+    participant Oracle as Correctness Oracle
+    participant Attempts as Attempt Trace
 
-    Note over Cache: Problem Directory Structure:<br/>years/YYYY/dayXX/<br/>- attempts/<br/>- examples/<br/>- input.txt<br/>- problem.txt<br/>- problem.html<br/>- problem.examples.txt<br/>- problem_meta.json
+    Note over Cache: Problem Directory Structure:<br/>years/YYYY/dayXX/<br/>- examples/<br/>- input.txt<br/>- problem.txt / problem.html<br/>- answers.json (cached accepted answers)
 
     alt Cache exists
         Cache->>Parser: Load cached problem.html
@@ -19,50 +19,44 @@ sequenceDiagram
         Cache->>Parser: Pass HTML
     end
 
-    Parser->>Parser: Extract examples from HTML
-    Parser->>Cache: Save examples to .examples.txt
-    Parser->>Parser: parse_problem_text()
-    Parser->>Strategy: Analyze problem characteristics
-    Strategy->>Strategy: get_strategies_for_problem()
-    Strategy->>Strategy: create_strategy_prompt()
+    Parser->>Parser: parse_problem_text() (per-part)
+    Parser->>Strategy: Problem characteristics
+    Strategy->>Learning: get_recommended_strategies()
+    Learning->>Learning: Select top models by role:<br/>1. Primary (generation)<br/>2. Reviewer (optional collaborative improvement)
 
-    Strategy->>Learning: Get problem type
-    Learning->>Learning: Select top models by role:<br/>1. Primary (Solution Generation)<br/>2. Reviewer (Solution Improvement)<br/>3. Validator (Solution Verification)
-
-    Learning->>LLM: Pass selected models and strategies
-    Note over LLM: Prompt includes:<br/>1. Problem description<br/>2. Examples<br/>3. Parsing guidance<br/>4. Strategy guidance<br/>5. Implementation requirements<br/>6. Final question
+    Learning->>LLM: Selected models + strategies + effectiveness
 
     loop For each primary model
-        LLM->>LLM: Generate solution
-        LLM->>Attempts: Record attempt immediately
-        Note over Attempts: Attempt includes:<br/>1. Model code (using 'input.txt')<br/>2. Prompt used<br/>3. Model info<br/>4. Generation metrics<br/>5. Raw response<br/>6. Applied strategies / execution results
-        
-        loop For each validator model
-            LLM->>LLM: Validate solution
-        end
-
-        alt Solution valid
-            Learning->>Learning: Update model performance metrics:<br/>1. Success rate<br/>2. Response time<br/>3. Code quality<br/>4. Cost efficiency
-        else Solution invalid
-            Learning->>Learning: Record validation failure
-        end
+        LLM->>LLM: Generate candidate
+        Note over LLM: Candidate enters the pool;<br/>correctness is NOT decided here
     end
 
-    alt No consensus
+    alt Weighted consensus reached
+        LLM->>Executor: Consensus candidate
+    end
+    alt Collaborative improvement enabled
         loop For each reviewer model
-            LLM->>LLM: Attempt solution improvement
-            Learning->>Learning: Record improvement impact
+            LLM->>LLM: Attempt improvement
         end
     end
 
-    LLM-->>Executor: Best validated solution
-    
-    alt Solution exists
-        Executor->>Executor: Run tests
-        alt Tests pass
-            Executor->>Submit: Submit solution
-            Submit->>AoC: Simulated answer submission
-            AoC-->>Submit: Simulated response
-            Submit->>Learning: Update strategy effectiveness
+    loop Candidate execution + repair (bounded)
+        Executor->>Oracle: Run candidate; compare output
+        Oracle->>Oracle: Judge vs cached accepted answer /<br/>worked example + overfit gate
+        Oracle-->>Executor: SOLVED / WRONG / NO_CANDIDATE / ...
+        alt Not accepted and repairs remain
+            Executor->>LLM: Feedback (expected vs actual)
+            LLM->>LLM: improve_solution()
         end
     end
+
+    alt All primary candidates fail
+        loop For each fallback model
+            Executor->>Oracle: Verify fallback candidate
+        end
+    end
+
+    Executor->>Attempts: Record each attempt (claimed vs verified)
+    Executor->>Learning: Record VERIFIED model performance
+
+    Note over AoC: Answer submission is unwired (submission/ package),<br/>reserved for the solver phase (Milestone F).

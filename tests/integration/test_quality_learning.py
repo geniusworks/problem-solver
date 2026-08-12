@@ -70,7 +70,7 @@ class DummyPrimaryModel:
         )
 
 
-class DummySubmissionManager:
+class DummyStrategyRecommender:
     def __init__(self, workspace_dir):  # type: ignore[override]
         self.workspace_dir = workspace_dir
 
@@ -107,8 +107,8 @@ async def test_solver_records_quality_metrics_in_learning_db(monkeypatch, tmp_pa
     )
     monkeypatch.setattr(solver_module, "parse_problem_text", lambda text: DummyParsedProblem())
 
-    # Use dummy submission manager to avoid touching real submission/learning logic
-    monkeypatch.setattr(solver_module, "SubmissionManager", DummySubmissionManager)
+    # Use a dummy strategy recommender to avoid touching real learning logic
+    monkeypatch.setattr(solver_module, "StrategyRecommender", DummyStrategyRecommender)
 
     # Patch quality analyzer and learning database to lightweight stubs
     monkeypatch.setattr(cq, "CodeQualityAnalyzer", DummyCodeQualityAnalyzer)

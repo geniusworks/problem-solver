@@ -28,8 +28,6 @@ from .errors import (
     ProviderError,
     ExecutionError,
 )
-from .solver import solve_problem
-from .validator import validate_solution
 from .execution import SolutionExecutor, TestCase
 
 __all__ = [
@@ -52,8 +50,6 @@ __all__ = [
     'ExecutionError',
     
     # Core functionality
-    'solve_problem',
-    'validate_solution',
     'SolutionExecutor',
     'TestCase',
 ]

@@ -5,12 +5,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Optional, List, Tuple, Any, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    # Import-time only: shared.strategies is imported lazily at call sites to keep
-    # module import cheap, but the annotation still needs the name to resolve.
-    from shared.strategies import Strategy
+from typing import Dict, Optional, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -124,43 +119,6 @@ class SubmissionManager:
             )
             strategy_optimizer.record_problem_result(strategy_result)
 
-    def get_recommended_strategies(
-        self, problem_text: str, characteristics: Dict[str, Any]
-    ) -> Tuple[List["Strategy"], Dict[str, float]]:
-        """Get the recommended strategies for a problem.
-
-        Args:
-            problem_text: The problem description text
-            characteristics: Problem characteristics from analysis
-            
-        Returns:
-            Tuple of (list of strategies, dict of strategy effectiveness scores)
-        """
-        # Get strategy names from problem text
-        from shared.strategies import get_strategies_for_problem  # Lazy import
-        strategy_names = get_strategies_for_problem(problem_text)
-        
-        # Look up the actual Strategy objects
-        from shared.strategies import Strategy, ProblemCategory, SOLUTION_STRATEGIES  # Lazy import
-        strategies = []
-        for category in ProblemCategory:
-            if category in SOLUTION_STRATEGIES:
-                for strategy in SOLUTION_STRATEGIES[category]:
-                    if strategy.name in strategy_names:
-                        strategies.append(strategy)
-        
-        # Get effectiveness scores from optimizer
-        from learning.optimizer import StrategyOptimizer  # Lazy import
-        strategy_optimizer = StrategyOptimizer(
-            self.learning_dir,
-            self.workspace_dir
-        )
-        effectiveness = strategy_optimizer.get_strategy_effectiveness(
-            characteristics, [s.name for s in strategies]
-        )
-        
-        return strategies, effectiveness
-
     def _get_attempt_count(self, problem_key: str) -> int:
         """Get the number of recorded attempts for a problem.
 
@@ -191,22 +149,3 @@ class SubmissionManager:
             return False, wait_seconds
             
         return True, None
-
-    async def submit_solution(
-        self, year: int, day: int, part: int, answer: str
-    ) -> Tuple[bool, str]:
-        """Submit a solution to Advent of Code.
-
-        Args:
-            year: Problem year
-            day: Problem day
-            part: Problem part
-            answer: Solution answer
-
-        Returns:
-            Tuple of (success, message)
-        """
-        # TODO: Implement actual submission to AoC
-        # For now, just simulate submission
-        logging.info(f"Would submit answer '{answer}' for {year} day {day} part {part}")
-        return True, "Submission successful (simulated)"

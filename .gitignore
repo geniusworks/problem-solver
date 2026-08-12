@@ -69,3 +69,6 @@ years/*
 !.env.example
 # Experiment run artifacts (regenerate with experiment.py)
 dev/experiments/
+
+# Runtime submission rate-limit history
+submission_history.json

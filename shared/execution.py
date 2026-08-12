@@ -18,7 +18,7 @@ from shared.errors import (
     RuntimeError,
     ResourceError,
 )
-from shared.performance import PerformanceMonitor, PerformanceMetrics
+from shared.performance import PerformanceMonitor
 from shared.quality.code_formatter import format_code
 from shared.tempfiles import TempFileManager
 from shared.config import RESOURCES_CONFIG, DEFAULT_EXECUTION_TIMEOUT
@@ -42,6 +42,21 @@ class TestCase:
             "expected_output": self.expected_output,
             "description": self.description,
         }
+
+
+@dataclass
+class PerformanceMetrics:
+    """Timing/resource metrics for one solution run.
+
+    Relocated here from the deleted shared/testing.py: this is the shape
+    ExecutionResult.performance actually carries. (ExecutionResult was
+    previously annotated with an unrelated, incompatible PerformanceMetrics
+    from shared.performance that it never constructed.)
+    """
+
+    execution_time: float  # seconds
+    peak_memory: float     # MB
+    cpu_percent: float     # average CPU usage
 
 
 @dataclass
@@ -137,14 +152,10 @@ async def execute_solution(code: str, input_data: str, timeout: int = 5) -> "Exe
     This is a convenience wrapper used by tests. It writes the given code to a
     temporary module, writes the input data to a temporary file, executes the
     module by invoking its `solve(input_data: str)` function, and returns the
-    output along with basic performance metrics compatible with
-    `shared.testing.PerformanceMetrics`.
+    output along with basic performance metrics (PerformanceMetrics).
 
     Raises built-in TimeoutError on timeout to match test expectations.
     """
-    # Local import to avoid type conflicts; tests expect this exact class
-    from shared.testing import PerformanceMetrics as TestPerfMetrics
-
     repo_root = Path(__file__).parent.parent
     temp_manager = TempFileManager(repo_root)
 
@@ -197,7 +208,7 @@ async def execute_solution(code: str, input_data: str, timeout: int = 5) -> "Exe
 
         elapsed = time.time() - start
         # Provide minimal, test-compatible metrics; values aren't validated in tests
-        perf = TestPerfMetrics(execution_time=elapsed, peak_memory=0.0, cpu_percent=0.0)
+        perf = PerformanceMetrics(execution_time=elapsed, peak_memory=0.0, cpu_percent=0.0)
         return ExecutionResult(output=stdout.decode().strip(), performance=perf, error=None)
 
     except Exception as e:

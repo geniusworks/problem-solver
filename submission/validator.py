@@ -1,19 +1,17 @@
 """Solution validation and submission module."""
 
-import os
 import re
 import logging
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Union
+from typing import Optional
+from pathlib import Path
+
 import aiohttp
 from bs4 import BeautifulSoup
 
-from pathlib import Path
-
-from .utils import get_session_cookie, fetch_problem_text
+from shared.utils import get_session_cookie, fetch_problem_text
 from shared.errors import ValidationError, SessionError, SubmissionError
-from shared.config import RESOURCES_CONFIG, SUBMIT_SOLUTIONS
-from .submission import SubmissionManager, SubmissionResult
+from shared.config import SUBMIT_SOLUTIONS
+from .manager import SubmissionManager, SubmissionResult
 
 logger = logging.getLogger(__name__)
 

@@ -120,33 +120,59 @@ fingerprint; `learning/solver.db` is the only DB written; a solved/failed pair p
 
 ## Milestone C — Structural consolidation (the integrity work)
 
-Per "delete now, re-add with evidence." Preserve git history; re-introduce with the harness later.
+Per "delete now, re-add with evidence." A pre-flight reachability audit (three tracing passes over
+the current code) corrected the roadmap in several places — the line numbers below predate the A/B
+refactors, and some "dead" claims were wrong. **C is split into a shipped deletion/isolation PR and
+two follow-up PRs** for the live-code restructuring, so the risky changes get their own review.
 
-- **Delete unreachable modules:** `shared/llm/providers.py`, `shared/validator.py` *(after moving its
-  real `submit_and_validate` to `submission/`)*, `shared/testing.py`, `shared/llm/hardware.py`,
-  `learning/strategies.py`, and the tests that only prop them up
-  (`tests/integration/test_llm.py`, the dead-config assertions in `tests/unit/test_config.py`).
-- **Delete no-op subsystems:** strategy-learning write loop, `shared/llm/collaborative.py`,
-  `shared/submission.py:submit_solution` (simulated). Keep `get_recommended_strategies` only if
-  something reads its output honestly; otherwise inline a keyword default.
-- **Delete solver dead code:** `ModelRole`/`AttemptResult`/`ModelSelector` (`solver.py:44-110`),
-  `_save_solution`/`_save_attempt`/`_count_attempts` (`:1080-1250`), module-level `solve_problem()`
-  (`:1271`), the 5× duplicated learning-write blocks.
-- **Decompose `solve_problem`** into the staged `shared/solver/` package (see Target structure). Each
-  stage typed and unit-tested.
-- **De-grab-bag `shared/utils.py`** (898 lines, 7 responsibilities) into `shared/aoc/` (fetch/cache/
-  session) and `shared/ledger.py` (record/save). Kill the mid-file re-imports (`:673-675`) and the
-  `utils → verification → ground_truth → utils` cycle (`:310-312`) by moving the ledger's oracle
-  calls up a layer.
-- **Collapse duplicate types** to one each (taxonomy, `TestCase`, `PerformanceMetrics`,
-  `ExamplePurpose`, error classes; remove the builtin-shadowing `TimeoutError`/`RuntimeError` in
-  `shared/errors.py`).
-- **Config sprawl:** delete `config/cache.yaml`, the dead `models.yaml`/`hardware.yaml` and the 9
-  dead `.env.example` vars; add the 5 live ones (`SOLVER_MODELS`, `REFERENCE_MODEL`,
-  `MAX_REPAIR_ITERATIONS`, `ENABLE_COLLABORATIVE_IMPROVEMENT`, `SUBMIT_SOLUTIONS`).
+### C1 — Deletion + isolation — ✅ SHIPPED (PR: milestone-c-consolidation)
 
-**Verify:** full suite green; `pylint -E` clean; `mypy` no new errors; fresh clone (no `years/`)
-green; `dev/verify_solutions.py` 4/4. Line count of `shared/solver` core well under 400.
+- **Deleted solver dead code:** `ModelRole`/`AttemptResult`/`ModelSelector`,
+  `_save_solution`/`_save_attempt`/`_count_attempts`/`_get_attempts_dir`, module-level
+  `solve_problem()` (+ its `shared/__init__.py` export), and the imports they left dead.
+- **Deleted unreachable modules:** `shared/llm/providers.py` (remote/`ProviderFactory` scaffolding;
+  `shared/llm/__init__.py` re-export updated — it was load-bearing), `shared/llm/hardware.py`,
+  `learning/strategies.py`, `shared/testing.py`, and `LMStudioProvider` (a NotImplementedError stub).
+  Their prop-up tests (`test_llm.py`, `test_provider_gating.py`) went with them.
+- **Relocated `PerformanceMetrics`** (the 3-field one) into `execution.py`, its real owner, and fixed
+  the wrong annotation on `ExecutionResult.performance`.
+- **Extracted `StrategyRecommender`** from the misnamed `SubmissionManager` (its only live method);
+  **deleted the simulated `submit_solution` stub**.
+- **Isolated the real, unwired submitter** into a top-level `submission/` package
+  (`manager.py` + `validator.py`), kept for Milestone F, clearly marked not-in-the-solve-loop.
+  Preserves the "keep submission code, defer wiring" decision.
+
+**Corrections found during the audit (recorded so the roadmap stays honest):**
+`shared/llm/collaborative.py` is **not** dead — `solver.py` uses it (gated), so it stays. `test_llm.py`
+does **not** instantiate an ABC ("cannot pass" was false); it just tested dead code. `SubmissionError`
+lives in `shared/errors.py`, not `validator.py`. The "~1,400 lines unreachable" figure held for
+deletion but excludes the preserved submitter and collaborative path.
+
+### C2 — De-grab-bag `shared/utils.py` — follow-up PR
+
+Split `utils.py` (898 lines, 7 responsibilities) into `shared/aoc/` (fetch/cache/session) and
+`shared/ledger.py` (record/save). Kill the mid-file re-imports (`:672-674`) and the
+`utils → verification → ground_truth → utils` cycle (deferred imports at `:312`, `:849`, `:878`) by
+moving the ledger's oracle calls up a layer. Mostly code movement, but enough importer churn to
+deserve its own review. **Do this next.**
+
+### C3 — Decompose `solve_problem` — follow-up PR (or fold into Milestone D)
+
+Break the ~430-line method (16 stages, ~15 shared locals) into named, typed, unit-tested stage
+methods on `BaseSolver`, shrinking `solve_problem` to a readable orchestrator. Decision: **extracted
+methods, not a `shared/solver/` package** — after the C1 deletions the file no longer justifies the
+package + context-object ceremony. This is maintainability hygiene that moves no *measured* number,
+so it does not block Milestone D; ideally done right before D touches `solve_problem` anyway.
+
+### Deferred to a later cleanup (not blocking)
+
+- **Config sprawl:** delete `config/cache.yaml` and the now-dead `models.yaml`/`hardware.yaml` (the
+  code reading them is gone); prune dead `.env.example` vars.
+- **Collapse remaining duplicate types** (taxonomy, `TestCase`, `ExamplePurpose`); remove the
+  builtin-shadowing `TimeoutError`/`RuntimeError` in `shared/errors.py`.
+
+**Verify (C1, met):** full suite green (165; −23 were the deleted dead-module tests); `pylint -E`
+clean; `dev/verify_solutions.py` 4/4.
 
 ## Milestone D — Generation robustness (the measured bottleneck)
 

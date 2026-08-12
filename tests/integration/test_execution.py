@@ -2,7 +2,7 @@
 
 import pytest
 from shared.execution import execute_solution
-from shared.testing import PerformanceMetrics
+from shared.execution import PerformanceMetrics
 
 
 async def test_execute_valid_solution():
