@@ -38,6 +38,7 @@ class TestValidation:
             {"consensus_threshold": 1.5},
             {"max_repair_iterations": -1},
             {"max_primary_models": 0},
+            {"samples_per_model": 0},
         ],
     )
     def test_invalid_values_are_rejected(self, kwargs):
@@ -210,13 +211,18 @@ class TestConfigHonesty:
 
     def test_no_removed_placeholder_fields(self):
         config = SolverConfig()
-        for gone in ("consensus_on", "samples_per_model", "prompt_variant",
+        # These stay gone until their features exist. samples_per_model was on
+        # this list until Milestone E wired it (self-consistency sampling), so it
+        # is now a real field -- see test_wired_fields_are_behavioural.
+        for gone in ("consensus_on", "prompt_variant",
                      "submit_solutions", "reference_model", "provider"):
             assert not hasattr(config, gone), f"{gone} should have been removed"
 
     def test_wired_fields_are_behavioural(self):
         base = SolverConfig()
-        # These now drive real behaviour (model count, fallback gate, exec timeout).
+        # These now drive real behaviour (model count, fallback gate, exec
+        # timeout, self-consistency sample count).
         assert base.with_overrides(max_primary_models=6).fingerprint() != base.fingerprint()
         assert base.with_overrides(enable_fallback_models=False).fingerprint() != base.fingerprint()
         assert base.with_overrides(execution_timeout=30).fingerprint() != base.fingerprint()
+        assert base.with_overrides(samples_per_model=3).fingerprint() != base.fingerprint()

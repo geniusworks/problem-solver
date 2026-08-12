@@ -76,12 +76,16 @@ the historical/architecture sections below are pre-refactor and are rewritten as
 - **Milestone C2 (PR #5, merged) — utils de-grab-bag:** retired the 898-line `shared/utils.py` into
   `paths.py` (leaf) + `aoc.py` (AoC I/O) + `ledger.py` (oracle-gated record/save) +
   `logging_setup.py`, breaking the `utils → verification → ground_truth → utils` import cycle.
-- **Milestone D1+D2 (this PR) — generation robustness + token accounting:** rewrote `_extract_code`
-  around `ast.parse` (fence-agnostic, prefers a `solve()`-defining region, handles reasoning
-  `thinking` text) to attack the `no_candidate` rate directly; threaded real Ollama token counts
-  into `AttemptRecord` (previously structurally zero). D3 (poison examples) downgraded — the
-  acceptance-veto is already guarded by the ground-truth oracle. Empirical `--trials 5` A/B vs the
-  baseline is running. C3 (decompose `solve_problem`) remains a follow-up.
+- **Milestone D1+D2 (PR #6, merged) — generation robustness + token accounting:** rewrote
+  `_extract_code` around `ast.parse` (fence-agnostic, prefers a `solve()`-defining region, handles
+  reasoning `thinking` text); threaded real Ollama token counts into `AttemptRecord`. The A/B
+  corrected the project's central claim (see below).
+- **PR #7 (merged) — failure diagnostics:** persist `verdict.feedback` into `AttemptRecord.error`
+  so the wrong-vs-error split is categorisable from any run without `--include-replay`.
+- **Milestone E — self-consistency (this PR):** `samples_per_model` draws N candidates per model;
+  at temperature>0 they diverge, giving several shots at the oracle. First orchestration win with
+  evidence (see below). Folded in a prompt-hardening tweak (effect unmeasured). C3 (decompose
+  `solve_problem`) remains a follow-up.
 
 ### Verified reality (not claims — measured)
 - Recorded solutions: **4 verified correct** (2024 d1 p1/p2, d2 p1, d3 p1). See `solutions/README.md`.
@@ -97,17 +101,20 @@ the historical/architecture sections below are pre-refactor and are rewritten as
   16 error / 1 no_candidate**. Models produce candidates freely; the real bottleneck is **code
   correctness** — 41% wrong, 31% runtime errors — not extraction. Problem-level solved barely moved
   (12→13/30) because extraction converts no-candidate into mostly wrong/error, occasionally solved.
+- **Self-consistency WIN (Milestone E A/B, `dev/progress/milestone-e-self-consistency.md`):** clean
+  isolation, samp1 vs samp3 (only `samples_per_model` differs), 2024 d1–3, 3 trials. **39% → 61%
+  solve rate; 0 → 3 of 6 problems reliable (solved every trial).** The three flipping problems all
+  went 2/3 → 3/3. d2 p2 and d3 p2 stay 0/3 under 3× samples — confirming they are a genuine
+  **capability** ceiling, not variance. Cost: 2.4× wall clock, ~2× tokens. Zero regression.
 
 ### Next (per PLAN.md)
-- **Milestone C2 (this PR) — DONE:** retired the `shared/utils.py` grab-bag into `paths.py` (leaf) +
-  `aoc.py` (AoC I/O) + `ledger.py` (oracle-gated record/save) + `logging_setup.py`, and broke the
-  `utils → verification → ground_truth → utils` import cycle. Deleted 4 dead helpers.
-- **Milestone C3 — decompose `solve_problem`:** into typed, tested stage-methods (not a package).
-  Maintainability hygiene; moves no *measured* number, so it does not block D.
-- **Milestone D — generation robustness (the measured bottleneck):** attack the `no_candidate` rate
-  (robust extraction, poison examples, token accounting). Recommended priority over C3, since the
-  baseline says generation robustness — not code structure — is what stands between the platform and
-  results.
+- **Answer-based consensus (Milestone E follow-up):** with self-consistency's candidate-pool /
+  executed-answer plumbing in place, add majority-vote over the executed answer for the *no-oracle*
+  case — the selector the submission phase (F) needs.
+- **The capability ceiling (d2 p2, d3 p2):** stably 0/3 even under 3× sampling. Needs a stronger
+  model or a different technique, not more samples — a question for a bigger-model A/B.
+- **Milestone C3 — decompose `solve_problem`:** typed, tested stage-methods (not a package).
+  Maintainability hygiene; moves no *measured* number. Still a follow-up, done opportunistically.
 
 
 ### Active Development
