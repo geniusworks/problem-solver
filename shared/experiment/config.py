@@ -53,6 +53,14 @@ class SolverConfig:
     # --- generation -----------------------------------------------------
     temperature: Optional[float] = None
 
+    # Self-consistency sampling: draw this many candidates per model instead of
+    # one. With temperature > 0 the samples differ, so a problem the model solves
+    # only some of the time gets several shots at the oracle in a single run --
+    # the direct attack on the run-to-run variance the baseline measured (4 of 6
+    # problems flipped across identical configs). Needs temperature > 0 to help;
+    # at 1 the solver behaves exactly as before.
+    samples_per_model: int = 1
+
     # --- repair and fallback --------------------------------------------
     max_repair_iterations: int = 2
     enable_fallback_models: bool = True
@@ -96,6 +104,8 @@ class SolverConfig:
             raise ValueError("max_repair_iterations must be >= 0")
         if self.max_primary_models < 1:
             raise ValueError("max_primary_models must be >= 1")
+        if self.samples_per_model < 1:
+            raise ValueError("samples_per_model must be >= 1")
 
     # -- serialisation ----------------------------------------------------
 

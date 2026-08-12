@@ -302,3 +302,67 @@ async def test_solver_uses_repair_loop_when_all_initial_candidates_fail(
     failed = [a for a in solver.attempts if a.outcome is not Outcome.SOLVED]
     assert failed
     assert any(a.error and "boom" in a.error for a in failed)
+
+
+class SamplingModel:
+    """A model whose first draw is bad and second is good.
+
+    With samples_per_model=1 the bad draw is the only candidate and the problem
+    fails; with 2 the good draw also enters the pool and the oracle accepts it.
+    This is the run-to-run variance self-consistency is meant to beat.
+    """
+
+    def __init__(self) -> None:
+        self.calls = 0
+        self.last_token_usage = {"input_tokens": 10, "output_tokens": 5}
+
+    async def generate_solution(  # type: ignore[override]
+        self, parsed_problem, year, day, strategies, strategy_effectiveness
+    ) -> str:
+        self.calls += 1
+        if self.calls >= 2:
+            return "def solve():\n    return 2\n  # good"
+        return "def solve():\n    return 1\n  # bad"
+
+
+@pytest.mark.asyncio
+async def test_self_consistency_draws_multiple_samples_per_model(monkeypatch, tmp_path):
+    from shared.experiment import SolverConfig
+
+    async def fake_fetch_problem_text(year, day, part=1):
+        return "Dummy problem text", None, None
+
+    async def fake_ensure_problem_files(year, day):
+        return {"problem": tmp_path / "p", "examples": tmp_path / "e", "input": tmp_path / "i"}
+
+    def fake_dirs(workspace_dir, year, day):
+        for sub in ("attempts", "examples"):
+            (tmp_path / sub).mkdir(parents=True, exist_ok=True)
+        return {"day": tmp_path, "attempts": tmp_path / "attempts", "examples": tmp_path / "examples"}
+
+    monkeypatch.setattr(solver_module, "fetch_problem_text", fake_fetch_problem_text)
+    monkeypatch.setattr(solver_module, "ensure_problem_files", fake_ensure_problem_files)
+    monkeypatch.setattr(solver_module, "ensure_problem_directory_structure", fake_dirs)
+    monkeypatch.setattr(solver_module, "parse_problem_text", lambda text: DummyParsedProblem())
+    monkeypatch.setattr(cq, "CodeQualityAnalyzer", DummyCodeQualityAnalyzer)
+    monkeypatch.setattr(learning, "LearningDatabase", DummyLearningDatabase)
+    monkeypatch.setattr(solver_module, "SolutionExecutor", RecordingExecutor)
+    monkeypatch.setattr(solver_module, "record_solution", lambda *a, **k: None)
+    monkeypatch.setattr(
+        solver_module.BaseSolver, "_get_top_models",
+        lambda self, problem_type, role, limit=3, min_success_rate=0.5: (
+            ["m"] if role == "primary" else []
+        ),
+    )
+
+    config = SolverConfig(samples_per_model=2)
+    solver = solver_module.BaseSolver(tmp_path, debug=False, config=config)
+    solver.enable_collaborative_improvement = False
+    model = SamplingModel()
+    solver.models = {"m": model}
+
+    result = await solver.solve_problem(2022, 1, 1, force=True)
+
+    # Both samples were drawn, and the good one was accepted.
+    assert model.calls == 2
+    assert result is not None and "# good" in result

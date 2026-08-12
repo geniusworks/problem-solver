@@ -46,6 +46,7 @@ _INT_FIELDS = {
     "num_ctx",
     "max_primary_models", "max_repair_iterations",
     "min_consensus_models", "execution_timeout",
+    "samples_per_model",
 }
 _FLOAT_FIELDS = {"consensus_threshold", "temperature"}
 _BOOL_FIELDS = {

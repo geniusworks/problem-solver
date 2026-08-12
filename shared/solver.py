@@ -210,9 +210,14 @@ class BaseSolver:
             # returned True; acceptance is decided by execution against the oracle.
             reviewer_models = self._get_top_models(problem_type, "reviewer", limit=3)
 
-            # Try each primary model and collect answers
+            # Try each primary model and collect answers. With self-consistency
+            # (samples_per_model > 1) a model contributes several candidates, so
+            # the pool is keyed by candidate id, not model name; candidate_models
+            # maps each back to the model that produced it, which is what the
+            # learning DB and the ledger must record against.
             answers = {}
-            # Generation wall-clock per model: the only cost signal local
+            candidate_models: Dict[str, str] = {}
+            # Generation wall-clock per candidate: the only cost signal local
             # models expose, since the Ollama CLI reports no token counts.
             generation_times: Dict[str, float] = {}
             generation_tokens: Dict[str, Dict[str, int]] = {}
@@ -227,63 +232,67 @@ class BaseSolver:
                     continue
                     
                 model = self.models[model_name]
-                try:
-                    logging.info("")
-                    logging.info(f"Trying primary model: {model_name}")
-                    logging.info("")
+                # Self-consistency: draw samples_per_model candidates from this
+                # model. Each draw is independent -- a sample that raises records
+                # its own no-candidate failure and does not abort the rest.
+                for sample_idx in range(self.config.samples_per_model):
+                    cand_id = (
+                        model_name if self.config.samples_per_model == 1
+                        else f"{model_name}#s{sample_idx}"
+                    )
+                    candidate_models[cand_id] = model_name
+                    try:
+                        logging.info("")
+                        logging.info(f"Trying primary model: {cand_id}")
+                        logging.info("")
 
-                    # Record start time for performance tracking
-                    start_time = datetime.now()
-                    
-                    # Generate solution
-                    solution = await model.generate_solution(
-                        parsed_problem,
-                        year,
-                        day,
-                        strategies=strategies,
-                        strategy_effectiveness=effectiveness
-                    )
-                    
-                    # Calculate metrics
-                    end_time = datetime.now()
-                    response_time = (end_time - start_time).total_seconds()
-                    generation_times[model_name] = response_time
-                    # Token usage the model just reported (analysis + impl calls),
-                    # so the attempt records real cost rather than a structural 0.
-                    generation_tokens[model_name] = getattr(
-                        model, "last_token_usage", {"input_tokens": 0, "output_tokens": 0}
-                    )
+                        # Record start time for performance tracking
+                        start_time = datetime.now()
 
-                    # Every candidate enters the pool; correctness is decided by
-                    # execution against the oracle further down, and the model's
-                    # performance is recorded there against that verdict -- not
-                    # here, where it has only produced text. (Code quality is
-                    # computed once, later, for the candidates that survive.)
-                    #
-                    # There used to be a validator-model gate here calling the
-                    # stub validate_solution (return True), which admitted
-                    # everything while looking like review. Removed.
-                    answers[model_name] = solution
+                        # Generate solution
+                        solution = await model.generate_solution(
+                            parsed_problem,
+                            year,
+                            day,
+                            strategies=strategies,
+                            strategy_effectiveness=effectiveness
+                        )
 
-                except Exception as e:
-                    failures.append((model_name, str(e)))
-                    # A model that never produced usable code is a distinct
-                    # failure from one whose code ran and gave a wrong answer,
-                    # and it is a real (verified) failure to record. It still
-                    # spent tokens getting there, so record them.
-                    tokens = getattr(
-                        model, "last_token_usage", {"input_tokens": 0, "output_tokens": 0}
-                    )
-                    self._record_attempt(
-                        model_name, year, day, part, Outcome.NO_CANDIDATE,
-                        stage="generate",
-                        error=f"{type(e).__name__}: {e}",
-                        input_tokens=tokens.get("input_tokens", 0),
-                        output_tokens=tokens.get("output_tokens", 0),
-                    )
-                    self._record_model_performance(
-                        model_name, success=False, problem_type=problem_type
-                    )
+                        # Calculate metrics
+                        end_time = datetime.now()
+                        response_time = (end_time - start_time).total_seconds()
+                        generation_times[cand_id] = response_time
+                        # Token usage the model just reported (analysis + impl
+                        # calls), so the attempt records real cost, not a zero.
+                        generation_tokens[cand_id] = getattr(
+                            model, "last_token_usage", {"input_tokens": 0, "output_tokens": 0}
+                        )
+
+                        # Every candidate enters the pool; correctness is decided
+                        # by execution against the oracle further down, and the
+                        # model's performance is recorded there against that
+                        # verdict -- not here, where it has only produced text.
+                        answers[cand_id] = solution
+
+                    except Exception as e:
+                        failures.append((cand_id, str(e)))
+                        # A model that never produced usable code is a distinct
+                        # failure from one whose code ran and gave a wrong answer,
+                        # and it is a real (verified) failure to record. It still
+                        # spent tokens getting there, so record them.
+                        tokens = getattr(
+                            model, "last_token_usage", {"input_tokens": 0, "output_tokens": 0}
+                        )
+                        self._record_attempt(
+                            model_name, year, day, part, Outcome.NO_CANDIDATE,
+                            stage="generate",
+                            error=f"{type(e).__name__}: {e}",
+                            input_tokens=tokens.get("input_tokens", 0),
+                            output_tokens=tokens.get("output_tokens", 0),
+                        )
+                        self._record_model_performance(
+                            model_name, success=False, problem_type=problem_type
+                        )
 
             # If we have answers, try to reach consensus
             consensus_answer: Optional[str] = None
@@ -430,21 +439,24 @@ class BaseSolver:
                     validated_candidates: List[Tuple[str, str]] = []
                     feedback_by_model: Dict[str, str] = {}
 
-                    for model_name, solution in current_candidates.items():
+                    for cand_id, solution in current_candidates.items():
+                        # cand_id keys the pool; model_name is the model that
+                        # produced it, which is what recording/model-lookup use.
+                        model_name = candidate_models.get(cand_id, cand_id)
                         try:
                             verdict = await self._verify_candidate(
                                 model_name, solution, year, day, part,
                                 exec_test_cases, known_answer,
                             )
-                            tokens = generation_tokens.get(model_name, {})
+                            tokens = generation_tokens.get(cand_id, {})
                             self._record_attempt(
                                 model_name, year, day, part, verdict.outcome,
                                 stage="repair" if iteration else "generate",
                                 answer=verdict.answer,
                                 expected=known_answer,
                                 repair_iteration=iteration,
-                                wall_clock_seconds=generation_times.get(model_name, 0.0),
-                                quality_score=quality_scores.get(model_name),
+                                wall_clock_seconds=generation_times.get(cand_id, 0.0),
+                                quality_score=quality_scores.get(cand_id),
                                 code=solution,
                                 input_tokens=tokens.get("input_tokens", 0),
                                 output_tokens=tokens.get("output_tokens", 0),
@@ -455,21 +467,21 @@ class BaseSolver:
                             )
                             # Record the model's verified performance once, on its
                             # initial candidate (repair iterations re-test the same
-                            # models and would double-count).
+                            # candidates and would double-count).
                             if iteration == 0:
                                 self._record_model_performance(
                                     model_name,
                                     success=verdict.accepted,
                                     problem_type=problem_type,
-                                    quality_score=(quality_scores.get(model_name) or 0.0) * 10.0,
-                                    response_time=generation_times.get(model_name, 0.0),
+                                    quality_score=(quality_scores.get(cand_id) or 0.0) * 10.0,
+                                    response_time=generation_times.get(cand_id, 0.0),
                                 )
                             if not verdict.accepted:
                                 if verdict.feedback:
-                                    feedback_by_model[model_name] = verdict.feedback
+                                    feedback_by_model[cand_id] = verdict.feedback
                                 continue
 
-                            validated_candidates.append((model_name, solution))
+                            validated_candidates.append((cand_id, solution))
                         except Exception as e:
                             # Do not swallow silently: a bug in the executor here is
                             # indistinguishable from "the candidate failed", which
@@ -488,18 +500,22 @@ class BaseSolver:
                                 key=lambda item: quality_scores.get(item[0], 0.0),
                                 reverse=True,
                             )
-                        chosen_model, chosen_solution = validated_candidates[0]
-                        record_solution(year, day, part, chosen_model, chosen_solution)
+                        chosen_cand, chosen_solution = validated_candidates[0]
+                        record_solution(
+                            year, day, part,
+                            candidate_models.get(chosen_cand, chosen_cand),
+                            chosen_solution,
+                        )
                         return chosen_solution
 
                     if iteration >= max_repair_iterations:
                         break
 
                     improved_candidates: Dict[str, str] = {}
-                    for model_name, solution in current_candidates.items():
-                        if model_name not in feedback_by_model:
+                    for cand_id, solution in current_candidates.items():
+                        if cand_id not in feedback_by_model:
                             continue
-                        model = self.models.get(model_name)
+                        model = self.models.get(candidate_models.get(cand_id, cand_id))
                         improve_fn = getattr(model, "improve_solution", None) if model else None
                         if not callable(improve_fn):
                             continue
@@ -507,10 +523,10 @@ class BaseSolver:
                             improved_code = await improve_fn(
                                 solution,
                                 parsed_problem,
-                                feedback_by_model[model_name],
+                                feedback_by_model[cand_id],
                             )
                             if improved_code and improved_code != solution:
-                                improved_candidates[model_name] = improved_code
+                                improved_candidates[cand_id] = improved_code
                         except Exception:
                             continue
 
