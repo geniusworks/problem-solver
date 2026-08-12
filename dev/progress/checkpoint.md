@@ -90,8 +90,13 @@ the historical/architecture sections below are pre-refactor and are rewritten as
 - **First multi-run baseline** (`dev/progress/baseline-2024-d1-3.md`): qwen2.5-coder:7b, 2024 d1–3,
   5 trials — **12/30 solved (40%); 4 of 6 problems solvable, 0 of 6 reliable.** Four of six flip
   across identical runs; single-run numbers are noise.
-- **Every failure is `no_candidate`, never `wrong` or `overfit`.** When the pipeline emits a
-  parseable solution it is correct. The bottleneck is producing a candidate, not model capability.
+- **CORRECTED (Milestone D1 A/B, `dev/progress/milestone-d-extraction.md`):** the baseline's
+  "every failure is `no_candidate`, models are correct when they produce anything" was a
+  **problem-level rollup artifact**. With robust extraction surfacing candidates and token/outcome
+  accounting made honest, the same 2024 d1–3 config produced **51 attempts: 13 solved / 21 wrong /
+  16 error / 1 no_candidate**. Models produce candidates freely; the real bottleneck is **code
+  correctness** — 41% wrong, 31% runtime errors — not extraction. Problem-level solved barely moved
+  (12→13/30) because extraction converts no-candidate into mostly wrong/error, occasionally solved.
 
 ### Next (per PLAN.md)
 - **Milestone C2 (this PR) — DONE:** retired the `shared/utils.py` grab-bag into `paths.py` (leaf) +

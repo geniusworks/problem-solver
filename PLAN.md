@@ -6,11 +6,17 @@ PR #1 turned the solver from an unmeasurable pipeline into one with a correctnes
 experiment harness, and independent verification. Two full-codebase audits (structural + pipeline)
 now show where it stands.
 
-**The empirical reframe.** Across recorded runs, **when the model produces a candidate it is ~9:1
-correct** (9 solved, 1 wrong). The dominant failure is *no candidate at all* plus outcomes flipping
-across byte-identical configs. So the bottleneck is **generation robustness and run-to-run
-variance — not model capability, not orchestration sophistication.** "The 7B models are too weak"
-was never measured; it was inferred from a broken instrument.
+**The empirical reframe (updated after the Milestone D1 A/B).** The original reframe read this
+project's early numbers as *"when the model produces a candidate it is ~9:1 correct; the dominant
+failure is no candidate at all."* The D1 A/B (`dev/progress/milestone-d-extraction.md`) showed that
+was a **problem-level rollup artifact**: a problem whose every candidate is wrong or errors returns
+None from the solver and is recorded as `no_candidate`, erasing the wrong/error attempts underneath.
+With robust extraction surfacing candidates and honest attempt-level accounting, the same 2024 d1–3
+config produces **51 attempts: 13 solved / 21 wrong / 16 error / 1 no_candidate**. So the real
+bottleneck is **code correctness — 41% wrong, 31% runtime errors — not extraction or "no candidate".**
+Model capability and run-to-run variance are still in play, but the lever moved: from *getting a
+candidate at all* to *getting a candidate that runs and is right*. Milestones D/E are re-pointed
+accordingly (reduce runtime errors; then self-consistency/consensus for the wrong answers).
 
 **What the audits found still wrong** (file:line):
 - **Live correctness hole:** `shared/solver.py:491-503` still runs the stub `validate_solution`
