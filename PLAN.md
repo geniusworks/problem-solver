@@ -249,8 +249,14 @@ Only now, and only what measures a positive delta through the harness.
 ## Milestone F — Solver phase (deferred, per "platform now, solver later")
 
 - Wire `submission/` for genuinely unseen problems, gated on `submit_solutions`, respecting the
-  cooldown parser. Requires a fresh `AOC_SESSION`.
-- Scale evaluation: full 2024, plus an earlier public year, as a benchmark.
+  cooldown parser. Requires a fresh `AOC_SESSION`. This is where answer-based consensus gets its
+  live A/B.
+- Scale evaluation: full 2024, plus an earlier public year, as a benchmark. **First data point in
+  (`dev/progress/scale-2024-d4-7.md`):** samp3 on 2024 d4–7 solved only 1/8 (new: d6 p1). The 7B is
+  capability-limited past the easy problems — 59% of attempts can't emit runnable code, 39% are
+  confidently wrong. Broader coverage is gated on a **stronger model**, which is hardware-blocked on
+  16 GB (32b swaps; mid-size models ~5 min/generation → 8 h+ sweeps). The platform's job here is
+  done: it turned "the 7B is too weak" from assumption into a measured frontier.
 
 ---
 
