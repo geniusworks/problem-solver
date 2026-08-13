@@ -23,6 +23,7 @@ It exits non-zero if any recorded solution is wrong, errors, or cannot be verifi
 |2024|6|1|5331|qwen2.5-coder:7b|2026-08-12 17:29:53 UTC|solutions/2024_day06_part1.py|
 |2024|10|1|482|qwen2.5-coder:7b|2026-08-13 01:35:39 UTC|solutions/2024_day10_part1.py|
 |2024|11|1|229043|qwen2.5-coder:7b|2026-08-13 02:01:54 UTC|solutions/2024_day11_part1.py|
+|2024|7|1|5702958180383|qwen3.5:9b|2026-08-13 10:28:20 UTC|solutions/2024_day07_part1.py|
 <!-- end verified rows -->
 
 ## Rejected — previously recorded as solved, verified wrong
