@@ -226,3 +226,4 @@ class TestConfigHonesty:
         assert base.with_overrides(enable_fallback_models=False).fingerprint() != base.fingerprint()
         assert base.with_overrides(execution_timeout=30).fingerprint() != base.fingerprint()
         assert base.with_overrides(samples_per_model=3).fingerprint() != base.fingerprint()
+        assert base.with_overrides(enable_thinking=False).fingerprint() != base.fingerprint()

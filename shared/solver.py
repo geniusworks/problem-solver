@@ -114,6 +114,7 @@ class BaseSolver:
                 model=model, debug=debug,
                 temperature=self.config.temperature,
                 num_ctx=self.config.num_ctx,
+                think=self.config.enable_thinking,
             )
             for model in model_names
         }

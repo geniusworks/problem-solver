@@ -103,6 +103,29 @@ class TestReasoningModels:
         result = await _generate({"response": "x"})
         assert OllamaProvider._tokens(result) == (0, 0)
 
+    async def _capture_payload(self, think):
+        """Run generate() and return the JSON payload posted to Ollama."""
+        sent = {}
+
+        class _Capturing(_FakeSession):
+            def post(self, *args, **kwargs):
+                sent.update(kwargs.get("json", {}))
+                return _FakeResponse(self._payload, self._status)
+
+        with patch("aiohttp.ClientSession", lambda **kw: _Capturing({"response": "x"})):
+            await OllamaProvider(model="m", think=think).generate("prompt")
+        return sent
+
+    async def test_think_flag_is_sent_when_disabled(self):
+        # Reasoning models over-reason on these prompts; think=False makes them
+        # emit code directly, so the flag must reach Ollama.
+        sent = await self._capture_payload(think=False)
+        assert sent.get("think") is False
+
+    async def test_think_flag_absent_by_default(self):
+        sent = await self._capture_payload(think=None)
+        assert "think" not in sent
+
     async def test_non_200_is_reported(self):
         with pytest.raises(RuntimeError, match="HTTP 500"):
             await _generate({}, status=500)
