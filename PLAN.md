@@ -289,20 +289,27 @@ venv/bin/python experiment.py --problems 2024:4-7 --trials 3 \
 and compare against the recorded 7B frontier (`dev/progress/scale-2024-d4-7.md`,
 `benchmark-2024-d1-12.md`). This is the single highest-value experiment remaining.
 
-### 2. Exercise the submission loop (Milestone F) — provide an unsolved problem
+### 2. Exercise the submission loop (Milestone F)
 
-The real AoC submitter lives in `submission/`, tested in isolation but deliberately **unwired**. It
-can't be live-tested yet because all of the author's 2024 is already solved (every fetch returns the
-accepted answer, so `submit_and_validate` short-circuits — no genuinely-unseen target). To unblock:
+The real AoC submitter lives in `submission/`, tested in isolation but deliberately **unwired**. A
+problem with a cached accepted answer can't exercise it (every fetch returns the answer, so
+`submit_and_validate` short-circuits) — it needs a genuinely-**unsolved** problem.
 
-- Wait for **AoC 2026** (December) and run against the live event, or
-- Use a **fresh account / an unsolved earlier year** so there are unsubmitted problems.
+**There is one live target now: `2025 d12 p2`** (2025 d1–11 and d12 p1 are all solved on the author's
+account; this project models AoC 2025 as a 12-day event, `paths.get_aoc_day_count`). Beyond that, the
+next unseen targets are **AoC 2026** (December) or a fresh account / unsolved earlier year.
 
-Then wiring is small: after `_execute_and_repair` yields a candidate for a no-oracle problem, call
+Wiring is small: after `_execute_and_repair` yields a candidate for a no-oracle problem, call
 `submission.validate_solution(...)` gated on `SUBMIT_SOLUTIONS=true`, respecting the cooldown parser.
 This is where answer-based consensus (`_select_candidate`, validated offline at 10/11) finally gets
-its live A/B. **Note:** real submission is rate-limited and outward-facing to your AoC account —
-enable `SUBMIT_SOLUTIONS` deliberately, per problem.
+its live A/B.
+
+**Two caveats on `2025 d12 p2`:** (a) real submission is rate-limited and outward-facing to your AoC
+account — a wrong answer triggers a cooldown — so enable `SUBMIT_SOLUTIONS` deliberately, per problem;
+(b) it is a Part 2 of the final day, and the measured 7B ceiling is that it rarely clears any Part 2,
+so a *successful* submission is unlikely without a stronger model. The loop can still be wired and
+demonstrated (it will most likely report "not the right answer"), which is itself a real end-to-end F
+test.
 
 ### Optional, unblocked (small cleanups)
 
