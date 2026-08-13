@@ -267,49 +267,58 @@ Only now, and only what measures a positive delta through the harness.
 
 Milestones A–E are done and the codebase is consolidated (C1–C3). The measurement platform is
 complete and the `qwen2.5-coder:7b` frontier on 2024 is mapped (7 verified solutions; reliable on the
-easy Part 1s, capability-limited beyond). The two levers that would advance the project further are
-both **blocked on something only you can provide** — here is exactly what each needs.
+easy Part 1s, capability-limited beyond). All of 2024 and 2025 are solved on the author's account
+(the final day's Part 2 star is auto-granted once Part 1 is done, so it shows no submittable answer
+but is complete) — so there is **no live submission target**; Milestone F is deferred (see below).
 
-### 1. Push past the capability ceiling — provide a stronger model
+The maintainer's stated priorities from here are **(1) improve the solve rate on the problems we can
+already measure** and **(2) find a stronger model.** Both push the same goal — solve more — from two
+directions: better orchestration of the current model, and more model.
 
-The measured bottleneck for broader coverage is model capability, not orchestration. The direct
-experiment (does a stronger model clear the ceiling?) can't run on this 16 GB machine:
-`qwen2.5-coder:32b` swaps (120 s timeout for a 40-token generation); mid-size models (phi4,
-qwen3.5:9b) run but at ~5 min/generation a full self-consistency sweep is 8 h+. To unblock, pick one:
+### 1. Improve solve rates on known problems — UNBLOCKED, do this now
+
+Everything here runs on the current hardware against the cached, oracle-verified 2024/2025 problems,
+and each idea is A/B'd through `--trials`. Candidate levers, roughly by expected value:
+
+- **Sweep `samples_per_model` higher (5, 7).** Self-consistency was the biggest win (39→61% at 3);
+  does more help, and where does it plateau? Cheap on the 7B.
+- **Repair-loop effectiveness.** The traceback now reaches the repair prompt (PR #7); measure whether
+  repair actually converts `error`/`wrong` into `solved`, and improve the feedback if not — the
+  error split (31% runtime errors) is the target.
+- **Prompt / generation A/Bs (Milestone D4, still open):** single-call vs the two-call analysis+impl
+  generation; `num_ctx` sweep; and a clean old-vs-new-prompt A/B to finally measure the
+  `solve()`-contract hardening (its effect was never isolated).
+- **Poison-example repair feedback (D3 residual):** suppress example-mismatch feedback when a
+  ground-truth answer is known, so a mis-paired example can't misdirect repair.
+
+Success criterion, as always: a `--trials` A/B with a reported delta and a committed result set,
+compared to the recorded baselines in `dev/progress/`.
+
+### 2. Find a stronger model — the capability lever
+
+The measured bottleneck for *broader* coverage is model capability. The direct experiment can't run
+on this 16 GB machine: `qwen2.5-coder:32b` swaps (120 s timeout for a 40-token generation); mid-size
+models (phi4, qwen3.5:9b) run but at ~5 min/generation a full self-consistency sweep is 8 h+. To
+unblock, provide one of:
 
 - **More RAM** (a 32 GB+ machine) and `ollama pull qwen2.5-coder:32b`, or
-- **A remote/cloud endpoint** — set `OLLAMA_HOST` to a hosted Ollama with a large model, or add a
-  new provider in `shared/llm/` for a hosted API (the provider seam is already there).
+- **A remote/cloud endpoint** — set `OLLAMA_HOST` to a hosted Ollama with a large model, or add a new
+  provider in `shared/llm/` for a hosted API (the provider seam is already there).
 
-Then re-run the winning A/B with the stronger model, e.g.:
+Then re-run the winning A/B with the stronger model against the recorded 7B frontier
+(`dev/progress/scale-2024-d4-7.md`, `benchmark-2024-d1-12.md`):
 ```
 venv/bin/python experiment.py --problems 2024:4-7 --trials 3 \
   --config "name=big-samp3,models=<stronger-model>,temperature=0.7,samples_per_model=3"
 ```
-and compare against the recorded 7B frontier (`dev/progress/scale-2024-d4-7.md`,
-`benchmark-2024-d1-12.md`). This is the single highest-value experiment remaining.
 
-### 2. Exercise the submission loop (Milestone F)
+### 3. Submission phase (Milestone F) — deferred
 
-The real AoC submitter lives in `submission/`, tested in isolation but deliberately **unwired**. A
-problem with a cached accepted answer can't exercise it (every fetch returns the answer, so
-`submit_and_validate` short-circuits) — it needs a genuinely-**unsolved** problem.
-
-**There is one live target now: `2025 d12 p2`** (2025 d1–11 and d12 p1 are all solved on the author's
-account; this project models AoC 2025 as a 12-day event, `paths.get_aoc_day_count`). Beyond that, the
-next unseen targets are **AoC 2026** (December) or a fresh account / unsolved earlier year.
-
-Wiring is small: after `_execute_and_repair` yields a candidate for a no-oracle problem, call
-`submission.validate_solution(...)` gated on `SUBMIT_SOLUTIONS=true`, respecting the cooldown parser.
-This is where answer-based consensus (`_select_candidate`, validated offline at 10/11) finally gets
-its live A/B.
-
-**Two caveats on `2025 d12 p2`:** (a) real submission is rate-limited and outward-facing to your AoC
-account — a wrong answer triggers a cooldown — so enable `SUBMIT_SOLUTIONS` deliberately, per problem;
-(b) it is a Part 2 of the final day, and the measured 7B ceiling is that it rarely clears any Part 2,
-so a *successful* submission is unlikely without a stronger model. The loop can still be wired and
-demonstrated (it will most likely report "not the right answer"), which is itself a real end-to-end F
-test.
+The real AoC submitter (`submission/`) is tested in isolation but deliberately unwired, and there is
+no unsolved problem to submit against (all of 2024/2025 is complete). Revisit for **AoC 2026**
+(December, if we choose to enter) or a fresh account. Wiring is small when the time comes: gate a
+`submission.validate_solution(...)` call on `SUBMIT_SOLUTIONS=true` after `_execute_and_repair`. Real
+submission is rate-limited and outward-facing to the account — enable deliberately, per problem.
 
 ### Optional, unblocked (small cleanups)
 

@@ -117,22 +117,21 @@ the historical/architecture sections below are pre-refactor and are rewritten as
 
 ### Next (per PLAN.md)
 
-Milestones A–E are done and the codebase is consolidated (C1–C3). The platform is complete and the
-7B frontier is mapped. The two remaining levers both need a maintainer action — see
-**"Next steps for the maintainer"** in `PLAN.md` for the concrete steps. In short:
+Milestones A–E are done and the codebase is consolidated (C1–C3). The platform is complete, the 7B
+frontier is mapped, and all of 2024 **and 2025** are solved (the final-day Part 2 star is auto-granted
+once Part 1 is done, so it shows no submittable answer but is complete) — so there is no live
+submission target. Maintainer priorities from here (see PLAN.md → "Next steps for the maintainer"):
 
-1. **Push past the capability ceiling — needs a stronger model.** Hardware-blocked on 16 GB
-   (qwen2.5-coder:32b swaps; mid-size models ~5 min/generation → 8 h+ sweeps). Requires more RAM or a
-   remote/cloud endpoint. Then re-run the self-consistency A/B with the stronger model.
-2. **Exercise the submission loop (Milestone F) — one live target exists: `2025 d12 p2`.** All of
-   2024 and 2025 d1–11 (+ d12 p1) are solved; **2025 d12 p2 is unsolved**, so it's a genuine
-   submission target now (no need to wait for AoC 2026). Wire `submission/` gated on
-   `SUBMIT_SOLUTIONS`. Caveat: it's a final-day Part 2 and the 7B rarely clears any Part 2, so a
-   *successful* submission is unlikely — but the loop can be wired and demonstrated. Real submission
-   is outward-facing to the account (wrong-answer cooldown); enable deliberately, per problem.
+1. **Improve solve rates on known problems — UNBLOCKED, do now.** A/B levers on the current 7B against
+   cached/oracle-verified 2024–2025 problems: sweep `samples_per_model` higher (5, 7); measure and
+   improve repair-loop effectiveness (does repair convert error/wrong → solved?); the open D4 prompt/
+   generation A/Bs (single vs two-call, `num_ctx`, old-vs-new prompt); the D3 poison-feedback fix.
+2. **Find a stronger model — capability lever, hardware-blocked.** Needs more RAM (`qwen2.5-coder:32b`)
+   or a remote/cloud endpoint, then re-run the winning A/B vs the recorded 7B frontier.
+3. **Submission phase (F) — deferred.** No unsolved target (all 2024/2025 complete); revisit for AoC
+   2026 or a fresh account.
 
-Optional, unblocked: the small deferred cleanups (dead `config/*.yaml`, remaining duplicate types) —
-see PLAN.md → "Deferred to a later cleanup".
+Optional, unblocked: the small deferred cleanups (dead `config/*.yaml`, remaining duplicate types).
 
 
 ### Active Development
