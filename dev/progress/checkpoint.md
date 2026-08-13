@@ -88,16 +88,17 @@ the historical/architecture sections below are pre-refactor and are rewritten as
   `solve_problem`) remains a follow-up.
 
 ### Verified reality (not claims — measured)
-- Recorded solutions: **8 verified correct** (2024 d1 p1/p2, d2 p1, d3 p1, d6 p1, d7 p1, d10 p1,
-  d11 p1 — d7 p1 added by the qwen3.5:9b run). See `solutions/README.md`. The earlier "6/10" figure
-  was never true; three recorded solutions were wrong and are quarantined in `solutions/rejected/`.
-- **A stronger model that fits 16 GB (`dev/progress/reasoning-model-9b.md`):** `qwen3.5:9b` with
-  thinking disabled solved **6/14 of 2024 d1–7 vs the 7B coder's 2/14** (samples=1), and cracked
-  **d7 p1 — which the 7B never solved even at samples=3.** Fits at 5.8 GB, 100% GPU. First evidence
-  the capability ceiling can be pushed *without* new hardware. Caveats: samples=1 is noisy (the d7 p1
-  win is the load-bearing signal); the 9b is ~4.5× slower even with thinking off. Reasoning models
-  otherwise over-reason on these prompts (26k+ chars, `done_reason=length`) — the new `enable_thinking`
-  toggle (PR #18) is what makes them usable.
+- Recorded solutions: **11 verified correct** (2024 d1 p1/p2, d2 p1, d3 p1, d4 p1, d5 p1, d6 p1,
+  d7 p1, d7 p2, d10 p1, d11 p1 — d4 p1/d5 p1/d7 p1/d7 p2 from the qwen3.5:9b runs). See
+  `solutions/README.md`. The earlier "6/10" figure was never true; three recorded solutions were
+  wrong and are quarantined in `solutions/rejected/`.
+- **qwen3.5:9b (thinking off) is the new baseline model, confirmed decisively**
+  (`dev/progress/9b-confirmation-d4-7.md`): on 2024 d4–7 at samples=3 it solved **5/8 vs the 7B's
+  1/8**, and cracked **d7 p2 — a genuine Part 2** the 7B never reached. It fits at 5.8 GB / 100% GPU,
+  so the capability ceiling was pushed **without new hardware.** Two long-standing questions answered:
+  the 7B *is* too weak past the easy problems, and we *can* do better on 16 GB. Remaining ceiling:
+  d4–6 Part 2s stay `no_candidate` even for the 9b. Cost: ~4.5× slower. Reasoning models over-reason
+  without the `enable_thinking=false` toggle (PR #18).
 - **First multi-run baseline** (`dev/progress/baseline-2024-d1-3.md`): qwen2.5-coder:7b, 2024 d1–3,
   5 trials — **12/30 solved (40%); 4 of 6 problems solvable, 0 of 6 reliable.** Four of six flip
   across identical runs; single-run numbers are noise.
