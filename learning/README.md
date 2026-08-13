@@ -38,7 +38,7 @@ The learning system is integrated into the main solver through:
 
 2. **Result Recording** (`learning/database.py`)
    ```python
-   db = LearningDatabase(workspace_dir)
+   db = LearningDatabase()  # defaults to the learning/ dir -> learning/solver.db
    db.store_result(
        problem_id="2024_day01_part1",
        strategies=["dynamic_programming"],
