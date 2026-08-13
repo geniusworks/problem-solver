@@ -263,17 +263,63 @@ Only now, and only what measures a positive delta through the harness.
 
 ---
 
+## Next steps for the maintainer
+
+Milestones A–E are done and the codebase is consolidated (C1–C3). The measurement platform is
+complete and the `qwen2.5-coder:7b` frontier on 2024 is mapped (7 verified solutions; reliable on the
+easy Part 1s, capability-limited beyond). The two levers that would advance the project further are
+both **blocked on something only you can provide** — here is exactly what each needs.
+
+### 1. Push past the capability ceiling — provide a stronger model
+
+The measured bottleneck for broader coverage is model capability, not orchestration. The direct
+experiment (does a stronger model clear the ceiling?) can't run on this 16 GB machine:
+`qwen2.5-coder:32b` swaps (120 s timeout for a 40-token generation); mid-size models (phi4,
+qwen3.5:9b) run but at ~5 min/generation a full self-consistency sweep is 8 h+. To unblock, pick one:
+
+- **More RAM** (a 32 GB+ machine) and `ollama pull qwen2.5-coder:32b`, or
+- **A remote/cloud endpoint** — set `OLLAMA_HOST` to a hosted Ollama with a large model, or add a
+  new provider in `shared/llm/` for a hosted API (the provider seam is already there).
+
+Then re-run the winning A/B with the stronger model, e.g.:
+```
+venv/bin/python experiment.py --problems 2024:4-7 --trials 3 \
+  --config "name=big-samp3,models=<stronger-model>,temperature=0.7,samples_per_model=3"
+```
+and compare against the recorded 7B frontier (`dev/progress/scale-2024-d4-7.md`,
+`benchmark-2024-d1-12.md`). This is the single highest-value experiment remaining.
+
+### 2. Exercise the submission loop (Milestone F) — provide an unsolved problem
+
+The real AoC submitter lives in `submission/`, tested in isolation but deliberately **unwired**. It
+can't be live-tested yet because all of the author's 2024 is already solved (every fetch returns the
+accepted answer, so `submit_and_validate` short-circuits — no genuinely-unseen target). To unblock:
+
+- Wait for **AoC 2026** (December) and run against the live event, or
+- Use a **fresh account / an unsolved earlier year** so there are unsubmitted problems.
+
+Then wiring is small: after `_execute_and_repair` yields a candidate for a no-oracle problem, call
+`submission.validate_solution(...)` gated on `SUBMIT_SOLUTIONS=true`, respecting the cooldown parser.
+This is where answer-based consensus (`_select_candidate`, validated offline at 10/11) finally gets
+its live A/B. **Note:** real submission is rate-limited and outward-facing to your AoC account —
+enable `SUBMIT_SOLUTIONS` deliberately, per problem.
+
+### Optional, unblocked (small cleanups)
+
+Not required to advance the project, doable any time — see "Deferred to a later cleanup" under
+Milestone C: delete the dead `config/models.yaml`/`hardware.yaml`/`cache.yaml`, prune dead
+`.env.example` vars, and collapse the last few duplicate types.
+
 ## Documentation
 
-Realign as each milestone lands, not in one pass. **Immediately** fix the actively-false bits:
-`checkpoint.md:57,84` (contradicts the ledger), the dead `shared/llm/models.py` / `CONTRIBUTING.md`
-links in `README.md`, and the stale `ollama run` comment (`shared/llm/local.py:30-32`). Rewrite
-`architecture.md` and the diagrams to the Target structure once Milestone C lands. `checkpoint.md`
-should record the PR #1 refactor and the new baseline numbers.
+Docs are realigned to the current state and kept fresh per PR: `README.md` (platform overview +
+findings), `dev/docs/architecture.md` (design), `dev/progress/checkpoint.md` (live status),
+`dev/progress/*.md` (the committed baselines, A/Bs, and the capability frontier), and the
+`dev/diagrams/*.mmd` sequence diagrams. Keep them in step as future work lands.
 
 ## Sequencing
 
 A (measure) → B (sound instrument) → C (consolidate) → D (robustness) → E (orchestration) →
-F (solver). A and B are small and come first because every later number depends on them. C is the
-integrity payoff. D targets the actual bottleneck. E is the research. F is the product goal, and it
-waits — deliberately — until the platform can prove whether any of it works.
+F (solver). A–E and C are **done**. F (the product goal) waits — deliberately — for an unsolved
+problem to submit against, and the capability push waits for a stronger model. Both are
+maintainer-gated (see "Next steps for the maintainer" above).
