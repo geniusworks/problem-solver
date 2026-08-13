@@ -112,8 +112,11 @@ See `.env.example` for available environment variables.
 #### Solution Management
 - `execution.py`: safe code execution + `PerformanceMetrics` (relocated here
   from the deleted `testing.py`)
-- `solver.py`: `BaseSolver.solve_problem`, the generate → verify → repair →
-  fallback pipeline
+- `solver.py`: `BaseSolver.solve_problem`, a short orchestrator over four stage
+  methods — `_prepare_problem` → `_generate_candidates` → `_reach_consensus` →
+  `_execute_and_repair`. Self-consistency (`samples_per_model`) fans out several
+  candidates per model in the generation stage; the execution stage verifies each
+  against the oracle, repairs, and falls back
 - `submission/` (top-level package): the real AoC answer submitter, **isolated
   and deliberately unwired** — kept for the solver phase (Milestone F), not
   called from the solve loop

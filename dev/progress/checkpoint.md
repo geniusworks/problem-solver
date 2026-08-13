@@ -116,18 +116,20 @@ the historical/architecture sections below are pre-refactor and are rewritten as
   needs a stronger model (hardware-blocked here), not more orchestration.
 
 ### Next (per PLAN.md)
-- **Answer-based consensus — DONE (this PR):** `_select_candidate` votes on the executed answer for
-  the no-oracle case; justified offline (plurality == correct 10/11 on samp3 data). Its live A/B
-  belongs with F (unseen problems).
-- **The capability ceiling — now measured at scale (d4–7: 1/8).** The bottleneck for broader
-  coverage is model capability, not orchestration. The direct test — a stronger model — is
-  **hardware-blocked**: qwen2.5-coder:32b swaps on 16 GB (120 s timeout for 40 tokens); phi4 /
-  qwen3.5:9b run but at ~5 min/generation a full self-consistency sweep is 8 h+. This is the single
-  highest-value experiment the platform cannot currently run; it needs more RAM.
-- **Milestone F — submission phase:** wire `submission/` (unwired) for unseen problems, gated on
-  `SUBMIT_SOLUTIONS`; this is where answer-based consensus gets its live A/B.
-- **Milestone C3 — decompose `solve_problem`:** typed, tested stage-methods. Maintainability hygiene;
-  moves no *measured* number. Follow-up, done opportunistically.
+
+Milestones A–E are done and the codebase is consolidated (C1–C3). The platform is complete and the
+7B frontier is mapped. The two remaining levers both need a maintainer action — see
+**"Next steps for the maintainer"** in `PLAN.md` for the concrete steps. In short:
+
+1. **Push past the capability ceiling — needs a stronger model.** Hardware-blocked on 16 GB
+   (qwen2.5-coder:32b swaps; mid-size models ~5 min/generation → 8 h+ sweeps). Requires more RAM or a
+   remote/cloud endpoint. Then re-run the self-consistency A/B with the stronger model.
+2. **Exercise the submission loop (Milestone F) — needs a genuinely-unsolved problem.** All of the
+   author's 2024 is already solved, so there is no live target; wait for AoC 2026 (December) or use a
+   fresh account/unsolved year, then wire `submission/` gated on `SUBMIT_SOLUTIONS`.
+
+Optional, unblocked: the small deferred cleanups (dead `config/*.yaml`, remaining duplicate types) —
+see PLAN.md → "Deferred to a later cleanup".
 
 
 ### Active Development
