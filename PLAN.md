@@ -167,13 +167,16 @@ deleted along the way. Single `aoc.py` module rather than an `aoc/` package — 
 "don't add package ceremony this size doesn't need" call as C3. Suite green (165), pylint -E clean,
 verify_solutions 4/4.
 
-### C3 — Decompose `solve_problem` — follow-up PR (or fold into Milestone D)
+### C3 — Decompose `solve_problem` — ✅ DONE (PR: milestone-c3-decompose)
 
-Break the ~430-line method (16 stages, ~15 shared locals) into named, typed, unit-tested stage
-methods on `BaseSolver`, shrinking `solve_problem` to a readable orchestrator. Decision: **extracted
-methods, not a `shared/solver/` package** — after the C1 deletions the file no longer justifies the
-package + context-object ceremony. This is maintainability hygiene that moves no *measured* number,
-so it does not block Milestone D; ideally done right before D touches `solve_problem` anyway.
+Broke the ~480-line method into named stage methods on `BaseSolver` — `_prepare_problem` (setup),
+`_generate_candidates` (self-consistency generation), `_execute_and_repair` (oracle + verify +
+repair + fallback) — each returning a small bundle (`_Prep`, `_Candidates`) the orchestrator unpacks.
+`solve_problem` is now a ~160-line orchestrator: setup → generate → consensus/collaborative (still
+inline) → execute/repair. **Extracted methods, not a `shared/solver/` package** — the file didn't
+justify the package + context-object ceremony. Behaviour-preserving (bundle+unpack), verified by the
+186-test net; pylint -E clean; verify_solutions 5/5. The inline consensus/collaborative block is the
+one remaining chunk that could be extracted next.
 
 ### Deferred to a later cleanup (not blocking)
 
