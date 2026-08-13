@@ -41,7 +41,8 @@ class OllamaProvider(LLMProvider):
 
     def __init__(self, model: str = "codellama:7b", debug: bool = False,
                  temperature: Optional[float] = None,
-                 num_ctx: Optional[int] = None, **kwargs):
+                 num_ctx: Optional[int] = None, think: Optional[bool] = None,
+                 **kwargs):
         super().__init__(**kwargs)
         self.model = model
         self.debug = debug
@@ -50,6 +51,13 @@ class OllamaProvider(LLMProvider):
         self.temperature = temperature
         # Explicit override; None sizes the window to the prompt.
         self.num_ctx = num_ctx
+        # Ollama's per-request thinking toggle for reasoning models. None uses
+        # the model default; False disables chain-of-thought. Reasoning models
+        # (e.g. qwen3.5) otherwise emit tens of thousands of chars of unbounded
+        # reasoning on this project's prompts, exhaust the output budget
+        # (done_reason=length), and never reach the code -- so think=False turns
+        # them into fast, direct coders.
+        self.think = think
         self.model_info = {"name": model, "description": "Description of the model."}
         self.last_prompt = None
         # Token usage of the most recent generate_solution call (analysis + impl
@@ -413,6 +421,8 @@ Final Question: {problem.final_question}""")
         }
         if options:
             payload["options"] = options
+        if self.think is not None:
+            payload["think"] = self.think
 
         logger.debug("Requesting generation from %s for %s", host, self.model)
         try:

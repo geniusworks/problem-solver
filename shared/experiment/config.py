@@ -53,6 +53,12 @@ class SolverConfig:
     # --- generation -----------------------------------------------------
     temperature: Optional[float] = None
 
+    # Ollama per-request thinking toggle. None = model default; False disables
+    # chain-of-thought. Reasoning models (e.g. qwen3.5) otherwise over-reason on
+    # these prompts -- tens of thousands of chars of thinking that exhaust the
+    # output budget before any code -- so an A/B of such a model wants this False.
+    enable_thinking: Optional[bool] = None
+
     # Self-consistency sampling: draw this many candidates per model instead of
     # one. With temperature > 0 the samples differ, so a problem the model solves
     # only some of the time gets several shots at the oracle in a single run --

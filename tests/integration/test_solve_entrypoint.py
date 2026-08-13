@@ -42,7 +42,7 @@ class DummyModel:
     AVAILABLE_MODELS = ["dummy-model"]
 
     def __init__(self, model: str, debug: bool = False, temperature=None,
-                 num_ctx=None) -> None:
+                 num_ctx=None, think=None) -> None:
         self.model_name = model
         self.debug = debug
         self.temperature = temperature
