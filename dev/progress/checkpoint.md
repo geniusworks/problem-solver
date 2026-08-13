@@ -88,9 +88,10 @@ the historical/architecture sections below are pre-refactor and are rewritten as
   `solve_problem`) remains a follow-up.
 
 ### Verified reality (not claims — measured)
-- Recorded solutions: **5 verified correct** (2024 d1 p1/p2, d2 p1, d3 p1, d6 p1 — the last added by
-  the scale eval). See `solutions/README.md`. The earlier "6/10" figure was never true; three
-  recorded solutions were wrong and are quarantined in `solutions/rejected/`.
+- Recorded solutions: **7 verified correct** (2024 d1 p1/p2, d2 p1, d3 p1, d6 p1, d10 p1, d11 p1 —
+  the last three from the scale eval + d8–12 benchmark). See `solutions/README.md`. The earlier
+  "6/10" figure was never true; three recorded solutions were wrong and are quarantined in
+  `solutions/rejected/`.
 - **First multi-run baseline** (`dev/progress/baseline-2024-d1-3.md`): qwen2.5-coder:7b, 2024 d1–3,
   5 trials — **12/30 solved (40%); 4 of 6 problems solvable, 0 of 6 reliable.** Four of six flip
   across identical runs; single-run numbers are noise.
@@ -105,13 +106,14 @@ the historical/architecture sections below are pre-refactor and are rewritten as
   isolation, samp1 vs samp3 (only `samples_per_model` differs), 2024 d1–3, 3 trials. **39% → 61%
   solve rate; 0 → 3 of 6 problems reliable (solved every trial).** The three flipping problems all
   went 2/3 → 3/3. Cost: 2.4× wall clock, ~2× tokens. Zero regression.
-- **CAPABILITY CEILING measured (scale eval, `dev/progress/scale-2024-d4-7.md`):** the same samp3
-  config on the never-scored 2024 d4–7 solved **only 1 of 8** (new verified solution: d6 p1 = 5331,
-  now in the ledger; `verify_solutions` 5/5). 51 attempts split 30 error / 20 wrong / 1 solved —
-  the model either can't emit runnable code (59%) or emits confidently-wrong code (39%). This
-  **answers the project's oldest question with evidence: qwen2.5-coder:7b is genuinely too weak past
-  the easy problems.** Self-consistency fixes *variance* on reachable problems; it cannot add
-  capability. Broader coverage needs a stronger model (hardware-blocked here), not more orchestration.
+- **CAPABILITY CEILING measured (scale eval `scale-2024-d4-7.md` + benchmark `benchmark-2024-d1-12.md`):**
+  the samp3 config on the never-scored days solved **1 of 8 (d4–7)** and **2 of 10 (d8–12)** — d6 p1,
+  d10 p1, d11 p1 added to the ledger (`verify_solutions` 7/7). Across d1–12: almost every win is a
+  Part 1 (only d1 p2 among Part 2s); failures are wrong reasoning or un-runnable code, not variance.
+  This **answers the project's oldest question with evidence: qwen2.5-coder:7b is genuinely too weak
+  past the easy problems.** Self-consistency fixes *variance* on reachable problems; it cannot add
+  capability. Zero wrong/overfit recorded across all of d1–12 — the oracle held. Broader coverage
+  needs a stronger model (hardware-blocked here), not more orchestration.
 
 ### Next (per PLAN.md)
 - **Answer-based consensus — DONE (this PR):** `_select_candidate` votes on the executed answer for
