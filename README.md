@@ -23,6 +23,33 @@ Two things, in order of importance:
    four stages — prepare → generate → consensus → execute/repair/fallback — driving local models to
    solve a puzzle and recording verified solutions to a ledger (`solutions/README.md`).
 
+## Architecture & decision workflow
+
+The pipeline that measurably works. A model's *text* is never trusted; only code that **executes to
+the accepted answer** is recorded. Self-consistency fans out several candidates; the oracle decides;
+a repair loop and fallback models get extra shots before giving up.
+
+```mermaid
+flowchart TD
+    A[Fetch & parse problem<br/>per-part HTML, cache offline] --> B[Analyse + pick models & strategies]
+    B --> C[Generate N candidates per model<br/>self-consistency: samples_per_model, temp&gt;0]
+    C --> V[Execute candidates &amp; verify<br/>consensus ranks, the oracle decides]
+    V --> Q{Have a cached<br/>accepted answer?}
+    Q -- "yes (oracle)" --> M{Executed answer<br/>== accepted?}
+    M -- yes --> REC[[Record: overfit-gated ledger<br/>+ canonical solution file]]
+    M -- "no / examples error" --> REP[Repair with execution feedback<br/>up to max_repair_iterations]
+    REP --> V
+    Q -- "no (unseen)" --> PLUR[Answer-based consensus:<br/>plurality of executed answers]
+    PLUR --> UNV[Accept as UNVERIFIED<br/>the submission-phase path, unwired]
+    M -- "all candidates fail" --> FB{Fallback models<br/>enabled & available?}
+    FB -- yes --> C
+    FB -- no --> NONE[[No solution: every attempt<br/>recorded with its failure reason]]
+```
+
+Every arrow that ends in a record is **oracle-gated** — a wrong or overfit candidate is refused, not
+logged as solved. Every attempt (solved or not) is recorded with its outcome and failure reason, so
+runs are diagnosable after the fact.
+
 ## What the measurements found
 
 Every one of these is a committed A/B or analysis in `dev/progress/`, not an assertion:
@@ -36,15 +63,25 @@ Every one of these is a committed A/B or analysis in `dev/progress/`, not an ass
 - **Answer-based consensus is a good no-oracle selector.** On the sample data, plurality vote over
   the *executed* answer would have picked the correct answer 10/11 times — the selector the
   submission phase needs. (`dev/progress/milestone-e-answer-consensus.md`)
-- **The model has a hard capability ceiling.** The winning config on the never-scored 2024 d4–7
-  solved only **1 of 8**: the 7B either can't emit runnable code (59% of attempts) or emits
-  confidently-wrong code (39%). Self-consistency fixes *variance*, not *capability*. Broader
-  coverage needs a stronger model, not more orchestration.
-  (`dev/progress/scale-2024-d4-7.md`)
+- **Model capability dominates on the hard problems — and it was mis-assumed.** On the never-scored
+  2024 d4–7, `qwen2.5-coder:7b` (the original baseline) solves only **1 of 8**. But two newer models
+  that *also fit 16 GB* — `qwen3.5:9b` and `gemma4:12b` — reach **5 of 8** and crack Part 2s the 7B
+  never touches. Self-consistency fixes *variance*; a better model is what adds *capability*. So "the
+  7B is too weak past the easy problems" is now measured, and so is the fix.
+  (`dev/progress/scale-2024-d4-7.md`, `9b-confirmation-d4-7.md`, `model-bakeoff-gemma4-vs-9b.md`)
+- **Reasoning models need a leash.** A reasoning model (`qwen3.5:9b`) left to think freely emits
+  tens of thousands of chars of chain-of-thought and never reaches the code; an `enable_thinking=false`
+  toggle turns it into a fast, direct coder. Capability is only useful if the harness can extract it.
+- **The remaining ceiling is algorithm *efficiency*, not the harness.** The hardest Part 2s (2024 d5
+  p2, d6 p2) stay unsolved for every 16 GB model: the model finds the right idea but writes code too
+  slow for the full input, and a 5× execution-timeout recovers nothing. That needs a smarter
+  algorithm — a stronger model or a genuine reasoning step — not more tuning.
+  (`dev/progress/9b-timeout-investigation.md`)
 
-The honest headline: **on this hardware, `qwen2.5-coder:7b` solves the easy end of AoC 2024 reliably
-and is genuinely out of depth past it** — a frontier that was assumed for a long time and is now
-measured.
+The honest headline: **the bottleneck is model capability, not orchestration** — and on 16 GB the
+capability that fits has a clear frontier (reliable on easy problems; strong models reach the medium
+ones; the efficiency-bound Part 2s remain out of reach). Every part of that sentence is measured, not
+assumed. Full cross-hardware numbers: `dev/benchmarks/cross-machine-results.md`.
 
 ## Running an experiment
 
@@ -131,20 +168,46 @@ years/                   Cached problem data (gitignored)
 `PLAN.md` (repo root) is the forward roadmap; `dev/progress/checkpoint.md` is the live status
 snapshot and `dev/docs/architecture.md` the design overview.
 
+## What it's suited to (and what it isn't)
+
+The testbed is AoC, but the *shape* of problem the pipeline handles well generalises. It works best
+where a candidate can be **checked automatically and cheaply**:
+
+- **Well-suited:** self-contained algorithmic problems with a deterministic answer and a fast check —
+  parsing, simulation, small graph/grid work, arithmetic-heavy puzzles. The oracle (or example
+  cases) gives an unambiguous pass/fail, so self-consistency and the repair loop have a signal to
+  climb. This is the sweet spot AoC Parts 1 and early Part 2 live in.
+- **Less-suited:** problems whose answer is subjective or expensive to verify (no oracle → the whole
+  measured-not-asserted premise weakens), and problems where the *idea* is easy but the naive
+  implementation is too slow for the real input — the hard AoC Part 2s. There the limit is algorithm
+  efficiency, which orchestration can't manufacture.
+
+In short: **the harness turns model capability into verified solutions wherever there's a cheap
+checker; it can't invent capability the model lacks, nor a faster algorithm than the model writes.**
+
 ## Status
 
 **Working and measured:** the full solve pipeline (fetch → parse → generate → consensus →
 execute/verify → repair → fallback), the experiment harness with repeat trials, the correctness
-oracle and overfit gate, self-consistency sampling and answer-based consensus, and 5 verified
-recorded solutions.
+oracle and overfit gate, self-consistency sampling and answer-based consensus, and **12 verified
+recorded solutions** (`dev/verify_solutions.py` clean).
+
+**What we've established (measured, not asserted):**
+- Self-consistency sampling is the single biggest orchestration win (samp1→samp3: 39%→61% on d1–3).
+- The bottleneck past the easy problems is *model capability*, and stronger models that still fit
+  16 GB (`qwen3.5:9b`, `gemma4:12b`) push the frontier from 1/8 to 5/8 on the hard days.
+- Reasoning models need `enable_thinking=false` or they never reach the code.
+- A residual ceiling is *algorithm efficiency* (2024 d5 p2 / d6 p2), not the harness.
+
+**What remains open:**
+- Does a bigger model (30B+) crack the efficiency-bound Part 2s? — blocked on hardware (a 32B model
+  swaps on 16 GB; mid-size models are too slow for a full sweep). Needs more RAM or a remote
+  endpoint; the m2max-32 run plan is in `dev/benchmarks/cross-machine-results.md`.
+- Whether the gains hold on genuinely-unseen problems (all past years are already solved here).
 
 **Deliberately unwired:** the AoC answer submitter (`submission/`) is real and tested in isolation
 but not in the solve loop — there is no genuinely-unseen problem to submit against yet (a past
 year's puzzles are all already solved on the author's account).
-
-**Blocked on hardware:** the highest-value open experiment — does a stronger model clear the
-capability ceiling? — can't run on 16 GB (a 32B model swaps; mid-size models are too slow for a full
-sweep). It needs more RAM or a remote endpoint.
 
 ## Credits & license
 
