@@ -124,6 +124,7 @@ learning/                One SQLite DB: model + strategy performance
 submission/              Real AoC submitter -- isolated and UNWIRED (reserved for the solver phase)
 solutions/               Verified solutions + the ledger (README.md)
 dev/progress/            The measured findings (baselines, A/Bs, the capability frontier)
+dev/benchmarks/          Cross-machine results, keyed by hardware (solve rate by model/config)
 years/                   Cached problem data (gitignored)
 ```
 
