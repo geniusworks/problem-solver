@@ -1,26 +1,37 @@
+%% How the project's documentation fits together (post-consolidation).
+%% There is no manual changelog and no approval-gate process any more:
+%% git history + merged PRs are the changelog; the docs below each own one job.
 graph TD
-    subgraph Project Documentation
-        README[README.md]
-        Checkpoint[checkpoint.md]
-        History[checkpoint-history.md]
-        Mermaid[Mermaid Diagrams]
+    subgraph Front door
+        README[README.md<br/>what it is, architecture,<br/>findings, status]
     end
 
-    subgraph Authority Flow
-        README -->|Strategic Objectives| Checkpoint
-        Checkpoint -->|Roadmap & Progress| README
-        Checkpoint -->|Older Items| History
-        Checkpoint -->|Flow Changes| Mermaid
+    subgraph For contributors and agents
+        PLAN[PLAN.md<br/>forward roadmap]
+        AGENTS[AGENTS.md + CLAUDE.md<br/>how to work here]
+        ARCH[dev/docs/architecture.md<br/>design overview]
     end
 
-    subgraph Update Process
-        UserApproval{User Approval}
-        Changes[Prepared Changes]
-        Changes -->|Strategic/Roadmap| UserApproval
-        UserApproval -->|Approved| README & Checkpoint
+    subgraph The measured record
+        CHECK[dev/progress/checkpoint.md<br/>live status snapshot]
+        FIND[dev/progress/*.md<br/>durable findings A/Bs]
+        BENCH[dev/benchmarks/cross-machine-results.md<br/>solve rates by machine]
+        LEDGER[solutions/README.md<br/>oracle-verified ledger]
     end
+
+    GIT[(git history + merged PRs<br/>the changelog)]
+
+    README --> PLAN
+    README --> ARCH
+    README -->|summarises| FIND
+    README -->|summarises| BENCH
+    AGENTS -->|points to| CHECK
+    CHECK -->|cites| FIND
+    FIND -->|roll up into| BENCH
+    FIND -->|record verified answers in| LEDGER
+    GIT -.supersedes any manual changelog.-> CHECK
 
     style README fill:#f9f,stroke:#333,stroke-width:2px
-    style Checkpoint fill:#bbf,stroke:#333,stroke-width:2px
-    style History fill:#ddd,stroke:#333,stroke-width:2px
-    style UserApproval fill:#ffd,stroke:#333,stroke-width:2px
+    style CHECK fill:#bbf,stroke:#333,stroke-width:2px
+    style BENCH fill:#bfb,stroke:#333,stroke-width:2px
+    style GIT fill:#eee,stroke:#333,stroke-width:1px

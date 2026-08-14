@@ -1,55 +1,11 @@
 # Project Checkpoint
 
-**Instructions for AI Assistant**:
-READ/SUMMARIZE: Provide status overview only (skip "SESSION WRAP-UP steps")
+The **live status snapshot** — where the project actually stands right now. The forward roadmap is
+`PLAN.md` (repo root); the durable findings are `dev/progress/*.md`; cross-machine numbers are
+`dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
+file current as work lands so it never goes stale.
 
-SESSION WRAP-UP steps:
-- [ ] Update "Current Status" (with today's date):
-    - Update component statuses and active work
-    - Review and update known issues
-    - Refresh immediate next steps
-    - Update active priorities
-
-- [ ] Manage "Development Progress":
-    - Move completed items >2 weeks old to dev/progress/checkpoint-history.md (preserve dates)
-    - Update in-progress and planned items
-    - Ensure alignment with strategic objectives
-    - Add today's work under new dated entry in checkpoint-history.md
-    - Add new "Key Decisions" with today's date to history
-
-- [ ] Maintain Documentation:
-    - Update README.md for structural changes
-    - Update dev/diagrams/* for system changes
-    - Update dev/docs/development-guidelines.md for process changes
-    - Update dev/docs/architecture.md if architecture changed
-    - Require user approval for strategic changes:
-        - Strategic Objectives updates (README.md ↔ checkpoint.md)
-        - Development Roadmap updates (checkpoint.md ↔ README.md)
-
-- [ ] Commit Changes:
-    - Group changes logically (documentation, code, configuration)
-    - Commit with clear, descriptive messages
-    - Push changes to repository
-
-Note: Execute the above steps only on explicit wrap-up request.
-
-## Checkpoint Integrity Guidelines
-
-**Core Principles**:
-- Reflect all significant changes in this document
-- Maintain clear project context and direction
-- Move historical context to checkpoint-history.md
-
-**Quick Action Checklist**:
-- [ ] Compare current state with documentation
-- [ ] Clarify any detected divergences
-- [ ] Update checkpoint with full understanding
-- [ ] Preserve core principle consistency
-
-## Current Status (2026-08-11)
-
-**Authoritative roadmap: `PLAN.md` at the repo root.** This section is the live status snapshot;
-the historical/architecture sections below are pre-refactor and are rewritten as Milestone C lands.
+## Current status (2026-08-14)
 
 ### Where the project is
 - **PR #1 (merged):** added a correctness oracle (`shared/verification.py`, `shared/ground_truth.py`,
@@ -149,94 +105,6 @@ keyed by machine for cross-hardware comparison.** Where that leaves the prioriti
 4. **Submission phase (F) — deferred.** No unsolved target; revisit for AoC 2026 or a fresh account.
 
 Reasonable stopping point: the platform has demonstrated its result on this hardware — a measured
-model win, 11 oracle-verified solutions, everything reproducible.
+model win, 12 oracle-verified solutions, everything reproducible.
 Optional, unblocked: the small deferred cleanups (dead `config/*.yaml`, remaining duplicate types).
 
-
-### Active Development
-
-#### Model Selection and Performance Tracking
-- [x] Implemented role-based model selection (PRIMARY, REVIEWER, VALIDATOR)
-- [x] Added performance tracking in SQLite database
-- [x] Integrated with existing learning system
-- [x] Implemented code quality scoring for model performance metrics and wired it into the
-      learning database
-- [x] Added problem type classification and integrated it into model/strategy selection
-
-#### Model Registry Updates
-- Updated model list to focus on efficient coding models that fit M1 16GB constraints:
-  - qwen2.5-coder:7b (4.7GB) - Primary code generation and completion
-  - llama3.1:8b (4.9GB) - Strong general reasoning and problem solving
-  - mistral:7b (4.4GB) - Fast, robust general performer
-  - codellama:7b-instruct (3.8GB) - Legacy but solid code model and fallback
-  - gemma3:latest (3.3GB) - Compact, good general model
-  - deepseek-coder:6.7b - Additional code-focused model for diversity
-- Added ALIBABA to ModelProvider enum for Qwen models
-- Removed or de-emphasized larger models that exceed practical memory constraints
-- Updated model naming and configuration to match Ollama conventions and curated list
-
-### Component Status
-- Core solver: Stable, actively improving
-- Model integration: Working, needs monitoring
-- Documentation: Under reorganization
-
-### Known Issues
-- Need to validate performance characteristics of the curated model set under sustained
-  AoC workloads.
-- Some larger models (>13B effective size) may still cause OOM or poor performance on
-  16GB systems if accidentally used; these have been removed from the default list but may
-  exist locally.
-
-### Next Steps
-1. Implement proper code quality scoring system
-2. Add comprehensive problem type classification
-3. Gather real performance metrics for each model
-4. Consider adding memory monitoring to prevent OOM situations
-5. Test model combinations for optimal role assignments
-
-## Development Roadmap
-
-### Strategic Objectives
-[ ] Achieve autonomous problem analysis and solving
-    - Enhance automatic strategy identification
-    - Improve pattern recognition across problem types
-    - Develop robust input validation and parsing
-    - Enable self-guided debugging and optimization
-
-[ ] Implement collaborative multi-model system
-    - Design model specialization framework
-    - Enhance consensus-based validation
-    - Develop inter-model learning mechanisms
-    - Create adaptive model selection
-
-[ ] Build comprehensive learning and optimization
-    - Implement strategy effectiveness tracking
-    - Create solution pattern library
-    - Develop performance optimization system
-    - Enable cross-problem knowledge transfer
-
-### Planned
-[ ] Add analytics dashboard for model performance
-[ ] Implement automated strategy refinement
-[ ] Enhance problem similarity matching
-[ ] Fine-tune cold-start weights based on usage data
-
-### Current Focus
-[x] Enable and test the full solver pipeline end-to-end for at least one AoC problem (2024 Day 01).
-[x] Exercise and refine weighted consensus, validation, and reviewer/collaborative flows (integration tests + real 2024 Day 01 run).
-[x] Implement and wire up problem type classification and code quality scoring.
-[ ] Improve test coverage for solver, LLM integration, validator, quality, and learning modules.
-
-### Completed ✓ (Last 2 weeks)
-[x] Improve input file handling and security (2025-01-18)
-    - Changed to use simple 'input.txt' in solutions
-    - Added runtime path substitution
-    - Separated model code from runtime code
-[x] Enhance solution template implementation (2025-01-17)
-    - Updated prompts.py with improved solution template
-    - Added structured problem analysis guidance
-    - Enhanced input pattern recognition and handling
-[x] Enhance LLM prompt generation (2025-01-17)
-    - Refactored prompt generation code for better organization
-    - Improved strategy integration in templates
-    - Added dynamic prompt sections based on problem analysis
