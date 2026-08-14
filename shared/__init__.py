@@ -17,7 +17,6 @@ from .config import (
     LEARNING_DIR,
     AOC_SESSION,
     AOC_BASE_URL,
-    HARDWARE_CONFIG,
 )
 from .errors import (
     BaseError,
@@ -38,8 +37,7 @@ __all__ = [
     'LEARNING_DIR',
     'AOC_SESSION',
     'AOC_BASE_URL',
-    'HARDWARE_CONFIG',
-    
+
     # Error classes
     'BaseError',
     'ValidationError',

@@ -13,9 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from shared.errors import (
     ExecutionError,
-    TimeoutError,
     CompilationError,
-    RuntimeError,
     ResourceError,
 )
 from shared.performance import PerformanceMonitor
@@ -199,7 +197,7 @@ async def execute_solution(code: str, input_data: str, timeout: int = 5) -> "Exe
                     process.kill()
                 except Exception:
                     pass
-            # Raise built-in TimeoutError (not shared.errors.TimeoutError)
+            # Raise the builtin TimeoutError so callers/tests can catch it.
             raise _bi.TimeoutError(f"Execution timed out after {timeout} seconds")
 
         if process.returncode != 0:

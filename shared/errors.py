@@ -44,10 +44,6 @@ class ExecutionError(BaseError):
     """Base class for execution-related errors."""
     pass
 
-class TimeoutError(ExecutionError):
-    """Raised when execution exceeds time limit."""
-    pass
-
 class ResourceError(ExecutionError):
     """Raised when resource limits are exceeded."""
     pass
@@ -56,6 +52,6 @@ class CompilationError(ExecutionError):
     """Raised when code fails to compile."""
     pass
 
-class RuntimeError(ExecutionError):
-    """Raised when code fails during execution."""
-    pass
+# Note: execution timeouts and runtime failures use Python's builtin
+# TimeoutError / RuntimeError. Custom subclasses that shadowed those builtins
+# once lived here; they were unused and have been removed to avoid the shadow.

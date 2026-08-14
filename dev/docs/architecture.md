@@ -75,10 +75,10 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
 Configuration is layered to separate shared defaults from local settings:
 
 ### YAML Configuration (Shared Defaults)
-- `config/resources.yaml`: Resource limits and timeouts (live)
-- `config/models.yaml`, `config/hardware.yaml`, `config/cache.yaml`: legacy —
-  the code that read them (the remote-provider registry, `HardwareManager`) has
-  been deleted; these files are pending removal in a later cleanup.
+- `config/resources.yaml`: the one live config file — execution/request limits and
+  the submission toggle (`shared/config.py` reads it into `RESOURCES_CONFIG`).
+- The former `models.yaml` / `hardware.yaml` / `cache.yaml` were read only by unused
+  constants and their own unit tests; they and their loaders have been removed.
 
 ### Environment Configuration (Local Settings)
 - API keys and credentials

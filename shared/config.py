@@ -36,16 +36,10 @@ def load_yaml_config(filename: str) -> Dict[str, Any]:
     with open(config_file) as f:
         return yaml.safe_load(f)
 
-# Load YAML configurations (defaults)
-MODELS_CONFIG = load_yaml_config("models.yaml")
+# Load YAML configuration. Only resources.yaml is live (execution/request limits +
+# the submission toggle). The former models.yaml / hardware.yaml / cache.yaml were
+# read only by unused constants and their own unit tests, and have been removed.
 RESOURCES_CONFIG = load_yaml_config("resources.yaml")
-HARDWARE_CONFIG = load_yaml_config("hardware.yaml")
-CACHE_CONFIG = load_yaml_config("cache.yaml")
-
-# Model defaults
-DEFAULT_TEMPERATURE = float(MODELS_CONFIG.get("defaults", {}).get("temperature", 0.1))
-DEFAULT_MAX_TOKENS = int(MODELS_CONFIG.get("defaults", {}).get("max_tokens", 2000))
-DEFAULT_TIMEOUT = int(MODELS_CONFIG.get("defaults", {}).get("timeout_seconds", 60))
 
 # Environment-based configuration (overrides)
 SUBMIT_SOLUTIONS = os.getenv("SUBMIT_SOLUTIONS", "").lower() == "true" if os.getenv("SUBMIT_SOLUTIONS") else RESOURCES_CONFIG.get("submission", {}).get("enabled", False)
@@ -57,13 +51,6 @@ MAX_MEMORY_MB = int(os.getenv("MAX_MEMORY_MB",
     RESOURCES_CONFIG.get("execution", {}).get("max_memory_mb", 512)))
 MAX_PROCESSES = int(os.getenv("MAX_PROCESSES",
     RESOURCES_CONFIG.get("execution", {}).get("max_processes", 1)))
-
-# Hardware settings
-HARDWARE_PROFILE = os.getenv("HARDWARE_PROFILE")
-MAX_MODEL_SIZE = int(os.getenv("MAX_MODEL_SIZE", 
-    HARDWARE_CONFIG.get("max_model_size", 7)))
-CONCURRENT_MODELS = int(os.getenv("CONCURRENT_MODELS", 
-    HARDWARE_CONFIG.get("concurrent_models", 2)))
 
 # Rate limiting
 MAX_REQUESTS_PER_MINUTE = int(os.getenv("MAX_REQUESTS_PER_MINUTE", 20))
@@ -81,22 +68,6 @@ if _AOC_CONTACT:
     _DEFAULT_USER_AGENT = f"problem-solver (AoC LLM solver; contact: {_AOC_CONTACT})"
 
 USER_AGENT = os.getenv("USER_AGENT", _DEFAULT_USER_AGENT)
-
-def get_model_config(model_name: str) -> Dict[str, Any]:
-    """Get configuration for a specific model."""
-    return MODELS_CONFIG.get("models", {}).get(model_name, {})
-
-def get_cache_config(cache_type: str) -> Dict[str, Any]:
-    """Get configuration for a specific cache type."""
-    return CACHE_CONFIG.get(f"{cache_type}_cache", {})
-
-def get_model_defaults() -> Dict[str, Any]:
-    """Return model default settings from models.yaml."""
-    return MODELS_CONFIG.get("defaults", {}) or {}
-
-def get_hardware_config() -> Dict[str, Any]:
-    """Return the full hardware configuration dictionary."""
-    return HARDWARE_CONFIG or {}
 
 def get_resource_config() -> Dict[str, Any]:
     """Return the full resources configuration dictionary."""
