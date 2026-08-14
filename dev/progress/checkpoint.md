@@ -88,11 +88,17 @@ the historical/architecture sections below are pre-refactor and are rewritten as
   `solve_problem`) remains a follow-up.
 
 ### Verified reality (not claims — measured)
-- Recorded solutions: **11 verified correct** (2024 d1 p1/p2, d2 p1, d3 p1, d4 p1, d5 p1, d6 p1,
-  d7 p1, d7 p2, d10 p1, d11 p1 — d4 p1/d5 p1/d7 p1/d7 p2 from the qwen3.5:9b runs). See
-  `solutions/README.md`. The earlier "6/10" figure was never true; three recorded solutions were
-  wrong and are quarantined in `solutions/rejected/`.
-- **qwen3.5:9b (thinking off) is the new baseline model, confirmed decisively**
+- Recorded solutions: **12 verified correct** (2024 d1 p1/p2, d2 p1, d3 p1, d4 p1, d4 p2, d5 p1,
+  d6 p1, d7 p1, d7 p2, d10 p1, d11 p1). See `solutions/README.md`. The earlier "6/10" figure was
+  never true; three recorded solutions were wrong and are quarantined in `solutions/rejected/`.
+- **gemma4:12b is the leading model candidate (`dev/progress/model-bakeoff-gemma4-vs-9b.md`):** in a
+  d4–7 bake-off it matched the 9b's *best* result (5/8) at **1/3 the samples** (samples=1 vs the 9b's
+  samples=3) and less wall clock, solving the hard Part 2 d7 p2 on a single draw. samples=1 is noisy
+  (the 9b drew low, 2/8, vs its known 5/8), so this is "promising, probably better," not proven —
+  a gemma4 samples=3 confirmation vs the 9b's 5/8 is the deciding test. (`deepseek-r1:14b` was tested
+  and dropped — reasoning-native, ignores `think=false`, incompatible with our pipeline; no Q6
+  qwen3.5 tag exists.)
+- **qwen3.5:9b (thinking off) — previous baseline, confirmed decisively**
   (`dev/progress/9b-confirmation-d4-7.md`): on 2024 d4–7 at samples=3 it solved **5/8 vs the 7B's
   1/8**, and cracked **d7 p2 — a genuine Part 2** the 7B never reached. It fits at 5.8 GB / 100% GPU,
   so the capability ceiling was pushed **without new hardware.** Two long-standing questions answered:
