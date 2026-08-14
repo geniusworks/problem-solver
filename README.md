@@ -1,12 +1,11 @@
 # Problem Solver
 
-A research platform for **measuring LLM orchestration**, using Advent of Code as its testbed. It
-attempts autonomous solutions with local LLMs (via Ollama) and — more importantly — measures how
-well different orchestration strategies actually work, against a correctness oracle, with repeat
-trials, so results are evidence rather than anecdote.
+A research platform for **measuring LLM orchestration**, using Advent of Code as its testbed. Local
+LLMs (via Ollama) attempt autonomous solutions; more importantly, the harness measures how well each
+orchestration strategy actually works — against a correctness oracle, over repeat trials — so results
+are evidence, not anecdote.
 
-The project began as an unmeasurable pipeline. Its through-line since has been: **make every claim
-measured.** The sections below capture what that produced.
+It began as an unmeasurable pipeline; the through-line since has been to **make every claim measured.**
 
 ## What it is
 
@@ -67,7 +66,7 @@ Every one of these is a committed A/B or analysis in `dev/progress/`, not an ass
   2024 d4–7, `qwen2.5-coder:7b` (the original baseline) solves only **1 of 8**. But two newer models
   that *also fit 16 GB* — `qwen3.5:9b` and `gemma4:12b` — reach **5 of 8** and crack Part 2s the 7B
   never touches. Self-consistency fixes *variance*; a better model is what adds *capability*. So "the
-  7B is too weak past the easy problems" is now measured, and so is the fix.
+  7B is too weak past the easy problems" is measured, not assumed — and so is the fix.
   (`dev/progress/scale-2024-d4-7.md`, `9b-confirmation-d4-7.md`, `model-bakeoff-gemma4-vs-9b.md`)
 - **Reasoning models need a leash.** A reasoning model (`qwen3.5:9b`) left to think freely emits
   tens of thousands of chars of chain-of-thought and never reaches the code; an `enable_thinking=false`
@@ -81,56 +80,45 @@ Every one of these is a committed A/B or analysis in `dev/progress/`, not an ass
 The honest headline, scoped precisely: **on this fixed problem set and hardware, the binding
 constraint was model capability, not orchestration** — on 16 GB the capability that fits has a clear
 frontier (reliable on easy problems; strong models reach the medium ones; the efficiency-bound
-Part 2s remain out of reach). Every part of that sentence is measured, not assumed. Full
-cross-hardware numbers: `dev/benchmarks/cross-machine-results.md`.
-
-That is a statement about *a fixed band of problems*, though — not a verdict on orchestration in
-general. Why an orchestrated voting layer can keep paying off no matter how strong the model or
-hardware gets is the project's central open thesis, below.
+Part 2s stay out of reach). Every part is measured, not assumed. Full numbers:
+`dev/benchmarks/cross-machine-results.md`. But that describes *a fixed band of problems*, not
+orchestration in general — which raises the project's central open question.
 
 ## Does orchestrated voting scale? (the central open thesis)
 
-A fair challenge: frontier models are trained to be the single best solver *on their own*, and
-hardware keeps growing — so why orchestrate several votes at all? This is the question that would
-carry the work beyond AoC, so it deserves an answer stated separately from our solve rates, and with
-integrity about what is argued versus what is proven.
+Frontier models are trained to be the best solver *on their own*, and hardware keeps growing — so why
+orchestrate several votes at all? This is the question that carries the work beyond AoC, so it earns
+an answer separate from our solve rates, honest about what is argued versus proven.
 
-**The mechanistic case that voting keeps its value as models strengthen** — three reasons it
-shouldn't simply wash out:
+**Why voting should keep its value as models strengthen:**
 
-1. **The pass@k-vs-pass@1 gap never closes at a model's own frontier.** Any model, however strong,
-   samples from a distribution; on the hardest problems it can *sometimes* solve, the single
-   most-likely answer isn't reliably correct, but the correct one shows up among several draws.
-   Sampling N times and selecting by consensus or a verifier converts "solves it sometimes" into
-   "solves it" (self-consistency; best-of-N). A stronger model needs fewer draws — but the gap it
-   exploits *reappears at its new, harder frontier*. The value moves up with the model rather than
-   vanishing.
-2. **A cheap verifier turns k draws into one answer — an economic scaling law, not a crutch.** Where
-   correctness is checkable (our oracle, unit tests, a compiler, a proof checker), many cheap draws
-   plus selection can beat one expensive "think-harder" pass at equal or lower cost. That trade
-   becomes *more* attractive as per-draw cost falls, which is the direction hardware moves.
+1. **The pass@k-vs-pass@1 gap never closes at a model's own frontier.** Every model samples from a
+   distribution; on the hardest problems it can *sometimes* solve, the modal answer isn't reliably
+   correct but the right one appears among several draws. Sampling N and selecting by consensus or a
+   verifier turns "sometimes" into "solved" (self-consistency; best-of-N). A stronger model needs
+   fewer draws, but the gap reappears at *its* harder frontier — the value moves up with the model
+   rather than vanishing.
+2. **A cheap verifier turns k draws into one answer — an economic scaling law.** Where correctness is
+   checkable (our oracle, unit tests, a compiler, a proof checker), many cheap draws plus selection
+   can beat one expensive "think-harder" pass at equal or lower cost — a trade that only improves as
+   per-draw cost falls.
 3. **Diverse portfolios decorrelate error.** Even a frontier model has systematic blind spots; an
-   ensemble of *different* models/strategies wins precisely where their mistakes are uncorrelated.
-   Being individually best doesn't remove correlated failure modes — diverse orchestration attacks
-   the residual.
+   ensemble of *different* models wins where their mistakes are uncorrelated. Being individually best
+   doesn't remove correlated failure modes.
 
-**What we have actually shown here (evidence, not speculation):** sampling + consensus works *as a
-correctness mechanism* — self-consistency lifted **39% → 61%** and made 3 of 6 problems solve *every*
-trial; and the no-oracle selector works — plurality over executed answers picked correct **10/11**.
+**What we've shown** (evidence): sampling + consensus adds correctness — self-consistency **39% →
+61%**, 3 of 6 problems made reliable; the no-oracle selector picked correct **10/11**.
 
-**The honest counterweight, and what we have *not* shown.** On our *fixed* d4–7 set, `gemma4:12b` at
-1 sample matched `qwen3.5:9b` at 3 samples — a stronger model reached the same result with *less*
-voting. Read narrowly that says "voting matters less as the model strengthens." But that measures a
-*fixed* problem set, not scale-invariance: the strong model had headroom there, so its real frontier
-is elsewhere. **We have not yet run sampling + voting on a strong model against problems at *its own*
-frontier** — the pass@k-vs-pass@1 test that would confirm or refute the thesis. That is exactly what
-the 30B+ runs (m2max-32 / a remote endpoint) are reserved to measure.
+**What we haven't** (the honest gap): on our *fixed* d4–7 set, `gemma4:12b` at 1 sample matched
+`qwen3.5:9b` at 3 — a stronger model needed *less* voting. But that measures a fixed set, not
+scale-invariance: the strong model had headroom there. The decisive test — sampling + voting at a
+*strong* model's own frontier (**pass@k vs pass@1** on problems it solves only sometimes) — has not
+been run, and is what the 30B+ / m2max-32 runs are reserved to measure.
 
-**Bottom line, stated with integrity:** the mechanism is proven to add correctness in our setting;
-the *reason* it should keep paying off at any model or hardware tier is well-grounded in how
-sampling, verification, and ensembles behave; whether it actually does *at the frontier* is **not yet
-demonstrated by us** and is the single most valuable thing left to measure. We state the bet and the
-experiment that settles it rather than asserting the conclusion.
+**In short:** the mechanism demonstrably adds correctness here; the reason it should keep paying off
+at any model or hardware tier is well-grounded; whether it does *at the frontier* is unproven by us,
+and the most valuable thing left to measure. We state the bet and the experiment that settles it, not
+the conclusion.
 
 ## Running an experiment
 
@@ -173,7 +161,7 @@ python solve.py --year 2024 --day 1 --part 1   # --force to re-solve, --debug fo
    ollama pull qwen2.5-coder:7b
    ```
 3. `AOC_SESSION` (optional): only needed to **fetch** problems/inputs not already cached under
-   `years/`, or to wire the (currently unwired) submission phase. Put it in `.env` (gitignored) —
+   `years/`, or to wire the (unwired) submission phase. Put it in `.env` (gitignored) —
    see the session-cookie steps below. Cached problems run fully offline, oracle and all.
 4. Run tests: `PYTHONPATH=. venv/bin/pytest -q`
 
@@ -238,25 +226,25 @@ checker; it can't invent capability the model lacks, nor a faster algorithm than
 
 **Working and measured:** the full solve pipeline (fetch → parse → generate → consensus →
 execute/verify → repair → fallback), the experiment harness with repeat trials, the correctness
-oracle and overfit gate, self-consistency sampling and answer-based consensus, and **12 verified
-recorded solutions** (`dev/verify_solutions.py` clean).
+oracle and overfit gate, self-consistency and answer-based consensus, and **12 verified solutions**
+(`dev/verify_solutions.py` clean).
 
-**What we've established (measured, not asserted):**
-- Self-consistency sampling is the single biggest orchestration win (samp1→samp3: 39%→61% on d1–3).
-- The bottleneck past the easy problems is *model capability*, and stronger models that still fit
-  16 GB (`qwen3.5:9b`, `gemma4:12b`) push the frontier from 1/8 to 5/8 on the hard days.
-- Reasoning models need `enable_thinking=false` or they never reach the code.
-- A residual ceiling is *algorithm efficiency* (2024 d5 p2 / d6 p2), not the harness.
+**Established** (detailed under *What the measurements found*): self-consistency is the biggest
+orchestration win; past the easy problems the bottleneck is model capability, where stronger models
+that still fit 16 GB lift the hard days from 1/8 to 5/8; a residual ceiling is algorithm efficiency,
+not the harness.
 
-**What remains open:**
-- Does a bigger model (30B+) crack the efficiency-bound Part 2s? — blocked on hardware (a 32B model
-  swaps on 16 GB; mid-size models are too slow for a full sweep). Needs more RAM or a remote
-  endpoint; the m2max-32 run plan is in `dev/benchmarks/cross-machine-results.md`.
-- Whether the gains hold on genuinely-unseen problems (all past years are already solved here).
+**Open:**
+- Does a bigger model (30B+) crack the efficiency-bound Part 2s — and does voting still help at *its
+  own* frontier (the thesis above)? Blocked on hardware; the m2max-32 plan is in
+  `dev/benchmarks/cross-machine-results.md`.
+- Whether the gains hold on genuinely-unseen problems — the evaluation set here is *past* AoC years,
+  which are all solved.
 
-**Deliberately unwired:** the AoC answer submitter (`submission/`) is real and tested in isolation
-but not in the solve loop — there is no genuinely-unseen problem to submit against yet (a past
-year's puzzles are all already solved on the author's account).
+**Deliberately unwired:** the AoC answer submitter (`submission/`) is real and tested in isolation but
+kept out of the solve loop by design — the evaluation set is *past* AoC years, already solved on the
+maintainer's account, so there is no unseen answer to submit. Wiring it is the live-contest path
+(Milestone F).
 
 ## Credits & license
 
