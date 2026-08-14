@@ -124,20 +124,25 @@ the historical/architecture sections below are pre-refactor and are rewritten as
 
 ### Next (per PLAN.md)
 
-Milestones A–E are done and the codebase is consolidated (C1–C3). The platform is complete, the 7B
-frontier is mapped, and all of 2024 **and 2025** are solved (the final-day Part 2 star is auto-granted
-once Part 1 is done, so it shows no submittable answer but is complete) — so there is no live
-submission target. Maintainer priorities from here (see PLAN.md → "Next steps for the maintainer"):
+Milestones A–E are done and the codebase is consolidated (C1–C3). The platform is complete, and the
+model question is largely settled: **qwen3.5:9b (thinking off) is the baseline** (5/8 of the hard
+d4–7 vs the 7B's 1/8; 11 verified solutions). All 2024/2025 are solved, so there is no live
+submission target. The cheap solve-rate levers are now **exhausted**: extraction is robust,
+self-consistency handles variance, thinking-off fixed the reasoning model, and a 5× execution timeout
+recovered nothing (`dev/progress/9b-timeout-investigation.md`) — the remaining hard Part 2s (d4–6 p2)
+are a genuine algorithmic-capability limit of the 9b (right idea, wrong/too-slow code; d6 p2 is
+Python-speed-bound even with a correct brute force). Where that leaves the priorities:
 
-1. **Improve solve rates on known problems — UNBLOCKED, do now.** A/B levers on the current 7B against
-   cached/oracle-verified 2024–2025 problems: sweep `samples_per_model` higher (5, 7); measure and
-   improve repair-loop effectiveness (does repair convert error/wrong → solved?); the open D4 prompt/
-   generation A/Bs (single vs two-call, `num_ctx`, old-vs-new prompt); the D3 poison-feedback fix.
-2. **Find a stronger model — capability lever, hardware-blocked.** Needs more RAM (`qwen2.5-coder:32b`)
-   or a remote/cloud endpoint, then re-run the winning A/B vs the recorded 7B frontier.
-3. **Submission phase (F) — deferred.** No unsolved target (all 2024/2025 complete); revisit for AoC
-   2026 or a fresh account.
+1. **A stronger model — the remaining real lever, hardware-blocked.** For the middle-day Part 2s the
+   9b has found its ceiling. Needs a bigger machine (≥32 GB) or a remote/cloud endpoint (set
+   `OLLAMA_HOST` or add a hosted provider in `shared/llm/`), then re-run the samples=3 A/B on d4–7 vs
+   the recorded 9b frontier.
+2. **Algorithm-efficiency prompting — low-confidence, cheap to try.** An A/B nudging the model toward
+   optimized approaches; may not help if the model can't find the optimization.
+3. **Submission phase (F) — deferred.** No unsolved target; revisit for AoC 2026 or a fresh account.
 
+Reasonable stopping point: the platform has demonstrated its result on this hardware — a measured
+model win, 11 oracle-verified solutions, everything reproducible.
 Optional, unblocked: the small deferred cleanups (dead `config/*.yaml`, remaining duplicate types).
 
 
