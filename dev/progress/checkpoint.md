@@ -97,14 +97,23 @@ keyed by machine for cross-hardware comparison.** Where that leaves the prioriti
 
 1. **A stronger model — now UNBLOCKED: maintainer has an M2 Max / 32 GB.** That fits the tier that
    swamps 16 GB (`qwen2.5-coder:32b`, `Qwen3-Coder-30B-A3B`). Run those at samples=3 on d4–7 and add
-   the rows to `dev/benchmarks/cross-machine-results.md` under a new `m2max-32` machine id. Decisive
-   question: does a bigger model crack **d5 p2 / d6 p2**, which no 16 GB model has? (A remote/cloud
-   `OLLAMA_HOST` is the alternative.)
+   the rows to `dev/benchmarks/cross-machine-results.md` under a new `m2max-32` machine id. Two
+   decisive questions, not one: (a) does a bigger model crack **d5 p2 / d6 p2**, which no 16 GB model
+   has? and (b) the project's **central open thesis** (see README "Does orchestrated voting scale?"):
+   does sampling + voting still add correctness at a *strong* model's own frontier — i.e. **pass@k >
+   pass@1** on problems it solves only sometimes? That means running the strong model at samples=1 vs
+   samples=N on problems at *its* edge, not just counting total solves. (A remote/cloud `OLLAMA_HOST`
+   is the alternative.)
 2. **Confirm the M1 leader:** `gemma4:12b` samples=3 on d4–7 vs the 9b's 5/8 (in progress).
 3. **Algorithm-efficiency prompting — low-confidence, cheap to try** on M1 for the timeout-bound Part 2s.
 4. **Submission phase (F) — deferred.** No unsolved target; revisit for AoC 2026 or a fresh account.
 
 Reasonable stopping point: the platform has demonstrated its result on this hardware — a measured
 model win, 12 oracle-verified solutions, everything reproducible.
-Optional, unblocked: the small deferred cleanups (dead `config/*.yaml`, remaining duplicate types).
+Cleanup status: dead `config/*.yaml` and the builtin-shadowing error classes were removed (PR #26).
+The four same-named "duplicate" types (`ProblemCategory`, `ExamplePurpose`, `TestCase`,
+`PerformanceMetrics`) were investigated and found **genuinely distinct** — different members/fields
+and value types across layers, and `execution.PerformanceMetrics` is deliberately separate from
+`performance.PerformanceMetrics` (collapsing would reintroduce a bug C1 fixed). Not a mechanical
+dedup; left as-is (a cosmetic rename to drop the name collision is the only safe option, low value).
 
