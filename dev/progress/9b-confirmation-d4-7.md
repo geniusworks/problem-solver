@@ -22,9 +22,16 @@ class the coder simply couldn't. Three new verified solutions recorded (d4 p1, d
 
 d4 p2, d5 p2, d6 p2 stayed unsolved (all `no_candidate`) even for the 9b at 3 samples. So the 9b
 raises the frontier substantially without erasing it — the remaining Part 2s of the middle days are
-still out of reach here. Attempt mix (31: 6 solved / 10 wrong / 14 no_candidate / 1 error): the 9b
-still emits no-solve()/unrunnable code on a chunk of attempts (thinking-off is a blunt switch), so
-there is headroom in generation robustness on top of the model gain.
+still out of reach here. Attempt mix (31: 6 solved / 10 wrong / 14 no_candidate / 1 error).
+
+**Correction to an earlier claim in this note:** the 14 `no_candidate` are NOT wrapper/parse misses.
+Categorising them from the recorded error text: **9 are execution timeouts** (the 9b writes
+correct-looking but algorithmically slow / brute-force code that exceeds the already-generous 60 s
+limit on the full input), plus a few wrong-on-example and exactly **1** genuine no-`solve()` miss.
+d4 p2 and d6 p2 timed out on all three samples — the model reliably produces slow code for them.
+That is closer to an algorithm-efficiency (reasoning) limit than a harness one; whether it is
+*correct-but-slow* (a bigger timeout recovers it) or *genuinely too slow* is being tested with a
+targeted 300 s-timeout re-run of those three problems.
 
 ## Cost
 
@@ -41,10 +48,12 @@ Two model questions the project carried for a long time are now answered with ev
    disabled fits (5.8 GB, 100% GPU) and roughly quintuples the hard-problem solve rate, cracking a
    Part 2 in the process.
 
-**`qwen3.5:9b` (thinking off) is the new baseline model** for this project. The two open directions
-from here — both now well-motivated: (a) push generation robustness for the 9b (the 14 no_candidate
-are wrapper/parse misses, not reasoning failures); (b) if a still-stronger model is wanted for the
-middle-day Part 2s, that remains the bigger-machine / remote-endpoint lever.
+**`qwen3.5:9b` (thinking off) is the new baseline model** for this project. The open directions from
+here: (a) the dominant remaining failure is **execution timeouts** — the 9b writes slow/brute-force
+code for the hard Part 2s (see the correction above); the first test is whether a larger timeout
+recovers any (correct-but-slow) or whether they need algorithm-efficiency prompting / a stronger
+model; (b) if a still-stronger model is wanted for the middle-day Part 2s, that remains the
+bigger-machine / remote-endpoint lever.
 
 ## Reproduce
 
