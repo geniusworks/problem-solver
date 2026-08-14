@@ -9,7 +9,21 @@ It began as an unmeasurable pipeline; the through-line since has been to **make 
 
 ## What it is
 
-Two things, in order of importance:
+**The larger objective is generalized problem-solving through LLM orchestration** — extracting more
+correctness from models by *how* they're combined (sampling, consensus, verification, repair, diverse
+ensembles) than any single model yields alone. Advent of Code is the current testbed, not the point:
+it supplies a stream of self-contained problems with a cheap correctness check, which is exactly what
+makes the orchestration question measurable.
+
+Structurally the machine is a **proposer–verifier loop**: local models *propose* solutions — they're
+prediction machines, cheap and fallible and high-variance — and a cheap, exact **verifier** (run the
+code, compare to the accepted answer) *disposes*. Truth enters through the parts that don't predict,
+and that asymmetry is why coordinating predictors pays off at all: sampling, voting, and repair
+convert into correctness only because a cheap check can collapse many guesses to one verified answer.
+Where no such check exists, the coordination has little to grip — which is also where this approach
+stops being a good fit.
+
+Concretely, that objective is pursued through two pieces, in order of importance:
 
 1. **A measurement platform.** A frozen, fingerprinted `SolverConfig`; an experiment harness
    (`experiment.py`, `shared/experiment/`) that runs a problem set under one or more configs with
