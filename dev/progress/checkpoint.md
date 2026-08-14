@@ -130,22 +130,23 @@ the historical/architecture sections below are pre-refactor and are rewritten as
 
 ### Next (per PLAN.md)
 
-Milestones A–E are done and the codebase is consolidated (C1–C3). The platform is complete, and the
-model question is largely settled: **qwen3.5:9b (thinking off) is the baseline** (5/8 of the hard
-d4–7 vs the 7B's 1/8; 11 verified solutions). All 2024/2025 are solved, so there is no live
-submission target. The cheap solve-rate levers are now **exhausted**: extraction is robust,
-self-consistency handles variance, thinking-off fixed the reasoning model, and a 5× execution timeout
-recovered nothing (`dev/progress/9b-timeout-investigation.md`) — the remaining hard Part 2s (d4–6 p2)
-are a genuine algorithmic-capability limit of the 9b (right idea, wrong/too-slow code; d6 p2 is
-Python-speed-bound even with a correct brute force). Where that leaves the priorities:
+Milestones A–E are done and the codebase is consolidated (C1–C3). The platform is complete; on
+**M1 16 GB** the leading models are `gemma4:12b` and `qwen3.5:9b` (both 5/8 on the hard d4–7 vs the
+7B's 1/8; 12 verified solutions). All 2024/2025 are solved, so there is no live submission target.
+The cheap M1 solve-rate levers are **exhausted**: extraction robust, self-consistency handles
+variance, thinking-off fixed the reasoning model, a 5× timeout recovered nothing
+(`9b-timeout-investigation.md`) — the remaining hard Part 2s (d5 p2, d6 p2) are a genuine capability
+limit on 16 GB. **All M1 16 GB results are consolidated in `dev/benchmarks/cross-machine-results.md`,
+keyed by machine for cross-hardware comparison.** Where that leaves the priorities:
 
-1. **A stronger model — the remaining real lever, hardware-blocked.** For the middle-day Part 2s the
-   9b has found its ceiling. Needs a bigger machine (≥32 GB) or a remote/cloud endpoint (set
-   `OLLAMA_HOST` or add a hosted provider in `shared/llm/`), then re-run the samples=3 A/B on d4–7 vs
-   the recorded 9b frontier.
-2. **Algorithm-efficiency prompting — low-confidence, cheap to try.** An A/B nudging the model toward
-   optimized approaches; may not help if the model can't find the optimization.
-3. **Submission phase (F) — deferred.** No unsolved target; revisit for AoC 2026 or a fresh account.
+1. **A stronger model — now UNBLOCKED: maintainer has an M2 Max / 32 GB.** That fits the tier that
+   swamps 16 GB (`qwen2.5-coder:32b`, `Qwen3-Coder-30B-A3B`). Run those at samples=3 on d4–7 and add
+   the rows to `dev/benchmarks/cross-machine-results.md` under a new `m2max-32` machine id. Decisive
+   question: does a bigger model crack **d5 p2 / d6 p2**, which no 16 GB model has? (A remote/cloud
+   `OLLAMA_HOST` is the alternative.)
+2. **Confirm the M1 leader:** `gemma4:12b` samples=3 on d4–7 vs the 9b's 5/8 (in progress).
+3. **Algorithm-efficiency prompting — low-confidence, cheap to try** on M1 for the timeout-bound Part 2s.
+4. **Submission phase (F) — deferred.** No unsolved target; revisit for AoC 2026 or a fresh account.
 
 Reasonable stopping point: the platform has demonstrated its result on this hardware — a measured
 model win, 11 oracle-verified solutions, everything reproducible.
