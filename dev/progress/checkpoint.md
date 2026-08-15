@@ -52,10 +52,12 @@ file current as work lands so it never goes stale.
   (gemma4 samp3 vs the 9b's 5/8) came back **5/8**: gemma4 matched but did not beat the 9b, and did
   not crack d5 p2 / d6 p2. gemma4's edge is *per-draw efficiency* (it hit 5/8 at samples=1), not a
   higher ceiling. Two sub-findings: (a) a single-sample Part-2 solve can be luck — gemma4 samp1 got
-  d7 p2, samp3 lost it but gained d6 p1, same 5/8; (b) the two leaders miss *different* Part 2s
-  (gemma4→d4 p2, 9b→d7 p2), so their **union is 6/8** — a cheap ensemble/decorrelated-error test on
-  the M1. (`deepseek-r1:14b` was tested and dropped — reasoning-native, ignores `think=false`,
-  incompatible with our pipeline; no Q6 qwen3.5 tag exists.)
+  d7 p2, samp3 lost it but gained d6 p1, same 5/8; (b) the two leaders *appeared* to miss *different*
+  Part 2s (gemma4→d4 p2, 9b→d7 p2), suggesting a 6/8 union — **but the ensemble test refuted it**
+  (`ensemble-samp3-d4-7.md`): `gemma4:12b|qwen3.5:9b` samp3 got **5/8, not 6/8**, at ~2.2× wall,
+  because neither model reproduced d7 p2 (that "crack" was a lucky draw, not a robust competency).
+  (`deepseek-r1:14b` was tested and dropped — reasoning-native, ignores `think=false`, incompatible
+  with our pipeline; no Q6 qwen3.5 tag exists.)
 - **qwen3.5:9b (thinking off) — previous baseline, confirmed decisively**
   (`dev/progress/9b-confirmation-d4-7.md`): on 2024 d4–7 at samples=3 it solved **5/8 vs the 7B's
   1/8**, and cracked **d7 p2 — a genuine Part 2** the 7B never reached. It fits at 5.8 GB / 100% GPU,
@@ -91,12 +93,12 @@ file current as work lands so it never goes stale.
 Milestones A–E are done and the codebase is consolidated (C1–C3). The platform is complete; on
 **M1 16 GB** the leading models are `gemma4:12b` and `qwen3.5:9b` (both 5/8 on the hard d4–7 vs the
 7B's 1/8; 12 verified solutions). All 2024/2025 are solved, so there is no live submission target.
-Most cheap M1 solve-rate levers are spent: extraction robust, self-consistency handles variance,
-thinking-off fixed the reasoning model, a 5× timeout recovered nothing (`9b-timeout-investigation.md`)
-— d5 p2 / d6 p2 are a genuine capability limit on 16 GB. **One cheap M1 lever remains, newly revealed:**
-the two 5/8 leaders miss *different* Part 2s (gemma4→d4 p2, 9b→d7 p2), so a diverse
-`gemma4:12b,qwen3.5:9b` ensemble should reach **6/8** — and it directly tests the decorrelated-error
-arm of the orchestration thesis (`gemma4-samp3-confirmation.md`). **All M1 16 GB results are
+The cheap M1 solve-rate levers are now spent: extraction robust, self-consistency handles variance,
+thinking-off fixed the reasoning model, a 5× timeout recovered nothing (`9b-timeout-investigation.md`),
+and the **diverse-ensemble lever was tested and did not pay off** — `gemma4:12b|qwen3.5:9b` samp3 got
+**5/8, not the predicted 6/8**, at ~2.2× wall (`ensemble-samp3-d4-7.md`); the apparent complementary
+Part 2 (9b's d7 p2) was a lucky draw that didn't reproduce, so there was no robust competency to pool.
+d5 p2 / d6 p2 remain a genuine capability/efficiency limit on 16 GB. **All M1 16 GB results are
 consolidated in `dev/benchmarks/cross-machine-results.md`.** Where that leaves the priorities:
 
 1. **A stronger model — now UNBLOCKED: maintainer has an M2 Max / 32 GB.** That fits the tier that
@@ -108,10 +110,11 @@ consolidated in `dev/benchmarks/cross-machine-results.md`.** Where that leaves t
    pass@1** on problems it solves only sometimes? That means running the strong model at samples=1 vs
    samples=N on problems at *its* edge, not just counting total solves. (A remote/cloud `OLLAMA_HOST`
    is the alternative.)
-2. **Diverse ensemble on M1 (cheap, tests the thesis):** run `models=gemma4:12b,qwen3.5:9b` samp3 on
-   d4–7. The two 5/8 leaders miss different Part 2s → a 6/8 union is the prediction; a hit is
-   decorrelated-error evidence for the voting thesis, on hardware in hand. (The gemma4-vs-9b leader
-   question is **resolved — a 5/8 tie**, `gemma4-samp3-confirmation.md`.)
+2. **M1 orchestration levers — exhausted for now.** gemma4-vs-9b leader = **5/8 tie**; the
+   diverse-ensemble follow-up = **5/8, no gain** (`ensemble-samp3-d4-7.md`). The remaining honest
+   M1 idea is *more samples on a specific marginal problem* (raise pass@k on d7 p2, which both models
+   solve only occasionally) — low-confidence, but the one untried cheap lever. Otherwise the frontier
+   moves to bigger models (priority 1).
 3. **Algorithm-efficiency prompting — low-confidence, cheap to try** on M1 for the timeout-bound Part 2s.
 4. **Submission phase (F) — deferred.** No unsolved target; revisit for AoC 2026 or a fresh account.
 
