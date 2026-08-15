@@ -42,7 +42,7 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | m1-16 | qwen3.5:9b | tk-off samp1 | d4–7 | 1 | 2/8 | 25% | `model-bakeoff-gemma4-vs-9b.md` |
 | m1-16 | qwen3.5:9b | **tk-off samp3** | d4–7 | 1 | 5/8 | **62%** | `9b-confirmation-d4-7.md` |
 | m1-16 | gemma4:12b | tk-off samp1 | d4–7 | 1 | 5/8 | 62% | `model-bakeoff-gemma4-vs-9b.md` |
-| m1-16 | gemma4:12b | tk-off samp3 | d4–7 | 1 | *running* | — | *pending* |
+| m1-16 | gemma4:12b | **tk-off samp3** | d4–7 | 1 | 5/8 | **62%** | `gemma4-samp3-confirmation.md` |
 
 ### Headline reads (m1-16)
 
@@ -50,8 +50,14 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 - **Model matters more than the original baseline assumed:** on the hard d4–7 days, `qwen2.5-coder:7b`
   gets 1/8; both `qwen3.5:9b` and `gemma4:12b` reach 5/8. The "7B is too weak past the easy problems"
   was measured, not assumed.
-- **Leading model on m1-16: gemma4:12b** (matched the 9b's best at 1/3 the samples; samp3 confirmation
-  pending), with `qwen3.5:9b` a close second.
+- **gemma4:12b and qwen3.5:9b are co-leaders at 5/8 — a tie, not a gemma4 win** (`gemma4-samp3-confirmation.md`).
+  The deciding test (gemma4 samp3 vs the 9b's 5/8) came back **5/8**: gemma4 matched but did not beat
+  the 9b, and did not crack d5 p2 / d6 p2. gemma4's edge is *per-draw efficiency* (it reached 5/8 at
+  samples=1), not a higher ceiling.
+- **The two leaders miss *different* Part 2s → a cheap ensemble lever.** gemma4 cracks d4 p2 (9b misses);
+  9b cracks d7 p2 (gemma4 misses); both share d4p1/d5p1/d6p1/d7p1. **Union = 6/8.** A combined
+  `gemma4:12b,qwen3.5:9b` samp3 run should reach 6/8 if the complementarity holds — a decorrelated-error
+  test of the orchestration thesis, runnable on m1-16 (both fit).
 - **Hard ceiling that no m1-16 model has cracked:** 2024 d5 p2 and d6 p2 (d6 p2 is Python-speed-bound
   even with a correct brute force). These are the natural first targets for a stronger model on
   m2max-32.

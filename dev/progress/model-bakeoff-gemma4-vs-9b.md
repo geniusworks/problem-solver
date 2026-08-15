@@ -42,6 +42,12 @@ test is **gemma4 at samples=3 on d4–7 vs the 9b's recorded 5/8**: if it clears
 of d5 p2 / d6 p2, which neither model has cracked — it is decisively the new baseline. Until that
 confirms, treat gemma4 as *promising and probably better*, not proven-best.
 
+> **RESOLVED (`gemma4-samp3-confirmation.md`):** gemma4 samp3 came back **5/8 — a tie, not a win.** It
+> matched the 9b, did not clear 5/8, and did not crack d5 p2 / d6 p2. So gemma4 and the 9b are
+> **co-leaders** at 5/8; gemma4's advantage is per-draw efficiency (5/8 at samples=1), not a higher
+> ceiling. Bonus finding: the two miss *different* Part 2s (gemma4→d4 p2, 9b→d7 p2), so their **union
+> is 6/8** — a cheap decorrelated-error / ensemble test on the M1.
+
 ## Reproduce
 
 ```
