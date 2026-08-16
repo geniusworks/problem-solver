@@ -7,7 +7,40 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-08-16)
 
-### FIRST M2 MAX RESULT: the 30B tier did not beat 16 GB (2026-08-16)
+### BEST RESULT TO DATE: `qwen3-coder:30b` 6/8, d5 p2 cracked, ledger 13 (2026-08-16)
+
+**`qwen3-coder:30b` (18 GB MoE) samp3 on 2024 d4–7 → 6/8 (75%)** — the project's best, beating the
+M1's 5/8 and the dense 32B's 4/8 *on the same machine, runtime and config, the same day*
+(`dev/progress/m2max-qwen3coder30b-d4-7.md`; 39 min, 29 attempts, 261k tokens). It cracked **d5 p2,
+which no model or config had ever solved** → **first new ledger entry since the M1: `2024 d5 p2 =
+5502`, `verify_solutions` now 13 correct / 0 wrong**, via a genuine Kahn's-algorithm topological
+sort (overfit gate clean). It also took d4 p2 and d7 p2, both of which the dense 32B missed.
+
+Four findings, all recorded in the doc:
+1. **Generation beats size** — the smaller, newer, 3.4× cheaper MoE beat the bigger older dense
+   model by two problems under a controlled comparison. "Model capability" means *generation*.
+2. **The "efficiency-bound ceiling" is retired.** d5 p2 fell to a *better algorithm*, not a faster
+   machine — earlier models never proposed the topological sort. d6 p2 is the only one left, and it
+   failed here via 6/6 immediate `TypeError`s, not timeouts.
+3. **Failure style differs and matters:** dense 32B = 27 wrong / 5 error (confidently wrong); MoE =
+   4 wrong / 11 error (crashes). For a proposer–verifier loop crashes are the cheaper failure —
+   detectable, with an actionable traceback for repair.
+4. **A cross-model parsing trap:** day 5's two-section input broke *both* models (32B on `'93|48'`
+   7/7 on d5 p2; MoE on `'75,47,61,53,29'` 3/4 on d5 p1 — the one problem it missed that everything
+   else solves, despite solving d5 p2 minutes later). Model-independent and attackable by
+   prompt/harness — **a real orchestration lever, the first one this hardware push has surfaced.**
+
+**Unplanned Q2 evidence:** the MoE solved d4 p2 on 1/3 draws and d5 p2 on 1/4, while easy problems
+went 3/3 — the exact shape the pass@k thesis predicts. samp1 would likely have scored 4/8, not 6/8.
+Suggestive only (one trial, inferred counterfactual); the controlled samp1-vs-samp3 A/B at
+`--trials 5` is still owed, but the frontier band now exists.
+
+**Next:** Ollama upgrade (maintainer-approved) → `qwen3.8:27b` (2026-08-14, 18 GB, smaller and newer
+still) as the next rung of the generation ladder; re-smoke `qwen2.5-coder:32b` post-upgrade to check
+the runtime didn't shift behaviour, and record the runtime change as a machine variable. Then the
+Q2 A/B on the identified band.
+
+### The 32B result that this superseded (2026-08-16)
 
 **`qwen2.5-coder:32b` samp3 on 2024 d4–7 → 4/8 (50%), below the M1's 5/8**
 (`dev/progress/m2max-qwen25coder32b-d4-7.md`; 2h 12m, 41 attempts, 317k tokens, ledger untouched at

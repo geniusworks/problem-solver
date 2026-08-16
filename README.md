@@ -85,16 +85,19 @@ Every one of these is a committed A/B or analysis in `dev/progress/`, not an ass
 - **Reasoning models need a leash.** A reasoning model (`qwen3.5:9b`) left to think freely emits
   tens of thousands of chars of chain-of-thought and never reaches the code; an `enable_thinking=false`
   toggle turns it into a fast, direct coder. Capability is only useful if the harness can extract it.
-- **The remaining ceiling is algorithm *efficiency*, not the harness.** The hardest Part 2s (2024 d5
-  p2, d6 p2) stay unsolved for every 16 GB model: the model finds the right idea but writes code too
-  slow for the full input, and a 5× execution-timeout recovers nothing. That needs a smarter
-  algorithm — a stronger model or a genuine reasoning step — not more tuning.
-  (`dev/progress/9b-timeout-investigation.md`)
+- **The 16 GB ceiling was an *idea* ceiling, not an efficiency one — a claim we later corrected.**
+  The hardest Part 2s (2024 d5 p2, d6 p2) stayed unsolved for every 16 GB model, and a 5×
+  execution-timeout recovered nothing, so we read it as "the model finds the right idea but writes
+  code too slow" (`dev/progress/9b-timeout-investigation.md`). The M2 Max runs falsified that for
+  d5 p2: a newer model solved it with a **Kahn's-algorithm topological sort** — the earlier models
+  weren't writing a slow version of that approach, they never proposed it. The corrected reading:
+  what was missing was the *algorithm*, and a stronger model supplied it. d6 p2 alone is still
+  unsolved. (`dev/progress/m2max-qwen3coder30b-d4-7.md`)
 
-The honest headline, scoped precisely: **on this fixed problem set and hardware, the binding
-constraint was model capability, not orchestration** — on 16 GB the capability that fits has a clear
-frontier (reliable on easy problems; strong models reach the medium ones; the efficiency-bound
-Part 2s stay out of reach). Every part is measured, not assumed. Full numbers:
+The honest headline, scoped precisely: **on this fixed problem set, the binding constraint was model
+capability, not orchestration** — and on 32 GB that constraint moved once a *newer-generation* model
+was available (6/8, d5 p2 cracked), while a bigger *older* one did worse than 16 GB managed. Every
+part is measured, not assumed. Full numbers:
 `dev/benchmarks/cross-machine-results.md`. But that describes *a fixed band of problems*, not
 orchestration in general — which raises the project's central open question.
 
@@ -133,8 +136,17 @@ members' distinct strengths are *reproducible* — a real constraint on arm 3, n
 **What we haven't** (the honest gap): on our *fixed* d4–7 set, `gemma4:12b` at 1 sample matched
 `qwen3.5:9b` at 3 — a stronger model needed *less* voting. But that measures a fixed set, not
 scale-invariance: the strong model had headroom there. The decisive test — sampling + voting at a
-*strong* model's own frontier (**pass@k vs pass@1** on problems it solves only sometimes) — has not
-been run, and is what the 30B+ / m2max-32 runs are reserved to measure.
+*strong* model's own frontier (**pass@k vs pass@1** on problems it solves only sometimes) — has
+still not been run as a controlled A/B.
+
+**New, unplanned evidence for arm 1 (2026-08-16).** The 30B-class capability run supplied a
+preview. At `samples_per_model=3`, `qwen3-coder:30b` solved the two hardest problems it got —
+**d4 p2 on 1 of 3 draws, d5 p2 on 1 of 4** — while every easy problem solved 3/3. That is the
+predicted shape exactly: voting adds nothing where the model is reliable, and buys problems at its
+frontier. At 1 sample the run would most likely have scored 4/8 instead of 6/8. It is **suggestive,
+not conclusive** — one trial, and the counterfactual is inferred from which draw won rather than
+measured. But the frontier band the real A/B needs now exists on a model strong enough to matter.
+(`dev/progress/m2max-qwen3coder30b-d4-7.md`)
 
 **In short:** the mechanism demonstrably adds correctness here; the reason it should keep paying off
 at any model or hardware tier is well-grounded; whether it does *at the frontier* is unproven by us,
@@ -255,26 +267,38 @@ checker; it can't invent capability the model lacks, nor a faster algorithm than
 
 **Working and measured:** the full solve pipeline (fetch → parse → generate → consensus →
 execute/verify → repair → fallback), the experiment harness with repeat trials, the correctness
-oracle and overfit gate, self-consistency and answer-based consensus, and **12 verified solutions**
+oracle and overfit gate, self-consistency and answer-based consensus, and **13 verified solutions**
 (`dev/verify_solutions.py` clean).
 
 **Established** (detailed under *What the measurements found*): self-consistency is the biggest
-orchestration win; past the easy problems the bottleneck is model capability, where stronger models
-that still fit 16 GB lift the hard days from 1/8 to 5/8; a residual ceiling is algorithm efficiency,
-not the harness.
+orchestration win; past the easy problems the bottleneck is model capability — but the operative
+variable is **model generation, not size**. Newer models that still fit 16 GB lift the hard days
+from 1/8 to 5/8, and a newer 18 GB MoE reaches 6/8 where a *bigger*, older-generation 19 GB dense
+model manages only 4/8. The "residual ceiling is algorithm efficiency" claim was **partly wrong**:
+d5 p2 was never speed-bound, and fell to a better algorithm once a model proposed one. One problem
+on the hard set (d6 p2) remains uncracked.
+
+**Answered on the M2 Max (2026-08-16) — and the answer is *generation*, not size:**
+- **A stronger model does crack what 16 GB could not — `qwen3-coder:30b` scored 6/8, the project's
+  best result**, cracking **d5 p2, which no model or config had ever solved** (ledger now 13
+  verified). But the *dense* `qwen2.5-coder:32b` — bigger, same 30B class, older generation — scored
+  only **4/8, below the M1's 5/8**. Under a controlled same-day comparison the smaller, newer,
+  3.4× cheaper MoE beat it by two problems. Parameter count was never the lever.
+  (`dev/progress/m2max-qwen3coder30b-d4-7.md`, `m2max-qwen25coder32b-d4-7.md`)
+- **The "efficiency ceiling" was misdiagnosed.** d5 p2 fell to a *better algorithm* (a Kahn's-
+  algorithm topological sort), not to a faster machine or a longer timeout. d6 p2 is now the only
+  uncracked problem on the set.
 
 **Open:**
-- Does a bigger model (30B+) crack the efficiency-bound Part 2s? **First answer, and it's no.**
-  On an M2 Max / 32 GB, `qwen2.5-coder:32b` at samp3 scored **4/8 on 2024 d4–7 — *below* the M1's
-  5/8** from `gemma4:12b` (7.6 GB) and `qwen3.5:9b` (6.6 GB), cracking neither d5 p2 nor d6 p2.
-  Size within a generation is not the lever: the 1/8 → 5/8 lift came from *newer* models, and
-  scaling the older generation up does not reproduce it. Whether a newer model at that size does is
-  the open question (`qwen3.8:27b`, pending an Ollama upgrade).
-  (`dev/progress/m2max-qwen25coder32b-d4-7.md`)
-- Does voting still help at a strong model's *own* frontier (the thesis above)? Still open, and the
-  32B run sharpened the difficulty: on d4–7 that model is bimodal — 4 problems solved on every draw,
-  4 on none — so there is no "sometimes" band there for voting to act on. The frontier scan has to
-  widen before the test can run.
+- Does voting still help at a strong model's *own* frontier (the thesis above)? **Preliminary
+  evidence says yes**, unplanned: at samp3 the MoE solved d4 p2 on 1 of 3 draws and d5 p2 on 1 of 4,
+  both at its frontier, while easy problems solved 3/3. At samp1 the run would likely have scored
+  4/8 instead of 6/8. That is inferred from which draw won, not measured — the controlled
+  samp1-vs-samp3 A/B at `--trials 5` is still the real test, but the frontier band to run it on now
+  exists.
+- **A new orchestration lever, found by accident:** day 5's two-section input format broke *both*
+  30B-class models on parsing (the dense one on `'93|48'`, the MoE on `'75,47,61,53,29'`) —
+  model-independent, and attackable by prompt or harness rather than by a bigger model.
 - Whether the gains hold on genuinely-unseen problems — the evaluation set here is *past* AoC years,
   which are all solved.
 

@@ -45,6 +45,7 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | m1-16 | gemma4:12b | **tk-off samp3** | d4–7 | 1 | 5/8 | **62%** | `gemma4-samp3-confirmation.md` |
 | m1-16 | gemma4:12b + qwen3.5:9b | tk-off samp3 **ensemble** | d4–7 | 1 | 5/8 | 62% | `ensemble-samp3-d4-7.md` |
 | **m2max-32** | **qwen2.5-coder:32b** | **tk-off samp3** | d4–7 | 1 | **4/8** | **50%** | `m2max-qwen25coder32b-d4-7.md` |
+| **m2max-32** | **qwen3-coder:30b** (MoE) | **tk-off samp3** | d4–7 | 1 | **6/8** | **75%** | `m2max-qwen3coder30b-d4-7.md` |
 
 ### Headline reads (m1-16)
 
@@ -79,9 +80,26 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
   parsing** in all 7 attempts (`invalid literal for int(): '93|48'`) — it never reached an
   algorithm, let alone a slow one. Two of five d7 p2 attempts died the same way. Only d6 p2 still
   fits the timeout narrative.
-- **Generation-vs-size is the sharper follow-up:** `qwen3.8:27b` (2026-08-14, 18 GB) is smaller than
-  the 32B but two generations newer. **Blocked:** ollama 0.32.11 refuses the pull, needing a runtime
-  upgrade that would change a recorded machine variable mid-series.
+- **`qwen3-coder:30b` (MoE) is the project's best result: 6/8 (75%)** — the first capability gain any
+  hardware or model change has bought (`m2max-qwen3coder30b-d4-7.md`). It **cracked d5 p2, which no
+  model or config had ever solved** (+1 ledger entry, now 13), plus d4 p2 and d7 p2 that the dense
+  32B missed — in **39 min vs the 32B's 2h12m**.
+- **Generation beats size, under a controlled comparison.** Same machine, runtime, config, problem
+  set and day: the *smaller* 18 GB MoE scored 6/8 where the 19 GB dense 2024-generation model scored
+  4/8, at 3.4× less wall-clock. Read "model capability" as *generation*, not parameter count.
+- **"d5 p2 / d6 p2 are efficiency-bound" is retired.** The winning d5 p2 solution is a Kahn's-
+  algorithm topological sort — a *better algorithm*, not a faster one. d6 p2 is now the only
+  uncracked problem on the set, and even it failed via immediate `TypeError`s (6/6), not timeouts.
+- **Failure style differs by model and it matters:** the dense 32B produced 27 confidently-wrong
+  answers vs 5 errors; the MoE produced 4 wrong vs 11 crashes. For a proposer–verifier loop, crashes
+  are the cheaper failure — detectable, and they carry an actionable traceback into repair.
+- **Cross-model parsing trap:** day 5's two-section input (`a|b` rules, blank line, `1,2,3` updates)
+  broke *both* models — the 32B on `'93|48'` (7/7 attempts, d5 p2), the MoE on `'75,47,61,53,29'`
+  (3/4 attempts, d5 p1). Model-independent, and attackable by prompt/harness — a real orchestration
+  lever rather than a capability wall.
+- **Generation-vs-size, next rung:** `qwen3.8:27b` (2026-08-14, 18 GB) is smaller again and newer
+  still. **Blocked:** ollama 0.32.11 refuses the pull, needing a runtime upgrade that changes a
+  recorded machine variable — deferred until the current-runtime runs were done (they now are).
 - **12 verified solutions** recorded (`solutions/README.md`), oracle-clean throughout.
 
 ## What to run on m2max-32 (the next machine)
