@@ -107,26 +107,28 @@ missed them") is inferred from which draw succeeded, not measured. The controlle
 at `--trials 5` remains the real test — but the frontier band to run it on is now identified, and
 this model has one (d4 p2, d5 p2) where the 32B was bimodal and had none.
 
-## Collateral damage: the solve destroyed a regression fixture
+## Collateral damage: the solve overwrote a regression fixture (recovered)
 
-Solving d5 p2 **permanently destroyed the test fixture for d5 p2's old hardcoded stub.** The stub
-lived only at `years/2024/day05/2024_day05_part2.py` — gitignored, never committed — and that is
-exactly where the solver writes its canonical solution file. `test_hardcoded_stubs_are_rejected`
-had been reading its failure data from that path, so the successful run overwrote the artifact the
-test existed to pin.
+Solving d5 p2 **overwrote the test fixture for d5 p2's own hardcoded stub.** The stub lived only at
+`years/2024/day05/2024_day05_part2.py` — gitignored, never committed — which is exactly where the
+solver writes its canonical solution file. `test_hardcoded_stubs_are_rejected` read its failure data
+from that path, so the successful run destroyed the artifact the test existed to pin.
 
-Nothing else is affected (the oracle, ledger, and all other fixtures are intact) and the loss is
-recorded rather than papered over:
+**Recovered** from a copy of the pre-solve `years/` tree held outside the repo, and re-verified as
+genuine rather than assumed: `analyze_overfit_risk` flags all three hardcoded example literals
+(`is_suspicious=True`) and the oracle scores it `0` against an expected `5502` — matching the
+pre-oracle claim recorded in `solutions/README.md`. The test case is restored (186 tests).
 
-- The surviving overfit fixture (2024 d3 p2) was moved to **`tests/fixtures/overfit/`** — committed,
-  and outside any path the solver writes.
-- The d5 p2 case was **removed, not reconstructed**: 186 → 185 tests. A hand-written stand-in would
-  be a fabricated artifact, not the real pre-oracle failure, and this project does not manufacture
-  its own evidence.
-- `solutions/README.md` records what the stub did and that it is gone.
+The fix outlives the incident:
 
-The general rule this cost us: **a test fixture must never live in a directory the solver can
-write**, and `years/` is both solver-writable and gitignored, which made the loss unrecoverable.
+- **Both** overfit fixtures now live in committed **`tests/fixtures/overfit/`**, outside any path
+  the solver writes. The d3 p2 stub was one solve away from the same fate.
+- Had no external copy existed, the case would have been **removed, not reconstructed** — a
+  hand-written stand-in is a fabricated artifact, not the real pre-oracle failure, and this project
+  does not manufacture its own evidence.
+
+The general rule: **a test fixture must never live in a directory the solver can write.** `years/`
+is both solver-writable and gitignored, which is what turned an overwrite into a near-permanent loss.
 
 ## What this changes
 

@@ -51,11 +51,12 @@ gitignored `years/` tree, which the solver overwrites — see below).
 
 **Day 5 Part 2 has since been solved for real** (2026-08-16, `qwen3-coder:30b`,
 a Kahn's-algorithm topological sort — the first model in this project to crack
-it). Its row above is retained as the historical pre-oracle failure. One
-casualty: the hardcoded stub itself lived only at
+it). Its row above is retained as the historical pre-oracle failure. The solve
+briefly cost us that failure artifact: the stub lived only at
 `years/2024/day05/2024_day05_part2.py`, which is gitignored *and* is where the
-solver writes its canonical solution — so the successful solve destroyed the
-failure artifact, which had been a regression fixture for the overfit gate. It
-is unrecoverable and has not been reconstructed; a hand-written replacement
-would be fabricated data rather than a real failure. Surviving fixtures now live
-under `tests/fixtures/`, which is committed and outside the solver's write path.
+solver writes its canonical solution, so the successful run overwrote the
+regression fixture for the overfit gate. It was **recovered** from a copy of the
+pre-solve `years/` tree kept outside the repo, and re-verified as the genuine
+artifact (the gate flags all three hardcoded example literals; the oracle scores
+it `0` against `5502`). Both overfit fixtures now live under `tests/fixtures/`,
+which is committed and outside the solver's write path.

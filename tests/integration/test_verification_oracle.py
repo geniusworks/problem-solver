@@ -9,10 +9,11 @@ Fixtures must live in COMMITTED directories. They used to be read out of
 `years/`, which is both gitignored and the directory the solver writes its
 canonical solution into -- so solving a problem destroyed its own regression
 fixture. That is not hypothetical: on 2026-08-16 `qwen3-coder:30b` solved
-2024 d5 p2 for the first time, overwrote `years/2024/day05/2024_day05_part2.py`,
-and permanently destroyed the hardcoded stub that had been this file's second
-OVERFIT_CASE (see solutions/README.md for what it did). Never point a fixture at
-a path the solver can write.
+2024 d5 p2 for the first time and overwrote the hardcoded stub at
+`years/2024/day05/2024_day05_part2.py` that had been this file's second
+OVERFIT_CASE. It was recovered from a copy of the pre-solve `years/` tree held
+outside the repo; both overfit fixtures now live here, in a committed directory
+the solver cannot write. Never point a fixture at a path the solver can write.
 """
 
 from pathlib import Path
@@ -32,11 +33,9 @@ WRONG_ANSWER_CASES = [
 ]
 
 # Solutions that hardcode example data instead of implementing the algorithm.
-# The 2024 d5 p2 case is absent because its fixture no longer exists -- see the
-# module docstring. It is not reconstructed here: a hand-written stand-in would
-# be a fabricated artifact, not the real failure the old pipeline produced.
 OVERFIT_CASES = [
     (2024, 3, 2, "tests/fixtures/overfit/2024_day03_part2.py"),
+    (2024, 5, 2, "tests/fixtures/overfit/2024_day05_part2.py"),
 ]
 
 VERIFIED_CASES = [
