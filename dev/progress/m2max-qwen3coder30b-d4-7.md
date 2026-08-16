@@ -44,13 +44,19 @@ same runtime, same config, same problem set, same day. The newer, *smaller*, che
 **3.4× less wall-clock**. The project's claim that "past the easy problems the bottleneck is model
 capability" survives, but "capability" must be read as *model generation*, not parameter count.
 
-### 2. d5 p2 is cracked — and it was never really "efficiency-bound"
+### 2. d5 p2 is cracked — and *it* was never really "efficiency-bound" (d6 p2 was)
 
 The M1 concluded d5 p2 and d6 p2 were algorithm-efficiency ceilings (`9b-timeout-investigation.md`).
 The winning solution (`solutions/2024_day05_part2.py`) is a **Kahn's-algorithm topological sort** —
 it doesn't beat a timeout, it uses a better algorithm. What was missing was never speed on a known
 approach; it was *finding the right approach*. d6 p2 is now the only genuinely uncracked problem on
 this set.
+
+> **Update 2026-08-16:** d6 p2 fell later the same day to `qwen3.8:27b`, and it fell the *other* way
+> — to a plain brute force that finally ran inside the timeout, not to a better algorithm
+> (`m2max-qwen38-27b-d4-7.md`). So the two problems were never one phenomenon: **d5 p2 was an
+> algorithm-discovery wall, d6 p2 was a genuine speed wall** that faster hardware plus a correct
+> implementation cleared. The M1's efficiency diagnosis was right about d6 p2 and wrong about d5 p2.
 
 ### 3. This model fails by crashing, not by being confidently wrong — and that is better
 
@@ -82,10 +88,15 @@ ValueError: list.index(x): x not in list
 
 Pair that with the 32B, which failed **d5 p2** in all 7 attempts on
 `invalid literal for int() with base 10: '93|48'`. Two different models, same day, both crashing on
-the two-section input (`a|b` ordering rules, blank line, comma-separated updates). That is a
-recurring, model-independent failure mode, and the first thing here that looks addressable by
-**prompting or harness** rather than by a bigger model — a genuine orchestration lever, which is
-what this project exists to find.
+the two-section input (`a|b` ordering rules, blank line, comma-separated updates).
+
+> **Corrected 2026-08-16 (same day).** This was written up as a *model-independent* failure mode and
+> a promising orchestration lever. That claim did not survive the next run: `qwen3.8:27b` parsed
+> **both** parts of day 5 cleanly on the first draw (`m2max-qwen38-27b-d4-7.md`). The trap is real
+> but **generation-dependent** — it breaks the two 2024-era models tested here and not the 2026 one.
+> Prompt-level mitigation is therefore worth much less than claimed: the newer model simply does not
+> have the problem. Left here in full because the original claim is what the data supported at the
+> time, and the correction is the point.
 
 ## Unplanned evidence for the central thesis (pass@k > pass@1)
 

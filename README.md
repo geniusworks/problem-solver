@@ -85,19 +85,21 @@ Every one of these is a committed A/B or analysis in `dev/progress/`, not an ass
 - **Reasoning models need a leash.** A reasoning model (`qwen3.5:9b`) left to think freely emits
   tens of thousands of chars of chain-of-thought and never reaches the code; an `enable_thinking=false`
   toggle turns it into a fast, direct coder. Capability is only useful if the harness can extract it.
-- **The 16 GB ceiling was an *idea* ceiling, not an efficiency one — a claim we later corrected.**
+- **The 16 GB ceiling: two different walls, and our first diagnosis conflated them.**
   The hardest Part 2s (2024 d5 p2, d6 p2) stayed unsolved for every 16 GB model, and a 5×
   execution-timeout recovered nothing, so we read it as "the model finds the right idea but writes
-  code too slow" (`dev/progress/9b-timeout-investigation.md`). The M2 Max runs falsified that for
-  d5 p2: a newer model solved it with a **Kahn's-algorithm topological sort** — the earlier models
-  weren't writing a slow version of that approach, they never proposed it. The corrected reading:
-  what was missing was the *algorithm*, and a stronger model supplied it. d6 p2 alone is still
-  unsolved. (`dev/progress/m2max-qwen3coder30b-d4-7.md`)
+  code too slow" (`dev/progress/9b-timeout-investigation.md`). The M2 Max runs split that in two:
+  **d5 p2 was never speed-bound** — a newer model solved it with a **Kahn's-algorithm topological
+  sort**, an approach the earlier models never proposed — while **d6 p2 genuinely was**, falling to
+  a plain brute force that finally ran inside the timeout on faster hardware. One algorithm wall,
+  one speed wall, described for months as a single phenomenon. Both are now solved and in the
+  ledger. (`dev/progress/m2max-qwen38-27b-d4-7.md`, `m2max-qwen3coder30b-d4-7.md`)
 
 The honest headline, scoped precisely: **on this fixed problem set, the binding constraint was model
-capability, not orchestration** — and on 32 GB that constraint moved once a *newer-generation* model
-was available (6/8, d5 p2 cracked), while a bigger *older* one did worse than 16 GB managed. Every
-part is measured, not assumed. Full numbers:
+capability, not orchestration** — and on 32 GB that constraint dissolved once a *newer-generation*
+model was available: `qwen3.8:27b` solved **all 8**, while a bigger *older* model did worse than
+16 GB managed. The set is now exhausted as a capability measure. Every part is measured, not
+assumed. Full numbers:
 `dev/benchmarks/cross-machine-results.md`. But that describes *a fixed band of problems*, not
 orchestration in general — which raises the project's central open question.
 
@@ -267,38 +269,51 @@ checker; it can't invent capability the model lacks, nor a faster algorithm than
 
 **Working and measured:** the full solve pipeline (fetch → parse → generate → consensus →
 execute/verify → repair → fallback), the experiment harness with repeat trials, the correctness
-oracle and overfit gate, self-consistency and answer-based consensus, and **13 verified solutions**
+oracle and overfit gate, self-consistency and answer-based consensus, and **14 verified solutions**
 (`dev/verify_solutions.py` clean).
 
 **Established** (detailed under *What the measurements found*): self-consistency is the biggest
 orchestration win; past the easy problems the bottleneck is model capability — but the operative
 variable is **model generation, not size**. Newer models that still fit 16 GB lift the hard days
 from 1/8 to 5/8, and a newer 18 GB MoE reaches 6/8 where a *bigger*, older-generation 19 GB dense
-model manages only 4/8. The "residual ceiling is algorithm efficiency" claim was **partly wrong**:
-d5 p2 was never speed-bound, and fell to a better algorithm once a model proposed one. One problem
-on the hard set (d6 p2) remains uncracked.
+model manages only 4/8 — and a 17 GB *generalist* sweeps all 8. The "residual ceiling is algorithm
+efficiency" claim was **half wrong**: d5 p2 fell to a better algorithm, d6 p2 to a faster machine
+running a correct brute force. **The entire d4–7 hard set is now solved**, so it no longer measures
+a frontier.
 
-**Answered on the M2 Max (2026-08-16) — and the answer is *generation*, not size:**
-- **A stronger model does crack what 16 GB could not — `qwen3-coder:30b` scored 6/8, the project's
-  best result**, cracking **d5 p2, which no model or config had ever solved** (ledger now 13
-  verified). But the *dense* `qwen2.5-coder:32b` — bigger, same 30B class, older generation — scored
-  only **4/8, below the M1's 5/8**. Under a controlled same-day comparison the smaller, newer,
-  3.4× cheaper MoE beat it by two problems. Parameter count was never the lever.
-  (`dev/progress/m2max-qwen3coder30b-d4-7.md`, `m2max-qwen25coder32b-d4-7.md`)
-- **The "efficiency ceiling" was misdiagnosed.** d5 p2 fell to a *better algorithm* (a Kahn's-
-  algorithm topological sort), not to a faster machine or a longer timeout. d6 p2 is now the only
-  uncracked problem on the set.
+**Answered on the M2 Max (2026-08-16) — the answer is *generation*, not size, and the set is now
+exhausted:**
+- **`qwen3.8:27b` solved all 8 — a perfect sweep**, cracking **d6 p2, the last problem nothing had
+  ever solved** (ledger now **14 verified**). The comparison set that measured this project's
+  frontier since the M1 has no frontier left in it.
+- **The ladder is monotonic and runs backwards to size.** Every rung is *smaller* than the last:
+
+  | model | size | class | solved | per-attempt |
+  |---|---|---|---|---|
+  | `qwen2.5-coder:32b` dense, 2024 | 19 GB | code specialist | 4/8 | 22% |
+  | `qwen3-coder:30b` MoE, newer | 18 GB | code specialist | 6/8 | 45% |
+  | `qwen3.8:27b` dense, 2026-08-14 | **17 GB** | **generalist** | **8/8** | **83%** |
+
+  The 2024 specialist scored *below* the M1's 5/8 on twice the RAM. The winner is the smallest model
+  and isn't a coder — so this is general model quality, not code specialization.
+  (`dev/progress/m2max-qwen38-27b-d4-7.md`, `m2max-qwen3coder30b-d4-7.md`, `m2max-qwen25coder32b-d4-7.md`)
+- **The "efficiency ceiling" was two different walls, conflated.** d5 p2 was never speed-bound — it
+  fell to a *better algorithm* (a Kahn's-algorithm topological sort). d6 p2 genuinely was, and fell
+  to a plain brute force that finally ran inside the timeout on faster hardware. The original
+  diagnosis was right about one and wrong about the other.
 
 **Open:**
-- Does voting still help at a strong model's *own* frontier (the thesis above)? **Preliminary
-  evidence says yes**, unplanned: at samp3 the MoE solved d4 p2 on 1 of 3 draws and d5 p2 on 1 of 4,
-  both at its frontier, while easy problems solved 3/3. At samp1 the run would likely have scored
-  4/8 instead of 6/8. That is inferred from which draw won, not measured — the controlled
-  samp1-vs-samp3 A/B at `--trials 5` is still the real test, but the frontier band to run it on now
-  exists.
-- **A new orchestration lever, found by accident:** day 5's two-section input format broke *both*
-  30B-class models on parsing (the dense one on `'93|48'`, the MoE on `'75,47,61,53,29'`) —
-  model-independent, and attackable by prompt or harness rather than by a bigger model.
+- Does voting still help at a strong model's *own* frontier (the thesis above)? **The evidence now
+  points yes, twice over.** Qwen3.8's draws are recorded in order, so pass@1 reads directly off the
+  first draw: **pass@1 = 6/8, pass@3 = 8/8** — and the two problems sampling bought were **d5 p2 and
+  d6 p2, the two hardest on the set**, while every easy problem solved 3/3. The MoE showed the same
+  shape (d4 p2 on 1/3, d5 p2 on 1/4). Two models, two architectures, the predicted pattern: voting
+  adds nothing where the model is reliable and buys the hard problems where it is uncertain. It is
+  still **not the controlled A/B** — one trial, pass@1 inferred from first draws — and that A/B now
+  needs a *harder* set, because Qwen3.8 has no "sometimes" band left on d4–7.
+- **What to measure next:** d4–7 is retired as a capability instrument. The frontier scan moves to
+  `2024:8-20` (or 2025) to find a band where the strongest model is uncertain — which is both the
+  next capability question and the prerequisite for the pass@k A/B.
 - Whether the gains hold on genuinely-unseen problems — the evaluation set here is *past* AoC years,
   which are all solved.
 

@@ -46,6 +46,10 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | m1-16 | gemma4:12b + qwen3.5:9b | tk-off samp3 **ensemble** | d4–7 | 1 | 5/8 | 62% | `ensemble-samp3-d4-7.md` |
 | **m2max-32** | **qwen2.5-coder:32b** | **tk-off samp3** | d4–7 | 1 | **4/8** | **50%** | `m2max-qwen25coder32b-d4-7.md` |
 | **m2max-32** | **qwen3-coder:30b** (MoE) | **tk-off samp3** | d4–7 | 1 | **6/8** | **75%** | `m2max-qwen3coder30b-d4-7.md` |
+| **m2max-32** | **qwen3.8:27b** (generalist)† | **tk-off samp3** | d4–7 | 1 | **8/8** | **100%** | `m2max-qwen38-27b-d4-7.md` |
+
+† ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
+(6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
 
 ### Headline reads (m1-16)
 
@@ -97,9 +101,19 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
   broke *both* models — the 32B on `'93|48'` (7/7 attempts, d5 p2), the MoE on `'75,47,61,53,29'`
   (3/4 attempts, d5 p1). Model-independent, and attackable by prompt/harness — a real orchestration
   lever rather than a capability wall.
-- **Generation-vs-size, next rung:** `qwen3.8:27b` (2026-08-14, 18 GB) is smaller again and newer
-  still. **Blocked:** ollama 0.32.11 refuses the pull, needing a runtime upgrade that changes a
-  recorded machine variable — deferred until the current-runtime runs were done (they now are).
+- **`qwen3.8:27b` swept the set 8/8 (100%) — d4–7 is now retired as a capability instrument**
+  (`m2max-qwen38-27b-d4-7.md`). It cracked **d6 p2, the last problem nothing had ever solved**
+  (ledger now 14). Per-attempt it is in a different league: **20/24 = 83%** of its candidates verify,
+  against the MoE's 45% and the dense 32B's 22%.
+- **The generation ladder is monotonic, and runs backwards to size:** 19 GB dense 2024 specialist
+  4/8 → 18 GB MoE newer specialist 6/8 → **17 GB dense 2026 *generalist* 8/8**. The winner is the
+  smallest and is not a coder, so the effect is general model quality, not code specialization.
+- **Strongest pass@k evidence to date:** attempt ordering gives **pass@1 = 6/8, pass@3 = 8/8**, and
+  the two problems sampling bought were **d5 p2 and d6 p2 — the two hardest on the set**. Easy
+  problems solved 3/3, where extra draws add nothing. Exactly the predicted shape, now replicated
+  across two models and two architectures. Still not the controlled A/B.
+- **Cost caveat:** Qwen3.8 is the *slowest* (2h 40m vs the MoE's 39 m). Best capability, worst
+  wall-clock; the MoE remains the efficient choice per unit compute.
 - **12 verified solutions** recorded (`solutions/README.md`), oracle-clean throughout.
 
 ## What to run on m2max-32 (the next machine)

@@ -29,6 +29,7 @@ It exits non-zero if any recorded solution is wrong, errors, or cannot be verifi
 |2024|7|2|92612386119138|qwen3.5:9b|2026-08-13 21:48:24 UTC|solutions/2024_day07_part2.py|
 |2024|4|2|1822|qwen3.5:9b|2026-08-14 07:17:00 UTC|solutions/2024_day04_part2.py|
 |2024|5|2|5502|qwen3-coder:30b|2026-08-16 15:52:34 UTC|solutions/2024_day05_part2.py|
+|2024|6|2|1812|qwen3.8:27b|2026-08-16 22:01:27 UTC|solutions/2024_day06_part2.py|
 <!-- end verified rows -->
 
 ## Rejected — previously recorded as solved, verified wrong

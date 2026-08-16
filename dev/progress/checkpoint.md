@@ -7,7 +7,49 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-08-16)
 
-### BEST RESULT TO DATE: `qwen3-coder:30b` 6/8, d5 p2 cracked, ledger 13 (2026-08-16)
+### 🏁 THE d4–7 SET IS SOLVED OUT: `qwen3.8:27b` 8/8, ledger 14 (2026-08-16)
+
+**`qwen3.8:27b` (17 GB, released 2026-08-14) scored a perfect 8/8 on 2024 d4–7**
+(`dev/progress/m2max-qwen38-27b-d4-7.md`; 2h 40m, 24 attempts, 287k tokens, ollama 0.32.14). It
+cracked **d6 p2 — the last problem nothing had ever solved** → ledger **14 correct / 0 wrong**.
+**The comparison set no longer has a frontier in it and is retired as a capability instrument.**
+
+**The generation ladder, complete — every rung smaller than the last:**
+
+| model | size | class | solved | per-attempt | wall |
+|---|---|---|---|---|---|
+| `qwen2.5-coder:32b` dense, 2024 | 19 GB | specialist | 4/8 | 22% | 7,918 s |
+| `qwen3-coder:30b` MoE, newer | 18 GB | specialist | 6/8 | 45% | **2,346 s** |
+| `qwen3.8:27b` dense, 2026 | **17 GB** | **generalist** | **8/8** | **83%** | 9,602 s |
+
+Size runs *backwards* to capability; the winner is smallest and is not a coder, so the effect is
+general model quality rather than code specialization. Cost caveat: Qwen3.8 is the slowest — the MoE
+is still the best capability-per-second.
+
+**Strongest pass@k evidence yet (Q2, partially answered).** Attempt ordering gives **pass@1 = 6/8,
+pass@3 = 8/8**, and the two problems sampling bought were **d5 p2 and d6 p2 — the two hardest on the
+set**; every easy problem solved 3/3. The MoE showed the same shape (d4 p2 1/3, d5 p2 1/4). Two
+models, two architectures, the predicted pattern. Still not the controlled A/B (one trial, pass@1
+inferred from first draws).
+
+**Two prior claims corrected** (originals left in place with the correction, per house style):
+- *"d5 p2 / d6 p2 are efficiency-bound"* — two different walls, conflated. d5 p2 fell to a **better
+  algorithm** (topological sort); d6 p2 fell to a **plain brute force running inside the timeout**
+  on faster hardware. Right about one, wrong about the other.
+- *"Day 5's input is a model-independent parsing trap"* — overstated; it is **generation-dependent**.
+  Both 2024-era models tripped on it, Qwen3.8 parsed both parts cleanly. The "orchestration lever"
+  framing is correspondingly weaker.
+
+**Also observed:** with `enable_thinking=false`, Qwen3.8 **relocates its reasoning into code
+comments** — the d6 p2 solution contains a dead `simulate_guard` (ending in `pass`) where the model
+debugged itself in comments, then a corrected `simulate_guard_correct` below. A free self-correction
+pass inside one generation, which `_extract_code` handles fine. Worth an A/B.
+
+**Next:** the frontier has to move — scan `2024:8-20` (or 2025) to find a band where the strongest
+model is *uncertain*, which is simultaneously the next capability question and the prerequisite for
+the real pass@k A/B (`--trials 5`, samp1 vs samp3 vs samp5).
+
+### `qwen3-coder:30b` 6/8, d5 p2 cracked, ledger 13 (2026-08-16) — superseded above
 
 **`qwen3-coder:30b` (18 GB MoE) samp3 on 2024 d4–7 → 6/8 (75%)** — the project's best, beating the
 M1's 5/8 and the dense 32B's 4/8 *on the same machine, runtime and config, the same day*
