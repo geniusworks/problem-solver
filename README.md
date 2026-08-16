@@ -123,6 +123,13 @@ an answer separate from our solve rates, honest about what is argued versus prov
 **What we've shown** (evidence): sampling + consensus adds correctness — self-consistency **39% →
 61%**, 3 of 6 problems made reliable; the no-oracle selector picked correct **10/11**.
 
+**A measured caution on arm 3.** The one ensemble we ran on 16 GB did *not* pay off:
+`gemma4:12b`+`qwen3.5:9b` — two same-tier models with *apparently* complementary solves — stayed at
+**5/8** (no gain over the better single model, ~2.2× cost), because the distinguishing solve turned
+out to be sampling noise, not a robust competency. Diversity converts to correctness only when
+members' distinct strengths are *reproducible* — a real constraint on arm 3, not a refutation of it.
+(`dev/progress/ensemble-samp3-d4-7.md`)
+
 **What we haven't** (the honest gap): on our *fixed* d4–7 set, `gemma4:12b` at 1 sample matched
 `qwen3.5:9b` at 3 — a stronger model needed *less* voting. But that measures a fixed set, not
 scale-invariance: the strong model had headroom there. The decisive test — sampling + voting at a
