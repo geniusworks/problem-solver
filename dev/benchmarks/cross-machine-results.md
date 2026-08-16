@@ -14,7 +14,7 @@ result rows tagged with the machine `id`. Keep config columns identical across m
 | id | chip | RAM | cores | macOS | ollama | usable for models | notes |
 |----|------|-----|-------|-------|--------|-------------------|-------|
 | **m1-16** | Apple M1 | 16 GB | 8 | 26.5.2 (25F84) | 0.32.0 | ~dense-14B Q4 (~10 GB); ~10–11 GB usable after macOS | all runs below unless noted |
-| **m2max-32** | Apple M2 Max | 32 GB | 12 | 26.6.1 (25G76) | 0.32.11 | ~dense-30B / 30B-MoE Q4 — `qwen2.5-coder:32b` (19 GB) and `qwen3-coder:30b` (18 GB) both resident | bring-up 2026-08-15 (`m2max-handoff.md` §3); Python 3.14; cold learning DB; *no results yet* |
+| **m2max-32** | Apple M2 Max | 32 GB | 12 | 26.6.1 (25G76) | 0.32.11 | ~dense-30B / 30B-MoE Q4 — `qwen2.5-coder:32b` (19 GB) and `qwen3-coder:30b` (18 GB) both resident, 100% GPU | bring-up 2026-08-15 (`m2max-handoff.md` §3); Python 3.14; cold learning DB. **ollama 0.32.11 cannot pull `qwen3.8:27b`** — needs a newer runtime |
 
 ## Which models fit each machine (measured)
 
@@ -44,6 +44,7 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | m1-16 | gemma4:12b | tk-off samp1 | d4–7 | 1 | 5/8 | 62% | `model-bakeoff-gemma4-vs-9b.md` |
 | m1-16 | gemma4:12b | **tk-off samp3** | d4–7 | 1 | 5/8 | **62%** | `gemma4-samp3-confirmation.md` |
 | m1-16 | gemma4:12b + qwen3.5:9b | tk-off samp3 **ensemble** | d4–7 | 1 | 5/8 | 62% | `ensemble-samp3-d4-7.md` |
+| **m2max-32** | **qwen2.5-coder:32b** | **tk-off samp3** | d4–7 | 1 | **4/8** | **50%** | `m2max-qwen25coder32b-d4-7.md` |
 
 ### Headline reads (m1-16)
 
@@ -64,6 +65,23 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 - **Hard ceiling that no m1-16 model has cracked:** 2024 d5 p2 and d6 p2 (d6 p2 is Python-speed-bound
   even with a correct brute force). These are the natural first targets for a stronger model on
   m2max-32.
+
+### Headline reads (m2max-32)
+
+- **The 30B tier did NOT beat 16 GB — `qwen2.5-coder:32b` samp3 got 4/8, *below* the M1's 5/8**
+  (`m2max-qwen25coder32b-d4-7.md`). It solved every Part 1 and no Part 2, cracking neither d5 p2 nor
+  d6 p2. Its solved set is exactly the M1 leaders' set minus **d4 p2**, where it produced nine
+  wrong answers with no convergence — a problem `qwen3.5:9b` (6.6 GB) solves.
+- **Size within a generation is not the lever.** A 32B code-specialist from late 2024 loses to 9B/12B
+  models from a newer generation on the same set. What lifted 1/8 → 5/8 on the M1 was newer models,
+  not bigger ones; scaling the old generation up does not reproduce it.
+- **The "efficiency-bound" story needs qualifying.** For this model, d5 p2 failed on **input
+  parsing** in all 7 attempts (`invalid literal for int(): '93|48'`) — it never reached an
+  algorithm, let alone a slow one. Two of five d7 p2 attempts died the same way. Only d6 p2 still
+  fits the timeout narrative.
+- **Generation-vs-size is the sharper follow-up:** `qwen3.8:27b` (2026-08-14, 18 GB) is smaller than
+  the 32B but two generations newer. **Blocked:** ollama 0.32.11 refuses the pull, needing a runtime
+  upgrade that would change a recorded machine variable mid-series.
 - **12 verified solutions** recorded (`solutions/README.md`), oracle-clean throughout.
 
 ## What to run on m2max-32 (the next machine)

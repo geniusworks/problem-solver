@@ -5,7 +5,30 @@ The **live status snapshot** — where the project actually stands right now. Th
 `dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
 file current as work lands so it never goes stale.
 
-## Current status (2026-08-15)
+## Current status (2026-08-16)
+
+### FIRST M2 MAX RESULT: the 30B tier did not beat 16 GB (2026-08-16)
+
+**`qwen2.5-coder:32b` samp3 on 2024 d4–7 → 4/8 (50%), below the M1's 5/8**
+(`dev/progress/m2max-qwen25coder32b-d4-7.md`; 2h 12m, 41 attempts, 317k tokens, ledger untouched at
+12/12). It solved every Part 1 and no Part 2, cracking neither d5 p2 nor d6 p2 — so the handoff's Q1
+is answered **no** for this model. Its solved set is the M1 leaders' set minus **d4 p2**, where it
+produced 9 wrong answers with no convergence on a problem the 6.6 GB `qwen3.5:9b` solves.
+Attempt-level split: **9 solved / 27 wrong / 5 error** — generation and extraction were healthy, the
+code was simply wrong. Two record corrections came out of it: (a) "d5 p2 / d6 p2 are
+efficiency-bound" holds only for the 16 GB models — this one never parsed d5 p2's input at all
+(`invalid literal for int(): '93|48'`, 7/7 attempts), so its binding failure there is parsing, not
+speed; (b) **size within a generation is not the capability lever** — the 1/8 → 5/8 lift came from
+newer models, and scaling the 2024 generation up does not reproduce it.
+
+**Next:** `qwen3-coder:30b` (resident, untested) completes the planned Q1. The sharper experiment is
+**generation vs size** — `qwen3.8:27b` (released 2026-08-14, 18 GB, *smaller* than the 32B but two
+generations newer) — **blocked on an Ollama upgrade**: 0.32.11 refuses the pull. Upgrading changes a
+recorded machine variable, so it is deferred until the current-runtime runs finish; maintainer's
+call. **Q2 (pass@k) needs a wider frontier scan first:** on d4–7 the 32B is bimodal (4 solved every
+draw, 4 never), so there is no "sometimes" band for voting to act on. A follow-up worth doing:
+generated code that catches its own exception and prints `An error occurred: …` then `0` is scored
+**wrong** rather than **error**, understating crashes at the attempt level.
 
 ### Machine: work has moved to the M2 Max / 32 GB (2026-08-15)
 Bring-up is done and the M1 is retired as a run host (no further experiments planned there). State

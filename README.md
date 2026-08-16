@@ -264,10 +264,17 @@ that still fit 16 GB lift the hard days from 1/8 to 5/8; a residual ceiling is a
 not the harness.
 
 **Open:**
-- Does a bigger model (30B+) crack the efficiency-bound Part 2s — and does voting still help at *its
-  own* frontier (the thesis above)? **No longer hardware-blocked:** an M2 Max / 32 GB is set up
-  (bring-up 2026-08-15) with the 30B-class models resident; the runs are next. Plan:
-  `dev/benchmarks/cross-machine-results.md` and `dev/benchmarks/m2max-handoff.md`.
+- Does a bigger model (30B+) crack the efficiency-bound Part 2s? **First answer, and it's no.**
+  On an M2 Max / 32 GB, `qwen2.5-coder:32b` at samp3 scored **4/8 on 2024 d4–7 — *below* the M1's
+  5/8** from `gemma4:12b` (7.6 GB) and `qwen3.5:9b` (6.6 GB), cracking neither d5 p2 nor d6 p2.
+  Size within a generation is not the lever: the 1/8 → 5/8 lift came from *newer* models, and
+  scaling the older generation up does not reproduce it. Whether a newer model at that size does is
+  the open question (`qwen3.8:27b`, pending an Ollama upgrade).
+  (`dev/progress/m2max-qwen25coder32b-d4-7.md`)
+- Does voting still help at a strong model's *own* frontier (the thesis above)? Still open, and the
+  32B run sharpened the difficulty: on d4–7 that model is bimodal — 4 problems solved on every draw,
+  4 on none — so there is no "sometimes" band there for voting to act on. The frontier scan has to
+  widen before the test can run.
 - Whether the gains hold on genuinely-unseen problems — the evaluation set here is *past* AoC years,
   which are all solved.
 
