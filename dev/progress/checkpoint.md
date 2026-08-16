@@ -26,6 +26,11 @@ the stronger-model lever **UNBLOCKED** in `PLAN.md`/`README.md`, filled the real
 into `dev/benchmarks/cross-machine-results.md` (M2 Max, 12-core, macOS 26.6.1, ollama 0.32.11),
 added an honest-status note to `learning/README.md` (strategy-learning tables have never been
 populated by a real run), and made **docs currency a standing rule** with a doc map in `AGENTS.md`.
+The stale curated fallback `OllamaProvider.AVAILABLE_MODELS` (early-2025 7B pool) was then rebuilt
+from the measured record — gemma4:12b, qwen3.5:9b, qwen2.5-coder:7b, then the unmeasured 32 GB tier
+last until Q1 ranks it — and the `SOLVER_MODELS` pin was emptied in `.env.example` so the curated
+default actually applies (a pinned 7B had been silently overriding it on every machine set up from
+the example).
 
 ### Where the project is
 - **PR #1 (merged):** added a correctness oracle (`shared/verification.py`, `shared/ground_truth.py`,

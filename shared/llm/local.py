@@ -30,13 +30,32 @@ OLLAMA_OUTPUT_HEADROOM_TOKENS = 4096
 class OllamaProvider(LLMProvider):
     """Provider for Ollama local models."""
 
+    # Curated fallback used only when neither SOLVER_MODELS nor config.models is
+    # set; _resolve_available_models intersects it with what Ollama actually has
+    # installed, so bigger-than-this-machine entries are harmless. ORDER IS
+    # PREFERENCE: the cold-start fallback in _get_top_models tries models in
+    # list order. Ordered by the measured record (dev/benchmarks/
+    # cross-machine-results.md), measured before unmeasured:
+    #   gemma4:12b / qwen3.5:9b -- co-leaders, 5/8 on 2024 d4-7 samp3 (gemma4
+    #     first: same ceiling, better per-draw efficiency -- 5/8 at samples=1);
+    #   qwen2.5-coder:7b -- the measured baseline (1/8 on d4-7);
+    #   qwen2.5-coder:32b / qwen3-coder:30b -- the 32 GB tier, resident on
+    #     m2max-32 but NOT YET MEASURED (Q1 pending); listed last until they
+    #     earn a rank. Reorder on evidence, not vibes.
+    # The early 7B pool (llama3.1:8b, mistral:7b, codellama:7b-instruct,
+    # gemma3:latest, deepseek-coder:6.7b) was dropped: superseded on every
+    # measured axis by the models above.
+    # CAVEAT: every measured qwen3.5:9b result is with enable_thinking=false;
+    # its model default is thinking ON, which over-reasons and never emits code
+    # (dev/progress/reasoning-model-9b.md). The config default is None (= model
+    # default), so a run that reaches the 9b through this fallback without
+    # setting enable_thinking=false is NOT running the measured configuration.
     AVAILABLE_MODELS = [
+        "gemma4:12b",
+        "qwen3.5:9b",
         "qwen2.5-coder:7b",
-        "llama3.1:8b",
-        "mistral:7b",
-        "codellama:7b-instruct",
-        "gemma3:latest",
-        "deepseek-coder:6.7b",
+        "qwen2.5-coder:32b",
+        "qwen3-coder:30b",
     ]
 
     def __init__(self, model: str = "codellama:7b", debug: bool = False,
