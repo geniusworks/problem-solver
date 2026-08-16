@@ -55,12 +55,42 @@ The 32 GB tier pulls (verify tags at https://ollama.com/library if any 404 — t
   **machine-speed vs capability** separation (same model, more RAM → faster, *same* solve rate).
 
 Notes:
-- **`AOC_SESSION` is optional.** All of 2024 is cached under `years/` (gitignored) — the oracle and
-  examples run fully offline. You only need a session cookie to fetch *new* problems/years.
+- **You must bring `years/` with you — this is the one step a fresh clone cannot do for you.**
+  `years/` is gitignored, so the cached problem HTML, puzzle *inputs*, and the scraped accepted
+  answers (the oracle's ground truth) do **not** come with the repo. On a machine without it,
+  `verify_solutions.py` reports `0 correct, 0 wrong, 12 error — missing input file`, and no
+  experiment can be scored. Two ways to fix it, in order of preference:
+  1. **Copy it from the M1** (exact reproduction, no network, no AoC load):
+     `rsync -av <m1-host>:~/Herd/problem-solver/years/ years/`
+  2. **Re-fetch** with `AOC_SESSION` set in `.env`. This works because AoC renders
+     `Your puzzle answer was …` into the page of any day *that account* has solved, which is where
+     `shared/ground_truth.py` gets the oracle from. **It must be the same AoC account as the M1** —
+     inputs are per-account, so a different cookie yields different inputs and different answers,
+     and the results stop being comparable to the M1 rows.
+  Earlier revisions of this doc said `AOC_SESSION` is optional and the oracle "runs fully offline".
+  That was only true *on the M1*, where `years/` already existed locally.
 - The venv Python must be native **arm64** (`venv/bin/python`), never a bare `python`/`python3`
   (there's a legacy Intel `python2` on PATH). See `AGENTS.md`.
+- **The M2 Max started from a cold `learning/solver.db`** (2026-08-15). The M1's warm copy came
+  across and is preserved at `learning/solver.m1-warm-20260815.db` (gitignored, like every `*.db`);
+  the live DB was deleted and `LearningDatabase` re-created it from `schema.sql`. This matters less
+  than it sounds: the M1 DB's *only* populated table was `model_performance` (27 rows) —
+  `strategy_weights` and `strategy_results` were **empty**, so the strategy-effectiveness weighting
+  in `StrategyRecommender` had never actually been active on any M1 run. The warm data only fed
+  `_get_top_models` ranking, which a single-model `models=` run doesn't exercise. So M1↔M2 runs stay
+  comparable; restore the backup over `solver.db` if you ever need the exact M1 state.
+- **`gh` is not installed on the M2 Max.** `AGENTS.md` mentions `/opt/homebrew/bin/gh`; that was the
+  M1. Push the branch and open the PR in a browser, or `brew install gh`.
+- **Python 3.14 works** (verified on the M2 Max, 2026-08-15) after two dependency fixes landed:
+  `pydantic` was pinned to `==2.5.2`, which has no cp314 wheel and forced a doomed from-source Rust
+  build, and `coverage==7.3.3` contradicted `pytest-cov==6.2.1` (`needs >=7.5`) — that second one
+  made `requirements-dev.txt` uninstallable on *every* machine. If `setup.sh` ever fails building a
+  wheel again, re-run it against an older interpreter: `PYTHON=python3.12 ./scripts/setup.sh`.
 - Sanity check before big runs: `PYTHONPATH=. venv/bin/python dev/verify_solutions.py` → expect
-  `12 correct, 0 wrong`.
+  `12 correct, 0 wrong`. And `PYTHONPATH=. venv/bin/pytest -q` → expect green: **186 passed** with
+  `years/` present (2026-08-15). Without `years/` you get `162 passed, 24 skipped` — those 24 are
+  data-dependent and skip themselves, so a green-but-skipping suite is the tell that the oracle data
+  never made it onto the machine.
 
 ## 4. Exact commands (Q1 — capability, directly comparable to M1)
 

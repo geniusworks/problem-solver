@@ -11,5 +11,6 @@ pytest-xdist==3.8.0  # For parallel test execution
 # dependency, so it is declared only in requirements.txt now.
 mypy>=1.7.1        # Type checking
 bandit>=1.7.5      # Security checking
-coverage==7.3.3    # Code coverage
+coverage>=7.5      # Code coverage (pytest-cov 6.2.1 requires >=7.5; the old ==7.3.3
+                   # pin made this file uninstallable -- ResolutionImpossible)
 types-psutil>=5.9.5
