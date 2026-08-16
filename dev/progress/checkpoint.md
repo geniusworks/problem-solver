@@ -5,7 +5,17 @@ The **live status snapshot** — where the project actually stands right now. Th
 `dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
 file current as work lands so it never goes stale.
 
-## Current status (2026-08-14)
+## Current status (2026-08-15)
+
+### Machine: work has moved to the M2 Max / 32 GB (2026-08-15)
+Bring-up is done and the M1 is retired as a run host (no further experiments planned there). State
+on the new machine: **oracle 12 correct / 0 wrong**, **tests 186 passed** (the 24 previously-skipped
+tests are data-dependent and now run), `years/` 2024 d1–15 + 2025 copied from the M1, and all five
+tier-32 models resident — including `qwen3-coder:30b`, whose Ollama tag the handoff doc was unsure
+of and which resolves fine. Started from a **cold learning DB** (M1 copy preserved as
+`learning/solver.m1-warm-20260815.db`). Three environment defects were fixed to get here, two of
+which were latent on the M1 too — see `dev/benchmarks/m2max-handoff.md` §3 and the PR. **Next: Q1**
+(`qwen2.5-coder:32b` samp3 on 2024 d4–7 — does it beat the M1's 5/8 and crack d5 p2 / d6 p2?).
 
 ### Where the project is
 - **PR #1 (merged):** added a correctness oracle (`shared/verification.py`, `shared/ground_truth.py`,

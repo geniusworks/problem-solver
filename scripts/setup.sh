@@ -36,8 +36,19 @@ if [ ! -d venv ]; then
 fi
 echo "installing dependencies ..."
 ./venv/bin/python -m pip install -q --upgrade pip
-./venv/bin/python -m pip install -q -r requirements.txt
-[ -f requirements-dev.txt ] && ./venv/bin/python -m pip install -q -r requirements-dev.txt
+# Resolve runtime + dev together: they share pins (e.g. coverage), and installing
+# them in two passes lets the second silently downgrade the first. Note this
+# script does NOT use `set -e` -- check the status explicitly or a failed install
+# gets reported as success and the failure only surfaces much later.
+DEV_REQ=(); [ -f requirements-dev.txt ] && DEV_REQ=( -r requirements-dev.txt )
+if ! ./venv/bin/python -m pip install -q -r requirements.txt "${DEV_REQ[@]}"; then
+  echo "ERROR: dependency install failed (see pip output above)." >&2
+  echo "  If a package tried to build from source, your python ($("$PY" --version 2>&1))" >&2
+  echo "  is probably newer than a pinned dependency has wheels for. Either install a" >&2
+  echo "  supported interpreter and re-run as 'PYTHON=python3.12 ./scripts/setup.sh'," >&2
+  echo "  or relax the pin in requirements.txt." >&2
+  exit 1
+fi
 echo "  deps installed."
 
 # --- 2. .env scaffold ---
