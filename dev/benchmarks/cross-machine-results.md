@@ -68,6 +68,10 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 
 ## What to run on m2max-32 (the next machine)
 
+> **Running on the M2 Max? Start with `dev/benchmarks/m2max-handoff.md`** — full operational handoff
+> (setup, exact commands, the pass@k thesis-test design, and the gotchas). The summary below stands.
+
+
 The point of 32 GB is the model tier that swamps 16 GB. Suggested first runs, all at samp3, d4–7
 (directly comparable to the m1-16 rows above):
 

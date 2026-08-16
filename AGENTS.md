@@ -25,6 +25,9 @@ measured, not asserted. Secondarily, it's an AoC solver. See `README.md` for the
   session; update it (and the roadmap) as work lands so the docs never go stale.
 - `dev/progress/*.md` — the committed findings (baselines, A/Bs, the capability frontier).
 - `dev/benchmarks/cross-machine-results.md` — solve-rate results keyed by machine.
+- `dev/benchmarks/m2max-handoff.md` — **if you are running on the M2 Max / 32 GB (or any >16 GB
+  machine), read this first.** Operational handoff: what the M1 established, the two experiments to
+  run (30B capability + the pass@k thesis test), exact setup/commands, and the gotchas.
 - `dev/docs/architecture.md` — design overview.
 
 ## How to work here
