@@ -35,6 +35,12 @@ measured, not asserted. Secondarily, it's an AoC solver. See `README.md` for the
 - **Measure before building.** New orchestration ideas are A/B'd through the harness
   (`experiment.py --trials N`, comparing `SolverConfig` fingerprints), with a committed result set
   and a written delta in `dev/progress/`. Don't add capability on faith.
+- **Never conclude anything from `--trials 1` — including smoke tests.** The pipeline is
+  non-deterministic: 4 of 6 problems flip between solved and unsolved across byte-identical configs
+  (`dev/progress/baseline-2024-d1-3.md`). A single pass is a plumbing check, not a measurement. This
+  bit us for real — a one-shot smoke returned 0/2 right after an Ollama upgrade and looked exactly
+  like a runtime regression; `--trials 3` on the same config returned 6/6
+  (`dev/progress/ollama-0.32.14-runtime-check.md`). Pre-run checks use `--trials 3`.
 - **The oracle is authoritative.** Nothing counts as solved without independent verification against
   the cached accepted answer; keep `dev/verify_solutions.py` green.
 - **Docs currency is a standing rule, not a courtesy.** This is a research project: a stale doc is

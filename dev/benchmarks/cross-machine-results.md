@@ -14,7 +14,7 @@ result rows tagged with the machine `id`. Keep config columns identical across m
 | id | chip | RAM | cores | macOS | ollama | usable for models | notes |
 |----|------|-----|-------|-------|--------|-------------------|-------|
 | **m1-16** | Apple M1 | 16 GB | 8 | 26.5.2 (25F84) | 0.32.0 | ~dense-14B Q4 (~10 GB); ~10–11 GB usable after macOS | all runs below unless noted |
-| **m2max-32** | Apple M2 Max | 32 GB | 12 | 26.6.1 (25G76) | 0.32.11 | ~dense-30B / 30B-MoE Q4 — `qwen2.5-coder:32b` (19 GB) and `qwen3-coder:30b` (18 GB) both resident, 100% GPU | bring-up 2026-08-15 (`m2max-handoff.md` §3); Python 3.14; cold learning DB. **ollama 0.32.11 cannot pull `qwen3.8:27b`** — needs a newer runtime |
+| **m2max-32** | Apple M2 Max | 32 GB | 12 | 26.6.1 (25G76) | **0.32.14** (was 0.32.11 until 2026-08-16) | ~dense-30B / 30B-MoE Q4 — `qwen2.5-coder:32b` (19 GB), `qwen3-coder:30b` (18 GB), `qwen3.8:27b` (17 GB), all 100% GPU | bring-up 2026-08-15 (`m2max-handoff.md` §3); Python 3.14; cold learning DB. **The 4/8 and 6/8 rows below ran on 0.32.11**; upgraded to pull `qwen3.8:27b`, which 0.32.11 refuses. Upgrade verified behaviour-neutral: 6/6 on a 3-trial control (`ollama-0.32.14-runtime-check.md`) |
 
 ## Which models fit each machine (measured)
 

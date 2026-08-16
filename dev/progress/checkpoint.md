@@ -35,10 +35,30 @@ went 3/3 — the exact shape the pass@k thesis predicts. samp1 would likely have
 Suggestive only (one trial, inferred counterfactual); the controlled samp1-vs-samp3 A/B at
 `--trials 5` is still owed, but the frontier band now exists.
 
-**Next:** Ollama upgrade (maintainer-approved) → `qwen3.8:27b` (2026-08-14, 18 GB, smaller and newer
-still) as the next rung of the generation ladder; re-smoke `qwen2.5-coder:32b` post-upgrade to check
-the runtime didn't shift behaviour, and record the runtime change as a machine variable. Then the
-Q2 A/B on the identified band.
+### Ollama upgraded to 0.32.14; runtime verified clean (2026-08-16)
+
+Upgraded from 0.32.11 (which refuses to pull `qwen3.8:27b`) and **verified behaviour-neutral: 6/6
+on a 3-trial control** with `qwen2.5-coder:32b` on d1 (`dev/progress/ollama-0.32.14-runtime-check.md`).
+`qwen3.8:27b` (17 GB) is now resident. **All existing results ran on 0.32.11 and are unaffected.**
+
+Two things came out of it, both recorded:
+- **`--trials 1` is not evidence — including for smoke tests.** The first post-upgrade check was a
+  one-shot smoke and returned **0/2** on problems that *7B models* solve, immediately after a
+  plausible cause. It looked like a clear runtime regression; `--trials 3` on the identical config
+  returned **6/6**. The project's founding finding (4 of 6 problems flip across byte-identical
+  configs) applied to experiments but had been quietly exempted for smoke tests, and the exempted
+  instrument manufactured a false regression. **`AGENTS.md` now requires `--trials 3` for pre-run
+  checks.**
+- **Token accounting is stale across repair attempts** (new bug, unfixed): three attempts reported
+  identical `(4283, 876)` tokens while returning different answers (`0`, `0`, `87471881`), so
+  `last_token_usage` is reused rather than refreshed per generation. It matters because arm 2 of the
+  central thesis is an *economic* claim measured in tokens — repair-heavy pass@k costs are currently
+  understated. Wall-clock is unaffected.
+
+**Next:** `qwen3.8:27b` smoke (`--trials 3`, and specifically whether it honours
+`enable_thinking=false` — it is a reasoning-capable generalist, and `deepseek-r1:14b` was dropped
+for ignoring that flag), then its full d4–7 run as the next rung of the generation ladder. Then the
+Q2 pass@k A/B on the band `qwen3-coder:30b` exposed.
 
 ### The 32B result that this superseded (2026-08-16)
 
