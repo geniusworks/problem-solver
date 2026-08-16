@@ -32,6 +32,20 @@ last until Q1 ranks it — and the `SOLVER_MODELS` pin was emptied in `.env.exam
 default actually applies (a pinned 7B had been silently overriding it on every machine set up from
 the example).
 
+The **32B smoke test passed** (2026-08-16): `qwen2.5-coder:32b` samp1 on 2024 d1 → **2/2 verified**
+(p1 170.6s, p2 191.3s, 362s wall). The M1's hardware blocker is gone — the 32B loads and generates
+without swapping, extraction handles its output, and both answers matched the oracle. At ~180s per
+problem-part, Q1 (8 parts × 3 samples + repair) projects to **2–4 h**. Two defects the smoke test
+exposed, both fixed before Q1: **`autopep8==2.0.4` was broken on Python 3.14** (imports `lib2to3`,
+removed from the stdlib in 3.13 — every `fix_code()` raised and the formatter silently degraded to
+unformatted code, an M1↔M2 difference beyond model and hardware; bumped to >=2.3.2), and **the test
+suite was writing into the live measurement store** (`solve.py` resolves its workspace to the repo
+root, so the entrypoint test's writes landed in `learning/solver.db` — the M1's DB carried a
+fabricated `dummy-model` at 79/79, a perfect record for a model that never ran, in the very table
+`_get_top_models` ranks on; harmless to live runs via the installed-models filter, but contamination
+of a research artifact). An autouse conftest guard now redirects any `LearningDatabase` aimed at the
+real directory to a temp dir, and the dummy rows are scrubbed.
+
 ### Where the project is
 - **PR #1 (merged):** added a correctness oracle (`shared/verification.py`, `shared/ground_truth.py`,
   `shared/overfit_detection.py`), the experiment harness (`shared/experiment/`, `experiment.py`),

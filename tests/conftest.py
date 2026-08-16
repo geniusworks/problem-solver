@@ -25,6 +25,39 @@ def _isolate_solver_env(monkeypatch):
         monkeypatch.delenv(var, raising=False)
 
 
+_REAL_LEARNING_DIR = Path(__file__).resolve().parent.parent / "learning"
+
+
+@pytest.fixture(autouse=True)
+def _never_write_the_real_learning_db(monkeypatch, tmp_path_factory):
+    """No test may write the project's live measurement store.
+
+    `learning/solver.db` is a research artifact: every row is supposed to be a
+    measured outcome. But `solve.py` resolves its workspace to the repo root, so
+    the entrypoint integration test drove real writes into it -- the M1's
+    database ended up with a fabricated `dummy-model` at 79 attempts / 79
+    successes, a perfect record for a model that never ran, sitting in the table
+    `_get_top_models` ranks on. (It was filtered out of live runs by the
+    installed-models intersection, so this was contamination, not a wrong
+    result.)
+
+    Any LearningDatabase aimed at the real directory -- explicitly or via the
+    `db_dir=None` default -- is redirected to a per-test temp dir. Tests that
+    already pass their own tmp_path are untouched.
+    """
+    from learning.database import LearningDatabase
+
+    redirect = tmp_path_factory.mktemp("learning-db")
+    original_init = LearningDatabase.__init__
+
+    def guarded_init(self, db_dir=None):
+        if db_dir is None or Path(db_dir).resolve() == _REAL_LEARNING_DIR:
+            db_dir = redirect
+        original_init(self, Path(db_dir))
+
+    monkeypatch.setattr(LearningDatabase, "__init__", guarded_init)
+
+
 @pytest.fixture
 def test_data_dir() -> Path:
     """Return the test data directory."""
