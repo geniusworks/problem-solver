@@ -48,13 +48,16 @@ gemma4 only:     d4 p2          <- gemma4 cracks this Part 2, the 9b misses it
 neither:         d5 p2, d6 p2
 ```
 
-Their errors are **decorrelated on exactly the hard Part 2s.** The *union* of the two is **6/8** —
-one more than either alone. That is the "diverse portfolios decorrelate error" arm of the
-orchestration thesis (see README, "Does orchestrated voting scale?"), and it is **testable cheaply on
-the M1**: both models fit, so a `models=gemma4:12b,qwen3.5:9b` config at samples=3 should reach 6/8
-if the complementarity holds in one combined run. This revises the earlier "cheap M1 levers are
-exhausted" note — this is a cheap lever, and it targets the thesis directly rather than the capability
-ceiling.
+Their errors *appeared* decorrelated on the hard Part 2s, so the *union* looked like **6/8** — one
+more than either alone — a cheap M1 test of the "diverse portfolios decorrelate error" arm of the
+orchestration thesis (README, "Does orchestrated voting scale?").
+
+> **TESTED — it did not hold (`ensemble-samp3-d4-7.md`).** The combined `gemma4:12b|qwen3.5:9b` samp3
+> run got **5/8, not 6/8**, at ~2.2× wall. Both models participated fully, but neither solved d7 p2
+> that run: the 9b's d7 p2 "crack" was itself a low-probability draw (like gemma4's d7 p2 at samp1 —
+> finding 1 above), not a robust competency, so the ensemble had nothing stable to pool. Diversity
+> pays only when members' distinct solves are *reproducible*; the lever for a marginal problem like
+> d7 p2 is more samples or a stronger model, not a second same-tier model.
 
 ## What stays unchanged
 
@@ -67,7 +70,7 @@ holds. Those still need a stronger model (the m2max-32 / 30B+ runs) or a genuine
 venv/bin/python experiment.py --problems 2024:4-7 --trials 1 \
   --config "name=gemma4-samp3,models=gemma4:12b,temperature=0.7,samples_per_model=3,enable_thinking=false"
 
-# the ensemble follow-up this finding motivates (M1, both models fit):
+# the ensemble follow-up this finding motivated (models list is PIPE-separated, not comma):
 venv/bin/python experiment.py --problems 2024:4-7 --trials 1 \
-  --config "name=ensemble-samp3,models=gemma4:12b,qwen3.5:9b,temperature=0.7,samples_per_model=3,enable_thinking=false"
+  --config "name=ensemble-samp3,models=gemma4:12b|qwen3.5:9b,temperature=0.7,samples_per_model=3,enable_thinking=false"
 ```
