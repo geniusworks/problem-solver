@@ -171,20 +171,28 @@ python solve.py --year 2024 --day 1 --part 1   # --force to re-solve, --debug fo
 
 ## Getting started
 
-1. Install dependencies:
+1. One-shot setup (venv + deps + `.env` scaffold + a RAM-matched model tier):
    ```bash
-   pip install -r requirements.txt
-   pip install -r requirements-dev.txt
+   ./scripts/setup.sh
+   ```
+   Or by hand — always into the project venv, never a bare `pip` (see `AGENTS.md`):
+   ```bash
+   python3 -m venv venv
+   venv/bin/python -m pip install -r requirements.txt -r requirements-dev.txt
    ```
 2. Install [Ollama](https://ollama.ai) and pull at least one coding model (the solver checks which
    configured models are actually installed and errors clearly if none are):
    ```bash
    ollama pull qwen2.5-coder:7b
    ```
-3. `AOC_SESSION` (optional): only needed to **fetch** problems/inputs not already cached under
-   `years/`, or to wire the (unwired) submission phase. Put it in `.env` (gitignored) —
-   see the session-cookie steps below. Cached problems run fully offline, oracle and all.
-4. Run tests: `PYTHONPATH=. venv/bin/pytest -q`
+3. `AOC_SESSION`: needed to **fetch** problems, inputs, and the accepted answers the oracle scores
+   against. `years/` is gitignored — a fresh clone has no cached data, so the oracle cannot run
+   until you either fetch with a session cookie (see the steps below; put it in `.env`, gitignored)
+   or copy `years/` from a machine that has it. Once cached, everything runs offline. Note the
+   accepted answers only exist for days *your account* has solved — that's what makes them ground
+   truth.
+4. Run tests: `PYTHONPATH=. venv/bin/pytest -q` (green without cached data too — the data-dependent
+   tests skip themselves, reported as skips).
 
 To get the session cookie (Safari): enable the Develop menu (Settings → Advanced → "Show features
 for web developers"), log in to adventofcode.com, open Web Inspector (⌥⌘I) → Storage → Cookies →
@@ -257,8 +265,9 @@ not the harness.
 
 **Open:**
 - Does a bigger model (30B+) crack the efficiency-bound Part 2s — and does voting still help at *its
-  own* frontier (the thesis above)? Blocked on hardware; the m2max-32 plan is in
-  `dev/benchmarks/cross-machine-results.md`.
+  own* frontier (the thesis above)? **No longer hardware-blocked:** an M2 Max / 32 GB is set up
+  (bring-up 2026-08-15) with the 30B-class models resident; the runs are next. Plan:
+  `dev/benchmarks/cross-machine-results.md` and `dev/benchmarks/m2max-handoff.md`.
 - Whether the gains hold on genuinely-unseen problems — the evaluation set here is *past* AoC years,
   which are all solved.
 

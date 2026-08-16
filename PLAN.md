@@ -294,18 +294,19 @@ and each idea is A/B'd through `--trials`. Candidate levers, roughly by expected
 Success criterion, as always: a `--trials` A/B with a reported delta and a committed result set,
 compared to the recorded baselines in `dev/progress/`.
 
-### 2. Find a stronger model — the capability lever
+### 2. Find a stronger model — the capability lever — ✅ UNBLOCKED (2026-08-15)
 
-The measured bottleneck for *broader* coverage is model capability. The direct experiment can't run
-on this 16 GB machine: `qwen2.5-coder:32b` swaps (120 s timeout for a 40-token generation); mid-size
-models (phi4, qwen3.5:9b) run but at ~5 min/generation a full self-consistency sweep is 8 h+. To
-unblock, provide one of:
+The measured bottleneck for *broader* coverage is model capability, and the direct experiment
+couldn't run on the M1 16 GB: `qwen2.5-coder:32b` swaps (120 s timeout for a 40-token generation);
+mid-size models run but at ~5 min/generation a full self-consistency sweep is 8 h+.
 
-- **More RAM** (a 32 GB+ machine) and `ollama pull qwen2.5-coder:32b`, or
-- **A remote/cloud endpoint** — set `OLLAMA_HOST` to a hosted Ollama with a large model, or add a new
-  provider in `shared/llm/` for a hosted API (the provider seam is already there).
+**Resolved by hardware:** the project moved to an **M2 Max / 32 GB** (`m2max-32`), bring-up complete
+— oracle 12/12, suite green, `qwen2.5-coder:32b` and `qwen3-coder:30b` resident. The run plan and
+gotchas live in `dev/benchmarks/m2max-handoff.md` (Q1 capability at samp3 on d4–7; Q2 the
+pass@k-vs-pass@1 thesis test). A remote/cloud `OLLAMA_HOST` remains the fallback for tiers beyond
+32 GB.
 
-Then re-run the winning A/B with the stronger model against the recorded 7B frontier
+Re-run the winning A/B with the stronger model against the recorded 7B frontier
 (`dev/progress/scale-2024-d4-7.md`, `benchmark-2024-d1-12.md`):
 ```
 venv/bin/python experiment.py --problems 2024:4-7 --trials 3 \

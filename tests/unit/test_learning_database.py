@@ -125,22 +125,32 @@ class TestRunningSuccessRate:
         assert avg == pytest.approx(4.0)
         assert latest == pytest.approx(6.0)
 
-    def test_pre_migration_rows_keep_zero_counters(self, db):
-        """Seeded/legacy rates are priors, not measurements -- don't fabricate history."""
+    def test_fresh_database_has_no_model_performance_rows(self, db):
+        """A measurement store starts empty -- init_db must not fabricate priors.
+
+        It used to seed model_performance with an invented 0.5 success rate for a
+        model that was never run (and whose name wasn't even a valid Ollama tag).
+        Cold start is _get_top_models' fallback-to-installed-models, not fake data.
+        """
         with db.connect() as conn:
             rows = conn.execute(
                 "SELECT attempts, successes FROM model_performance"
             ).fetchall()
 
-        assert rows, "init_db should seed some rows"
-        assert all(row == (0, 0) for row in rows)
+        assert rows == []
 
     def test_first_real_observation_replaces_the_prior(self, db):
+        """Legacy rows (pre-migration or hand-seeded) hold a prior rate with zero
+        counters; the first measured attempt must replace it outright."""
+        model, role = "legacy-model:7b", "primary"
         with db.connect() as conn:
-            seeded = conn.execute(
-                "SELECT model_name, role FROM model_performance LIMIT 1"
-            ).fetchone()
-        model, role = seeded
+            conn.execute(
+                "INSERT INTO model_performance (model_name, problem_type, role, "
+                "success_rate, response_time, cost, quality_score, avg_quality_score) "
+                "VALUES (?, 'general', ?, 0.5, 10.0, 0.0, 5.0, 5.0)",
+                (model, role),
+            )
+            conn.commit()
 
         db.update_model_performance(model, {"quality_score": 5.0}, success=False, role=role)
 

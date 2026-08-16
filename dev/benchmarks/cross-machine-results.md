@@ -14,7 +14,7 @@ result rows tagged with the machine `id`. Keep config columns identical across m
 | id | chip | RAM | cores | macOS | ollama | usable for models | notes |
 |----|------|-----|-------|-------|--------|-------------------|-------|
 | **m1-16** | Apple M1 | 16 GB | 8 | 26.5.2 (25F84) | 0.32.0 | ~dense-14B Q4 (~10 GB); ~10–11 GB usable after macOS | all runs below unless noted |
-| **m2max-32** | Apple M2 Max | 32 GB | — | *TBD* | *TBD* | ~dense-30B / 30B-MoE (fits qwen2.5-coder:32b, Qwen3-Coder-30B-A3B) | *not yet run* |
+| **m2max-32** | Apple M2 Max | 32 GB | 12 | 26.6.1 (25G76) | 0.32.11 | ~dense-30B / 30B-MoE Q4 — `qwen2.5-coder:32b` (19 GB) and `qwen3-coder:30b` (18 GB) both resident | bring-up 2026-08-15 (`m2max-handoff.md` §3); Python 3.14; cold learning DB; *no results yet* |
 
 ## Which models fit each machine (measured)
 
@@ -76,7 +76,8 @@ The point of 32 GB is the model tier that swamps 16 GB. Suggested first runs, al
 (directly comparable to the m1-16 rows above):
 
 1. `qwen2.5-coder:32b` (Q4, ~20 GB) — the code-specialized 32B the M1 couldn't hold.
-2. `Qwen3-Coder-30B-A3B` (MoE, ~18 GB) — the current-gen local coder leader that needs the headroom.
+2. `qwen3-coder:30b` (MoE, ~18 GB — the tag for Qwen3-Coder-30B-A3B; confirmed to pull fine,
+   2026-08-15) — the current-gen local coder leader that needs the headroom.
 3. Re-run `gemma4:12b` / `qwen3.5:9b` samp3 there too, to separate *machine speed* from *model
    capability* (same model, more RAM → faster, same solve rate expected).
 

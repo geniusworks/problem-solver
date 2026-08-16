@@ -17,6 +17,16 @@ of and which resolves fine. Started from a **cold learning DB** (M1 copy preserv
 which were latent on the M1 too — see `dev/benchmarks/m2max-handoff.md` §3 and the PR. **Next: Q1**
 (`qwen2.5-coder:32b` samp3 on 2024 d4–7 — does it beat the M1's 5/8 and crack d5 p2 / d6 p2?).
 
+A pre-run holistic audit (2026-08-15) tightened honesty and currency before the first M2 Max data
+point: **removed the fabricated `init_db` seed rows** (an invented 0.5 success rate for a model
+never run — fake data in the measurement store; cold start is `_get_top_models`' fallback, and a
+fresh DB is now genuinely empty), corrected `README.md`'s claim that cached problems "run fully
+offline" (false on a fresh clone; `years/` is gitignored) and its bare-`pip` setup steps, marked
+the stronger-model lever **UNBLOCKED** in `PLAN.md`/`README.md`, filled the real `m2max-32` specs
+into `dev/benchmarks/cross-machine-results.md` (M2 Max, 12-core, macOS 26.6.1, ollama 0.32.11),
+added an honest-status note to `learning/README.md` (strategy-learning tables have never been
+populated by a real run), and made **docs currency a standing rule** with a doc map in `AGENTS.md`.
+
 ### Where the project is
 - **PR #1 (merged):** added a correctness oracle (`shared/verification.py`, `shared/ground_truth.py`,
   `shared/overfit_detection.py`), the experiment harness (`shared/experiment/`, `experiment.py`),
