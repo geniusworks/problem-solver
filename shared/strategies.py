@@ -781,10 +781,21 @@ def get_strategies_for_problem(problem_text: str) -> List[str]:
         matching_categories = sorted(category_scores.items(), key=lambda x: x[1], reverse=True)[:2]
         matching_categories = [cat for cat, _ in matching_categories]
             
-    # Get strategies for each matching category
+    # Get strategies for each matching category.
+    #
+    # .get(), not [] -- CATEGORY_KEYWORDS can select a category that has no
+    # entry in SOLUTION_STRATEGIES (GRAPH, STATE_MACHINE, OPTIMIZATION have
+    # keywords but no strategies). An unguarded lookup raised KeyError out of
+    # _prepare_problem and failed the whole problem before the model was ever
+    # called: 2024 d8 died on both parts because "antinode" substring-matches
+    # the GRAPH keyword "node". A category with no strategies must contribute
+    # nothing -- generation then proceeds unweighted, exactly as on a cold
+    # start -- never crash the solve.
     for category in matching_categories:
-        strategies.extend(strategy.name for strategy in SOLUTION_STRATEGIES[category])
-    
+        strategies.extend(
+            strategy.name for strategy in SOLUTION_STRATEGIES.get(category, ())
+        )
+
     return strategies
 
 def create_strategy_prompt(strategies: List[Strategy]) -> str:

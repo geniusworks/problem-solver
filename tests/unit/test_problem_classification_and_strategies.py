@@ -129,3 +129,41 @@ def test_math_problem_uses_math_specific_top_models(monkeypatch, tmp_path):
     models = solver._get_top_models(problem_type, "primary", limit=2)
 
     assert models == ["math-model-1"]
+
+
+class TestStrategyLookupNeverCrashesTheSolve:
+    """`get_strategies_for_problem` must never raise on real problem text.
+
+    CATEGORY_KEYWORDS can select a category that has no entry in
+    SOLUTION_STRATEGIES (GRAPH, STATE_MACHINE and OPTIMIZATION have keywords but
+    no strategies). The lookup used to be an unguarded SOLUTION_STRATEGIES[cat],
+    so those categories raised KeyError out of _prepare_problem and failed the
+    whole problem before the model was ever called -- a harness crash recorded
+    as a model failure. 2024 d8 hit it on both parts because "antinode"
+    substring-matches the GRAPH keyword "node".
+    """
+
+    def test_every_keyword_matchable_category_is_survivable(self):
+        from shared.strategies import CATEGORY_KEYWORDS, SOLUTION_STRATEGIES
+
+        for category, keywords in CATEGORY_KEYWORDS.items():
+            # Text saturated with one category's keywords forces it to win.
+            text = " ".join(keywords * 5)
+            result = get_strategies_for_problem(text)  # must not raise
+            assert isinstance(result, list)
+            if category not in SOLUTION_STRATEGIES:
+                # No strategies defined -> contributes nothing, quietly.
+                assert all(isinstance(name, str) for name in result)
+
+    def test_graph_wording_does_not_raise(self):
+        """The exact shape that killed 2024 d8: 'antinode' contains 'node'."""
+        text = (
+            "Each antinode occurs at a point perfectly in line with two antennas. "
+            "Count the antinode locations within the bounds of the map."
+        )
+        assert isinstance(get_strategies_for_problem(text), list)
+
+    def test_optimization_wording_does_not_raise(self):
+        """OPTIMIZATION keywords ('minimize', 'best', 'fewest_steps') are common AoC words."""
+        text = "Find the best route that will minimize the cost and use the fewest steps."
+        assert isinstance(get_strategies_for_problem(text), list)
