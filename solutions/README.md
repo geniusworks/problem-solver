@@ -30,6 +30,14 @@ It exits non-zero if any recorded solution is wrong, errors, or cannot be verifi
 |2024|4|2|1822|qwen3.5:9b|2026-08-14 07:17:00 UTC|solutions/2024_day04_part2.py|
 |2024|5|2|5502|qwen3-coder:30b|2026-08-16 15:52:34 UTC|solutions/2024_day05_part2.py|
 |2024|6|2|1812|qwen3.8:27b|2026-08-16 22:01:27 UTC|solutions/2024_day06_part2.py|
+|2024|8|1|423|qwen3.8:27b|2026-08-17 01:00:36 UTC|solutions/2024_day08_part1.py|
+|2024|8|2|1287|qwen3.8:27b|2026-08-17 01:13:44 UTC|solutions/2024_day08_part2.py|
+|2024|10|2|1094|qwen3.8:27b|2026-08-17 02:05:43 UTC|solutions/2024_day10_part2.py|
+|2024|12|1|1546338|qwen3.8:27b|2026-08-17 02:22:25 UTC|solutions/2024_day12_part1.py|
+|2024|12|2|978590|qwen3.8:27b|2026-08-17 02:36:20 UTC|solutions/2024_day12_part2.py|
+|2024|14|1|228410028|qwen3.8:27b|2026-08-17 03:06:27 UTC|solutions/2024_day14_part1.py|
+|2024|15|1|1577255|qwen3.8:27b|2026-08-17 03:17:10 UTC|solutions/2024_day15_part1.py|
+|2024|13|1|37680|qwen3.8:27b|2026-08-17 04:02:52 UTC|solutions/2024_day13_part1.py|
 <!-- end verified rows -->
 
 ## Rejected — previously recorded as solved, verified wrong

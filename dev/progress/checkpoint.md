@@ -5,9 +5,45 @@ The **live status snapshot** — where the project actually stands right now. Th
 `dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
 file current as work lands so it never goes stale.
 
-## Current status (2026-08-16)
+## Current status (2026-08-17)
 
-### 🏁 THE d4–7 SET IS SOLVED OUT: `qwen3.8:27b` 8/8, ledger 14 (2026-08-16)
+### FRONTIER FOUND on d8–15: `qwen3.8:27b` 9/16, ledger 22 (2026-08-17)
+
+With d4–7 solved out, the scan moved to **2024 d8–15** and found a real frontier: **9/16 (56%)**
+(`dev/progress/m2max-qwen38-frontier-scan-d8-15.md`; samp1, 1 trial, 3h, 373k tokens). **Seven new
+verified solutions in one run — the largest jump in project history — ledger 14 → 21, then 22** after
+d13 p1's overfit rejection was overturned. Oracle: **22 correct, 0 wrong**.
+
+**The failure band, and it splits by kind** — which gives the pass@k A/B a real prediction to test:
+- *Implementation-fiddly:* **d9 p1** (the scan's only `no_candidate` — 900 s, nothing extractable),
+  **d9 p2**, **d15 p2** (2,282 s, longest of the scan).
+- *Insight-required:* **d11 p2** (memoised counting), **d13 p2** (algebra over brute force).
+- *Under-specified:* **d14 p2** ("find the Christmas tree") — excluded from the A/B on principle; the
+  oracle can score it but the problem never defines the target.
+
+Prediction: sampling should buy the fiddly problems and not the insight ones — voting improving
+*execution reliability* rather than manufacturing *ideas*. If d11 p2 or d13 p2 falls to sampling
+instead, that is the more surprising and more valuable result.
+
+**Two instrument defects found and fixed** (both were scoring harness behaviour as model failure):
+1. **`KeyError: ProblemCategory.GRAPH` crashed whole problems before the model was called**
+   (`strategy-keyerror-d8.md`). `SOLUTION_STRATEGIES[category]` was unguarded while GRAPH,
+   STATE_MACHINE and OPTIMIZATION have keywords but no strategies; substring scoring meant d8's
+   "anti**node**" matched `node`. Live since 2025-12-06 → **the M1's "d8–12 leg: 2/10" is really 2 of
+   8 attempted**, corrected in place. d8 is the only affected day in d1–15; once fixed, **both parts
+   of d8 solved on the first draw.**
+2. **The overfit gate rejected a correct, general solution** (`overfit-gate-false-positive.md`):
+   d13 p1 produced the right full-input answer and was refused for containing an example literal —
+   which sat in a *docstring*. The check ran on raw source and never asked *where*. Comments and
+   docstrings are now stripped before the identical checks run; both real cheat fixtures still trip
+   it. Exposure is model-specific: `qwen3.8:27b` writes its reasoning into comments, so the habit
+   that helps it solve hard problems is what tripped a gate reading prose as code.
+
+**Next:** `--trials 3` at samp1 on the five-problem band to separate *sometimes* from *never* (only
+*sometimes* can show a pass@k effect), then the controlled samp1 vs samp3 vs samp5 A/B — the thesis
+test the project has been building toward.
+
+### THE d4–7 SET IS SOLVED OUT: `qwen3.8:27b` 8/8, ledger 14 (2026-08-16)
 
 **`qwen3.8:27b` (17 GB, released 2026-08-14) scored a perfect 8/8 on 2024 d4–7**
 (`dev/progress/m2max-qwen38-27b-d4-7.md`; 2h 40m, 24 attempts, 287k tokens, ollama 0.32.14). It
