@@ -14,7 +14,7 @@ result rows tagged with the machine `id`. Keep config columns identical across m
 | id | chip | RAM | cores | macOS | ollama | usable for models | notes |
 |----|------|-----|-------|-------|--------|-------------------|-------|
 | **m1-16** | Apple M1 | 16 GB | 8 | 26.5.2 (25F84) | 0.32.0 | ~dense-14B Q4 (~10 GB); ~10–11 GB usable after macOS | all runs below unless noted |
-| **m2max-32** | Apple M2 Max | 32 GB | — | *TBD* | *TBD* | ~dense-30B / 30B-MoE (fits qwen2.5-coder:32b, Qwen3-Coder-30B-A3B) | *not yet run* |
+| **m2max-32** | Apple M2 Max | 32 GB | 12 | 26.6.1 (25G76) | **0.32.14** (was 0.32.11 until 2026-08-16) | ~dense-30B / 30B-MoE Q4 — `qwen2.5-coder:32b` (19 GB), `qwen3-coder:30b` (18 GB), `qwen3.8:27b` (17 GB), all 100% GPU | bring-up 2026-08-15 (`m2max-handoff.md` §3); Python 3.14; cold learning DB. **The 4/8 and 6/8 rows below ran on 0.32.11**; upgraded to pull `qwen3.8:27b`, which 0.32.11 refuses. Upgrade verified behaviour-neutral: 6/6 on a 3-trial control (`ollama-0.32.14-runtime-check.md`) |
 
 ## Which models fit each machine (measured)
 
@@ -44,6 +44,12 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | m1-16 | gemma4:12b | tk-off samp1 | d4–7 | 1 | 5/8 | 62% | `model-bakeoff-gemma4-vs-9b.md` |
 | m1-16 | gemma4:12b | **tk-off samp3** | d4–7 | 1 | 5/8 | **62%** | `gemma4-samp3-confirmation.md` |
 | m1-16 | gemma4:12b + qwen3.5:9b | tk-off samp3 **ensemble** | d4–7 | 1 | 5/8 | 62% | `ensemble-samp3-d4-7.md` |
+| **m2max-32** | **qwen2.5-coder:32b** | **tk-off samp3** | d4–7 | 1 | **4/8** | **50%** | `m2max-qwen25coder32b-d4-7.md` |
+| **m2max-32** | **qwen3-coder:30b** (MoE) | **tk-off samp3** | d4–7 | 1 | **6/8** | **75%** | `m2max-qwen3coder30b-d4-7.md` |
+| **m2max-32** | **qwen3.8:27b** (generalist)† | **tk-off samp3** | d4–7 | 1 | **8/8** | **100%** | `m2max-qwen38-27b-d4-7.md` |
+
+† ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
+(6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
 
 ### Headline reads (m1-16)
 
@@ -64,6 +70,50 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 - **Hard ceiling that no m1-16 model has cracked:** 2024 d5 p2 and d6 p2 (d6 p2 is Python-speed-bound
   even with a correct brute force). These are the natural first targets for a stronger model on
   m2max-32.
+
+### Headline reads (m2max-32)
+
+- **The 30B tier did NOT beat 16 GB — `qwen2.5-coder:32b` samp3 got 4/8, *below* the M1's 5/8**
+  (`m2max-qwen25coder32b-d4-7.md`). It solved every Part 1 and no Part 2, cracking neither d5 p2 nor
+  d6 p2. Its solved set is exactly the M1 leaders' set minus **d4 p2**, where it produced nine
+  wrong answers with no convergence — a problem `qwen3.5:9b` (6.6 GB) solves.
+- **Size within a generation is not the lever.** A 32B code-specialist from late 2024 loses to 9B/12B
+  models from a newer generation on the same set. What lifted 1/8 → 5/8 on the M1 was newer models,
+  not bigger ones; scaling the old generation up does not reproduce it.
+- **The "efficiency-bound" story needs qualifying.** For this model, d5 p2 failed on **input
+  parsing** in all 7 attempts (`invalid literal for int(): '93|48'`) — it never reached an
+  algorithm, let alone a slow one. Two of five d7 p2 attempts died the same way. Only d6 p2 still
+  fits the timeout narrative.
+- **`qwen3-coder:30b` (MoE) is the project's best result: 6/8 (75%)** — the first capability gain any
+  hardware or model change has bought (`m2max-qwen3coder30b-d4-7.md`). It **cracked d5 p2, which no
+  model or config had ever solved** (+1 ledger entry, now 13), plus d4 p2 and d7 p2 that the dense
+  32B missed — in **39 min vs the 32B's 2h12m**.
+- **Generation beats size, under a controlled comparison.** Same machine, runtime, config, problem
+  set and day: the *smaller* 18 GB MoE scored 6/8 where the 19 GB dense 2024-generation model scored
+  4/8, at 3.4× less wall-clock. Read "model capability" as *generation*, not parameter count.
+- **"d5 p2 / d6 p2 are efficiency-bound" is retired.** The winning d5 p2 solution is a Kahn's-
+  algorithm topological sort — a *better algorithm*, not a faster one. d6 p2 is now the only
+  uncracked problem on the set, and even it failed via immediate `TypeError`s (6/6), not timeouts.
+- **Failure style differs by model and it matters:** the dense 32B produced 27 confidently-wrong
+  answers vs 5 errors; the MoE produced 4 wrong vs 11 crashes. For a proposer–verifier loop, crashes
+  are the cheaper failure — detectable, and they carry an actionable traceback into repair.
+- **Cross-model parsing trap:** day 5's two-section input (`a|b` rules, blank line, `1,2,3` updates)
+  broke *both* models — the 32B on `'93|48'` (7/7 attempts, d5 p2), the MoE on `'75,47,61,53,29'`
+  (3/4 attempts, d5 p1). Model-independent, and attackable by prompt/harness — a real orchestration
+  lever rather than a capability wall.
+- **`qwen3.8:27b` swept the set 8/8 (100%) — d4–7 is now retired as a capability instrument**
+  (`m2max-qwen38-27b-d4-7.md`). It cracked **d6 p2, the last problem nothing had ever solved**
+  (ledger now 14). Per-attempt it is in a different league: **20/24 = 83%** of its candidates verify,
+  against the MoE's 45% and the dense 32B's 22%.
+- **The generation ladder is monotonic, and runs backwards to size:** 19 GB dense 2024 specialist
+  4/8 → 18 GB MoE newer specialist 6/8 → **17 GB dense 2026 *generalist* 8/8**. The winner is the
+  smallest and is not a coder, so the effect is general model quality, not code specialization.
+- **Strongest pass@k evidence to date:** attempt ordering gives **pass@1 = 6/8, pass@3 = 8/8**, and
+  the two problems sampling bought were **d5 p2 and d6 p2 — the two hardest on the set**. Easy
+  problems solved 3/3, where extra draws add nothing. Exactly the predicted shape, now replicated
+  across two models and two architectures. Still not the controlled A/B.
+- **Cost caveat:** Qwen3.8 is the *slowest* (2h 40m vs the MoE's 39 m). Best capability, worst
+  wall-clock; the MoE remains the efficient choice per unit compute.
 - **12 verified solutions** recorded (`solutions/README.md`), oracle-clean throughout.
 
 ## What to run on m2max-32 (the next machine)
@@ -76,7 +126,8 @@ The point of 32 GB is the model tier that swamps 16 GB. Suggested first runs, al
 (directly comparable to the m1-16 rows above):
 
 1. `qwen2.5-coder:32b` (Q4, ~20 GB) — the code-specialized 32B the M1 couldn't hold.
-2. `Qwen3-Coder-30B-A3B` (MoE, ~18 GB) — the current-gen local coder leader that needs the headroom.
+2. `qwen3-coder:30b` (MoE, ~18 GB — the tag for Qwen3-Coder-30B-A3B; confirmed to pull fine,
+   2026-08-15) — the current-gen local coder leader that needs the headroom.
 3. Re-run `gemma4:12b` / `qwen3.5:9b` samp3 there too, to separate *machine speed* from *model
    capability* (same model, more RAM → faster, same solve rate expected).
 

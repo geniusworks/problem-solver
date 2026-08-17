@@ -28,6 +28,8 @@ It exits non-zero if any recorded solution is wrong, errors, or cannot be verifi
 |2024|5|1|5747|qwen3.5:9b|2026-08-13 17:44:18 UTC|solutions/2024_day05_part1.py|
 |2024|7|2|92612386119138|qwen3.5:9b|2026-08-13 21:48:24 UTC|solutions/2024_day07_part2.py|
 |2024|4|2|1822|qwen3.5:9b|2026-08-14 07:17:00 UTC|solutions/2024_day04_part2.py|
+|2024|5|2|5502|qwen3-coder:30b|2026-08-16 15:52:34 UTC|solutions/2024_day05_part2.py|
+|2024|6|2|1812|qwen3.8:27b|2026-08-16 22:01:27 UTC|solutions/2024_day06_part2.py|
 <!-- end verified rows -->
 
 ## Rejected — previously recorded as solved, verified wrong
@@ -41,8 +43,21 @@ and under `years/` as failure data for evaluating the verification harness.
 | 2024 day 02 part 2 | 86 | 476 | Never removes a level; ignores the 1–3 delta rule entirely |
 | 2024 day 03 part 2 | 0 | 106921067 | Hardcoded `if line == "<example>": return 48 else: return 0` |
 | 2024 day 04 part 1 | 2344 | 2401 | Searches 4 directions, two of which are the same diagonal; strips `.` from the grid |
-| 2024 day 05 part 2 | 0 | 5502 | Hardcoded lookup table over example strings |
+| 2024 day 05 part 2 | 0 | 5502 | Hardcoded lookup table over example strings — **now genuinely solved**, see below |
 
 Day 3 Part 2 previously had a row in this table pointing at
 `solutions/2024_day03_part2.py`, a file that did not exist. The code behind it is
-preserved at `years/2024/day03/2024_day03_part2.py`.
+preserved at `tests/fixtures/overfit/2024_day03_part2.py` (moved there from the
+gitignored `years/` tree, which the solver overwrites — see below).
+
+**Day 5 Part 2 has since been solved for real** (2026-08-16, `qwen3-coder:30b`,
+a Kahn's-algorithm topological sort — the first model in this project to crack
+it). Its row above is retained as the historical pre-oracle failure. The solve
+briefly cost us that failure artifact: the stub lived only at
+`years/2024/day05/2024_day05_part2.py`, which is gitignored *and* is where the
+solver writes its canonical solution, so the successful run overwrote the
+regression fixture for the overfit gate. It was **recovered** from a copy of the
+pre-solve `years/` tree kept outside the repo, and re-verified as the genuine
+artifact (the gate flags all three hardcoded example literals; the oracle scores
+it `0` against `5502`). Both overfit fixtures now live under `tests/fixtures/`,
+which is committed and outside the solver's write path.

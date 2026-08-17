@@ -23,6 +23,10 @@ openai>=1.3.7     # For OpenAI API
 # Runtime dependencies of shared/quality: these are imported by the code-quality
 # analyser and formatter during a normal solve, not just in development.
 black>=22.3.0     # shared/quality/code_formatter.py, code_quality.py
-autopep8==2.0.4   # shared/quality/code_formatter.py
+autopep8>=2.3.2   # shared/quality/code_formatter.py. NOT 2.0.4: it imports
+                  # lib2to3, removed from the stdlib in Python 3.13, so every
+                  # fix_code() call raised and the formatter silently degraded
+                  # to unformatted code ("autopep8 failed: No module named
+                  # 'lib2to3'"). 2.1.0+ dropped the lib2to3 dependency.
 pylint>=2.15.0    # shared/quality/code_quality.py
 radon>=6.0.1      # shared/quality/code_quality.py

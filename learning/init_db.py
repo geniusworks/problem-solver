@@ -30,46 +30,17 @@ def init_db(learning_dir: str, db_path: str = "solver.db", schema_path: Optional
     with open(schema_path) as f:
         schema_sql = f.read()
     
-    # Connect and initialize
+    # Connect and initialize. A fresh database starts EMPTY on purpose: this is a
+    # measurement store, and every row in it must be a measurement. An earlier
+    # version seeded model_performance with invented numbers (a 0.5 success rate
+    # and 5.0 quality for "codellama-7b-instruct" -- not even a valid Ollama tag),
+    # which is exactly the asserted-not-measured data this project exists to
+    # avoid. Cold start is handled where it belongs: _get_top_models falls back
+    # to the installed models when the table has nothing to rank.
     with sqlite3.connect(db_path) as conn:
         conn.executescript(schema_sql)
-        seed_model_performance(conn)
-    
+
     print("Database initialized successfully!")
-
-
-def seed_model_performance(conn):
-    """Seed the model_performance table with some default data."""
-    try:
-        # Check if the model_performance table is empty
-        cursor = conn.execute("SELECT COUNT(*) FROM model_performance")
-        count = cursor.fetchone()[0]
-        if count == 0:
-            models = [
-                {"model_name": "codellama-7b-instruct", "problem_type": "general", "role": "primary", "success_rate": 0.5, "quality_score": 5.0, "response_time": 10.0, "cost": 0.0},
-                {"model_name": "codellama-7b-instruct", "problem_type": "general", "role": "reviewer", "success_rate": 0.5, "quality_score": 5.0, "response_time": 10.0, "cost": 0.0},
-                {"model_name": "codellama-7b-instruct", "problem_type": "general", "role": "validator", "success_rate": 0.5, "quality_score": 5.0, "response_time": 10.0, "cost": 0.0},
-            ]
-            with conn:
-                for model in models:
-                    conn.execute(
-                        """
-                        INSERT INTO model_performance (model_name, problem_type, role, success_rate, quality_score, response_time, cost, avg_quality_score)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                        """,
-                        (
-                            model["model_name"],
-                            model["problem_type"],
-                            model["role"],
-                            model["success_rate"],
-                            model["quality_score"],
-                            model["response_time"],
-                            model["cost"],
-                            model["quality_score"],  # Use quality_score as initial avg_quality_score
-                        ),
-                    )
-    except Exception as e:
-        print(f"Error seeding model performance data: {e}")
 
 
 if __name__ == "__main__":

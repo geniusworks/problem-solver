@@ -35,10 +35,28 @@ measured, not asserted. Secondarily, it's an AoC solver. See `README.md` for the
 - **Measure before building.** New orchestration ideas are A/B'd through the harness
   (`experiment.py --trials N`, comparing `SolverConfig` fingerprints), with a committed result set
   and a written delta in `dev/progress/`. Don't add capability on faith.
+- **Never conclude anything from `--trials 1` — including smoke tests.** The pipeline is
+  non-deterministic: 4 of 6 problems flip between solved and unsolved across byte-identical configs
+  (`dev/progress/baseline-2024-d1-3.md`). A single pass is a plumbing check, not a measurement. This
+  bit us for real — a one-shot smoke returned 0/2 right after an Ollama upgrade and looked exactly
+  like a runtime regression; `--trials 3` on the same config returned 6/6
+  (`dev/progress/ollama-0.32.14-runtime-check.md`). Pre-run checks use `--trials 3`.
 - **The oracle is authoritative.** Nothing counts as solved without independent verification against
   the cached accepted answer; keep `dev/verify_solutions.py` green.
-- **Keep docs fresh per PR**, not in one late pass. Correct your own record when a later run
-  disproves an earlier claim.
+- **Docs currency is a standing rule, not a courtesy.** This is a research project: a stale doc is
+  a wrong claim. Every PR that changes what is true must update the docs that state it, in the same
+  PR — never in a later pass. The doc map, so nothing is missed:
+  - `dev/progress/checkpoint.md` — live status; update whenever status changes (results, machine,
+    blockers).
+  - `dev/progress/<finding>.md` — one committed write-up per substantive result.
+  - `dev/benchmarks/cross-machine-results.md` — every measured run adds/updates a row; machine
+    specs filled in the moment a machine is real, never left *TBD*.
+  - `PLAN.md` — re-point the roadmap when a blocker clears or a priority resolves.
+  - `README.md` — only when a *claim* it makes changes (findings, status, thesis).
+  - `dev/benchmarks/m2max-handoff.md` and other operational docs — correct anything a real run
+    disproves.
+  Correct your own record when a later run disproves an earlier claim, and say so in the doc — a
+  falsified claim is replaced with the correction, not silently deleted.
 - **Run tests:** `PYTHONPATH=. venv/bin/pytest -q`.
 - **Never commit secrets or PII.** Configuration goes through `.env` (gitignored); see `.env.example`.
 

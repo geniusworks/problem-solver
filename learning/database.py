@@ -81,8 +81,8 @@ class LearningDatabase:
 
             # Pre-migration rows keep attempts = successes = 0 on purpose.
             #
-            # Their stored success_rate was a last-attempt boolean (or a synthetic
-            # cold-start value from seed_model_performance), not a measured rate,
+            # Their stored success_rate was a last-attempt boolean (or, in old
+            # databases, a synthetic cold-start seed), not a measured rate,
             # so backfilling counters from it would fabricate history -- a seeded
             # 0.5 would round into a perfect 1/1 record. Leaving the counters at
             # zero keeps success_rate as a prior estimate that the first real

@@ -5,7 +5,125 @@ The **live status snapshot** — where the project actually stands right now. Th
 `dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
 file current as work lands so it never goes stale.
 
-## Current status (2026-08-15)
+## Current status (2026-08-16)
+
+### 🏁 THE d4–7 SET IS SOLVED OUT: `qwen3.8:27b` 8/8, ledger 14 (2026-08-16)
+
+**`qwen3.8:27b` (17 GB, released 2026-08-14) scored a perfect 8/8 on 2024 d4–7**
+(`dev/progress/m2max-qwen38-27b-d4-7.md`; 2h 40m, 24 attempts, 287k tokens, ollama 0.32.14). It
+cracked **d6 p2 — the last problem nothing had ever solved** → ledger **14 correct / 0 wrong**.
+**The comparison set no longer has a frontier in it and is retired as a capability instrument.**
+
+**The generation ladder, complete — every rung smaller than the last:**
+
+| model | size | class | solved | per-attempt | wall |
+|---|---|---|---|---|---|
+| `qwen2.5-coder:32b` dense, 2024 | 19 GB | specialist | 4/8 | 22% | 7,918 s |
+| `qwen3-coder:30b` MoE, newer | 18 GB | specialist | 6/8 | 45% | **2,346 s** |
+| `qwen3.8:27b` dense, 2026 | **17 GB** | **generalist** | **8/8** | **83%** | 9,602 s |
+
+Size runs *backwards* to capability; the winner is smallest and is not a coder, so the effect is
+general model quality rather than code specialization. Cost caveat: Qwen3.8 is the slowest — the MoE
+is still the best capability-per-second.
+
+**Strongest pass@k evidence yet (Q2, partially answered).** Attempt ordering gives **pass@1 = 6/8,
+pass@3 = 8/8**, and the two problems sampling bought were **d5 p2 and d6 p2 — the two hardest on the
+set**; every easy problem solved 3/3. The MoE showed the same shape (d4 p2 1/3, d5 p2 1/4). Two
+models, two architectures, the predicted pattern. Still not the controlled A/B (one trial, pass@1
+inferred from first draws).
+
+**Two prior claims corrected** (originals left in place with the correction, per house style):
+- *"d5 p2 / d6 p2 are efficiency-bound"* — two different walls, conflated. d5 p2 fell to a **better
+  algorithm** (topological sort); d6 p2 fell to a **plain brute force running inside the timeout**
+  on faster hardware. Right about one, wrong about the other.
+- *"Day 5's input is a model-independent parsing trap"* — overstated; it is **generation-dependent**.
+  Both 2024-era models tripped on it, Qwen3.8 parsed both parts cleanly. The "orchestration lever"
+  framing is correspondingly weaker.
+
+**Also observed:** with `enable_thinking=false`, Qwen3.8 **relocates its reasoning into code
+comments** — the d6 p2 solution contains a dead `simulate_guard` (ending in `pass`) where the model
+debugged itself in comments, then a corrected `simulate_guard_correct` below. A free self-correction
+pass inside one generation, which `_extract_code` handles fine. Worth an A/B.
+
+**Next:** the frontier has to move — scan `2024:8-20` (or 2025) to find a band where the strongest
+model is *uncertain*, which is simultaneously the next capability question and the prerequisite for
+the real pass@k A/B (`--trials 5`, samp1 vs samp3 vs samp5).
+
+### `qwen3-coder:30b` 6/8, d5 p2 cracked, ledger 13 (2026-08-16) — superseded above
+
+**`qwen3-coder:30b` (18 GB MoE) samp3 on 2024 d4–7 → 6/8 (75%)** — the project's best, beating the
+M1's 5/8 and the dense 32B's 4/8 *on the same machine, runtime and config, the same day*
+(`dev/progress/m2max-qwen3coder30b-d4-7.md`; 39 min, 29 attempts, 261k tokens). It cracked **d5 p2,
+which no model or config had ever solved** → **first new ledger entry since the M1: `2024 d5 p2 =
+5502`, `verify_solutions` now 13 correct / 0 wrong**, via a genuine Kahn's-algorithm topological
+sort (overfit gate clean). It also took d4 p2 and d7 p2, both of which the dense 32B missed.
+
+Four findings, all recorded in the doc:
+1. **Generation beats size** — the smaller, newer, 3.4× cheaper MoE beat the bigger older dense
+   model by two problems under a controlled comparison. "Model capability" means *generation*.
+2. **The "efficiency-bound ceiling" is retired.** d5 p2 fell to a *better algorithm*, not a faster
+   machine — earlier models never proposed the topological sort. d6 p2 is the only one left, and it
+   failed here via 6/6 immediate `TypeError`s, not timeouts.
+3. **Failure style differs and matters:** dense 32B = 27 wrong / 5 error (confidently wrong); MoE =
+   4 wrong / 11 error (crashes). For a proposer–verifier loop crashes are the cheaper failure —
+   detectable, with an actionable traceback for repair.
+4. **A cross-model parsing trap:** day 5's two-section input broke *both* models (32B on `'93|48'`
+   7/7 on d5 p2; MoE on `'75,47,61,53,29'` 3/4 on d5 p1 — the one problem it missed that everything
+   else solves, despite solving d5 p2 minutes later). Model-independent and attackable by
+   prompt/harness — **a real orchestration lever, the first one this hardware push has surfaced.**
+
+**Unplanned Q2 evidence:** the MoE solved d4 p2 on 1/3 draws and d5 p2 on 1/4, while easy problems
+went 3/3 — the exact shape the pass@k thesis predicts. samp1 would likely have scored 4/8, not 6/8.
+Suggestive only (one trial, inferred counterfactual); the controlled samp1-vs-samp3 A/B at
+`--trials 5` is still owed, but the frontier band now exists.
+
+### Ollama upgraded to 0.32.14; runtime verified clean (2026-08-16)
+
+Upgraded from 0.32.11 (which refuses to pull `qwen3.8:27b`) and **verified behaviour-neutral: 6/6
+on a 3-trial control** with `qwen2.5-coder:32b` on d1 (`dev/progress/ollama-0.32.14-runtime-check.md`).
+`qwen3.8:27b` (17 GB) is now resident. **All existing results ran on 0.32.11 and are unaffected.**
+
+Two things came out of it, both recorded:
+- **`--trials 1` is not evidence — including for smoke tests.** The first post-upgrade check was a
+  one-shot smoke and returned **0/2** on problems that *7B models* solve, immediately after a
+  plausible cause. It looked like a clear runtime regression; `--trials 3` on the identical config
+  returned **6/6**. The project's founding finding (4 of 6 problems flip across byte-identical
+  configs) applied to experiments but had been quietly exempted for smoke tests, and the exempted
+  instrument manufactured a false regression. **`AGENTS.md` now requires `--trials 3` for pre-run
+  checks.**
+- **Token accounting is stale across repair attempts** (new bug, unfixed): three attempts reported
+  identical `(4283, 876)` tokens while returning different answers (`0`, `0`, `87471881`), so
+  `last_token_usage` is reused rather than refreshed per generation. It matters because arm 2 of the
+  central thesis is an *economic* claim measured in tokens — repair-heavy pass@k costs are currently
+  understated. Wall-clock is unaffected.
+
+**Next:** `qwen3.8:27b` smoke (`--trials 3`, and specifically whether it honours
+`enable_thinking=false` — it is a reasoning-capable generalist, and `deepseek-r1:14b` was dropped
+for ignoring that flag), then its full d4–7 run as the next rung of the generation ladder. Then the
+Q2 pass@k A/B on the band `qwen3-coder:30b` exposed.
+
+### The 32B result that this superseded (2026-08-16)
+
+**`qwen2.5-coder:32b` samp3 on 2024 d4–7 → 4/8 (50%), below the M1's 5/8**
+(`dev/progress/m2max-qwen25coder32b-d4-7.md`; 2h 12m, 41 attempts, 317k tokens, ledger untouched at
+12/12). It solved every Part 1 and no Part 2, cracking neither d5 p2 nor d6 p2 — so the handoff's Q1
+is answered **no** for this model. Its solved set is the M1 leaders' set minus **d4 p2**, where it
+produced 9 wrong answers with no convergence on a problem the 6.6 GB `qwen3.5:9b` solves.
+Attempt-level split: **9 solved / 27 wrong / 5 error** — generation and extraction were healthy, the
+code was simply wrong. Two record corrections came out of it: (a) "d5 p2 / d6 p2 are
+efficiency-bound" holds only for the 16 GB models — this one never parsed d5 p2's input at all
+(`invalid literal for int(): '93|48'`, 7/7 attempts), so its binding failure there is parsing, not
+speed; (b) **size within a generation is not the capability lever** — the 1/8 → 5/8 lift came from
+newer models, and scaling the 2024 generation up does not reproduce it.
+
+**Next:** `qwen3-coder:30b` (resident, untested) completes the planned Q1. The sharper experiment is
+**generation vs size** — `qwen3.8:27b` (released 2026-08-14, 18 GB, *smaller* than the 32B but two
+generations newer) — **blocked on an Ollama upgrade**: 0.32.11 refuses the pull. Upgrading changes a
+recorded machine variable, so it is deferred until the current-runtime runs finish; maintainer's
+call. **Q2 (pass@k) needs a wider frontier scan first:** on d4–7 the 32B is bimodal (4 solved every
+draw, 4 never), so there is no "sometimes" band for voting to act on. A follow-up worth doing:
+generated code that catches its own exception and prints `An error occurred: …` then `0` is scored
+**wrong** rather than **error**, understating crashes at the attempt level.
 
 ### Machine: work has moved to the M2 Max / 32 GB (2026-08-15)
 Bring-up is done and the M1 is retired as a run host (no further experiments planned there). State
@@ -16,6 +134,35 @@ of and which resolves fine. Started from a **cold learning DB** (M1 copy preserv
 `learning/solver.m1-warm-20260815.db`). Three environment defects were fixed to get here, two of
 which were latent on the M1 too — see `dev/benchmarks/m2max-handoff.md` §3 and the PR. **Next: Q1**
 (`qwen2.5-coder:32b` samp3 on 2024 d4–7 — does it beat the M1's 5/8 and crack d5 p2 / d6 p2?).
+
+A pre-run holistic audit (2026-08-15) tightened honesty and currency before the first M2 Max data
+point: **removed the fabricated `init_db` seed rows** (an invented 0.5 success rate for a model
+never run — fake data in the measurement store; cold start is `_get_top_models`' fallback, and a
+fresh DB is now genuinely empty), corrected `README.md`'s claim that cached problems "run fully
+offline" (false on a fresh clone; `years/` is gitignored) and its bare-`pip` setup steps, marked
+the stronger-model lever **UNBLOCKED** in `PLAN.md`/`README.md`, filled the real `m2max-32` specs
+into `dev/benchmarks/cross-machine-results.md` (M2 Max, 12-core, macOS 26.6.1, ollama 0.32.11),
+added an honest-status note to `learning/README.md` (strategy-learning tables have never been
+populated by a real run), and made **docs currency a standing rule** with a doc map in `AGENTS.md`.
+The stale curated fallback `OllamaProvider.AVAILABLE_MODELS` (early-2025 7B pool) was then rebuilt
+from the measured record — gemma4:12b, qwen3.5:9b, qwen2.5-coder:7b, then the unmeasured 32 GB tier
+last until Q1 ranks it — and the `SOLVER_MODELS` pin was emptied in `.env.example` so the curated
+default actually applies (a pinned 7B had been silently overriding it on every machine set up from
+the example).
+
+The **32B smoke test passed** (2026-08-16): `qwen2.5-coder:32b` samp1 on 2024 d1 → **2/2 verified**
+(p1 170.6s, p2 191.3s, 362s wall). The M1's hardware blocker is gone — the 32B loads and generates
+without swapping, extraction handles its output, and both answers matched the oracle. At ~180s per
+problem-part, Q1 (8 parts × 3 samples + repair) projects to **2–4 h**. Two defects the smoke test
+exposed, both fixed before Q1: **`autopep8==2.0.4` was broken on Python 3.14** (imports `lib2to3`,
+removed from the stdlib in 3.13 — every `fix_code()` raised and the formatter silently degraded to
+unformatted code, an M1↔M2 difference beyond model and hardware; bumped to >=2.3.2), and **the test
+suite was writing into the live measurement store** (`solve.py` resolves its workspace to the repo
+root, so the entrypoint test's writes landed in `learning/solver.db` — the M1's DB carried a
+fabricated `dummy-model` at 79/79, a perfect record for a model that never ran, in the very table
+`_get_top_models` ranks on; harmless to live runs via the installed-models filter, but contamination
+of a research artifact). An autouse conftest guard now redirects any `LearningDatabase` aimed at the
+real directory to a temp dir, and the dummy rows are scrubbed.
 
 ### Where the project is
 - **PR #1 (merged):** added a correctness oracle (`shared/verification.py`, `shared/ground_truth.py`,

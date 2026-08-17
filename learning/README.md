@@ -2,6 +2,16 @@
 
 The learning system helps improve problem-solving performance by tracking strategy effectiveness and solution patterns.
 
+> **Honest status (2026-08-15):** of the tables below, only **`model_performance`** has ever held
+> measured data — it records each model's oracle-verified outcomes and feeds `_get_top_models`
+> ranking (with a cold-start fallback to the installed models when empty). The **strategy** tables
+> (`strategy_results`, `strategy_weights`, `problem_characteristics`, `improvement_history`) have
+> never been populated by a real run: strategy *seeding* works (`shared/strategy_recommender.py`),
+> but effectiveness *learning* is scaffolding whose write path isn't exercised by the solve loop.
+> Sections below describing weight updates and adaptation describe the intended design, not current
+> behaviour. Re-wire only with harness evidence, per `PLAN.md` Milestone E. A fresh database starts
+> **empty** — an earlier `init_db` seeded invented model rows; it no longer does.
+
 ## Components
 
 ### Database Schema (`schema.sql`)
@@ -99,7 +109,7 @@ patterns = optimizer.analyze_failures()
 3. **Reset Learning**
    ```bash
    rm learning/solver.db
-   python -c "from learning.database import LearningDatabase; LearningDatabase()"
+   venv/bin/python -c "from learning.database import LearningDatabase; LearningDatabase()"
    ```
 
 ## Development
