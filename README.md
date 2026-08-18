@@ -282,6 +282,38 @@ understood.
 **Raw run artifacts** (`dev/experiments/*.json`) are gitignored too — they can embed generated source
 and execution output. The numbers that matter are transcribed into the committed findings.
 
+### Why we believe this is compliant
+
+AoC's [about page](https://adventofcode.com/about) asks (verbatim):
+
+> *"Please don't. Advent of Code is free to use, not free to copy. If you're posting a code
+> repository somewhere, please don't include parts of Advent of Code like the puzzle text or your
+> inputs."*
+
+and separately permits:
+
+> *"You may link to or reference puzzles from Advent of Code in discussions, classes, source code,
+> printed material, etc."* … *"Advent of Code does not claim ownership or copyright over your
+> solution implementation."*
+
+Mapping that onto what this repo contains:
+
+| what | where | why it's fine |
+|---|---|---|
+| puzzle text, inputs, scraped answers | **not committed** (`years/`, gitignored) | exactly what the guideline asks us to exclude |
+| generated solution code | `solutions/` | explicitly ours; AoC disclaims ownership of solutions |
+| accepted answers | `solutions/README.md` | not covered by the request, and **per-account** — our answers cannot help anyone else, since a different account gets a different input and a different answer |
+| short worked-*example* fragments (e.g. one input line) | a few findings + regression fixtures | *referencing* a puzzle to explain a specific parser failure, which the guideline permits; no puzzle is reproduced and nothing is spoiled |
+
+The example fragments are deliberately minimal and load-bearing: the overfit-gate regression tests
+cannot assert on example-literal reuse without an example literal, and a finding that says "the model
+crashed parsing this line" is unverifiable without the line. They are illustrative, not a
+redistribution of the puzzles.
+
+One timing note for anyone reusing this: publishing *current-year* solutions during the December
+event cuts against community norms even where it is permitted. Everything measured here is from past
+years.
+
 ## Getting started
 
 1. One-shot setup (venv + deps + `.env` scaffold + a RAM-matched model tier):
