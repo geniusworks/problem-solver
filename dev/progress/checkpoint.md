@@ -32,6 +32,14 @@ registered in writing before the k3 arm ran:
 **The next lever is therefore diversity, not more samples**: temperature, prompt variants, model
 mixing. That is a strategy question, not a compute question.
 
+**Precision correction (same day):** both arms ran with the default `max_repair_iterations=2`, so
+these are *k samples + repair*, not pure pass@k — k1 was "1 sample + up to 2 feedback repairs", k3
+was "3 samples + up to 2 repair rounds each" (up to 9 generations). The comparison stays valid
+(repair identical in both arms) and the gain is if anything conservative, since the 42% baseline
+already contains repair's contribution. **Experiment now running** separates sampling from repair:
+`parallel3` (3 blind draws, repair=0) vs `sequential3` (1 draw + 2 feedback refinements) — equal
+generation budget, opposite topology.
+
 Limits held plainly: n=3 trials/problem; **k5 deliberately not run** (maintainer scope call) so
 there is no dose-response curve or saturation point; one model, one temperature, four problems; and
 `p` itself rests on 6 draws each (pooling moved two estimates materially).

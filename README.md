@@ -154,6 +154,9 @@ measured. But the frontier band the real A/B needs now exists on a model strong 
 every earlier problem set — at its *own* measured frontier: **pass@1 42% → pass@3 75%**
 (`dev/progress/passk-ab-d13-d15.md`). The band was selected beforehand by an independent 3-trial
 classification, and the theoretical curve was registered in writing before the k3 arm ran.
+(Precisely: *1 sample vs 3 samples with the repair loop held constant at 2 iterations in both arms* —
+so this is "k samples + repair", not textbook pass@k over independent draws. The follow-up experiment
+separates the two.)
 
 The clearest case: a problem solved by **1 of 6** single draws was solved by **3 of 3** k3 trials —
 the mechanism exactly as argued, with a cheap verifier collapsing several draws to the correct one.

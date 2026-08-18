@@ -55,6 +55,32 @@ This is a real boundary on arm 1 of the thesis, found by the experiment built to
 points somewhere specific: **the lever for correlated failure is diversity — temperature, prompt
 variants, or different models — not larger k.**
 
+## Correction: these are "k samples + repair", not pure pass@k
+
+Registered 2026-08-17, on reading `shared/solver.py:532-605` while designing the follow-up.
+
+**Both arms ran with `max_repair_iterations=2`** (the default; neither `--config` set it). So the
+loop is: generate k candidates, verify, and if none is accepted, feed execution feedback back and
+regenerate *each* failing candidate, up to twice. The arms are therefore:
+
+- "k1" = **1 sample + up to 2 feedback-guided repairs** (up to 3 generations)
+- "k3" = **3 samples + up to 2 repair rounds on each** (up to 9 generations)
+
+Two consequences, and neither overturns the result:
+
+1. **The comparison stays valid** — repair is identical in both arms, so the delta is attributable
+   to sample count.
+2. **But the labels overstate precision.** This is not textbook pass@k over independent draws. The
+   `1-(1-p)^k` curve assumes independent samples with no feedback; our k1 baseline of 42% *already
+   contains* whatever repair contributes, which if anything makes the k3 gain **conservative** —
+   the baseline is inflated relative to a true single-shot pass@1. It also means k3 cost up to 9
+   generations, not 3, so the cost side of the comparison is worse than the label suggests.
+
+The honest statement of the headline: **going from 1 sample to 3 samples, with repair held constant
+at 2, lifts the solve rate from 42% to 75% on this band.** Whether the gain comes from *sampling*
+or from *sampling interacting with repair* is exactly what the follow-up experiment separates
+(`topology`: 3 blind draws vs 1 draw refined twice, both capped at 3 generations).
+
 ## Honest limits
 
 - **n = 3 trials per problem.** Every per-problem cell has a wide interval; 3/3 and 0/3 are strong
