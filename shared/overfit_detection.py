@@ -99,6 +99,73 @@ def _load_example_inputs(year: int, day: int) -> List[str]:
     return inputs
 
 
+def _strip_comments_and_docstrings(source: str) -> str:
+    """Return `source` with comments and docstrings removed.
+
+    Used before the example-literal checks so that prose quoting an example
+    cannot be mistaken for code branching on one. Deliberately conservative: if
+    the source will not tokenize or parse, the original is returned unchanged so
+    the caller still runs its checks against *something* rather than silently
+    letting a suspicious solution through.
+    """
+    import io
+    import tokenize
+
+    # 1. Comments, via tokenize (keeps string literals intact).
+    try:
+        out: List[str] = []
+        prev_end = (1, 0)
+        for tok in tokenize.generate_tokens(io.StringIO(source).readline):
+            if tok.type == tokenize.COMMENT:
+                continue
+            srow, scol = tok.start
+            if srow > prev_end[0]:
+                out.append("\n" * (srow - prev_end[0]))
+                prev_end = (srow, 0)
+            if scol > prev_end[1]:
+                out.append(" " * (scol - prev_end[1]))
+            out.append(tok.string)
+            prev_end = tok.end
+        stripped = "".join(out)
+    except (tokenize.TokenError, IndentationError, SyntaxError):
+        stripped = source
+
+    # 2. Docstrings, via AST -- blank out the string constant of any
+    #    module/class/function whose first statement is a bare string.
+    try:
+        tree = ast.parse(stripped)
+    except SyntaxError:
+        return stripped
+
+    spans: List[tuple] = []
+    for node in ast.walk(tree):
+        if not isinstance(
+            node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
+        ):
+            continue
+        body = getattr(node, "body", None)
+        if not body:
+            continue
+        first = body[0]
+        if (
+            isinstance(first, ast.Expr)
+            and isinstance(first.value, ast.Constant)
+            and isinstance(first.value.value, str)
+            and first.lineno is not None
+            and first.end_lineno is not None
+        ):
+            spans.append((first.lineno, first.end_lineno))
+
+    if not spans:
+        return stripped
+
+    lines = stripped.splitlines()
+    for start, end in spans:
+        for i in range(start - 1, min(end, len(lines))):
+            lines[i] = ""
+    return "\n".join(lines)
+
+
 def _check_example_literal_reuse(
     year: int,
     day: int,
@@ -115,6 +182,17 @@ def _check_example_literal_reuse(
     inputs = _load_example_inputs(year, day)
     if not inputs:
         return reasons
+
+    # Only *executable* code can overfit. Comments and docstrings cannot change
+    # what a program computes, so a model that quotes the example while
+    # explaining itself is not cheating -- and some models do this constantly
+    # (qwen3.8:27b writes its reasoning into comments; see
+    # dev/progress/m2max-qwen38-27b-d4-7.md). Checking raw source rejected a
+    # verifiably correct, fully general 2024 d13 p1 solution whose only sin was
+    # an example in its docstring (dev/progress/overfit-gate-false-positive.md).
+    # Strip prose first, then apply exactly the same checks as before: a literal
+    # that survives stripping is one the program can actually branch on.
+    solution_code = _strip_comments_and_docstrings(solution_code)
 
     for idx, input_text in enumerate(inputs, start=1):
         if not isinstance(input_text, str):

@@ -5,7 +5,18 @@ Extends the frontier picture from d1–7 to the first 12 days of AoC 2024 with t
 verified offline. The d8–12 leg ran 2026-08-12, 1 trial, 110 min
 (`dev/experiments/*_bench-samp3_a6f101eadf5f.json`, gitignored).
 
-## d8–12 leg: 2/10
+> **CORRECTION (2026-08-16): the d8–12 leg is 2 of *8 attempted*, not 2 of 10.**
+> A harness bug crashed **2024 d8, both parts, before the model was ever called**:
+> `get_strategies_for_problem` indexed `SOLUTION_STRATEGIES[category]` unguarded, and d8's text
+> substring-matches the GRAPH keyword `node` via "anti**node**" — GRAPH has keywords but no
+> strategies, so the lookup raised `KeyError` out of `_prepare_problem`. The unguarded line dates to
+> 2025-12-06, so it was present for this run. Those two parts were counted as model failures; they
+> were harness failures, and `qwen2.5-coder:7b` never got a shot at them. Fixed 2026-08-16
+> (`dev/progress/strategy-keyerror-d8.md`); d8 is the only affected day in 2024 d1–15. The
+> qualitative conclusions below (Part 2s are the wall; failures are capability, not variance) do not
+> depend on d8, but the denominator does.
+
+## d8–12 leg: 2/10 — see the correction above (2 of 8 *attempted*)
 
 New verified solutions: **d10 p1** (482, hiking-trail scoring) and **d11 p1** (229043, stone
 simulation) — both recorded and verified. Attempt-level (54 attempts, samples=3):

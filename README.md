@@ -1,11 +1,68 @@
 # Problem Solver
 
-A research platform for **measuring LLM orchestration**, using Advent of Code as its testbed. Local
-LLMs (via Ollama) attempt autonomous solutions; more importantly, the harness measures how well each
-orchestration strategy actually works — against a correctness oracle, over repeat trials — so results
-are evidence, not anecdote.
+**A research platform for measuring whether coordinating several LLM attempts beats a single one —
+and by how much.** Local models (via Ollama) propose solutions to Advent of Code problems; a
+correctness oracle executes each candidate against the real puzzle input and compares it to the
+accepted answer. Because the check is cheap and exact, every orchestration idea can be A/B'd for a
+real delta over repeat trials, so results are evidence rather than anecdote.
 
-It began as an unmeasurable pipeline; the through-line since has been to **make every claim measured.**
+It began as an unmeasurable pipeline. The through-line since has been to **make every claim
+measured** — including correcting our own claims when later runs disprove them, which has happened
+repeatedly and is recorded in place.
+
+## Headline results
+
+All measured on local models against an independent oracle; every figure links to a committed
+write-up in [`dev/progress/`](dev/progress/).
+
+**1. Coordinating attempts nearly doubles the solve rate — and we can now say *why*.**
+
+On problems the strongest model solves only *sometimes* (its own frontier, identified beforehand by
+an independent classification):
+
+| approach | solve rate |
+|---|---|
+| 1 attempt, with self-repair from execution feedback | **42%** |
+| 3 independent attempts, no feedback | **58%** |
+| **3 attempts, each with execution feedback** | **75%** |
+
+Sampling helps, repair helps, and **together they help more than the sum of their parts.** The
+sharpest single case: a problem solved by **1 of 6** single attempts was solved by **3 of 3** runs
+that combined both. (`passk-ab-d13-d15.md`, `topology-*.md`)
+
+**2. Model *generation* beats model *size*, decisively.**
+
+Three models of the same class on the same problems, each **smaller** than the last:
+
+| model | size | class | solved |
+|---|---|---|---|
+| `qwen2.5-coder:32b` (late 2024) | 19 GB | code specialist | 4/8 |
+| `qwen3-coder:30b` (newer, MoE) | 18 GB | code specialist | 6/8 |
+| **`qwen3.8:27b` (2026)** | **17 GB** | **generalist** | **8/8** |
+
+The 2024 specialist scored *below* what 12B models had achieved on half the RAM. The winner is the
+smallest and is not a coding model at all. (`m2max-qwen38-27b-d4-7.md` and siblings)
+
+**3. There is a hard limit, and it is not fixed by more attempts.**
+
+One problem resisted **every** configuration — 0 for 8 across one attempt, three attempts, with and
+without feedback. The model repeats *the same too-slow approach* each time. **Sampling multiplies
+draws, not diversity:** where failure is systematic rather than random, extra attempts re-roll the
+same die. The lever there is variety (temperature, prompt phrasing, a different model), not volume.
+
+**4. Measurement bugs flatter no one, and finding them is half the work.**
+
+Roughly half the effort behind these numbers went into discovering that earlier measurements were
+wrong — a crash being recorded as "the model failed" (for eight months), an anti-overfit gate
+*rejecting correct solutions*, invented rows in the results database, and tests writing into the live
+measurement store. All are fixed, with regression tests; the claims they corrupted are corrected in
+place rather than quietly restated. In a project whose premise is *measured, not asserted*, a broken
+instrument is the most expensive kind of bug.
+
+**Scope, stated plainly:** these findings rest on one strong model, a few dozen problem-parts from a
+single year of AoC, and three trials per cell. The directions are clear; the precise numbers are not,
+and none of it is yet established as general. A second year of evaluation data is now prepared for
+exactly that test.
 
 ## What it is
 
@@ -103,7 +160,7 @@ assumed. Full numbers:
 `dev/benchmarks/cross-machine-results.md`. But that describes *a fixed band of problems*, not
 orchestration in general — which raises the project's central open question.
 
-## Does orchestrated voting scale? (the central open thesis)
+## Does orchestrated voting scale? (measured: yes at k=3 — with one instructive exception)
 
 Frontier models are trained to be the best solver *on their own*, and hardware keeps growing — so why
 orchestrate several votes at all? This is the question that carries the work beyond AoC, so it earns
@@ -150,10 +207,29 @@ not conclusive** — one trial, and the counterfactual is inferred from which dr
 measured. But the frontier band the real A/B needs now exists on a model strong enough to matter.
 (`dev/progress/m2max-qwen3coder30b-d4-7.md`)
 
-**In short:** the mechanism demonstrably adds correctness here; the reason it should keep paying off
-at any model or hardware tier is well-grounded; whether it does *at the frontier* is unproven by us,
-and the most valuable thing left to measure. We state the bet and the experiment that settles it, not
-the conclusion.
+**THE DECISIVE TEST HAS NOW RUN (2026-08-17).** On `qwen3.8:27b` — the model that had outgrown
+every earlier problem set — at its *own* measured frontier: **pass@1 42% → pass@3 75%**
+(`dev/progress/passk-ab-d13-d15.md`). The band was selected beforehand by an independent 3-trial
+classification, and the theoretical curve was registered in writing before the k3 arm ran.
+(Precisely: *1 sample vs 3 samples with the repair loop held constant at 2 iterations in both arms* —
+so this is "k samples + repair", not textbook pass@k over independent draws. The follow-up experiment
+separates the two.)
+
+The clearest case: a problem solved by **1 of 6** single draws was solved by **3 of 3** k3 trials —
+the mechanism exactly as argued, with a cheap verifier collapsing several draws to the correct one.
+It is also a problem we twice called an "insight wall", so **sampling reaches insight problems, not
+only fiddly ones.**
+
+**And one problem refutes the naive version of the claim.** d15 p2 sits at 33% per draw, predicts
+70% at k=3, and scored **0 of 3** — nine samples, no solve. **Sampling multiplies draws, not
+diversity:** where a model fails *systematically* (here, the same too-slow approach every time),
+extra draws re-roll the same die. That is a real boundary on arm 1, and it relocates the next lever
+from *more samples* to *more diverse samples* — temperature, prompt variants, different models.
+
+**In short:** the mechanism adds correctness at a strong model's frontier, measured rather than
+argued. What is now open is sharper and more useful — **when does sampling fail, and what
+decorrelates draws?** Caveats held plainly: n=3 trials per problem, k=5 not run (no dose-response
+curve or saturation point), one model, one temperature, four problems.
 
 ## Running an experiment
 
@@ -182,6 +258,61 @@ different experiments. Verify the recorded solutions at any time with `dev/verif
 ```bash
 python solve.py --year 2024 --day 1 --part 1   # --force to re-solve, --debug for logs
 ```
+
+## Data, privacy, and Advent of Code's rules
+
+AoC asks that **puzzle text and puzzle inputs not be redistributed**, and inputs are per-account
+anyway. This repo is built so that constraint is structural rather than a matter of remembering:
+
+**Never committed** (all of `years/` is gitignored): puzzle HTML, puzzle inputs, and the scraped
+accepted answers the oracle reads. A fresh clone therefore has *no* AoC data and cannot run the
+oracle until you supply a session cookie for your own account (see below) or copy `years/` from a
+machine that has it. This is why `dev/verify_solutions.py` reports "missing input file" on a clean
+checkout — working as intended.
+
+**Also never committed:** the session cookie and contact string. Both live in `.env`, which is
+gitignored; `.env.example` ships placeholders only.
+
+**Committed by design:** the solver's own generated Python solutions (`solutions/`), the verified
+ledger with the answers they produce (`solutions/README.md`), and the experiment write-ups in
+`dev/progress/`. The write-ups and a few regression fixtures quote **short fragments of the public
+worked *examples*** (never real inputs) where a specific parsing failure has to be shown to be
+understood.
+
+**Raw run artifacts** (`dev/experiments/*.json`) are gitignored too — they can embed generated source
+and execution output. The numbers that matter are transcribed into the committed findings.
+
+### Why we believe this is compliant
+
+AoC's [about page](https://adventofcode.com/about) asks (verbatim):
+
+> *"Please don't. Advent of Code is free to use, not free to copy. If you're posting a code
+> repository somewhere, please don't include parts of Advent of Code like the puzzle text or your
+> inputs."*
+
+and separately permits:
+
+> *"You may link to or reference puzzles from Advent of Code in discussions, classes, source code,
+> printed material, etc."* … *"Advent of Code does not claim ownership or copyright over your
+> solution implementation."*
+
+Mapping that onto what this repo contains:
+
+| what | where | why it's fine |
+|---|---|---|
+| puzzle text, inputs, scraped answers | **not committed** (`years/`, gitignored) | exactly what the guideline asks us to exclude |
+| generated solution code | `solutions/` | explicitly ours; AoC disclaims ownership of solutions |
+| accepted answers | `solutions/README.md` | not covered by the request, and **per-account** — our answers cannot help anyone else, since a different account gets a different input and a different answer |
+| short worked-*example* fragments (e.g. one input line) | a few findings + regression fixtures | *referencing* a puzzle to explain a specific parser failure, which the guideline permits; no puzzle is reproduced and nothing is spoiled |
+
+The example fragments are deliberately minimal and load-bearing: the overfit-gate regression tests
+cannot assert on example-literal reuse without an example literal, and a finding that says "the model
+crashed parsing this line" is unverifiable without the line. They are illustrative, not a
+redistribution of the puzzles.
+
+One timing note for anyone reusing this: publishing *current-year* solutions during the December
+event cuts against community norms even where it is permitted. Everything measured here is from past
+years.
 
 ## Getting started
 
@@ -268,59 +399,36 @@ checker; it can't invent capability the model lacks, nor a faster algorithm than
 ## Status
 
 **Working and measured:** the full solve pipeline (fetch → parse → generate → consensus →
-execute/verify → repair → fallback), the experiment harness with repeat trials, the correctness
-oracle and overfit gate, self-consistency and answer-based consensus, and **14 verified solutions**
-(`dev/verify_solutions.py` clean).
+execute/verify → repair → fallback), the experiment harness with repeat trials and fingerprinted
+configs, the correctness oracle and overfit gate, self-consistency and answer-based consensus, and
+**25 verified solutions** (`dev/verify_solutions.py` clean).
 
-**Established** (detailed under *What the measurements found*): self-consistency is the biggest
-orchestration win; past the easy problems the bottleneck is model capability — but the operative
-variable is **model generation, not size**. Newer models that still fit 16 GB lift the hard days
-from 1/8 to 5/8, and a newer 18 GB MoE reaches 6/8 where a *bigger*, older-generation 19 GB dense
-model manages only 4/8 — and a 17 GB *generalist* sweeps all 8. The "residual ceiling is algorithm
-efficiency" claim was **half wrong**: d5 p2 fell to a better algorithm, d6 p2 to a faster machine
-running a correct brute force. **The entire d4–7 hard set is now solved**, so it no longer measures
-a frontier.
+**Established** — see *Headline results* above and the write-ups in `dev/progress/`:
+- Coordinated attempts beat single attempts at a strong model's own frontier (**42% → 75%**), with
+  sampling and repair contributing separately and superadditively.
+- **Generation beats size**: a 17 GB 2026 generalist swept a set where a 19 GB 2024 specialist
+  managed half, scoring below what 12B models achieved on half the RAM.
+- **A named limit**: where a model fails *systematically*, extra attempts do nothing (0/8 across
+  every configuration tried). Diversity, not volume, is the lever there.
+- Earlier "efficiency ceiling" and "capability" claims have been **corrected in place** as later runs
+  disproved them; the corrections are part of the record, not edits over it.
 
-**Answered on the M2 Max (2026-08-16) — the answer is *generation*, not size, and the set is now
-exhausted:**
-- **`qwen3.8:27b` solved all 8 — a perfect sweep**, cracking **d6 p2, the last problem nothing had
-  ever solved** (ledger now **14 verified**). The comparison set that measured this project's
-  frontier since the M1 has no frontier left in it.
-- **The ladder is monotonic and runs backwards to size.** Every rung is *smaller* than the last:
+**Open, in priority order:**
+- **Does any of this generalise?** Everything above rests on one model and one year. **AoC 2025
+  (d1–12, 23 problem-parts) is now prepared** as a second, never-measured evaluation set — the
+  cheapest available test of whether these patterns are real or artifacts of 2024's problems.
+- **What decorrelates draws?** The 0/8 failure says repetition is not diversity. Temperature,
+  prompt variants, and model mixing are each a cheap A/B against a known-resistant problem.
+- **The economic arm:** *many cheap draws vs one expensive pass at equal cost.* We have the pair to
+  test it — a MoE that is ~4× faster than the strongest model. Blocked on a known token-accounting
+  bug (repair attempts report duplicated counts), which must be fixed before any cost claim.
+- **Known instrument gaps, logged not hidden:** solver crashes are scored in the same bucket as model
+  failures (they want a distinct `HARNESS_ERROR` outcome), and generated code that catches its own
+  exception and prints an error string is scored `wrong` rather than `error`.
 
-  | model | size | class | solved | per-attempt |
-  |---|---|---|---|---|
-  | `qwen2.5-coder:32b` dense, 2024 | 19 GB | code specialist | 4/8 | 22% |
-  | `qwen3-coder:30b` MoE, newer | 18 GB | code specialist | 6/8 | 45% |
-  | `qwen3.8:27b` dense, 2026-08-14 | **17 GB** | **generalist** | **8/8** | **83%** |
-
-  The 2024 specialist scored *below* the M1's 5/8 on twice the RAM. The winner is the smallest model
-  and isn't a coder — so this is general model quality, not code specialization.
-  (`dev/progress/m2max-qwen38-27b-d4-7.md`, `m2max-qwen3coder30b-d4-7.md`, `m2max-qwen25coder32b-d4-7.md`)
-- **The "efficiency ceiling" was two different walls, conflated.** d5 p2 was never speed-bound — it
-  fell to a *better algorithm* (a Kahn's-algorithm topological sort). d6 p2 genuinely was, and fell
-  to a plain brute force that finally ran inside the timeout on faster hardware. The original
-  diagnosis was right about one and wrong about the other.
-
-**Open:**
-- Does voting still help at a strong model's *own* frontier (the thesis above)? **The evidence now
-  points yes, twice over.** Qwen3.8's draws are recorded in order, so pass@1 reads directly off the
-  first draw: **pass@1 = 6/8, pass@3 = 8/8** — and the two problems sampling bought were **d5 p2 and
-  d6 p2, the two hardest on the set**, while every easy problem solved 3/3. The MoE showed the same
-  shape (d4 p2 on 1/3, d5 p2 on 1/4). Two models, two architectures, the predicted pattern: voting
-  adds nothing where the model is reliable and buys the hard problems where it is uncertain. It is
-  still **not the controlled A/B** — one trial, pass@1 inferred from first draws — and that A/B now
-  needs a *harder* set, because Qwen3.8 has no "sometimes" band left on d4–7.
-- **What to measure next:** d4–7 is retired as a capability instrument. The frontier scan moves to
-  `2024:8-20` (or 2025) to find a band where the strongest model is uncertain — which is both the
-  next capability question and the prerequisite for the pass@k A/B.
-- Whether the gains hold on genuinely-unseen problems — the evaluation set here is *past* AoC years,
-  which are all solved.
-
-**Deliberately unwired:** the AoC answer submitter (`submission/`) is real and tested in isolation but
-kept out of the solve loop by design — the evaluation set is *past* AoC years, already solved on the
-maintainer's account, so there is no unseen answer to submit. Wiring it is the live-contest path
-(Milestone F).
+**Deliberately unwired:** the AoC answer submitter (`submission/`) is real and tested in isolation
+but kept out of the solve loop by design — the evaluation set is *past* AoC years, already solved on
+the maintainer's account, so there is no unseen answer to submit. Wiring it is the live-contest path.
 
 ## Credits & license
 

@@ -5,9 +5,82 @@ The **live status snapshot** — where the project actually stands right now. Th
 `dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
 file current as work lands so it never goes stale.
 
-## Current status (2026-08-16)
+## Current status (2026-08-17)
 
-### 🏁 THE d4–7 SET IS SOLVED OUT: `qwen3.8:27b` 8/8, ledger 14 (2026-08-16)
+### ⭐ THE CENTRAL THESIS IS MEASURED: pass@1 42% → pass@3 75% (2026-08-17)
+
+The experiment the project has been building toward since the M1
+(`dev/progress/passk-ab-d13-d15.md`). `qwen3.8:27b` on its *own* frontier band (2024 d13/d15,
+selected beforehand by independent 3-trial classification), k1 vs k3, 3 trials each, theory curve
+registered in writing before the k3 arm ran:
+
+| problem | pass@1 (24 pooled draws) | pass@3 | predicted | delta |
+|---|---|---|---|---|
+| d13 p1 | 83% | 100% | 100% | — |
+| **d13 p2** | **17%** | **100%** | 42% | **+58** |
+| d15 p1 | 33% | 100% | 70% | +30 |
+| **d15 p2** | **33%** | **0%** | 70% | **−70** |
+| **overall** | **42%** | **75%** | 71% | +4 |
+
+**The thesis holds** — and the two extremes matter more than the average:
+- **d13 p2**: 1-of-6 single draws → **3-of-3** at k3. The mechanism in pure form. Also a problem we
+  twice called an "insight wall": **sampling reaches insight problems, not only fiddly ones.**
+- **d15 p2**: 33% per draw, 70% predicted, **0/3 measured** (p≈0.03 if draws were independent).
+  **Sampling multiplies draws, not diversity** — the model repeats the same too-slow approach. This
+  is the most execution-bound problem in the band, and the failure is systematic, not stochastic.
+
+**The next lever is therefore diversity, not more samples**: temperature, prompt variants, model
+mixing. That is a strategy question, not a compute question.
+
+**Precision correction (same day):** both arms ran with the default `max_repair_iterations=2`, so
+these are *k samples + repair*, not pure pass@k — k1 was "1 sample + up to 2 feedback repairs", k3
+was "3 samples + up to 2 repair rounds each" (up to 9 generations). The comparison stays valid
+(repair identical in both arms) and the gain is if anything conservative, since the 42% baseline
+already contains repair's contribution. **Experiment now running** separates sampling from repair:
+`parallel3` (3 blind draws, repair=0) vs `sequential3` (1 draw + 2 feedback refinements) — equal
+generation budget, opposite topology.
+
+Limits held plainly: n=3 trials/problem; **k5 deliberately not run** (maintainer scope call) so
+there is no dose-response curve or saturation point; one model, one temperature, four problems; and
+`p` itself rests on 6 draws each (pooling moved two estimates materially).
+
+### FRONTIER FOUND on d8–15: `qwen3.8:27b` 9/16, ledger 22 (2026-08-17)
+
+With d4–7 solved out, the scan moved to **2024 d8–15** and found a real frontier: **9/16 (56%)**
+(`dev/progress/m2max-qwen38-frontier-scan-d8-15.md`; samp1, 1 trial, 3h, 373k tokens). **Seven new
+verified solutions in one run — the largest jump in project history — ledger 14 → 21, then 22** after
+d13 p1's overfit rejection was overturned. Oracle: **22 correct, 0 wrong**.
+
+**The failure band, and it splits by kind** — which gives the pass@k A/B a real prediction to test:
+- *Implementation-fiddly:* **d9 p1** (the scan's only `no_candidate` — 900 s, nothing extractable),
+  **d9 p2**, **d15 p2** (2,282 s, longest of the scan).
+- *Insight-required:* **d11 p2** (memoised counting), **d13 p2** (algebra over brute force).
+- *Under-specified:* **d14 p2** ("find the Christmas tree") — excluded from the A/B on principle; the
+  oracle can score it but the problem never defines the target.
+
+Prediction: sampling should buy the fiddly problems and not the insight ones — voting improving
+*execution reliability* rather than manufacturing *ideas*. If d11 p2 or d13 p2 falls to sampling
+instead, that is the more surprising and more valuable result.
+
+**Two instrument defects found and fixed** (both were scoring harness behaviour as model failure):
+1. **`KeyError: ProblemCategory.GRAPH` crashed whole problems before the model was called**
+   (`strategy-keyerror-d8.md`). `SOLUTION_STRATEGIES[category]` was unguarded while GRAPH,
+   STATE_MACHINE and OPTIMIZATION have keywords but no strategies; substring scoring meant d8's
+   "anti**node**" matched `node`. Live since 2025-12-06 → **the M1's "d8–12 leg: 2/10" is really 2 of
+   8 attempted**, corrected in place. d8 is the only affected day in d1–15; once fixed, **both parts
+   of d8 solved on the first draw.**
+2. **The overfit gate rejected a correct, general solution** (`overfit-gate-false-positive.md`):
+   d13 p1 produced the right full-input answer and was refused for containing an example literal —
+   which sat in a *docstring*. The check ran on raw source and never asked *where*. Comments and
+   docstrings are now stripped before the identical checks run; both real cheat fixtures still trip
+   it. Exposure is model-specific: `qwen3.8:27b` writes its reasoning into comments, so the habit
+   that helps it solve hard problems is what tripped a gate reading prose as code.
+
+**Next:** `--trials 3` at samp1 on the five-problem band to separate *sometimes* from *never* (only
+*sometimes* can show a pass@k effect), then the controlled samp1 vs samp3 vs samp5 A/B — the thesis
+test the project has been building toward.
+
+### THE d4–7 SET IS SOLVED OUT: `qwen3.8:27b` 8/8, ledger 14 (2026-08-16)
 
 **`qwen3.8:27b` (17 GB, released 2026-08-14) scored a perfect 8/8 on 2024 d4–7**
 (`dev/progress/m2max-qwen38-27b-d4-7.md`; 2h 40m, 24 attempts, 287k tokens, ollama 0.32.14). It
