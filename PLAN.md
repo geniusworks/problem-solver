@@ -265,67 +265,81 @@ Only now, and only what measures a positive delta through the harness.
 
 ## Next steps for the maintainer
 
-Milestones A–E are done and the codebase is consolidated (C1–C3). The measurement platform is
-complete and the `qwen2.5-coder:7b` frontier on 2024 is mapped (7 verified solutions; reliable on the
-easy Part 1s, capability-limited beyond). All of 2024 and 2025 are solved on the author's account
-(the final day's Part 2 star is auto-granted once Part 1 is done, so it shows no submittable answer
-but is complete) — so there is **no live submission target**; Milestone F is deferred (see below).
+**Milestones A–F status:** A–E done, codebase consolidated (C1–C3), F (submission) still deferred —
+there is no unseen problem to submit against. The two questions that gated everything for months are
+now **answered**, which re-points the roadmap entirely.
 
-The maintainer's stated priorities from here are **(1) improve the solve rate on the problems we can
-already measure** and **(2) find a stronger model.** Both push the same goal — solve more — from two
-directions: better orchestration of the current model, and more model.
+### Answered (2026-08-15 → 17), so no longer roadmap items
 
-### 1. Improve solve rates on known problems — UNBLOCKED, do this now
+- **"Find a stronger model."** Done, and the answer was not the expected one: **generation beats
+  size**. A 17 GB 2026 *generalist* (`qwen3.8:27b`) swept 2024 d4–7 **8/8**, where an 18 GB
+  newer-generation MoE got 6/8 and a **larger** 19 GB 2024 code-specialist managed only 4/8 — below
+  what 12B models achieved on half the RAM. Scaling an older generation up does not reproduce the
+  gain. (`dev/progress/m2max-qwen38-27b-d4-7.md` and siblings.)
+- **The central thesis — "does sampling+voting still add correctness at a *strong* model's own
+  frontier?"** Measured: **42% → 75%**, and now decomposed — 1 sample+repair 42%, 3 samples no repair
+  58%, 3 samples+repair **75%**. Sampling and repair contribute separately and **superadditively**.
+  (`passk-ab-d13-d15.md`.)
+- **The d4–7 comparison set is retired** (solved out at 100%); **d8–15 is the working instrument**
+  (56%), and the frontier band within it is classified.
 
-Everything here runs on the current hardware against the cached, oracle-verified 2024/2025 problems,
-and each idea is A/B'd through `--trials`. Candidate levers, roughly by expected value:
+### 1. Generality — the highest-value open question, and now unblocked
 
-- **Sweep `samples_per_model` higher (5, 7).** Self-consistency was the biggest win (39→61% at 3);
-  does more help, and where does it plateau? Cheap on the 7B.
-- **Repair-loop effectiveness.** The traceback now reaches the repair prompt (PR #7); measure whether
-  repair actually converts `error`/`wrong` into `solved`, and improve the feedback if not — the
-  error split (31% runtime errors) is the target.
-- **Prompt / generation A/Bs (Milestone D4, still open):** single-call vs the two-call analysis+impl
-  generation; `num_ctx` sweep; and a clean old-vs-new-prompt A/B to finally measure the
-  `solve()`-contract hardening (its effect was never isolated).
-- **Poison-example repair feedback (D3 residual):** suppress example-mismatch feedback when a
-  ground-truth answer is known, so a mis-paired example can't misdirect repair.
+Every result above rests on **one model, one year, a few dozen problem-parts, three trials per cell**.
+**AoC 2025 d1–12 is now fully cached (answers + inputs, 23 problem-parts, never measured).** A samp1
+scan there is ~3–4 h and is the cheapest possible check on whether these patterns are real or
+artifacts of 2024's problems:
 
-Success criterion, as always: a `--trials` A/B with a reported delta and a committed result set,
-compared to the recorded baselines in `dev/progress/`.
-
-### 2. Find a stronger model — the capability lever — ✅ UNBLOCKED (2026-08-15)
-
-The measured bottleneck for *broader* coverage is model capability, and the direct experiment
-couldn't run on the M1 16 GB: `qwen2.5-coder:32b` swaps (120 s timeout for a 40-token generation);
-mid-size models run but at ~5 min/generation a full self-consistency sweep is 8 h+.
-
-**Resolved by hardware:** the project moved to an **M2 Max / 32 GB** (`m2max-32`), bring-up complete
-— oracle 12/12, suite green, `qwen2.5-coder:32b` and `qwen3-coder:30b` resident. The run plan and
-gotchas live in `dev/benchmarks/m2max-handoff.md` (Q1 capability at samp3 on d4–7; Q2 the
-pass@k-vs-pass@1 thesis test). A remote/cloud `OLLAMA_HOST` remains the fallback for tiers beyond
-32 GB.
-
-Re-run the winning A/B with the stronger model against the recorded 7B frontier
-(`dev/progress/scale-2024-d4-7.md`, `benchmark-2024-d1-12.md`):
 ```
-venv/bin/python experiment.py --problems 2024:4-7 --trials 3 \
-  --config "name=big-samp3,models=<stronger-model>,temperature=0.7,samples_per_model=3"
+venv/bin/python experiment.py --problems 2025:1-12 --trials 1 \
+  --config "name=scan2025,models=qwen3.8:27b,temperature=0.7,samples_per_model=1,enable_thinking=false"
 ```
 
-### 3. Submission phase (Milestone F) — deferred
+The specific claims to re-test out-of-sample: does sampling still lift the frontier band; does the
+Part 1 / Part 2 difficulty cliff recur; and does the **systematic-failure** class (below) reappear.
 
-The real AoC submitter (`submission/`) is tested in isolation but deliberately unwired, and there is
-no unsolved problem to submit against (all of 2024/2025 is complete). Revisit for **AoC 2026**
-(December, if we choose to enter) or a fresh account. Wiring is small when the time comes: gate a
-`submission.validate_solution(...)` call on `SUBMIT_SOLUTIONS=true` after `_execute_and_repair`. Real
-submission is rate-limited and outward-facing to the account — enable deliberately, per problem.
+### 2. Draw diversity — the lever the data pointed at
+
+One problem (2024 d15 p2) resisted **every** configuration: **0/8** across 1 sample, 3 samples, with
+and without repair, despite a 33% single-draw rate in classification. The model re-emits the *same
+too-slow approach*. **Sampling multiplies draws, not diversity.** That makes d15 p2 a named,
+reproducible benchmark for anything claiming to decorrelate draws. Cheapest levers first:
+
+- **temperature** 0.7 → 1.0 (one config field, ~3 h)
+- **prompt variants** across draws ("optimise for time complexity first"; "propose three approaches,
+  implement the fastest") — needs a `prompt_variant` wired into generation
+- **model mixing** at the frontier — the M1's ensemble failed with two *same-tier, same-generation*
+  models; mixing across generations is untested
+
+### 3. The economic arm of the thesis — blocked on an instrument fix
+
+Arm 2 of the README thesis is a *cost* claim: many cheap draws beat one expensive pass at equal
+spend. The pair to test it exists — `qwen3-coder:30b` is ~4× faster than `qwen3.8:27b` — as
+**MoE at k=5 vs generalist at k=1 at matched wall-clock**. **Do not run it until the token-accounting
+bug is fixed** (below): a cost claim measured with broken cost accounting is worthless.
+
+### 4. Instrument gaps — logged, unfixed, each one small
+
+- **Token accounting is stale across repair attempts** (`last_token_usage` reused): attempts report
+  identical `(in, out)` counts while returning different answers. Blocks #3.
+- **Solver crashes are scored as model failures.** An exception out of the solve path lands in the
+  same bucket as "the model could not do it" — which is how a `KeyError` corrupted results for eight
+  months undetected (`strategy-keyerror-d8.md`). Wants a distinct `HARNESS_ERROR` outcome.
+- **Error-shaped answers are scored `wrong`.** Generated code that catches its own exception and
+  prints `An error occurred: …` then `0` is recorded as a wrong answer, understating crashes.
+
+### 5. Submission phase (Milestone F) — still deferred
+
+`submission/` is real and tested in isolation but unwired, and both 2024 and 2025 are solved on the
+maintainer's account, so there is no unseen answer to submit. Revisit for a live contest or a fresh
+account. Wiring is small: gate a `submission.validate_solution(...)` call on `SUBMIT_SOLUTIONS=true`
+after `_execute_and_repair`.
 
 ### Optional, unblocked (small cleanups)
 
-Not required to advance the project, doable any time — see "Deferred to a later cleanup" under
-Milestone C: delete the dead `config/models.yaml`/`hardware.yaml`/`cache.yaml`, prune dead
-`.env.example` vars, and collapse the last few duplicate types.
+See "Deferred to a later cleanup" under Milestone C: delete the dead `config/*.yaml`, prune dead
+`.env.example` vars, collapse the last duplicate types. `OllamaProvider.__init__`'s default
+`model="codellama:7b"` is also stale (inert — every call site passes `model` explicitly).
 
 ## Documentation
 
@@ -337,6 +351,9 @@ findings), `dev/docs/architecture.md` (design), `dev/progress/checkpoint.md` (li
 ## Sequencing
 
 A (measure) → B (sound instrument) → C (consolidate) → D (robustness) → E (orchestration) →
-F (solver). A–E and C are **done**. F (the product goal) waits — deliberately — for an unsolved
-problem to submit against, and the capability push waits for a stronger model. Both are
-maintainer-gated (see "Next steps for the maintainer" above).
+F (solver). **A–E are done**, and the two maintainer-gated blockers that followed them — a stronger
+model, and the pass@k thesis test — are **both now answered** (see "Answered" above).
+
+The work from here is no longer a milestone ladder but a research loop: **generalise the findings to
+a second year (#1), attack the failure mode the data exposed (#2), then settle the cost claim (#3)
+once the accounting supports it (#4).** F stays deferred until there is an unsolved target.
