@@ -38,6 +38,9 @@ It exits non-zero if any recorded solution is wrong, errors, or cannot be verifi
 |2024|14|1|228410028|qwen3.8:27b|2026-08-17 03:06:27 UTC|solutions/2024_day14_part1.py|
 |2024|15|1|1577255|qwen3.8:27b|2026-08-17 03:17:10 UTC|solutions/2024_day15_part1.py|
 |2024|13|1|37680|qwen3.8:27b|2026-08-17 04:02:52 UTC|solutions/2024_day13_part1.py|
+|2024|9|1|6340197768906|qwen3.8:27b|2026-08-17 04:43:16 UTC|solutions/2024_day09_part1.py|
+|2024|15|2|1597035|qwen3.8:27b|2026-08-17 06:18:23 UTC|solutions/2024_day15_part2.py|
+|2024|13|2|87550094242995|qwen3.8:27b|2026-08-17 07:24:28 UTC|solutions/2024_day13_part2.py|
 <!-- end verified rows -->
 
 ## Rejected — previously recorded as solved, verified wrong

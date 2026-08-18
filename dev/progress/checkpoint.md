@@ -7,6 +7,35 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-08-17)
 
+### ⭐ THE CENTRAL THESIS IS MEASURED: pass@1 42% → pass@3 75% (2026-08-17)
+
+The experiment the project has been building toward since the M1
+(`dev/progress/passk-ab-d13-d15.md`). `qwen3.8:27b` on its *own* frontier band (2024 d13/d15,
+selected beforehand by independent 3-trial classification), k1 vs k3, 3 trials each, theory curve
+registered in writing before the k3 arm ran:
+
+| problem | pass@1 (24 pooled draws) | pass@3 | predicted | delta |
+|---|---|---|---|---|
+| d13 p1 | 83% | 100% | 100% | — |
+| **d13 p2** | **17%** | **100%** | 42% | **+58** |
+| d15 p1 | 33% | 100% | 70% | +30 |
+| **d15 p2** | **33%** | **0%** | 70% | **−70** |
+| **overall** | **42%** | **75%** | 71% | +4 |
+
+**The thesis holds** — and the two extremes matter more than the average:
+- **d13 p2**: 1-of-6 single draws → **3-of-3** at k3. The mechanism in pure form. Also a problem we
+  twice called an "insight wall": **sampling reaches insight problems, not only fiddly ones.**
+- **d15 p2**: 33% per draw, 70% predicted, **0/3 measured** (p≈0.03 if draws were independent).
+  **Sampling multiplies draws, not diversity** — the model repeats the same too-slow approach. This
+  is the most execution-bound problem in the band, and the failure is systematic, not stochastic.
+
+**The next lever is therefore diversity, not more samples**: temperature, prompt variants, model
+mixing. That is a strategy question, not a compute question.
+
+Limits held plainly: n=3 trials/problem; **k5 deliberately not run** (maintainer scope call) so
+there is no dose-response curve or saturation point; one model, one temperature, four problems; and
+`p` itself rests on 6 draws each (pooling moved two estimates materially).
+
 ### FRONTIER FOUND on d8–15: `qwen3.8:27b` 9/16, ledger 22 (2026-08-17)
 
 With d4–7 solved out, the scan moved to **2024 d8–15** and found a real frontier: **9/16 (56%)**

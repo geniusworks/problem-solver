@@ -103,7 +103,7 @@ assumed. Full numbers:
 `dev/benchmarks/cross-machine-results.md`. But that describes *a fixed band of problems*, not
 orchestration in general — which raises the project's central open question.
 
-## Does orchestrated voting scale? (the central open thesis)
+## Does orchestrated voting scale? (measured: yes at k=3 — with one instructive exception)
 
 Frontier models are trained to be the best solver *on their own*, and hardware keeps growing — so why
 orchestrate several votes at all? This is the question that carries the work beyond AoC, so it earns
@@ -150,10 +150,26 @@ not conclusive** — one trial, and the counterfactual is inferred from which dr
 measured. But the frontier band the real A/B needs now exists on a model strong enough to matter.
 (`dev/progress/m2max-qwen3coder30b-d4-7.md`)
 
-**In short:** the mechanism demonstrably adds correctness here; the reason it should keep paying off
-at any model or hardware tier is well-grounded; whether it does *at the frontier* is unproven by us,
-and the most valuable thing left to measure. We state the bet and the experiment that settles it, not
-the conclusion.
+**THE DECISIVE TEST HAS NOW RUN (2026-08-17).** On `qwen3.8:27b` — the model that had outgrown
+every earlier problem set — at its *own* measured frontier: **pass@1 42% → pass@3 75%**
+(`dev/progress/passk-ab-d13-d15.md`). The band was selected beforehand by an independent 3-trial
+classification, and the theoretical curve was registered in writing before the k3 arm ran.
+
+The clearest case: a problem solved by **1 of 6** single draws was solved by **3 of 3** k3 trials —
+the mechanism exactly as argued, with a cheap verifier collapsing several draws to the correct one.
+It is also a problem we twice called an "insight wall", so **sampling reaches insight problems, not
+only fiddly ones.**
+
+**And one problem refutes the naive version of the claim.** d15 p2 sits at 33% per draw, predicts
+70% at k=3, and scored **0 of 3** — nine samples, no solve. **Sampling multiplies draws, not
+diversity:** where a model fails *systematically* (here, the same too-slow approach every time),
+extra draws re-roll the same die. That is a real boundary on arm 1, and it relocates the next lever
+from *more samples* to *more diverse samples* — temperature, prompt variants, different models.
+
+**In short:** the mechanism adds correctness at a strong model's frontier, measured rather than
+argued. What is now open is sharper and more useful — **when does sampling fail, and what
+decorrelates draws?** Caveats held plainly: n=3 trials per problem, k=5 not run (no dose-response
+curve or saturation point), one model, one temperature, four problems.
 
 ## Running an experiment
 
