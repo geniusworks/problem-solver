@@ -47,6 +47,9 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m2max-32** | **qwen2.5-coder:32b** | **tk-off samp3** | d4–7 | 1 | **4/8** | **50%** | `m2max-qwen25coder32b-d4-7.md` |
 | **m2max-32** | **qwen3-coder:30b** (MoE) | **tk-off samp3** | d4–7 | 1 | **6/8** | **75%** | `m2max-qwen3coder30b-d4-7.md` |
 | **m2max-32** | **qwen3.8:27b** (generalist)† | **tk-off samp3** | d4–7 | 1 | **8/8** | **100%** | `m2max-qwen38-27b-d4-7.md` |
+| **m2max-32** | **qwen3.8:27b** | tk-off **samp1** | **2025** d1–12 | 1 | **16/23** | **70%** | `generality-2025-scan.md` |
+| **m2max-32** | **qwen3.8:27b** | tk-off **samp1** | **2025** band d2/4/9/10/11 | 3 | 14/30 | 47% | `band-2025-classification.md` |
+| **m2max-32** | **qwen3.8:27b** | tk-off **samp3** | **2025** d9/d11 | 3 | **9/12** | **75%** | `passk-replication-2025.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
@@ -114,6 +117,20 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
   across two models and two architectures. Still not the controlled A/B.
 - **Cost caveat:** Qwen3.8 is the *slowest* (2h 40m vs the MoE's 39 m). Best capability, worst
   wall-clock; the MoE remains the efficient choice per unit compute.
+- **THE FINDINGS GENERALISE — first out-of-sample year.** `qwen3.8:27b` on **AoC 2025 d1–12**
+  (never measured) scored **16/23 (70%)**, adding **16 verified solutions → ledger 41**
+  (`generality-2025-scan.md`). A real frontier exists out of sample; the **Part 1/Part 2 cliff
+  recurs** (83% vs 55%, six of seven misses are Part 2s); and **day 9 fell in both years**, both
+  times by computing wrong answers rather than crashing.
+- **THE CENTRAL CLAIM REPLICATES OUT OF SAMPLE.** k1→k3 on the 2025 band: **d9 p1 25%→100%** and
+  **d11 p2 33%→100%**, while the wall (d9 p2) held at 0 and the control (d11 p1) stayed 100%
+  (`passk-replication-2025.md`). Stronger than a 2024 repeat because **2025 was the unfavourable
+  venue** — its frontier is bimodal (4 reliable / 2 sometimes / 4 walls vs 2024's 5-of-8
+  near-misses), flagged in advance as working against sampling. It replicated anyway.
+- **A standing boundary, now with one member per year:** 2024 d15 p2 (**0/8**) and 2025 d9 p2
+  (**0/7**) resist every configuration tried. Diversity, not volume, is the open lever.
+  **Caveat: 70% vs 2024's 56% is set composition, not a year difference** — 2025 d1–12 includes the
+  easy early days, 2024 d8–15 does not. The *structure* transfers; the rate is not comparable.
 - **12 verified solutions** recorded (`solutions/README.md`), oracle-clean throughout.
 
 ## What to run on m2max-32 (the next machine)

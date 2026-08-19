@@ -41,6 +41,24 @@ It exits non-zero if any recorded solution is wrong, errors, or cannot be verifi
 |2024|9|1|6340197768906|qwen3.8:27b|2026-08-17 04:43:16 UTC|solutions/2024_day09_part1.py|
 |2024|15|2|1597035|qwen3.8:27b|2026-08-17 06:18:23 UTC|solutions/2024_day15_part2.py|
 |2024|13|2|87550094242995|qwen3.8:27b|2026-08-17 07:24:28 UTC|solutions/2024_day13_part2.py|
+|2025|1|1|1135|qwen3.8:27b|2026-08-18 15:42:20 UTC|solutions/2025_day01_part1.py|
+|2025|1|2|6558|qwen3.8:27b|2026-08-18 15:55:22 UTC|solutions/2025_day01_part2.py|
+|2025|2|1|18893502033|qwen3.8:27b|2026-08-18 16:02:23 UTC|solutions/2025_day02_part1.py|
+|2025|3|1|17408|qwen3.8:27b|2026-08-18 16:18:34 UTC|solutions/2025_day03_part1.py|
+|2025|3|2|172740584266849|qwen3.8:27b|2026-08-18 16:31:25 UTC|solutions/2025_day03_part2.py|
+|2025|4|1|1489|qwen3.8:27b|2026-08-18 16:34:45 UTC|solutions/2025_day04_part1.py|
+|2025|5|1|513|qwen3.8:27b|2026-08-18 16:58:53 UTC|solutions/2025_day05_part1.py|
+|2025|5|2|339668510830757|qwen3.8:27b|2026-08-18 17:03:26 UTC|solutions/2025_day05_part2.py|
+|2025|6|1|4805473544166|qwen3.8:27b|2026-08-18 17:12:26 UTC|solutions/2025_day06_part1.py|
+|2025|6|2|8907730960817|qwen3.8:27b|2026-08-18 17:23:43 UTC|solutions/2025_day06_part2.py|
+|2025|7|1|1651|qwen3.8:27b|2026-08-18 17:46:14 UTC|solutions/2025_day07_part1.py|
+|2025|7|2|108924003331749|qwen3.8:27b|2026-08-18 17:57:55 UTC|solutions/2025_day07_part2.py|
+|2025|8|1|80446|qwen3.8:27b|2026-08-18 18:00:10 UTC|solutions/2025_day08_part1.py|
+|2025|8|2|51294528|qwen3.8:27b|2026-08-18 18:04:58 UTC|solutions/2025_day08_part2.py|
+|2025|10|1|457|qwen3.8:27b|2026-08-18 18:46:58 UTC|solutions/2025_day10_part1.py|
+|2025|11|1|708|qwen3.8:27b|2026-08-18 19:01:31 UTC|solutions/2025_day11_part1.py|
+|2025|11|2|545394698933400|qwen3.8:27b|2026-08-19 02:46:38 UTC|solutions/2025_day11_part2.py|
+|2025|9|1|4781235324|qwen3.8:27b|2026-08-19 03:47:59 UTC|solutions/2025_day09_part1.py|
 <!-- end verified rows -->
 
 ## Rejected — previously recorded as solved, verified wrong
