@@ -283,20 +283,24 @@ now **answered**, which re-points the roadmap entirely.
 - **The d4–7 comparison set is retired** (solved out at 100%); **d8–15 is the working instrument**
   (56%), and the frontier band within it is classified.
 
-### 1. Generality — the highest-value open question, and now unblocked
+### 1. Generality — ✅ ANSWERED (2026-08-18/19)
 
-Every result above rests on **one model, one year, a few dozen problem-parts, three trials per cell**.
-**AoC 2025 d1–12 is now fully cached (answers + inputs, 23 problem-parts, never measured).** A samp1
-scan there is ~3–4 h and is the cheapest possible check on whether these patterns are real or
-artifacts of 2024's problems:
+**The findings generalise.** AoC 2025 (never previously measured) was fetched, scanned and tested:
 
-```
-venv/bin/python experiment.py --problems 2025:1-12 --trials 1 \
-  --config "name=scan2025,models=qwen3.8:27b,temperature=0.7,samples_per_model=1,enable_thinking=false"
-```
+- **Scan, 2025 d1–12:** 16/23 (70%), **+16 verified solutions** (`generality-2025-scan.md`). A real
+  frontier exists out of sample; the **Part 1/Part 2 cliff recurs** (83% vs 55%).
+- **Band classification:** only **2 of 10** problems are "sometimes" — 2025's frontier is **bimodal**
+  (4 reliable / 2 sometimes / 4 walls) where 2024's was mostly near-misses, making it a *harder*
+  venue for the sampling claim (`band-2025-classification.md`).
+- **Replication of the central claim:** k1→k3 lifted both "sometimes" problems from **25–33% to
+  100%**, while the wall held at 0 and the control stayed at 100% — all four cells as predicted,
+  with the prediction registered in advance (`passk-replication-2025.md`).
 
-The specific claims to re-test out-of-sample: does sampling still lift the frontier band; does the
-Part 1 / Part 2 difficulty cliff recur; and does the **systematic-failure** class (below) reappear.
+**Ledger: 43 verified solutions across two years, 0 wrong.**
+
+Remaining under this heading: **widen the replication.** Two "sometimes" problems × 3 trials is a
+successful replication attempt, not a confirmation at scale. More frontier problems — 2024 d16–25
+(uncached), or a third year — would firm up the effect size rather than just its direction.
 
 ### 2. Draw diversity — the lever the data pointed at
 

@@ -73,7 +73,7 @@ instrument is the most expensive kind of bug.
 Tested out of sample on **AoC 2025 d1–12** — never measured, 23 scoreable parts — the model scored
 **16/23 (70%)**, and the structure carried over: a real frontier exists, the **Part 1/Part 2 cliff
 recurs** (83% vs 55%, six of seven misses are Part 2s), and the same failure classes reappear. The
-ledger stands at **41 verified solutions across two years**. (`generality-2025-scan.md`)
+ledger stands at **43 verified solutions across two years**. (`generality-2025-scan.md`, `band-2025-classification.md`)
 
 **Scope, stated plainly:** these findings rest on one strong model and three trials per cell. The
 *structural* claims now have out-of-sample support; the *sampling* result (42% → 75%) has been
@@ -417,7 +417,7 @@ checker; it can't invent capability the model lacks, nor a faster algorithm than
 **Working and measured:** the full solve pipeline (fetch → parse → generate → consensus →
 execute/verify → repair → fallback), the experiment harness with repeat trials and fingerprinted
 configs, the correctness oracle and overfit gate, self-consistency and answer-based consensus, and
-**41 verified solutions** across two AoC years (`dev/verify_solutions.py` clean).
+**43 verified solutions** across two AoC years (`dev/verify_solutions.py` clean).
 
 **Established** — see *Headline results* above and the write-ups in `dev/progress/`:
 - Coordinated attempts beat single attempts at a strong model's own frontier (**42% → 75%**), with
