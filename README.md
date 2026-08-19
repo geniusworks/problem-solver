@@ -59,10 +59,17 @@ measurement store. All are fixed, with regression tests; the claims they corrupt
 place rather than quietly restated. In a project whose premise is *measured, not asserted*, a broken
 instrument is the most expensive kind of bug.
 
-**Scope, stated plainly:** these findings rest on one strong model, a few dozen problem-parts from a
-single year of AoC, and three trials per cell. The directions are clear; the precise numbers are not,
-and none of it is yet established as general. A second year of evaluation data is now prepared for
-exactly that test.
+**5. The structural findings generalise to a second year.**
+
+Tested out of sample on **AoC 2025 d1–12** — never measured, 23 scoreable parts — the model scored
+**16/23 (70%)**, and the structure carried over: a real frontier exists, the **Part 1/Part 2 cliff
+recurs** (83% vs 55%, six of seven misses are Part 2s), and the same failure classes reappear. The
+ledger stands at **41 verified solutions across two years**. (`generality-2025-scan.md`)
+
+**Scope, stated plainly:** these findings rest on one strong model and three trials per cell. The
+*structural* claims now have out-of-sample support; the *sampling* result (42% → 75%) has been
+measured on 2024 only, and testing it on 2025 is the next step. Rates are not comparable across the
+two years — the problem ranges are not difficulty-matched.
 
 ## What it is
 
@@ -401,7 +408,7 @@ checker; it can't invent capability the model lacks, nor a faster algorithm than
 **Working and measured:** the full solve pipeline (fetch → parse → generate → consensus →
 execute/verify → repair → fallback), the experiment harness with repeat trials and fingerprinted
 configs, the correctness oracle and overfit gate, self-consistency and answer-based consensus, and
-**25 verified solutions** (`dev/verify_solutions.py` clean).
+**41 verified solutions** across two AoC years (`dev/verify_solutions.py` clean).
 
 **Established** — see *Headline results* above and the write-ups in `dev/progress/`:
 - Coordinated attempts beat single attempts at a strong model's own frontier (**42% → 75%**), with

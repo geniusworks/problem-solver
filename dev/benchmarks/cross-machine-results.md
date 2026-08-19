@@ -47,6 +47,7 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m2max-32** | **qwen2.5-coder:32b** | **tk-off samp3** | d4–7 | 1 | **4/8** | **50%** | `m2max-qwen25coder32b-d4-7.md` |
 | **m2max-32** | **qwen3-coder:30b** (MoE) | **tk-off samp3** | d4–7 | 1 | **6/8** | **75%** | `m2max-qwen3coder30b-d4-7.md` |
 | **m2max-32** | **qwen3.8:27b** (generalist)† | **tk-off samp3** | d4–7 | 1 | **8/8** | **100%** | `m2max-qwen38-27b-d4-7.md` |
+| **m2max-32** | **qwen3.8:27b** | tk-off **samp1** | **2025** d1–12 | 1 | **16/23** | **70%** | `generality-2025-scan.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
@@ -114,6 +115,13 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
   across two models and two architectures. Still not the controlled A/B.
 - **Cost caveat:** Qwen3.8 is the *slowest* (2h 40m vs the MoE's 39 m). Best capability, worst
   wall-clock; the MoE remains the efficient choice per unit compute.
+- **THE FINDINGS GENERALISE — first out-of-sample year.** `qwen3.8:27b` on **AoC 2025 d1–12**
+  (never measured) scored **16/23 (70%)**, adding **16 verified solutions → ledger 41**
+  (`generality-2025-scan.md`). A real frontier exists out of sample; the **Part 1/Part 2 cliff
+  recurs** (83% vs 55%, six of seven misses are Part 2s); and **day 9 fell in both years**, both
+  times by computing wrong answers rather than crashing.
+  **Caveat: 70% vs 2024's 56% is set composition, not a year difference** — 2025 d1–12 includes the
+  easy early days, 2024 d8–15 does not. The *structure* transfers; the rate is not comparable.
 - **12 verified solutions** recorded (`solutions/README.md`), oracle-clean throughout.
 
 ## What to run on m2max-32 (the next machine)

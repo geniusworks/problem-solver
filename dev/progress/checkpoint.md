@@ -7,6 +7,37 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-08-17)
 
+### 🌍 THE FINDINGS GENERALISE: AoC 2025 out-of-sample, 16/23 (70%), ledger 41 (2026-08-18)
+
+First evaluation on problems the project had never seen (`dev/progress/generality-2025-scan.md`;
+samp1, 1 trial, 4h, 544k tokens, 0 wrong/unverified/overfit). **16 new verified solutions → ledger
+25 → 41 correct, 0 wrong.**
+
+All three structural claims held out of sample:
+1. **A real frontier exists** — 70%, not 100% or 0%. 2025 is a working instrument. This was the
+   outcome most at risk.
+2. **The Part 1/Part 2 cliff recurs** — 83% vs 55%; **six of seven scoreable misses are Part 2s**,
+   the 2024 shape on unrelated puzzles.
+3. **Day 9 fell in both years, both parts** — unrelated puzzles, but both failed by computing
+   *wrong answers* rather than crashing. Fiddly-bookkeeping failures look like a recurring class.
+
+**Failure split (7 scoreable misses):** 4 wrong-answer (d2 p2, d4 p2, d9 p1/p2), 3 crash (d10 p2,
+d11 p2, d12 p1) — close to 2024's shape. Since 2024's pass@k result showed sampling converts *wrong*
+far more readily than *systematic* failure, that yields a **pre-registered prediction**: sampling
+should pay on the wrong-answer group and not the crash group.
+
+**Caveat, stated in the doc:** 70% > 2024's 56% is almost certainly **set composition** — 2025 d1–12
+includes easy early days, 2024 d8–15 does not. Structure transfers; the rate is not comparable.
+
+**The first genuinely unseen problem:** 2025 d12 p2 has no cached answer (the account never solved
+it). The harness attempted it, scored nothing, and kept it out of the totals — the Milestone F
+scenario in miniature, and the first real target the deferred submission path has ever had. Nothing
+was submitted.
+
+**Next:** classify a 2025 frontier band (`--trials 3` on the misses), then a k1-vs-k3 A/B there —
+which would be the first out-of-sample test of the project's *central* claim, not just its
+structural ones.
+
 ### ⭐ THE CENTRAL THESIS IS MEASURED: pass@1 42% → pass@3 75% (2026-08-17)
 
 The experiment the project has been building toward since the M1
