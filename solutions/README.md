@@ -57,6 +57,8 @@ It exits non-zero if any recorded solution is wrong, errors, or cannot be verifi
 |2025|8|2|51294528|qwen3.8:27b|2026-08-18 18:04:58 UTC|solutions/2025_day08_part2.py|
 |2025|10|1|457|qwen3.8:27b|2026-08-18 18:46:58 UTC|solutions/2025_day10_part1.py|
 |2025|11|1|708|qwen3.8:27b|2026-08-18 19:01:31 UTC|solutions/2025_day11_part1.py|
+|2025|11|2|545394698933400|qwen3.8:27b|2026-08-19 02:46:38 UTC|solutions/2025_day11_part2.py|
+|2025|9|1|4781235324|qwen3.8:27b|2026-08-19 03:47:59 UTC|solutions/2025_day09_part1.py|
 <!-- end verified rows -->
 
 ## Rejected — previously recorded as solved, verified wrong

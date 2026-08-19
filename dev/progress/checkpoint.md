@@ -7,6 +7,21 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-08-17)
 
+### 2025 band classified: mostly walls, only 2 "sometimes" (2026-08-19)
+
+`--trials 3` on the 2025 misses (`dev/progress/band-2025-classification.md`; 5h, ledger 41 → **43**).
+**Only d9 p1 and d11 p2 are "sometimes" (1/3 each).** 2025's frontier is far more **bimodal** than
+2024's — 4 reliable / 2 sometimes / 4 walls, versus 2024's 5-of-8 sometimes — which makes it a
+**harder venue** for the sampling claim, and hints the 2024 band was unusually favourable to it.
+
+**The pre-registered prediction failed on both halves:** crash-class d11 p2 *is* a "sometimes";
+three of four wrong-answer problems are hard walls (0/4). **How a problem failed once does not
+predict whether it is sometimes-solvable** — that must be measured. Third failed taxonomy in this
+line of work; the durable lesson is that only repeated sampling classifies "sometimes".
+
+**Next:** k1-vs-k3 on d9 p1 + d11 p2 — the first out-of-sample test of the *central* claim. Thin
+band: a positive result is encouraging, a null result is under-powered rather than decisive.
+
 ### 🌍 THE FINDINGS GENERALISE: AoC 2025 out-of-sample, 16/23 (70%), ledger 41 (2026-08-18)
 
 First evaluation on problems the project had never seen (`dev/progress/generality-2025-scan.md`;
