@@ -7,6 +7,28 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-08-17)
 
+### ⭐⭐ THE CENTRAL CLAIM REPLICATES OUT OF SAMPLE (2026-08-19)
+
+k3 on the 2025 band (`dev/progress/passk-replication-2025.md`; 5h, 0 wrong/unverified/overfit).
+**All four cells behaved as predicted, with the prediction registered before the run:**
+
+| problem | pass@1 | **pass@3** | role |
+|---|---|---|---|
+| **d9 p1** | 25% | **100%** | sometimes → rescued |
+| d9 p2 | 0/4 | **0/3** | wall → held (**0/7** overall) |
+| d11 p1 | 100% | **100%** | control → held |
+| **d11 p2** | 33% | **100%** | sometimes → rescued |
+
+**Stronger than a repeat of 2024, because 2025 was the unfavourable venue** — its bimodal frontier
+was flagged in advance as working against sampling, and the effect replicated anyway. The three-way
+structure (rescue / wall / control) is what makes it a mechanism rather than a rate artifact.
+
+**Limits unchanged:** two "sometimes" problems × 3 trials — a replication attempt that succeeded, not
+a confirmation at scale; and both arms include the repair loop (see the pass@k correction).
+
+**The standing boundary now has two members:** 2024 d15 p2 (0/8) and 2025 d9 p2 (0/7) — one per year,
+immune to more draws. **Diversity, not volume, is the open lever.**
+
 ### 2025 band classified: mostly walls, only 2 "sometimes" (2026-08-19)
 
 `--trials 3` on the 2025 misses (`dev/progress/band-2025-classification.md`; 5h, ledger 41 → **43**).

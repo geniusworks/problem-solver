@@ -28,7 +28,14 @@ an independent classification):
 
 Sampling helps, repair helps, and **together they help more than the sum of their parts.** The
 sharpest single case: a problem solved by **1 of 6** single attempts was solved by **3 of 3** runs
-that combined both. (`passk-ab-d13-d15.md`, `topology-*.md`)
+that combined both. (`passk-ab-d13-d15.md`)
+
+**Replicated out of sample.** Repeated on **AoC 2025** — a year never previously measured, whose
+frontier is *less* favourable to sampling (mostly all-or-nothing rather than near-misses) — the two
+uncertain problems went from **25–33% → 100%**, while a problem that never solves stayed unsolved and
+a problem that always solves was unaffected. Sampling rescued exactly the uncertain cases and nothing
+else, which is the signature of a mechanism rather than a rate artifact.
+(`passk-replication-2025.md`)
 
 **2. Model *generation* beats model *size*, decisively.**
 
@@ -45,10 +52,12 @@ smallest and is not a coding model at all. (`m2max-qwen38-27b-d4-7.md` and sibli
 
 **3. There is a hard limit, and it is not fixed by more attempts.**
 
-One problem resisted **every** configuration — 0 for 8 across one attempt, three attempts, with and
-without feedback. The model repeats *the same too-slow approach* each time. **Sampling multiplies
-draws, not diversity:** where failure is systematic rather than random, extra attempts re-roll the
-same die. The lever there is variety (temperature, prompt phrasing, a different model), not volume.
+**Two problems, one in each year, resisted every configuration** — 2024 d15 p2 (0/8) and 2025 d9 p2
+(0/7), across one attempt, three attempts, with and without feedback. The model repeats *the same
+failing approach* each time. **Sampling multiplies draws, not diversity:** where failure is
+systematic rather than random, extra attempts re-roll the same die. The lever there is variety
+(temperature, prompt phrasing, a different model), not volume. Both are now named, reproducible
+benchmarks for anything claiming to decorrelate draws.
 
 **4. Measurement bugs flatter no one, and finding them is half the work.**
 
