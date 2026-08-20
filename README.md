@@ -55,9 +55,14 @@ smallest and is not a coding model at all. (`m2max-qwen38-27b-d4-7.md` and sibli
 **Two problems, one in each year, resisted every configuration** — 2024 d15 p2 (0/8) and 2025 d9 p2
 (0/7), across one attempt, three attempts, with and without feedback. The model repeats *the same
 failing approach* each time. **Sampling multiplies draws, not diversity:** where failure is
-systematic rather than random, extra attempts re-roll the same die. The lever there is variety
-(temperature, prompt phrasing, a different model), not volume. Both are now named, reproducible
-benchmarks for anything claiming to decorrelate draws.
+systematic rather than random, extra attempts re-roll the same die.
+
+**And we tested the obvious fix — it failed.** Raising sampling temperature from 0.7 to 1.0 moved
+neither problem (still 0/11 and 0/10) and slightly *hurt* a problem that already worked
+(`temperature-diversity-negative.md`). Parameter-level variety perturbs token choice *within* an
+approach; what these failures appear to need is **strategy-level** variety — explicitly asking for a
+different algorithm, or a different model. That remains untested. Both problems are named,
+reproducible benchmarks for anything claiming to decorrelate draws.
 
 **4. Measurement bugs flatter no one, and finding them is half the work.**
 

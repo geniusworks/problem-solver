@@ -302,18 +302,41 @@ Remaining under this heading: **widen the replication.** Two "sometimes" problem
 successful replication attempt, not a confirmation at scale. More frontier problems — 2024 d16–25
 (uncached), or a third year — would firm up the effect size rather than just its direction.
 
-### 2. Draw diversity — the lever the data pointed at
+### 2. Draw diversity — temperature RULED OUT; strategy-level diversity is the live lever
 
-One problem (2024 d15 p2) resisted **every** configuration: **0/8** across 1 sample, 3 samples, with
-and without repair, despite a 33% single-draw rate in classification. The model re-emits the *same
-too-slow approach*. **Sampling multiplies draws, not diversity.** That makes d15 p2 a named,
-reproducible benchmark for anything claiming to decorrelate draws. Cheapest levers first:
+**Two problems resist everything:** 2024 d15 p2 (**0/11**) and 2025 d9 p2 (**0/10**), across
+`samples_per_model` ∈ {1,3}, `max_repair_iterations` ∈ {0,2}, `temperature` ∈ {0.7,1.0}. One per
+year, never solved once — the project's most reproducible negative results, and the benchmark any
+decorrelation claim must clear.
 
-- **temperature** 0.7 → 1.0 (one config field, ~3 h)
-- **prompt variants** across draws ("optimise for time complexity first"; "propose three approaches,
-  implement the fastest") — needs a `prompt_variant` wired into generation
-- **model mixing** at the frontier — the M1's ensemble failed with two *same-tier, same-generation*
-  models; mixing across generations is untested
+**Tried and failed (2026-08-20):** raising temperature 0.7 → 1.0 at k3 moved neither wall and
+slightly hurt a working problem (6/12 → 5/12, `temperature-diversity-negative.md`). The
+correlated-draws *diagnosis* may still hold, but temperature is the wrong *instrument*: sampling
+more wildly from the same flawed understanding yields noisier versions of the same approach.
+
+The distinction to carry forward:
+
+- **Parameter-level diversity** (temperature, top-p) — perturbs token choice *within* an approach.
+  **Tested. Does not help.**
+- **Strategy-level diversity** — changes *which* approach is attempted. **Untested, and now the
+  best-motivated direction in the project.**
+
+Ordered by cost:
+
+1. **Targeted efficiency feedback** (cheapest, most specific). Both walls look execution-bound. The
+   repair prompt currently says only that the answer was not accepted; it should say *"this timed
+   out on the real input — propose an asymptotically faster approach"*. This is a prompt change
+   aimed exactly at the observed failure, testable against two known-resistant problems.
+2. **Prompt variants across draws** — draw 1 unconstrained, draw 2 "optimise for time complexity
+   first", draw 3 "propose three approaches and implement the fastest". Needs a `prompt_variant`
+   wired into generation; it is the direct implementation of strategy-level diversity.
+3. **Cross-generation model mixing** — the M1's ensemble failed with two *same-tier, same-generation*
+   models. Mixing `qwen3.8:27b` with `qwen3-coder:30b` (different architecture *and* generation) is
+   untested and is the arm-3 ("decorrelated portfolios") claim from the README thesis.
+
+**Caution learned the hard way:** four mechanistic hypotheses in this line of work have now been
+falsified by the next run. Treat each of the above as a *measurement to make*, not a fix to apply —
+and A/B it against the two resistant benchmarks before believing it.
 
 ### 3. The economic arm of the thesis — blocked on an instrument fix
 
