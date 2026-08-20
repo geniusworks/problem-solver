@@ -29,6 +29,12 @@ inline `<think>` format incompatible with the pipeline). **These are the models 
 
 ## Results (machine × model × config → solve rate)
 
+> **Fingerprint note (2026-08-20):** adding the `efficiency_feedback` field to `SolverConfig`
+> changed every config hash — the k3 settings recorded as `bb22870d2a6d` in earlier findings now
+> hash to `ea658112193a`. Nothing about those runs changed: `efficiency_feedback=False` is exactly
+> the behaviour they had, so they remain valid baselines. Only the hash moved. Fingerprints identify
+> a *config space*, and that space genuinely grew.
+
 All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" = `enable_thinking=false`.
 
 | machine | model (Q4_K_M) | config | problem set | trials | solved | rate | source |

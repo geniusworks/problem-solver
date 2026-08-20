@@ -71,6 +71,50 @@ class _Candidates:
     failures: List[Any] = field(default_factory=list)
 
 
+def _is_timeout_error(error: str) -> bool:
+    """True if an execution error is a timeout rather than a crash.
+
+    Both execution paths phrase it the same way ("... timed out after N
+    seconds", shared/execution.py), so a substring check is sufficient and
+    avoids coupling to an exception type that does not survive the subprocess
+    boundary.
+    """
+    return "timed out" in str(error).lower()
+
+
+def _efficiency_guidance(examples_passed: bool) -> List[str]:
+    """Repair guidance for a solution that is too slow rather than wrong.
+
+    The default feedback for a timeout says only that the run errored, which
+    leaves the model free to resubmit the same approach -- and it does: 2024
+    d15 p2 and 2025 d9 p2 resisted 11 and 10 configurations respectively, and
+    raising temperature did not help (dev/progress/temperature-diversity-
+    negative.md). The diagnosis there was that extra draws re-roll the same
+    die; this tells the model *which* die to stop rolling.
+    """
+    lines = [
+        "DIAGNOSIS: this is a PERFORMANCE failure, not a correctness failure. "
+        "The code did not crash and did not return a wrong answer -- it did not "
+        "finish in time on the real input.",
+    ]
+    if examples_passed:
+        lines.append(
+            "Your approach is CORRECT on the small example but does not scale: "
+            "the real input is far larger."
+        )
+    lines.extend([
+        "Do NOT resubmit the same algorithm with minor edits -- it will time out again.",
+        "Find an asymptotically faster approach. Consider: memoising or caching repeated "
+        "sub-computations; replacing a scan over all candidates with a direct "
+        "computation; using a dict/set instead of repeated list scans; deriving the "
+        "answer mathematically instead of simulating every step; or pruning branches "
+        "that cannot affect the result.",
+        "State the time complexity of your previous attempt and of your new one, and "
+        "make sure the new one is strictly better.",
+    ])
+    return lines
+
+
 class BaseSolver:
     """Base class for solving AoC problems."""
 
@@ -961,8 +1005,13 @@ class BaseSolver:
             if example_results and any(getattr(r, "error", None) for r in example_results):
                 lines.append("Execution failed on examples with no structured test cases.")
         if full_result is not None:
-            if getattr(full_result, "error", None):
-                lines.append(f"Full input run ERROR: {getattr(full_result, 'error', '')}")
+            full_error = getattr(full_result, "error", None)
+            if full_error:
+                lines.append(f"Full input run ERROR: {full_error}")
+                if self.config.efficiency_feedback and _is_timeout_error(full_error):
+                    lines.extend(_efficiency_guidance(bool(exec_test_cases and not any(
+                        getattr(r, "error", None) for r in example_results
+                    ))))
             elif not full_answer:
                 lines.append("Full input run completed but produced an empty answer.")
             else:

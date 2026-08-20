@@ -69,6 +69,19 @@ class SolverConfig:
 
     # --- repair and fallback --------------------------------------------
     max_repair_iterations: int = 2
+
+    # Targeted efficiency feedback. When the full-input run TIMES OUT (as opposed
+    # to erroring or answering wrongly), the default repair message says only
+    # that the answer was not accepted -- which tells the model nothing about
+    # *why*, so it tends to resubmit the same too-slow approach. With this on,
+    # a timeout produces an explicit instruction to find an asymptotically
+    # faster algorithm.
+    #
+    # Gated by config rather than applied unconditionally so it can be A/B'd:
+    # a behaviour change that did not enter fingerprint() would make two
+    # different experiments share a hash -- exactly the hollow-A/B trap
+    # Milestone B removed. Default False = the behaviour every prior run had.
+    efficiency_feedback: bool = False
     enable_fallback_models: bool = True
     enable_collaborative_improvement: bool = False
 
