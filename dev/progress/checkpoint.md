@@ -7,6 +7,27 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-08-17)
 
+### ❌ TEMPERATURE IS NOT THE LEVER — a clean negative (2026-08-20)
+
+temp 1.0 vs the existing 0.7 baseline, k3, 3 trials, on both resistant benchmarks
+(`dev/progress/temperature-diversity-negative.md`; 9h, 0 wrong/unverified/overfit).
+**6/12 → 5/12.** Neither wall moved (2024 d15 p2 now **0/11**, 2025 d9 p2 now **0/10**) and one
+working problem got slightly worse (d15 p1 3/3 → 2/3).
+
+**This falsifies a hypothesis this project derived from its own data** — that the resistant failures
+are *correlated draws* and temperature would decorrelate them. The diagnosis may stand; the
+instrument does not. **Parameter-level** diversity (temperature/top-p) perturbs tokens *within* an
+approach; these failures need **strategy-level** diversity — prompting for a different algorithm, or
+a different model. Both untested, and better motivated now the cheap option is ruled out.
+
+**Fourth falsified hypothesis in this line of work** (after "insight walls won't fall", "voting buys
+execution reliability not ideas", and "failure mode predicts sometimes-solvability"). The pattern:
+mechanistic stories about *why* these models fail keep failing to predict what helps; only direct
+measurement has. An argument for keeping A/Bs expensive-but-first, not for theorising harder.
+
+**Baseline reuse worth noting:** temperature is in the config fingerprint, so the 0.7 arm already
+existed and only the 1.0 arm had to run — halving the cost. Same trick as the k1 pooling.
+
 ### ⭐⭐ THE CENTRAL CLAIM REPLICATES OUT OF SAMPLE (2026-08-19)
 
 k3 on the 2025 band (`dev/progress/passk-replication-2025.md`; 5h, 0 wrong/unverified/overfit).

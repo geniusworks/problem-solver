@@ -50,6 +50,7 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m2max-32** | **qwen3.8:27b** | tk-off **samp1** | **2025** d1–12 | 1 | **16/23** | **70%** | `generality-2025-scan.md` |
 | **m2max-32** | **qwen3.8:27b** | tk-off **samp1** | **2025** band d2/4/9/10/11 | 3 | 14/30 | 47% | `band-2025-classification.md` |
 | **m2max-32** | **qwen3.8:27b** | tk-off **samp3** | **2025** d9/d11 | 3 | **9/12** | **75%** | `passk-replication-2025.md` |
+| **m2max-32** | **qwen3.8:27b** | tk-off samp3 **temp 1.0** | 2024 d15 + 2025 d9 | 3 | 5/12 | 42% | `temperature-diversity-negative.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
@@ -127,8 +128,12 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
   (`passk-replication-2025.md`). Stronger than a 2024 repeat because **2025 was the unfavourable
   venue** — its frontier is bimodal (4 reliable / 2 sometimes / 4 walls vs 2024's 5-of-8
   near-misses), flagged in advance as working against sampling. It replicated anyway.
-- **A standing boundary, now with one member per year:** 2024 d15 p2 (**0/8**) and 2025 d9 p2
-  (**0/7**) resist every configuration tried. Diversity, not volume, is the open lever.
+- **A standing boundary, now with one member per year:** 2024 d15 p2 (**0/11**) and 2025 d9 p2
+  (**0/10**) resist every configuration tried — k ∈ {1,3}, repair ∈ {0,2}, temperature ∈ {0.7,1.0}.
+- **Temperature is NOT the lever (negative result).** 0.7 → 1.0 at k3 moved neither wall and slightly
+  hurt a working problem: **6/12 → 5/12** (`temperature-diversity-negative.md`). Parameter-level
+  diversity perturbs tokens within an approach; these failures appear to need **strategy-level**
+  diversity (prompt for a different algorithm, or a different model) — untested.
   **Caveat: 70% vs 2024's 56% is set composition, not a year difference** — 2025 d1–12 includes the
   easy early days, 2024 d8–15 does not. The *structure* transfers; the rate is not comparable.
 - **12 verified solutions** recorded (`solutions/README.md`), oracle-clean throughout.
