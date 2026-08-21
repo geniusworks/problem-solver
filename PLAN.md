@@ -328,7 +328,14 @@ The distinction to carry forward:
 
 Ordered by cost:
 
-1. **Targeted efficiency feedback — BUILT, BUT AIMED WRONG (2026-08-20).** Implemented and gated
+**THE FILTER (adopted 2026-08-21, after five falsified hypotheses):** *interventions that add no new
+information do not help, however well-targeted the wording.* Before running anything, ask **what does
+the model learn that it did not already know?** If the answer is "nothing", expect a null. Sampling
+works because it adds independent draws; repair works because it adds a traceback. Temperature added
+variance without information and failed; reworded feedback added exhortation without information and
+failed (`targeted-feedback-negative.md`).
+
+1. **Targeted feedback — BUILT AND TESTED; both variants are NULL (2026-08-20/21).** Implemented and gated
    behind `SolverConfig.efficiency_feedback`, with tests, and it fires only on timeouts — but
    **neither target problem ever times out**, so it is inert on them and its A/B was stopped before
    it could produce a false negative. The "execution-bound" premise came from long *wall-clock*,
@@ -337,12 +344,17 @@ Ordered by cost:
    repair prompt currently says only that the answer was not accepted; it should say *"this timed
    out on the real input — propose an asymptotically faster approach"*. This is a prompt change
    aimed exactly at the observed failure, testable against two known-resistant problems.
-2. **Prompt variants across draws** — draw 1 unconstrained, draw 2 "optimise for time complexity
-   first", draw 3 "propose three approaches and implement the fastest". Needs a `prompt_variant`
-   wired into generation; it is the direct implementation of strategy-level diversity.
-3. **Cross-generation model mixing** — the M1's ensemble failed with two *same-tier, same-generation*
-   models. Mixing `qwen3.8:27b` with `qwen3-coder:30b` (different architecture *and* generation) is
-   untested and is the arm-3 ("decorrelated portfolios") claim from the README thesis.
+2. **Prompt variants across draws — DEMOTED by the filter.** Rewording without new information is
+   the same class as the null above. Cheap, but now a low prior; run it only if the promoted options
+   are blocked.
+3. **Cross-generation model mixing — PROMOTED.** A second model's differing answer *is* new
+   information. The M1's ensemble failed with two *same-tier, same-generation* models; mixing
+   `qwen3.8:27b` with `qwen3-coder:30b` (different architecture *and* generation) is untested, and is
+   arm 3 ("decorrelated portfolios") of the README thesis.
+4. **Feed back a failing case the model has not seen — PROMOTED, best fit for the filter.** Both
+   target problems pass the worked example and fail the real input, so the distinguishing case is
+   precisely what the model never sees. Constructing one without leaking the expected answer is the
+   hard part and the interesting design problem.
 
 **Caution learned the hard way:** four mechanistic hypotheses in this line of work have now been
 falsified by the next run. Treat each of the above as a *measurement to make*, not a fix to apply —

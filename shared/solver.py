@@ -71,6 +71,36 @@ class _Candidates:
     failures: List[Any] = field(default_factory=list)
 
 
+def _wrong_answer_guidance(produced: str) -> List[str]:
+    """Repair guidance for code that runs cleanly and computes the wrong thing.
+
+    This is the dominant real failure mode: across the two hardest recorded
+    problems, 80 of 132 attempts were wrong answers and none was a timeout
+    (dev/progress/CORRECTION-d15p2-is-not-a-wall.md). The default message says
+    only that the answer was not accepted, which invites a cosmetic edit and
+    another wrong answer.
+
+    NOTE: deliberately echoes only what the model ITSELF produced. The expected
+    full-input answer is not available to this function and must never be --
+    handing the model the target would make the overfit gate the only thing
+    standing between us and a hardcoded "solution", and would invalidate the
+    measurement.
+    """
+    return [
+        f"Your code ran successfully and produced: {produced}",
+        "That value is INCORRECT. The code has no crash and no timeout -- the logic "
+        "computes the wrong thing.",
+        "Do NOT make a cosmetic edit and resubmit. A wrong answer that runs cleanly "
+        "usually means a misread requirement, not a typo.",
+        "Re-read the problem statement and check specifically: are you answering the "
+        "exact question asked (count vs sum vs index, 0- vs 1-based)? Have you handled "
+        "the boundary and wrap-around cases? Does your reading of the rules match the "
+        "worked example step by step, including any case the example does not cover?",
+        "If the worked example passes but the real input does not, the difference is a "
+        "case the example never exercises -- name that case explicitly before coding.",
+    ]
+
+
 def _is_timeout_error(error: str) -> bool:
     """True if an execution error is a timeout rather than a crash.
 
@@ -1008,7 +1038,7 @@ class BaseSolver:
             full_error = getattr(full_result, "error", None)
             if full_error:
                 lines.append(f"Full input run ERROR: {full_error}")
-                if self.config.efficiency_feedback and _is_timeout_error(full_error):
+                if self.config.targeted_feedback and _is_timeout_error(full_error):
                     lines.extend(_efficiency_guidance(bool(exec_test_cases and not any(
                         getattr(r, "error", None) for r in example_results
                     ))))
@@ -1016,6 +1046,8 @@ class BaseSolver:
                 lines.append("Full input run completed but produced an empty answer.")
             else:
                 lines.append("Full input run completed but the answer is still not accepted.")
+                if self.config.targeted_feedback:
+                    lines.extend(_wrong_answer_guidance(full_answer))
         return "\n".join(lines)
 
     def _get_problem_type(self, characteristics: Dict[str, Any]) -> str:

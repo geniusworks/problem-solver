@@ -7,6 +7,33 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-08-17)
 
+### ❌ TARGETED FEEDBACK: no gain — but the five nulls now form a rule (2026-08-21)
+
+Wrong-answer repair guidance ("your code produced X, that is INCORRECT; a clean-running wrong answer
+usually means a misread requirement, not a typo") on both target problems
+(`dev/progress/targeted-feedback-negative.md`; 9h, 0 wrong/unverified/overfit). **6/12 → 5/12**, one
+control slipped (d9 p1 3/3 → 2/3, n=3 so within noise). **The guidance definitely fired — present in
+49 of 70 attempt records** — so unlike its predecessor this is a real null, not an inert flag.
+
+**Why it plausibly failed: no new information.** The model already knew the answer was rejected. The
+guidance named a *category* of error without identifying *which* requirement was misread, and the one
+thing that would resolve it — the expected answer — cannot be supplied without destroying the
+measurement (it would make the overfit gate the only barrier to a hardcoded solution).
+
+**THE RULE (five falsified hypotheses in, the pattern is the finding):**
+> **Interventions that add no new information do not help, however well-targeted the wording.**
+> Temperature added variance without information. This added exhortation without information. The
+> two things that *have* worked add real information: sampling contributes genuinely independent
+> draws; repair contributes an actual traceback.
+
+**Roadmap filter — before running anything, ask what the model learns that it did not already know:**
+- *Prompt variants* — **demoted** (same class as this null).
+- *Cross-generation model mixing* — **promoted**; a second model's differing answer is new
+  information, and it is arm 3 of the README thesis, untested.
+- *Feeding back a failing case the model has not seen* — **promoted**, best fit for the filter: both
+  targets pass the worked example and fail the real input, so the distinguishing case is exactly what
+  the model never sees. Building one without leaking the answer is the design problem.
+
 ### ❌ TEMPERATURE IS NOT THE LEVER — a clean negative (2026-08-20)
 
 temp 1.0 vs the existing 0.7 baseline, k3, 3 trials, on both resistant benchmarks
