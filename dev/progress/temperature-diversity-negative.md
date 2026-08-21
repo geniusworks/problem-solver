@@ -19,9 +19,15 @@ This tests — and falsifies — a specific hypothesis this project derived from
 | problem | role | temp 0.7 @ k3 | **temp 1.0 @ k3** | verdict |
 |---------|------|---------------|-------------------|---------|
 | 2024 d15 p1 | sometimes | 3/3 (100%) | **2/3 (67%)** | slightly worse |
-| **2024 d15 p2** | **wall** | 0/3 | **0/3** | unmoved — now **0/11** overall |
+| **2024 d15 p2** | ~12% problem† | 0/3 | **0/3** | unmoved |
 | 2025 d9 p1 | sometimes | 3/3 (100%) | **3/3 (100%)** | unchanged |
-| **2025 d9 p2** | **wall** | 0/3 | **0/3** | unmoved — now **0/10** overall |
+| **2025 d9 p2** | **wall (0/10)** | 0/3 | **0/3** | unmoved |
+
+† **Corrected 2026-08-20:** d15 p2 was called a wall here. It is not — it has solved **2 of 16**
+problem-trials (~12%). Missing a 12% problem in three trials has probability ≈ 0.68, so **its 0/3
+is weak evidence**; only 2025 d9 p2's 0/3 speaks to a genuine wall. The headline (6/12 → 5/12, no
+gain, one working problem slightly worse) is unaffected.
+`CORRECTION-d15p2-is-not-a-wall.md`
 | **total** | | **6/12** | **5/12** | **no gain** |
 
 ## The hypothesis this kills
@@ -45,7 +51,7 @@ The distinction now worth carrying:
 
 ## The walls are now the project's most reproducible results
 
-**2024 d15 p2: 0/11. 2025 d9 p2: 0/10.** Across `samples_per_model` ∈ {1,3},
+**2025 d9 p2: 0/10** (2024 d15 p2 is ~12%, not a wall — see above). Across `samples_per_model` ∈ {1,3},
 `max_repair_iterations` ∈ {0,2}, and `temperature` ∈ {0.7,1.0} — one problem per year, never solved
 once. These are not noisy failures; they are stable properties of this model on these problems, and
 they remain the sharpest available benchmark for any future claim to have decorrelated draws.

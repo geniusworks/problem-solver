@@ -304,10 +304,15 @@ successful replication attempt, not a confirmation at scale. More frontier probl
 
 ### 2. Draw diversity — temperature RULED OUT; strategy-level diversity is the live lever
 
-**Two problems resist everything:** 2024 d15 p2 (**0/11**) and 2025 d9 p2 (**0/10**), across
-`samples_per_model` ∈ {1,3}, `max_repair_iterations` ∈ {0,2}, `temperature` ∈ {0.7,1.0}. One per
-year, never solved once — the project's most reproducible negative results, and the benchmark any
-decorrelation claim must clear.
+**One problem resists everything:** 2025 d9 p2, **0 of 10** problem-trials across
+`samples_per_model` ∈ {1,3}, `max_repair_iterations` ∈ {0,2}, `temperature` ∈ {0.7,1.0} — the
+project's most reproducible negative result, and the benchmark any decorrelation claim must clear.
+
+> **Corrected 2026-08-20.** This said *two* problems, adding 2024 d15 p2 at "0/11, never solved
+> once". That was wrong: **d15 p2 has solved 2 of 16 times (~12%)** — the tally summed only the
+> arms where it failed. It is a very-low-rate "sometimes", not a wall, and it is in the ledger.
+> Neither problem has **ever timed out** (0 timeout attempts on record); they fail by wrong answers
+> and crashes. See `dev/progress/CORRECTION-d15p2-is-not-a-wall.md`.
 
 **Tried and failed (2026-08-20):** raising temperature 0.7 → 1.0 at k3 moved neither wall and
 slightly hurt a working problem (6/12 → 5/12, `temperature-diversity-negative.md`). The
@@ -323,7 +328,12 @@ The distinction to carry forward:
 
 Ordered by cost:
 
-1. **Targeted efficiency feedback** (cheapest, most specific). Both walls look execution-bound. The
+1. **Targeted efficiency feedback — BUILT, BUT AIMED WRONG (2026-08-20).** Implemented and gated
+   behind `SolverConfig.efficiency_feedback`, with tests, and it fires only on timeouts — but
+   **neither target problem ever times out**, so it is inert on them and its A/B was stopped before
+   it could produce a false negative. The "execution-bound" premise came from long *wall-clock*,
+   which is generation plus repair, not execution. Re-aim it at the failure modes that actually
+   occur (wrong answers, crashes) or find problems that genuinely time out. The
    repair prompt currently says only that the answer was not accepted; it should say *"this timed
    out on the real input — propose an asymptotically faster approach"*. This is a prompt change
    aimed exactly at the observed failure, testable against two known-resistant problems.

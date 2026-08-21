@@ -134,8 +134,11 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
   (`passk-replication-2025.md`). Stronger than a 2024 repeat because **2025 was the unfavourable
   venue** — its frontier is bimodal (4 reliable / 2 sometimes / 4 walls vs 2024's 5-of-8
   near-misses), flagged in advance as working against sampling. It replicated anyway.
-- **A standing boundary, now with one member per year:** 2024 d15 p2 (**0/11**) and 2025 d9 p2
-  (**0/10**) resist every configuration tried — k ∈ {1,3}, repair ∈ {0,2}, temperature ∈ {0.7,1.0}.
+- **A standing boundary with one confirmed member:** **2025 d9 p2 (0/10)** resists every
+  configuration tried — k ∈ {1,3}, repair ∈ {0,2}, temperature ∈ {0.7,1.0}. *(Corrected 2026-08-20:
+  2024 d15 p2 was listed here as a second wall at "0/11". It is not — it has solved **2 of 16**
+  times (~12%). Neither problem has ever timed out; both fail by wrong answers and crashes.
+  `dev/progress/CORRECTION-d15p2-is-not-a-wall.md`.)*
 - **Temperature is NOT the lever (negative result).** 0.7 → 1.0 at k3 moved neither wall and slightly
   hurt a working problem: **6/12 → 5/12** (`temperature-diversity-negative.md`). Parameter-level
   diversity perturbs tokens within an approach; these failures appear to need **strategy-level**

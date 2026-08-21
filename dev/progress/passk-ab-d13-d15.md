@@ -46,10 +46,16 @@ reformulation solved algebraically rather than by brute force. Both times that c
 33% per draw, 70% predicted at k=3, and **0 of 3** — nine samples, no solve. If draws were
 independent at p=0.33, that outcome has probability ~0.03.
 
-The reading: **sampling multiplies draws, not diversity.** d15 p2 is the most execution-bound
-problem in the band (3,337–3,677 s per k3 trial), and the model appears to produce *the same
-too-slow approach* every time. Where failure is systematic rather than stochastic, extra draws
-re-roll the same die.
+The reading: **sampling multiplies draws, not diversity.** The model appears to produce the same
+failing approach every time; where failure is systematic rather than stochastic, extra draws re-roll
+the same die.
+
+> **Corrected 2026-08-20.** This originally called d15 p2 "the most execution-bound problem in the
+> band (3,337–3,677 s per k3 trial)". **That inference was wrong**: the wall-clock is *generation
+> plus repair*, not execution, and **no attempt on d15 p2 has ever hit an execution timeout** (0 of
+> 68 recorded attempts). It fails by wrong answers (42) and crashes (15). d15 p2 is also **not a
+> wall** — it has solved 2 of 16 problem-trials (~12%), so its 0/3 here is a low-probability draw
+> rather than proof of immunity. `CORRECTION-d15p2-is-not-a-wall.md`
 
 This is a real boundary on arm 1 of the thesis, found by the experiment built to test it, and it
 points somewhere specific: **the lever for correlated failure is diversity — temperature, prompt

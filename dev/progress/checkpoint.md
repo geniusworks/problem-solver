@@ -11,8 +11,13 @@ file current as work lands so it never goes stale.
 
 temp 1.0 vs the existing 0.7 baseline, k3, 3 trials, on both resistant benchmarks
 (`dev/progress/temperature-diversity-negative.md`; 9h, 0 wrong/unverified/overfit).
-**6/12 → 5/12.** Neither wall moved (2024 d15 p2 now **0/11**, 2025 d9 p2 now **0/10**) and one
-working problem got slightly worse (d15 p1 3/3 → 2/3).
+**6/12 → 5/12.** Neither target moved and one working problem got slightly worse (d15 p1 3/3 → 2/3).
+
+> **Corrected 2026-08-20:** this said "neither *wall* moved (d15 p2 now 0/11…)". **2024 d15 p2 is not
+> a wall** — it has solved 2 of 16 times (~12%); the tally had summed only the arms where it failed.
+> Missing a ~12% problem in 3 trials is unremarkable (p ≈ 0.68), so d15 p2's 0/3 here is weak
+> evidence. The 6/12 → 5/12 headline stands; only **2025 d9 p2 (0/10)** speaks to a genuine wall.
+> `dev/progress/CORRECTION-d15p2-is-not-a-wall.md`
 
 **This falsifies a hypothesis this project derived from its own data** — that the resistant failures
 are *correlated draws* and temperature would decorrelate them. The diagnosis may stand; the
@@ -47,8 +52,9 @@ structure (rescue / wall / control) is what makes it a mechanism rather than a r
 **Limits unchanged:** two "sometimes" problems × 3 trials — a replication attempt that succeeded, not
 a confirmation at scale; and both arms include the repair loop (see the pass@k correction).
 
-**The standing boundary now has two members:** 2024 d15 p2 (0/8) and 2025 d9 p2 (0/7) — one per year,
-immune to more draws. **Diversity, not volume, is the open lever.**
+**The standing boundary has one confirmed member:** 2025 d9 p2 (0/10), immune to more draws.
+**Diversity, not volume, is the open lever.** *(Originally claimed two, adding 2024 d15 p2 — which
+has in fact solved 2 of 16 times. See `CORRECTION-d15p2-is-not-a-wall.md`.)*
 
 ### 2025 band classified: mostly walls, only 2 "sometimes" (2026-08-19)
 
@@ -116,7 +122,9 @@ registered in writing before the k3 arm ran:
   twice called an "insight wall": **sampling reaches insight problems, not only fiddly ones.**
 - **d15 p2**: 33% per draw, 70% predicted, **0/3 measured** (p≈0.03 if draws were independent).
   **Sampling multiplies draws, not diversity** — the model repeats the same too-slow approach. This
-  is the most execution-bound problem in the band, and the failure is systematic, not stochastic.
+  was described as the most execution-bound problem in the band — **incorrect**: that inference came
+  from long *wall-clock*, which is generation plus repair. No attempt on it has ever hit an execution
+  timeout (`CORRECTION-d15p2-is-not-a-wall.md`).
 
 **The next lever is therefore diversity, not more samples**: temperature, prompt variants, model
 mixing. That is a strategy question, not a compute question.

@@ -52,13 +52,17 @@ smallest and is not a coding model at all. (`m2max-qwen38-27b-d4-7.md` and sibli
 
 **3. There is a hard limit, and it is not fixed by more attempts.**
 
-**Two problems, one in each year, resisted every configuration** — 2024 d15 p2 (0/8) and 2025 d9 p2
-(0/7), across one attempt, three attempts, with and without feedback. The model repeats *the same
-failing approach* each time. **Sampling multiplies draws, not diversity:** where failure is
-systematic rather than random, extra attempts re-roll the same die.
+**One problem has resisted every configuration**: 2025 d9 p2, **0 of 10** problem-trials across one
+attempt, three attempts, with and without feedback. The model repeats *the same failing approach*
+each time. **Sampling multiplies draws, not diversity:** where failure is systematic rather than
+random, extra attempts re-roll the same die.
+
+*(Corrected 2026-08-20: this originally claimed two such problems. 2024 d15 p2 is **not** a wall — it
+has solved 2 of 16 times, a ~12% problem. See `dev/progress/CORRECTION-d15p2-is-not-a-wall.md`. The
+claim now rests on one problem, not two.)*
 
 **And we tested the obvious fix — it failed.** Raising sampling temperature from 0.7 to 1.0 moved
-neither problem (still 0/11 and 0/10) and slightly *hurt* a problem that already worked
+neither problem and slightly *hurt* a problem that already worked
 (`temperature-diversity-negative.md`). Parameter-level variety perturbs token choice *within* an
 approach; what these failures appear to need is **strategy-level** variety — explicitly asking for a
 different algorithm, or a different model. That remains untested. Both problems are named,
@@ -429,8 +433,9 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
   sampling and repair contributing separately and superadditively.
 - **Generation beats size**: a 17 GB 2026 generalist swept a set where a 19 GB 2024 specialist
   managed half, scoring below what 12B models achieved on half the RAM.
-- **A named limit**: where a model fails *systematically*, extra attempts do nothing (0/8 across
-  every configuration tried). Diversity, not volume, is the lever there.
+- **A named limit**: where a model fails *systematically*, extra attempts do nothing — 2025 d9 p2 is
+  0/10 across every configuration tried. Diversity, not volume, is the lever there. (One problem, not
+  the two originally claimed: `dev/progress/CORRECTION-d15p2-is-not-a-wall.md`.)
 - Earlier "efficiency ceiling" and "capability" claims have been **corrected in place** as later runs
   disproved them; the corrections are part of the record, not edits over it.
 
