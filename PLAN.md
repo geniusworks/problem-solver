@@ -304,10 +304,15 @@ successful replication attempt, not a confirmation at scale. More frontier probl
 
 ### 2. Draw diversity — temperature RULED OUT; strategy-level diversity is the live lever
 
-**Two problems resist everything:** 2024 d15 p2 (**0/11**) and 2025 d9 p2 (**0/10**), across
-`samples_per_model` ∈ {1,3}, `max_repair_iterations` ∈ {0,2}, `temperature` ∈ {0.7,1.0}. One per
-year, never solved once — the project's most reproducible negative results, and the benchmark any
-decorrelation claim must clear.
+**One problem resists everything:** 2025 d9 p2, **0 of 10** problem-trials across
+`samples_per_model` ∈ {1,3}, `max_repair_iterations` ∈ {0,2}, `temperature` ∈ {0.7,1.0} — the
+project's most reproducible negative result, and the benchmark any decorrelation claim must clear.
+
+> **Corrected 2026-08-20.** This said *two* problems, adding 2024 d15 p2 at "0/11, never solved
+> once". That was wrong: **d15 p2 has solved 2 of 16 times (~12%)** — the tally summed only the
+> arms where it failed. It is a very-low-rate "sometimes", not a wall, and it is in the ledger.
+> Neither problem has **ever timed out** (0 timeout attempts on record); they fail by wrong answers
+> and crashes. See `dev/progress/CORRECTION-d15p2-is-not-a-wall.md`.
 
 **Tried and failed (2026-08-20):** raising temperature 0.7 → 1.0 at k3 moved neither wall and
 slightly hurt a working problem (6/12 → 5/12, `temperature-diversity-negative.md`). The
@@ -323,16 +328,33 @@ The distinction to carry forward:
 
 Ordered by cost:
 
-1. **Targeted efficiency feedback** (cheapest, most specific). Both walls look execution-bound. The
+**THE FILTER (adopted 2026-08-21, after five falsified hypotheses):** *interventions that add no new
+information do not help, however well-targeted the wording.* Before running anything, ask **what does
+the model learn that it did not already know?** If the answer is "nothing", expect a null. Sampling
+works because it adds independent draws; repair works because it adds a traceback. Temperature added
+variance without information and failed; reworded feedback added exhortation without information and
+failed (`targeted-feedback-negative.md`).
+
+1. **Targeted feedback — BUILT AND TESTED; both variants are NULL (2026-08-20/21).** Implemented and gated
+   behind `SolverConfig.efficiency_feedback`, with tests, and it fires only on timeouts — but
+   **neither target problem ever times out**, so it is inert on them and its A/B was stopped before
+   it could produce a false negative. The "execution-bound" premise came from long *wall-clock*,
+   which is generation plus repair, not execution. Re-aim it at the failure modes that actually
+   occur (wrong answers, crashes) or find problems that genuinely time out. The
    repair prompt currently says only that the answer was not accepted; it should say *"this timed
    out on the real input — propose an asymptotically faster approach"*. This is a prompt change
    aimed exactly at the observed failure, testable against two known-resistant problems.
-2. **Prompt variants across draws** — draw 1 unconstrained, draw 2 "optimise for time complexity
-   first", draw 3 "propose three approaches and implement the fastest". Needs a `prompt_variant`
-   wired into generation; it is the direct implementation of strategy-level diversity.
-3. **Cross-generation model mixing** — the M1's ensemble failed with two *same-tier, same-generation*
-   models. Mixing `qwen3.8:27b` with `qwen3-coder:30b` (different architecture *and* generation) is
-   untested and is the arm-3 ("decorrelated portfolios") claim from the README thesis.
+2. **Prompt variants across draws — DEMOTED by the filter.** Rewording without new information is
+   the same class as the null above. Cheap, but now a low prior; run it only if the promoted options
+   are blocked.
+3. **Cross-generation model mixing — PROMOTED.** A second model's differing answer *is* new
+   information. The M1's ensemble failed with two *same-tier, same-generation* models; mixing
+   `qwen3.8:27b` with `qwen3-coder:30b` (different architecture *and* generation) is untested, and is
+   arm 3 ("decorrelated portfolios") of the README thesis.
+4. **Feed back a failing case the model has not seen — PROMOTED, best fit for the filter.** Both
+   target problems pass the worked example and fail the real input, so the distinguishing case is
+   precisely what the model never sees. Constructing one without leaking the expected answer is the
+   hard part and the interesting design problem.
 
 **Caution learned the hard way:** four mechanistic hypotheses in this line of work have now been
 falsified by the next run. Treat each of the above as a *measurement to make*, not a fix to apply —

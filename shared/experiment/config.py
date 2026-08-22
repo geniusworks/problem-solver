@@ -69,6 +69,27 @@ class SolverConfig:
 
     # --- repair and fallback --------------------------------------------
     max_repair_iterations: int = 2
+
+    # Failure-specific repair feedback. The default repair message is the same
+    # regardless of HOW a candidate failed -- "the answer is still not
+    # accepted" -- which leaves the model free to resubmit a near-identical
+    # attempt, and it does. With this on the message is specialised per failure
+    # mode:
+    #   timeout      -> this is a PERFORMANCE problem; find a faster algorithm
+    #   wrong answer -> echo what the code actually produced, and push toward
+    #                   re-reading the spec rather than cosmetic tweaks
+    # Crashes are left alone: the traceback is already specific feedback.
+    #
+    # Named for the failure modes it addresses rather than for one of them --
+    # an earlier version covered only timeouts and was aimed at two benchmark
+    # problems that turn out never to time out
+    # (dev/progress/CORRECTION-d15p2-is-not-a-wall.md).
+    #
+    # Gated by config rather than applied unconditionally so it can be A/B'd:
+    # a behaviour change that did not enter fingerprint() would make two
+    # different experiments share a hash -- exactly the hollow-A/B trap
+    # Milestone B removed. Default False = the behaviour every prior run had.
+    targeted_feedback: bool = False
     enable_fallback_models: bool = True
     enable_collaborative_improvement: bool = False
 

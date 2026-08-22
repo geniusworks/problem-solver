@@ -55,7 +55,10 @@ controls are what turn a number into a mechanism.
 ## The other half: a class of failure that sampling cannot touch
 
 **2025 d9 p2 is now 0/7** — every configuration, k=1 and k=3, four hours of compute in this run
-alone (one attempt ran 4,221 s, the longest problem-trial recorded). It joins **2024 d15 p2 (0/8)**
+alone (one attempt ran 4,221 s, the longest problem-trial recorded). It was originally paired with
+**2024 d15 p2** as a second member of this class — **that was wrong**: d15 p2 has solved 2 of 16
+times (~12%), so the class currently has **one confirmed member**
+(`CORRECTION-d15p2-is-not-a-wall.md`). The remainder of this section read:
 as a second confirmed member of a class that more draws simply do not reach.
 
 Two years, two such problems. This is not an anomaly to be explained away — it is a **standing
