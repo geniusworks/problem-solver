@@ -369,8 +369,13 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
 
 ### 4. Instrument gaps — logged, unfixed, each one small
 
-- **Token accounting is stale across repair attempts** (`last_token_usage` reused): attempts report
-  identical `(in, out)` counts while returning different answers. Blocks #3.
+- ~~**Token accounting is stale across repair attempts**~~ — ✅ **FIXED 2026-08-22**
+  (`token-accounting-fix.md`). `improve_solution` never updated `last_token_usage`, so repair
+  attempts reported the previous generation's counts. Fixing it surfaced a **second bug in the same
+  call**: repair ran at Ollama's **model default temperature**, not the configured one — which means
+  the temperature experiment's manipulation reached only ~1/3 of generations (corrected in that
+  doc). Historical result JSONs carry duplicated repair token counts and should be treated as lower
+  bounds on repair cost.
 - **Solver crashes are scored as model failures.** An exception out of the solve path lands in the
   same bucket as "the model could not do it" — which is how a `KeyError` corrupted results for eight
   months undetected (`strategy-keyerror-d8.md`). Wants a distinct `HARNESS_ERROR` outcome.
@@ -406,8 +411,8 @@ test, generality) are **all answered**. F stays deferred until there is an unsol
 What remains is the endgame (adopted at the 2026-08-22 review): the project has tested arm 1 of its
 own thesis and neither of the other two. **Three steps finish every arm, then one step writes it up:**
 
-1. **Fix token accounting** (instrument, small — item 4 above). Repair attempts currently report
-   duplicated token counts, so no cost claim is honest until this lands. Unblocks step 3.
+1. ~~**Fix token accounting**~~ — ✅ **DONE 2026-08-22** (`token-accounting-fix.md`). Also fixed a
+   second bug it exposed: repair ignored the configured temperature. Step 3 is unblocked.
 2. **Cross-generation model mixing A/B** (thesis arm 3, promoted by the information filter, runnable
    today: `qwen3.8:27b` + `qwen3-coder:30b`, both resident, measured to fail differently).
 3. **The economic A/B** (thesis arm 2): MoE at k=5 vs generalist at k=1 at matched cost — the

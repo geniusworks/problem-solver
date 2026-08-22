@@ -7,6 +7,26 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-08-21)
 
+### ✅ ENDGAME STEP 1 DONE: token accounting fixed (+ a second bug it exposed) (2026-08-22)
+
+`improve_solution` never updated `last_token_usage`, so every repair attempt reported the *previous*
+generation's counts — the symptom being three attempts logging identical `(4283, 876)` while
+returning different answers (`dev/progress/token-accounting-fix.md`). Arm 2 of the thesis is an
+economic claim measured in tokens, so **step 3 of the endgame was correctly blocked on this**.
+
+**A second bug in the same call:** repair used `generate(prompt)` with **no temperature**, so every
+repair generation ran at Ollama's model default rather than the configured value. Consequence for a
+committed result: at k3 with repair=2 a failing problem makes up to 9 generations (3 initial + 6
+repair), so **the temperature experiment's manipulation reached only ~1/3 of them**. The comparison
+stays valid (both arms defaulted in repair) but the treatment was far weaker than intended; the
+temperature doc now states the honest version — *raising the temperature of the initial draws only
+produced no benefit*.
+
+3 tests. **Historical caveat:** result JSONs written before this carry duplicated repair token
+counts; treat earlier token totals as lower bounds on repair cost. Wall-clock unaffected.
+
+**Next:** endgame step 2 — cross-generation model-mixing A/B (thesis arm 3).
+
 ### 🧭 REVIEW CHECK-IN: statistics computed, endgame adopted (2026-08-22)
 
 A deliberate pause to audit the project against its own objectives. Found and fixed README/checkpoint
