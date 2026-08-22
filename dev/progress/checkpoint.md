@@ -5,7 +5,24 @@ The **live status snapshot** — where the project actually stands right now. Th
 `dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
 file current as work lands so it never goes stale.
 
-## Current status (2026-08-17)
+## Current status (2026-08-21)
+
+### 🧭 REVIEW CHECK-IN: statistics computed, endgame adopted (2026-08-22)
+
+A deliberate pause to audit the project against its own objectives. Found and fixed README/checkpoint
+drift (the replication was described in one paragraph and denied in another), and computed the
+headline's significance for the first time, from the artifacts:
+
+- **2024 alone (10/24 vs 9/12): one-sided Fisher exact p ≈ 0.061 — marginal.**
+- **2025 replication (2/8 vs 6/6): p ≈ 0.009. Combined: p ≈ 0.005.**
+- The honest sentence, now in README: *neither year alone is decisive; together they are.*
+
+Thesis scorecard: **arm 1 (sampling) measured + replicated; arm 2 (economics) unmeasured, blocked on
+the token-accounting bug; arm 3 (portfolios) untested at the frontier.**
+
+**Next (the endgame, PLAN.md "Sequencing"):** 1) token-accounting fix → 2) cross-generation
+model-mixing A/B (arm 3) → 3) economic A/B (arm 2) → 4) **`RESULTS.md`**, the consolidated findings
+report and the deliverable for going public.
 
 ### ❌ TARGETED FEEDBACK: no gain — but the five nulls now form a rule (2026-08-21)
 

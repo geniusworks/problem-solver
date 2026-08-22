@@ -63,10 +63,13 @@ claim now rests on one problem, not two.)*
 
 **And we tested the obvious fix — it failed.** Raising sampling temperature from 0.7 to 1.0 moved
 neither problem and slightly *hurt* a problem that already worked
-(`temperature-diversity-negative.md`). Parameter-level variety perturbs token choice *within* an
-approach; what these failures appear to need is **strategy-level** variety — explicitly asking for a
-different algorithm, or a different model. That remains untested. Both problems are named,
-reproducible benchmarks for anything claiming to decorrelate draws.
+(`temperature-diversity-negative.md`). **Reworded repair feedback was tested next — also null**
+(`targeted-feedback-negative.md`), and the five falsified hypotheses now form a rule: **interventions
+that add no new information do not help, however well-targeted the wording.** What has worked adds
+real information — sampling contributes independent draws, repair contributes a traceback. The
+surviving candidates under that filter supply something genuinely new: a second model's differing
+answer (untested), or a failing case the model has not seen (design stage). **2025 d9 p2 (0/13)** is
+the standing benchmark any such claim must move.
 
 **4. Measurement bugs flatter no one, and finding them is half the work.**
 
@@ -84,10 +87,11 @@ Tested out of sample on **AoC 2025 d1–12** — never measured, 23 scoreable pa
 recurs** (83% vs 55%, six of seven misses are Part 2s), and the same failure classes reappear. The
 ledger stands at **43 verified solutions across two years**. (`generality-2025-scan.md`, `band-2025-classification.md`)
 
-**Scope, stated plainly:** these findings rest on one strong model and three trials per cell. The
-*structural* claims now have out-of-sample support; the *sampling* result (42% → 75%) has been
-measured on 2024 only, and testing it on 2025 is the next step. Rates are not comparable across the
-two years — the problem ranges are not difficulty-matched.
+**Scope, stated plainly:** these findings rest on one strong model and three trials per cell, and
+the statistics deserve one honest sentence: the 2024 headline **alone is marginal** (one-sided
+Fisher exact p ≈ 0.06 on the aggregate); it is the **out-of-sample replication** (2025: 2/8 → 6/6,
+p ≈ 0.009; combined p ≈ 0.005) that makes the sampling claim solid. Rates are not comparable across
+the two years — the problem ranges are not difficulty-matched.
 
 ## What it is
 
@@ -434,7 +438,7 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
 - **Generation beats size**: a 17 GB 2026 generalist swept a set where a 19 GB 2024 specialist
   managed half, scoring below what 12B models achieved on half the RAM.
 - **A named limit**: where a model fails *systematically*, extra attempts do nothing — 2025 d9 p2 is
-  0/10 across every configuration tried. Diversity, not volume, is the lever there. (One problem, not
+  0/13 across every configuration tried. Diversity, not volume, is the lever there. (One problem, not
   the two originally claimed: `dev/progress/CORRECTION-d15p2-is-not-a-wall.md`.)
 - Earlier "efficiency ceiling" and "capability" claims have been **corrected in place** as later runs
   disproved them; the corrections are part of the record, not edits over it.
