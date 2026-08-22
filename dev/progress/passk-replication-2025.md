@@ -42,6 +42,13 @@ controls are what turn a number into a mechanism.
 | 2024 band (5 problems) | 42% | 75% |
 | **2025 band (2 problems + wall + control)** | **25–33%** | **100%** |
 
+## Statistical note (added 2026-08-22)
+
+Recomputed from the artifacts: the 2024 aggregate alone (10/24 vs 9/12) is **marginal** — one-sided
+Fisher exact p ≈ 0.061. This replication (2/8 vs 6/6 on the "sometimes" problems) is p ≈ 0.009, and
+the combined evidence (Fisher's method) is **p ≈ 0.005**. The honest statement: **neither year alone
+is decisive; together they are** — which is precisely what a replication is for.
+
 ## Limits — unchanged, and they matter
 
 - **Two "sometimes" problems, three trials each.** This is a **replication attempt that succeeded**,

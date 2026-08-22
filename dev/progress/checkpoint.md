@@ -5,7 +5,7 @@ The **live status snapshot** — where the project actually stands right now. Th
 `dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
 file current as work lands so it never goes stale.
 
-## Current status (2026-08-17)
+## Current status (2026-08-21)
 
 ### ❌ TARGETED FEEDBACK: no gain — but the five nulls now form a rule (2026-08-21)
 
