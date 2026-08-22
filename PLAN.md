@@ -397,12 +397,24 @@ findings), `dev/docs/architecture.md` (design), `dev/progress/checkpoint.md` (li
 `dev/progress/*.md` (the committed baselines, A/Bs, and the capability frontier), and the
 `dev/diagrams/*.mmd` sequence diagrams. Keep them in step as future work lands.
 
-## Sequencing
+## Sequencing — the path to a reportable result
 
 A (measure) → B (sound instrument) → C (consolidate) → D (robustness) → E (orchestration) →
-F (solver). **A–E are done**, and the two maintainer-gated blockers that followed them — a stronger
-model, and the pass@k thesis test — are **both now answered** (see "Answered" above).
+F (solver). **A–E are done**; the maintainer-gated blockers that followed (stronger model, pass@k
+test, generality) are **all answered**. F stays deferred until there is an unsolved target.
 
-The work from here is no longer a milestone ladder but a research loop: **generalise the findings to
-a second year (#1), attack the failure mode the data exposed (#2), then settle the cost claim (#3)
-once the accounting supports it (#4).** F stays deferred until there is an unsolved target.
+What remains is the endgame (adopted at the 2026-08-22 review): the project has tested arm 1 of its
+own thesis and neither of the other two. **Three steps finish every arm, then one step writes it up:**
+
+1. **Fix token accounting** (instrument, small — item 4 above). Repair attempts currently report
+   duplicated token counts, so no cost claim is honest until this lands. Unblocks step 3.
+2. **Cross-generation model mixing A/B** (thesis arm 3, promoted by the information filter, runnable
+   today: `qwen3.8:27b` + `qwen3-coder:30b`, both resident, measured to fail differently).
+3. **The economic A/B** (thesis arm 2): MoE at k=5 vs generalist at k=1 at matched cost — the
+   many-cheap-draws-vs-one-expensive-pass question the README has argued and never measured.
+4. **Write `RESULTS.md`** — the consolidated, self-contained findings report: the three arms as
+   measured (including nulls), the statistics stated honestly (2024 alone is marginal at p ≈ 0.061;
+   with the 2025 replication, combined p ≈ 0.005), the corrections, and the information rule. The
+   28 finding docs stay as the audit trail; `RESULTS.md` is the artifact a reader actually reads,
+   and the deliverable for making the repo public. Written **last**, so it is complete rather than
+   serially patched.
