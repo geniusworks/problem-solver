@@ -413,10 +413,19 @@ own thesis and neither of the other two. **Three steps finish every arm, then on
 
 1. ~~**Fix token accounting**~~ — ✅ **DONE 2026-08-22** (`token-accounting-fix.md`). Also fixed a
    second bug it exposed: repair ignored the configured temperature. Step 3 is unblocked.
-2. **Cross-generation model mixing A/B** (thesis arm 3, promoted by the information filter, runnable
-   today: `qwen3.8:27b` + `qwen3-coder:30b`, both resident, measured to fail differently).
-3. **The economic A/B** (thesis arm 2): MoE at k=5 vs generalist at k=1 at matched cost — the
+2. ~~**Cross-generation model mixing A/B**~~ — ✅ **RESOLVED WITHOUT THE RUN, 2026-08-22**
+   (`ensemble-precheck-negative.md`). A cheap pre-check profiled `qwen3-coder:30b` alone on the
+   targets first: its solve set is a **strict subset** of `qwen3.8:27b`'s — it solves nothing the
+   generalist cannot and *fails* d9 p1, which the generalist handles 3/3. Nothing to pool, so the
+   ensemble was **not run** (1h45m spent instead of ~9h). Arm 3 stays **untested for want of a
+   suitable pair**; the entry criterion is now explicit: *measure each member individually on the
+   targets first, and only run an ensemble if one solves something the others reliably miss.*
+3. **The economic A/B** (thesis arm 2) — **now the only remaining experiment.** The
    many-cheap-draws-vs-one-expensive-pass question the README has argued and never measured.
+   *Design note from step 2:* the MoE is ~3× faster but strictly weaker on hard problems, so the
+   fair framing is **cost per verified solution on a set where both models can score** (d4–7, where
+   the MoE gets 6/8 and the generalist 8/8) — not on the frontier band, where the MoE scores 3/12
+   and any cost ratio is dominated by its failures.
 4. **Write `RESULTS.md`** — the consolidated, self-contained findings report: the three arms as
    measured (including nulls), the statistics stated honestly (2024 alone is marginal at p ≈ 0.061;
    with the 2025 replication, combined p ≈ 0.005), the corrections, and the information rule. The

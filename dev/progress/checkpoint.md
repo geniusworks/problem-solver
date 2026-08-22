@@ -7,6 +7,31 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-08-21)
 
+### ✅ ENDGAME STEP 2 RESOLVED — without running the experiment (2026-08-22)
+
+A pre-check profiled `qwen3-coder:30b` alone on the ensemble targets before paying for the ensemble
+(`dev/progress/ensemble-precheck-negative.md`; 1h45m, 3/12).
+
+**Its solve set is a strict subset of `qwen3.8:27b`'s:** solves d15 p1 (which the generalist also
+solves), fails d15 p2 and d9 p2 (which the generalist also fails), and **fails d9 p1, which the
+generalist solves 3/3.** Nothing to pool → the model-mixing A/B was **not run**. ~9h saved by
+spending 1h45m.
+
+**Why the pre-check existed:** the M1 ensemble failed for exactly this reason, discovered *after* the
+run. Applying that lesson prospectively is the whole value. Entry criterion now explicit in PLAN:
+*measure each member individually on the targets first; only run an ensemble if one solves something
+the others reliably miss.*
+
+**Arm 3 status:** two failed attempts (M1 same-tier pair, this cross-generation pair), **no
+successful demonstration**, and no refutation either — it is **untested for want of a suitable
+model pair**.
+
+**Bonus:** sharpens "generation beats size" from *a gap* (6/8 vs 8/8 on d4–7) to **strict domination**
+on hard problems.
+
+**Next:** endgame step 3 — the economic A/B (arm 2), the last remaining experiment before
+`RESULTS.md`.
+
 ### ✅ ENDGAME STEP 1 DONE: token accounting fixed (+ a second bug it exposed) (2026-08-22)
 
 `improve_solution` never updated `last_token_usage`, so every repair attempt reported the *previous*
