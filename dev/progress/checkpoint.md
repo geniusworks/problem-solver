@@ -7,6 +7,24 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-08-21)
 
+### 🏁 ENDGAME COMPLETE: `RESULTS.md` written (2026-08-23)
+
+The consolidated findings report is at the repo root. All four endgame steps are done and **all three
+thesis arms are measured**. Every figure in it was **recomputed from the run artifacts**, not carried
+forward from prose — the discipline the d15 p2 tally error taught.
+
+Corpus it summarises: **57 runs · 1,475 attempts · ~121 GPU-hours · 16.3M tokens · 43 verified
+solutions across two AoC years, 0 wrong in the ledger.**
+
+It covers: the three arms (1 confirmed + replicated, 2 splits by cost type, 3 untested for want of a
+pair); the two unpredicted findings (generation beats size; the information rule from five nulls);
+the six instrument defects and six in-place corrections; scope and limits; and where the mechanism
+should and should not generalise.
+
+**The project has now tested every claim it set out to make.** Remaining work is optional: widen the
+replication, find a model pair with measured complementary failures (arm 3), or close the two logged
+scoring gaps (`HARNESS_ERROR`, error-shaped answers).
+
 ### ✅ ENDGAME STEP 3 DONE — arm 2 measured; ALL THREE THESIS ARMS COMPLETE (2026-08-23)
 
 Economic A/B at matched wall-clock (`dev/progress/economic-arm-moe-vs-generalist.md`; both arms run

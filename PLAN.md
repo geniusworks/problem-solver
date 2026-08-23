@@ -426,7 +426,7 @@ own thesis and neither of the other two. **Three steps finish every arm, then on
    does not reach the ceiling (7/8 vs 8/8). True for local GPU inference, false for token-metered
    APIs, and bounded by the cheap model's ceiling. Volume bought the stochastic failure (d5 p1,
    ~25%/draw parsing) and not the systematic one (d6 p2, 6/6 identical `TypeError`s).
-4. **Write `RESULTS.md` — ALL THREE ARMS ARE NOW MEASURED; this is the only step left.** — the consolidated, self-contained findings report: the three arms as
+4. ~~**Write `RESULTS.md`**~~ — ✅ **DONE 2026-08-23.** — the consolidated, self-contained findings report: the three arms as
    measured (including nulls), the statistics stated honestly (2024 alone is marginal at p ≈ 0.061;
    with the 2025 replication, combined p ≈ 0.005), the corrections, and the information rule. The
    28 finding docs stay as the audit trail; `RESULTS.md` is the artifact a reader actually reads,

@@ -10,6 +10,11 @@ It began as an unmeasurable pipeline. The through-line since has been to **make 
 measured** — including correcting our own claims when later runs disprove them, which has happened
 repeatedly and is recorded in place.
 
+> **📊 [RESULTS.md](RESULTS.md) — the consolidated findings report.** All three arms of the thesis
+> as measured, the statistics stated honestly, the five falsified hypotheses and the rule they
+> produced, and the instrument defects found along the way. Start there if you want the science
+> rather than the codebase.
+
 ## Headline results
 
 All measured on local models against an independent oracle; every figure links to a committed
