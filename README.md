@@ -80,7 +80,22 @@ measurement store. All are fixed, with regression tests; the claims they corrupt
 place rather than quietly restated. In a project whose premise is *measured, not asserted*, a broken
 instrument is the most expensive kind of bug.
 
-**5. The structural findings generalise to a second year.**
+**5. Cheap draws beat one expensive pass — on time, not on tokens.**
+
+At a matched wall-clock budget, a fast weak model taking many draws vs a slow strong model taking few:
+
+| | solved | **s / verified solution** | **tokens / verified solution** |
+|---|---|---|---|
+| `qwen3.8:27b` k=3 (slow, strong) | **8/8** | 1,389 s | **38,460** |
+| `qwen3-coder:30b` k=12 (fast, weak) | 7/8 | **891 s** (0.64×) | 128,730 (3.35×) |
+
+**The answer depends on which cost you pay:** for local GPU inference, where cost is *time*, many
+cheap draws win by 36%. For a token-metered API they lose by 3.35×. And volume does not close the
+capability gap — 7/8 vs 8/8. Which problem it bought is the now-familiar split: a ~25%-per-draw
+*parsing* failure fell to four times the draws; a *systematic* one (6/6 identical `TypeError`s) did
+not. (`economic-arm-moe-vs-generalist.md`)
+
+**6. The structural findings generalise to a second year.**
 
 Tested out of sample on **AoC 2025 d1–12** — never measured, 23 scoreable parts — the model scored
 **16/23 (70%)**, and the structure carried over: a real frontier exists, the **Part 1/Part 2 cliff
@@ -213,6 +228,19 @@ an answer separate from our solve rates, honest about what is argued versus prov
 
 **What we've shown** (evidence): sampling + consensus adds correctness — self-consistency **39% →
 61%**, 3 of 6 problems made reliable; the no-oracle selector picked correct **10/11**.
+
+**Arm 2 is now measured, and it splits.** *Many cheap draws beat one expensive pass* is **true on
+wall-clock** (0.64× per verified solution) and **false on tokens** (3.35×), and volume does not reach
+the stronger model's ceiling (7/8 vs 8/8). The useful form of the claim: *cheap draws win when the
+binding cost is time, not tokens, and only up to the cheap model's ceiling.*
+(`economic-arm-moe-vs-generalist.md`)
+
+**Arm 3 remains untested — for want of a suitable model pair, not for want of trying.** Two attempts
+have failed at the entry condition rather than at the mechanism: the M1's same-tier pair, and a
+cross-generation pair whose second model turned out to solve a **strict subset** of the first's
+problems (`ensemble-precheck-negative.md`). An ensemble can only pool what its members
+*differentially* solve; neither pair had that. The entry criterion is now explicit — measure each
+member individually on the targets first.
 
 **A measured caution on arm 3.** The one ensemble we ran on 16 GB did *not* pay off:
 `gemma4:12b`+`qwen3.5:9b` — two same-tier models with *apparently* complementary solves — stayed at

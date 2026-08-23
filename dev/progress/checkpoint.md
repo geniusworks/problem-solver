@@ -7,6 +7,36 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-08-21)
 
+### ✅ ENDGAME STEP 3 DONE — arm 2 measured; ALL THREE THESIS ARMS COMPLETE (2026-08-23)
+
+Economic A/B at matched wall-clock (`dev/progress/economic-arm-moe-vs-generalist.md`; both arms run
+fresh post-token-fix, 0 wrong/unverified/overfit).
+
+| config | solved | s/solve | tokens/solve |
+|---|---|---|---|
+| `qwen3.8:27b` k=3 | **8/8** | 1,389 s | **38,460** |
+| `qwen3-coder:30b` k=12 | 7/8 | **891 s (0.64×)** | 128,730 (3.35×) |
+
+**Arm 2 splits by which cost you pay:** cheap draws win on **time** (36% cheaper per solution), lose
+on **tokens** (3.35×), and do not reach the ceiling. *True for local GPU inference, false for
+token-metered APIs, bounded by the cheap model's ceiling* — sharper than the original claim.
+
+**Pre-registered prediction held:** volume bought d5 p1 (~25%/draw parsing failure — stochastic) and
+did not buy d6 p2 (6/6 identical `TypeError`s — systematic). The pass@k finding and the five-null
+rule agreeing on one problem.
+
+**Ordering mattered:** the MoE arm is the repair-heavy one, so its token total — the column the
+negative half of the conclusion rests on — would have been understated had this run before step 1's
+token fix. Fixing the instrument first produced the *less* flattering and correct answer.
+
+**THESIS SCORECARD — all three arms measured:**
+- **Arm 1 (pass@k):** ✅ 42% → 75%, decomposed, replicated out of sample (combined p ≈ 0.005)
+- **Arm 2 (economics):** ✅ splits — time yes, tokens no, ceiling-bounded
+- **Arm 3 (portfolios):** ⚠️ untested for want of a suitable model pair; two attempts failed at the
+  *entry condition* (no differential solves), not at the mechanism
+
+**Next: step 4 — `RESULTS.md`**, the consolidated findings report. The only remaining step.
+
 ### ✅ ENDGAME STEP 2 RESOLVED — without running the experiment (2026-08-22)
 
 A pre-check profiled `qwen3-coder:30b` alone on the ensemble targets before paying for the ensemble

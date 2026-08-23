@@ -420,13 +420,13 @@ own thesis and neither of the other two. **Three steps finish every arm, then on
    ensemble was **not run** (1h45m spent instead of ~9h). Arm 3 stays **untested for want of a
    suitable pair**; the entry criterion is now explicit: *measure each member individually on the
    targets first, and only run an ensemble if one solves something the others reliably miss.*
-3. **The economic A/B** (thesis arm 2) — **now the only remaining experiment.** The
-   many-cheap-draws-vs-one-expensive-pass question the README has argued and never measured.
-   *Design note from step 2:* the MoE is ~3× faster but strictly weaker on hard problems, so the
-   fair framing is **cost per verified solution on a set where both models can score** (d4–7, where
-   the MoE gets 6/8 and the generalist 8/8) — not on the frontier band, where the MoE scores 3/12
-   and any cost ratio is dominated by its failures.
-4. **Write `RESULTS.md`** — the consolidated, self-contained findings report: the three arms as
+3. ~~**The economic A/B**~~ — ✅ **DONE 2026-08-23** (`economic-arm-moe-vs-generalist.md`).
+   **Arm 2 splits by which cost you pay:** per verified solution the fast weak model at k=12 is
+   **0.64× the wall-clock** (891 s vs 1,389 s) but **3.35× the tokens** (128,730 vs 38,460), and it
+   does not reach the ceiling (7/8 vs 8/8). True for local GPU inference, false for token-metered
+   APIs, and bounded by the cheap model's ceiling. Volume bought the stochastic failure (d5 p1,
+   ~25%/draw parsing) and not the systematic one (d6 p2, 6/6 identical `TypeError`s).
+4. **Write `RESULTS.md` — ALL THREE ARMS ARE NOW MEASURED; this is the only step left.** — the consolidated, self-contained findings report: the three arms as
    measured (including nulls), the statistics stated honestly (2024 alone is marginal at p ≈ 0.061;
    with the 2025 replication, combined p ≈ 0.005), the corrections, and the information rule. The
    28 finding docs stay as the audit trail; `RESULTS.md` is the artifact a reader actually reads,
