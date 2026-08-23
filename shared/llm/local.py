@@ -558,5 +558,19 @@ Final Question: {problem.final_question}
 
 Provide ONLY the improved code between ```python and ``` markers. Do not include any explanations."""
 
-        response = await self.generate(prompt)
+        response = await self.generate(prompt, temperature=self.temperature)
+
+        # Record THIS call's tokens. Without this the attribute still holds the
+        # counts from the last generate_solution(), so every repair attempt
+        # reports identical (input, output) totals while returning a different
+        # answer -- which is how the bug was spotted: three attempts logging
+        # (4283, 876) apiece with answers '0', '0', '87471881'
+        # (dev/progress/ollama-0.32.14-runtime-check.md). Repair-heavy pass@k
+        # costs were understated by however many repair rounds ran.
+        in_tokens, out_tokens = self._tokens(response)
+        self.last_token_usage = {
+            "input_tokens": in_tokens,
+            "output_tokens": out_tokens,
+        }
+
         return self._extract_code(response.content) or solution  # Return original if no valid code found

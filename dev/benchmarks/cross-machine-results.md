@@ -57,6 +57,9 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m2max-32** | **qwen3.8:27b** | tk-off **samp1** | **2025** band d2/4/9/10/11 | 3 | 14/30 | 47% | `band-2025-classification.md` |
 | **m2max-32** | **qwen3.8:27b** | tk-off **samp3** | **2025** d9/d11 | 3 | **9/12** | **75%** | `passk-replication-2025.md` |
 | **m2max-32** | **qwen3.8:27b** | tk-off samp3 **temp 1.0** | 2024 d15 + 2025 d9 | 3 | 5/12 | 42% | `temperature-diversity-negative.md` |
+| **m2max-32** | qwen3-coder:30b | tk-off samp3 | 2024 d15 + 2025 d9 | 3 | 3/12 | 25% | `ensemble-precheck-negative.md` |
+| **m2max-32** | qwen3.8:27b | tk-off samp3 **(econ)** | d4–7 | 1 | **8/8** | 100% | `economic-arm-moe-vs-generalist.md` |
+| **m2max-32** | qwen3-coder:30b | tk-off **samp12 (econ)** | d4–7 | 1 | **7/8** | 88% | `economic-arm-moe-vs-generalist.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).

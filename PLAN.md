@@ -369,8 +369,13 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
 
 ### 4. Instrument gaps — logged, unfixed, each one small
 
-- **Token accounting is stale across repair attempts** (`last_token_usage` reused): attempts report
-  identical `(in, out)` counts while returning different answers. Blocks #3.
+- ~~**Token accounting is stale across repair attempts**~~ — ✅ **FIXED 2026-08-22**
+  (`token-accounting-fix.md`). `improve_solution` never updated `last_token_usage`, so repair
+  attempts reported the previous generation's counts. Fixing it surfaced a **second bug in the same
+  call**: repair ran at Ollama's **model default temperature**, not the configured one — which means
+  the temperature experiment's manipulation reached only ~1/3 of generations (corrected in that
+  doc). Historical result JSONs carry duplicated repair token counts and should be treated as lower
+  bounds on repair cost.
 - **Solver crashes are scored as model failures.** An exception out of the solve path lands in the
   same bucket as "the model could not do it" — which is how a `KeyError` corrupted results for eight
   months undetected (`strategy-keyerror-d8.md`). Wants a distinct `HARNESS_ERROR` outcome.
@@ -406,13 +411,22 @@ test, generality) are **all answered**. F stays deferred until there is an unsol
 What remains is the endgame (adopted at the 2026-08-22 review): the project has tested arm 1 of its
 own thesis and neither of the other two. **Three steps finish every arm, then one step writes it up:**
 
-1. **Fix token accounting** (instrument, small — item 4 above). Repair attempts currently report
-   duplicated token counts, so no cost claim is honest until this lands. Unblocks step 3.
-2. **Cross-generation model mixing A/B** (thesis arm 3, promoted by the information filter, runnable
-   today: `qwen3.8:27b` + `qwen3-coder:30b`, both resident, measured to fail differently).
-3. **The economic A/B** (thesis arm 2): MoE at k=5 vs generalist at k=1 at matched cost — the
-   many-cheap-draws-vs-one-expensive-pass question the README has argued and never measured.
-4. **Write `RESULTS.md`** — the consolidated, self-contained findings report: the three arms as
+1. ~~**Fix token accounting**~~ — ✅ **DONE 2026-08-22** (`token-accounting-fix.md`). Also fixed a
+   second bug it exposed: repair ignored the configured temperature. Step 3 is unblocked.
+2. ~~**Cross-generation model mixing A/B**~~ — ✅ **RESOLVED WITHOUT THE RUN, 2026-08-22**
+   (`ensemble-precheck-negative.md`). A cheap pre-check profiled `qwen3-coder:30b` alone on the
+   targets first: its solve set is a **strict subset** of `qwen3.8:27b`'s — it solves nothing the
+   generalist cannot and *fails* d9 p1, which the generalist handles 3/3. Nothing to pool, so the
+   ensemble was **not run** (1h45m spent instead of ~9h). Arm 3 stays **untested for want of a
+   suitable pair**; the entry criterion is now explicit: *measure each member individually on the
+   targets first, and only run an ensemble if one solves something the others reliably miss.*
+3. ~~**The economic A/B**~~ — ✅ **DONE 2026-08-23** (`economic-arm-moe-vs-generalist.md`).
+   **Arm 2 splits by which cost you pay:** per verified solution the fast weak model at k=12 is
+   **0.64× the wall-clock** (891 s vs 1,389 s) but **3.35× the tokens** (128,730 vs 38,460), and it
+   does not reach the ceiling (7/8 vs 8/8). True for local GPU inference, false for token-metered
+   APIs, and bounded by the cheap model's ceiling. Volume bought the stochastic failure (d5 p1,
+   ~25%/draw parsing) and not the systematic one (d6 p2, 6/6 identical `TypeError`s).
+4. **Write `RESULTS.md` — ALL THREE ARMS ARE NOW MEASURED; this is the only step left.** — the consolidated, self-contained findings report: the three arms as
    measured (including nulls), the statistics stated honestly (2024 alone is marginal at p ≈ 0.061;
    with the 2025 replication, combined p ≈ 0.005), the corrections, and the information rule. The
    28 finding docs stay as the audit trail; `RESULTS.md` is the artifact a reader actually reads,

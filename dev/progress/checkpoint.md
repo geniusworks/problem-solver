@@ -7,6 +7,81 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-08-21)
 
+### ✅ ENDGAME STEP 3 DONE — arm 2 measured; ALL THREE THESIS ARMS COMPLETE (2026-08-23)
+
+Economic A/B at matched wall-clock (`dev/progress/economic-arm-moe-vs-generalist.md`; both arms run
+fresh post-token-fix, 0 wrong/unverified/overfit).
+
+| config | solved | s/solve | tokens/solve |
+|---|---|---|---|
+| `qwen3.8:27b` k=3 | **8/8** | 1,389 s | **38,460** |
+| `qwen3-coder:30b` k=12 | 7/8 | **891 s (0.64×)** | 128,730 (3.35×) |
+
+**Arm 2 splits by which cost you pay:** cheap draws win on **time** (36% cheaper per solution), lose
+on **tokens** (3.35×), and do not reach the ceiling. *True for local GPU inference, false for
+token-metered APIs, bounded by the cheap model's ceiling* — sharper than the original claim.
+
+**Pre-registered prediction held:** volume bought d5 p1 (~25%/draw parsing failure — stochastic) and
+did not buy d6 p2 (6/6 identical `TypeError`s — systematic). The pass@k finding and the five-null
+rule agreeing on one problem.
+
+**Ordering mattered:** the MoE arm is the repair-heavy one, so its token total — the column the
+negative half of the conclusion rests on — would have been understated had this run before step 1's
+token fix. Fixing the instrument first produced the *less* flattering and correct answer.
+
+**THESIS SCORECARD — all three arms measured:**
+- **Arm 1 (pass@k):** ✅ 42% → 75%, decomposed, replicated out of sample (combined p ≈ 0.005)
+- **Arm 2 (economics):** ✅ splits — time yes, tokens no, ceiling-bounded
+- **Arm 3 (portfolios):** ⚠️ untested for want of a suitable model pair; two attempts failed at the
+  *entry condition* (no differential solves), not at the mechanism
+
+**Next: step 4 — `RESULTS.md`**, the consolidated findings report. The only remaining step.
+
+### ✅ ENDGAME STEP 2 RESOLVED — without running the experiment (2026-08-22)
+
+A pre-check profiled `qwen3-coder:30b` alone on the ensemble targets before paying for the ensemble
+(`dev/progress/ensemble-precheck-negative.md`; 1h45m, 3/12).
+
+**Its solve set is a strict subset of `qwen3.8:27b`'s:** solves d15 p1 (which the generalist also
+solves), fails d15 p2 and d9 p2 (which the generalist also fails), and **fails d9 p1, which the
+generalist solves 3/3.** Nothing to pool → the model-mixing A/B was **not run**. ~9h saved by
+spending 1h45m.
+
+**Why the pre-check existed:** the M1 ensemble failed for exactly this reason, discovered *after* the
+run. Applying that lesson prospectively is the whole value. Entry criterion now explicit in PLAN:
+*measure each member individually on the targets first; only run an ensemble if one solves something
+the others reliably miss.*
+
+**Arm 3 status:** two failed attempts (M1 same-tier pair, this cross-generation pair), **no
+successful demonstration**, and no refutation either — it is **untested for want of a suitable
+model pair**.
+
+**Bonus:** sharpens "generation beats size" from *a gap* (6/8 vs 8/8 on d4–7) to **strict domination**
+on hard problems.
+
+**Next:** endgame step 3 — the economic A/B (arm 2), the last remaining experiment before
+`RESULTS.md`.
+
+### ✅ ENDGAME STEP 1 DONE: token accounting fixed (+ a second bug it exposed) (2026-08-22)
+
+`improve_solution` never updated `last_token_usage`, so every repair attempt reported the *previous*
+generation's counts — the symptom being three attempts logging identical `(4283, 876)` while
+returning different answers (`dev/progress/token-accounting-fix.md`). Arm 2 of the thesis is an
+economic claim measured in tokens, so **step 3 of the endgame was correctly blocked on this**.
+
+**A second bug in the same call:** repair used `generate(prompt)` with **no temperature**, so every
+repair generation ran at Ollama's model default rather than the configured value. Consequence for a
+committed result: at k3 with repair=2 a failing problem makes up to 9 generations (3 initial + 6
+repair), so **the temperature experiment's manipulation reached only ~1/3 of them**. The comparison
+stays valid (both arms defaulted in repair) but the treatment was far weaker than intended; the
+temperature doc now states the honest version — *raising the temperature of the initial draws only
+produced no benefit*.
+
+3 tests. **Historical caveat:** result JSONs written before this carry duplicated repair token
+counts; treat earlier token totals as lower bounds on repair cost. Wall-clock unaffected.
+
+**Next:** endgame step 2 — cross-generation model-mixing A/B (thesis arm 3).
+
 ### 🧭 REVIEW CHECK-IN: statistics computed, endgame adopted (2026-08-22)
 
 A deliberate pause to audit the project against its own objectives. Found and fixed README/checkpoint
