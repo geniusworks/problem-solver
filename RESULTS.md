@@ -12,6 +12,11 @@ forward in prose.
 **Corpus:** 57 recorded experiment runs · 1,475 candidate attempts · ~121 GPU-hours · 16.3M tokens ·
 **43 oracle-verified solutions across two AoC years, 0 wrong in the ledger.**
 
+> **Read the contamination section before the capability numbers.** AoC 2024/2025 solutions predate
+> the models used here and are public, so the *capability* results are descriptive of this testbed
+> rather than clean measurements. The *orchestration* comparisons — which hold the model and problems
+> fixed and vary only the strategy — are largely unaffected.
+
 ---
 
 ## The thesis, and what happened to each arm
@@ -168,8 +173,49 @@ the artifacts.
 
 ---
 
+## Training-data contamination: the largest threat to validity
+
+**Advent of Code is a contaminated benchmark for any recent model, and this work does not control for
+it.** The problems used here are AoC **2024 and 2025**; the headline model, `qwen3.8:27b`, was
+released in **August 2026**. Community solutions to both years have been public on GitHub, Reddit and
+personal blogs since the events ran. It is likely that solutions to these problems — or close
+paraphrases — were in the model's training data.
+
+This is stated first among the limits because it is the objection a reader should raise, and because
+it affects the findings unevenly:
+
+**Weakened by contamination — the capability claims.**
+The 8/8 sweep of 2024 d4–7, the "generation beats size" ladder, and the 43-solution ledger all
+measure *something*, but they cannot distinguish "this model is more capable" from "this model has
+seen more of this benchmark". A newer model is both stronger *and* more likely to have ingested the
+2024/2025 corpus, and those two explanations are entangled here. **Treat the capability numbers as
+descriptive of this testbed, not as a capability measurement.**
+
+**Largely robust to contamination — the orchestration comparisons.**
+Arms 1 and 2 compare *configurations of the same model on the same problems*. Whatever the model
+memorised, it memorised identically in both arms, so contamination cannot explain a difference
+between k=1 and k=3, or between two sampling budgets. The mechanism findings — that sampling
+converts "sometimes" into "solved", that sampling and repair are superadditive, that volume buys
+stochastic but not systematic failures — do not depend on the problems being unseen.
+
+**A partial argument against pure memorisation, offered as weak evidence only.**
+The frontier band consists of problems the model solves *sometimes* — 17%, 25%, 33% per draw.
+Memorised solutions would be expected to reproduce reliably rather than intermittently, and the
+problems that resist every configuration (0/13) would be odd things to have memorised badly. This is
+suggestive, not dispositive: partial or paraphrased memorisation could plausibly produce exactly this
+intermittency.
+
+**What would actually settle it**, and none of it was done here:
+- Evaluate on problems published *after* the model's training cutoff — AoC 2026, in December, would
+  be genuinely unseen and is the cheapest clean test available to this project.
+- Or use a benchmark with a held-out or contamination-audited split.
+- Or compare per-problem solve rates against public solution availability, which would at least
+  detect a gross correlation.
+
 ## Scope and limits
 
+- **Training-data contamination is uncontrolled** (see the section above) — the single largest threat
+  to the capability claims, and the first thing a reader should discount.
 - **One strong model** for the headline results; three models compared for the generation finding.
 - **Three trials per cell** in most experiments; solve counts are directional, cost ratios are
   aggregates and more robust.
