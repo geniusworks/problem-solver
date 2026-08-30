@@ -382,6 +382,22 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
 - **Error-shaped answers are scored `wrong`.** Generated code that catches its own exception and
   prints `An error occurred: …` then `0` is recorded as a wrong answer, understating crashes.
 
+### 4b. Contamination — the cheapest clean test this project could run
+
+AoC 2024/2025 predate every model used here and their solutions are public, so the capability results
+cannot separate "more capable" from "has seen this benchmark"
+(`RESULTS.md`, contamination section). The orchestration comparisons are largely robust — same model,
+same problems, only the strategy varies — but the capability ladder is not.
+
+**AoC 2026 (December) would be genuinely unseen** for any model released before it, and the harness
+already handles a live year: fetch with `AOC_SESSION`, and problems with no cached answer score as
+`UNVERIFIED` rather than contaminating the totals (demonstrated on 2025 d12 p2). Re-running the
+capability ladder and one orchestration arm on unseen problems would convert the weakest claims here
+into clean ones, and is the single highest-value experiment left.
+
+This is also the natural moment to wire Milestone F: a live year is the first time there has been an
+unsolved answer to submit.
+
 ### 5. Submission phase (Milestone F) — still deferred
 
 `submission/` is real and tested in isolation but unwired, and both 2024 and 2025 are solved on the

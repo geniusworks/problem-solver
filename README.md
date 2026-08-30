@@ -55,6 +55,12 @@ Three models of the same class on the same problems, each **smaller** than the l
 The 2024 specialist scored *below* what 12B models had achieved on half the RAM. The winner is the
 smallest and is not a coding model at all. (`m2max-qwen38-27b-d4-7.md` and siblings)
 
+⚠️ **Discount this for contamination.** AoC 2024/2025 solutions are public and predate these models,
+so a newer model is both plausibly stronger *and* more likely to have trained on the benchmark —
+the two explanations are entangled and this work does not separate them. The *orchestration*
+findings (1 and 5) hold the model and problems fixed and are largely unaffected; the *capability*
+findings here are descriptive of this testbed. See [RESULTS.md](RESULTS.md#training-data-contamination-the-largest-threat-to-validity).
+
 **3. There is a hard limit, and it is not fixed by more attempts.**
 
 **One problem has resisted every configuration**: 2025 d9 p2, **0 of 10** problem-trials across one
