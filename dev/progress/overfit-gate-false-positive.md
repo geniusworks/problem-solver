@@ -68,8 +68,8 @@ had rejected one particular phrasing of a correct answer.
 The original offending source is **lost** — the scan did not use `--include-replay`, and the replay
 generated fresh code. The false positive was therefore proved by reconstruction (a hand-written
 general solution with a docstring example) rather than by inspecting the original. That is weaker
-evidence about *that specific draw*, and it is stated plainly here rather than glossed: what is
-certain is that the heuristic flags correct general code, and that d13 p1's answer was right.
+evidence about *that specific draw*: what is certain is that the heuristic flags correct general
+code, and that d13 p1's answer was right.
 
 **Operational note:** run frontier scans with `--include-replay` when a gate rejection is plausible.
 The source of a refused solution is exactly the artifact needed to audit the refusal, and it is the

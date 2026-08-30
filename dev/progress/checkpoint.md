@@ -274,7 +274,7 @@ already contains repair's contribution. **Experiment now running** separates sam
 `parallel3` (3 blind draws, repair=0) vs `sequential3` (1 draw + 2 feedback refinements) — equal
 generation budget, opposite topology.
 
-Limits held plainly: n=3 trials/problem; **k5 deliberately not run** (maintainer scope call) so
+Limits: n=3 trials/problem; **k5 deliberately not run** (maintainer scope call) so
 there is no dose-response curve or saturation point; one model, one temperature, four problems; and
 `p` itself rests on 6 draws each (pooling moved two estimates materially).
 

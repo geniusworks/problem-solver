@@ -5,7 +5,7 @@ Advent of Code problems; an exact oracle executes each candidate against the rea
 compares it to the accepted answer. Because that check is cheap and exact, orchestration strategies
 can be A/B'd for a real delta over repeat trials.
 
-**The finding, in plain terms.** Letting a local model make several attempts at a problem and fix its
+**The finding.** Letting a local model make several attempts at a problem and fix its
 own errors solved far more of them than a single attempt did — **42% → 75%** on the problems it finds
 hardest — and the same pattern held on a second year the models had never been tested on. Because the
 puzzles are public, the raw *"how capable is the model"* numbers carry a caveat (below); the *"does
@@ -56,7 +56,7 @@ problems went **25–33% → 100%**, while a problem that never solves stayed un
 that always solves was unaffected. Sampling rescued exactly the uncertain cases and nothing else,
 which is the signature of a mechanism rather than a rate artifact.
 
-**The statistics, stated plainly:**
+**The statistics:**
 
 | evidence | rates | one-sided Fisher exact |
 |---|---|---|
