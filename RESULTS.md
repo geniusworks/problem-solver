@@ -5,9 +5,14 @@ Advent of Code problems; an exact oracle executes each candidate against the rea
 compares it to the accepted answer. Because that check is cheap and exact, orchestration strategies
 can be A/B'd for a real delta over repeat trials.
 
+**The finding, in plain terms.** Letting a local model make several attempts at a problem and fix its
+own errors solved far more of them than a single attempt did — **42% → 75%** on the problems it finds
+hardest — and the same pattern held on a second year the models had never been tested on. Because the
+puzzles are public, the raw *"how capable is the model"* numbers carry a caveat (below); the *"does
+coordinating attempts help"* comparisons pit the model against itself and are unaffected.
+
 This document is the consolidated result. The 31 write-ups in [`dev/progress/`](dev/progress/) are
-the audit trail; every figure here was recomputed from the run artifacts rather than carried
-forward in prose.
+the audit trail; every figure here was recomputed from the run artifacts.
 
 **Corpus:** 57 recorded experiment runs · 1,475 candidate attempts · ~121 GPU-hours · 16.3M tokens ·
 **43 oracle-verified solutions across two AoC years, 0 wrong in the ledger.**
@@ -30,7 +35,7 @@ now been tested.
 | **2. economics** | many cheap draws + a verifier beat one expensive pass at equal cost | ⚖️ **splits by which cost you pay** |
 | **3. portfolios** | diverse models decorrelate error | ⚠️ **untested — no suitable model pair** |
 
-### Arm 1 — Sampling works at the frontier, and we can say why
+### Arm 1 — Sampling works at the frontier, and why it works is measured
 
 On problems the strongest model solves only *sometimes* — its own frontier, identified beforehand by
 an independent classification:
@@ -45,7 +50,7 @@ Sampling helps, repair helps, and **together they exceed the sum of their parts.
 case: a problem solved by **1 of 6** single attempts was solved by **3 of 3** runs combining both.
 
 **Replicated out of sample.** Repeated on AoC 2025 — never previously measured, and a *less*
-favourable venue (its frontier is mostly all-or-nothing rather than near-misses) — the two uncertain
+favorable venue (its frontier is mostly all-or-nothing rather than near-misses) — the two uncertain
 problems went **25–33% → 100%**, while a problem that never solves stayed unsolved and a problem
 that always solves was unaffected. Sampling rescued exactly the uncertain cases and nothing else,
 which is the signature of a mechanism rather than a rate artifact.
@@ -148,7 +153,7 @@ emitted identical `TypeError`s every time.
 
 ---
 
-## What the measurements cost us in credibility, and why that matters
+## What the measurements cost in credibility, and why that matters
 
 Roughly half the work behind these numbers was discovering that earlier measurements were wrong.
 Six instrument defects, each of which made results *look better or worse than reality*:
@@ -162,11 +167,10 @@ Six instrument defects, each of which made results *look better or worse than re
 | Repair attempts reported the previous generation's tokens | **cost understated exactly where repair is heaviest** |
 | Repair ignored the configured temperature | a temperature experiment reached only ~1/3 of generations |
 
-Each is fixed with regression tests. More importantly, **six recorded claims were corrected in
-place** rather than quietly restated — including one where a tally accumulated in prose ("0/8… 0/11…
-never solved once") turned out to have silently dropped the runs where the problem *did* solve. It
-had solved 2 of 16 times, and the contradiction was visible all along: the problem was in the
-verified ledger, which it could only be by solving.
+Each is fixed with regression tests. The sharpest lesson came from a tally accumulated in prose
+("0/8… 0/11… never solved once") that turned out to have silently dropped the runs where the problem
+*did* solve. It had solved 2 of 16 times, and the contradiction was visible all along: the problem was
+in the verified ledger, which it could only be by solving.
 
 The rule adopted: **a tally maintained by addition in prose is not a measurement.** Recompute from
 the artifacts.
@@ -193,16 +197,16 @@ descriptive of this testbed, not as a capability measurement.**
 
 **Largely robust to contamination — the orchestration comparisons.**
 Arms 1 and 2 compare *configurations of the same model on the same problems*. Whatever the model
-memorised, it memorised identically in both arms, so contamination cannot explain a difference
+memorized, it memorized identically in both arms, so contamination cannot explain a difference
 between k=1 and k=3, or between two sampling budgets. The mechanism findings — that sampling
 converts "sometimes" into "solved", that sampling and repair are superadditive, that volume buys
 stochastic but not systematic failures — do not depend on the problems being unseen.
 
-**A partial argument against pure memorisation, offered as weak evidence only.**
+**A partial argument against pure memorization, offered as weak evidence only.**
 The frontier band consists of problems the model solves *sometimes* — 17%, 25%, 33% per draw.
-Memorised solutions would be expected to reproduce reliably rather than intermittently, and the
-problems that resist every configuration (0/13) would be odd things to have memorised badly. This is
-suggestive, not dispositive: partial or paraphrased memorisation could plausibly produce exactly this
+Memorized solutions would be expected to reproduce reliably rather than intermittently, and the
+problems that resist every configuration (0/13) would be odd things to have memorized badly. This is
+suggestive, not dispositive: partial or paraphrased memorization could plausibly produce exactly this
 intermittency.
 
 **What would actually settle it**, and none of it was done here:
@@ -226,8 +230,13 @@ intermittency.
 - The pass@k arms ran with the repair loop at its default, so they measure *k samples + repair*
   rather than textbook pass@k over independent draws.
 - **k=5 was not run**, so there is no dose-response curve or saturation point.
+- **One hardware configuration.** Faster hardware would refine the capability numbers (larger models
+  fit, and execution-timeout "speed walls" move) and the wall-clock economics of arm 2, and would
+  unblock the still-missing tests — k=5 for a dose-response curve, an arm-3 model pair, and AoC 2026
+  as a clean contamination check. It is *not* expected to change the orchestration mechanism, which
+  holds the model and machine fixed.
 
-## Where this generalises, and where it doesn't
+## Where this generalizes, and where it doesn't
 
 The mechanism needs a **cheap, exact verifier**. Sampling and repair convert into correctness only
 because a check can collapse many guesses to one verified answer. Where that check exists — unit
@@ -238,8 +247,8 @@ is that none of this applies.
 ## Reproducing
 
 Every result lists its exact command in its `dev/progress/` write-up. Configurations are
-fingerprinted, so two runs with different behaviour cannot share a hash — the mechanism that caught
-a duplicate experiment before it wasted three hours, and that forced behaviour changes to be
+fingerprinted, so two runs with different behavior cannot share a hash — the mechanism that caught
+a duplicate experiment before it wasted three hours, and that forced behavior changes to be
 config-gated so they could be A/B'd at all.
 
 Puzzle inputs, problem text and scraped answers are **not** in this repository (see the README's

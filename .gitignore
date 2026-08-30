@@ -72,3 +72,6 @@ dev/experiments/
 
 # Runtime submission rate-limit history
 submission_history.json
+
+# local agent settings
+.claude/
