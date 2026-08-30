@@ -157,7 +157,7 @@ emitted identical `TypeError`s every time.
 ## What the measurements cost in credibility, and why that matters
 
 Roughly half the work behind these numbers was discovering that earlier measurements were wrong.
-Six instrument defects, each of which made results *look better or worse than reality*:
+Eight instrument defects, each of which made results *look better or worse than reality*:
 
 | defect | effect |
 |---|---|
@@ -167,6 +167,8 @@ Six instrument defects, each of which made results *look better or worse than re
 | Tests wrote into the live results database | a fake model with a perfect 79/79 record |
 | Repair attempts reported the previous generation's tokens | **cost understated exactly where repair is heaviest** |
 | Repair ignored the configured temperature | a temperature experiment reached only ~1/3 of generations |
+| `success_rate` recorded at generation time, `success=True` for anything that parsed | **the sole signal model ranking used measured "returned code", not "solved the problem"** |
+| `StrategyOptimizer` read a second, dead database (0 rows) | strategy effectiveness computed over no data at all |
 
 Each is fixed with regression tests. The sharpest lesson came from a tally accumulated in prose
 ("0/8… 0/11… never solved once") that turned out to have silently dropped the runs where the problem
@@ -231,6 +233,11 @@ intermittency.
 - The pass@k arms ran with the repair loop at its default, so they measure *k samples + repair*
   rather than textbook pass@k over independent draws.
 - **k=5 was not run**, so there is no dose-response curve or saturation point.
+- **Adaptive model selection is inert in these experiments.** The live solver ranks models for
+  each new problem by their oracle-verified success rate in the learning database, falling back to
+  the installed set on a cold start. Every experiment here pins its models with `--config`, so the
+  ranking has nothing to choose between and the headline comparisons are unaffected by it. The
+  strategy-weight half of the same mechanism is an unimplemented stub.
 - **One hardware configuration.** Faster hardware would refine the capability numbers (larger models
   fit, and execution-timeout "speed walls" move) and the wall-clock economics of arm 2, and would
   unblock the still-missing tests — k=5 for a dose-response curve, an arm-3 model pair, and AoC 2026

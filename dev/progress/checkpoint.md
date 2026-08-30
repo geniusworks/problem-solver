@@ -18,7 +18,7 @@ solutions across two AoC years, 0 wrong in the ledger.**
 
 It covers: the three arms (1 confirmed + replicated, 2 splits by cost type, 3 untested for want of a
 pair); the two unpredicted findings (generation beats size; the information rule from five nulls);
-the six instrument defects and six in-place corrections; scope and limits; and where the mechanism
+the eight instrument defects and six in-place corrections; scope and limits; and where the mechanism
 should and should not generalise.
 
 **The project has now tested every claim it set out to make.** Remaining work is optional: widen the
