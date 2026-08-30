@@ -12,7 +12,8 @@ puzzles are public, the raw *"how capable is the model"* numbers carry a caveat 
 coordinating attempts help"* comparisons pit the model against itself and are unaffected.
 
 This document is the consolidated result. The 31 write-ups in [`dev/progress/`](dev/progress/) are
-the audit trail; every figure here was recomputed from the run artifacts.
+the audit trail; every figure here was recomputed from the run artifacts. For the project itself —
+what it is, how the pipeline works, how to run it — see the [README](README.md).
 
 **Corpus:** 57 recorded experiment runs · 1,475 candidate attempts · ~121 GPU-hours · 16.3M tokens ·
 **43 oracle-verified solutions across two AoC years, 0 wrong in the ledger.**
@@ -252,4 +253,5 @@ a duplicate experiment before it wasted three hours, and that forced behavior ch
 config-gated so they could be A/B'd at all.
 
 Puzzle inputs, problem text and scraped answers are **not** in this repository (see the README's
-data policy); a fresh clone cannot run the oracle until you supply your own AoC session.
+[data policy](README.md#data-privacy-and-advent-of-codes-rules)); a fresh clone cannot run the
+oracle until you supply your own AoC session.
