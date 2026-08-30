@@ -12,11 +12,12 @@ measured, not asserted. Secondarily, it's an AoC solver. See `README.md` for the
 ## Environment (important)
 
 - **Always use the project venv.** Run Python as `venv/bin/python ...` (or activate the venv first).
-  Never rely on a bare `python`/`python3` on PATH — this machine has a legacy Intel `python2` at
-  `/usr/local/bin/python`.
-- **Use full paths for other executables** where PATH is ambiguous (e.g. `/opt/homebrew/bin/gh` — a
-  shell function can otherwise shadow `gh`).
-- Models run via **local Ollama** (`http://localhost:11434`); the venv Python is native **arm64**.
+  Never rely on a bare `python`/`python3` on PATH — if the system `python` resolves to a legacy
+  Python 2, a bare invocation fails confusingly.
+- **Use full paths for executables where PATH is ambiguous** — a shell function or alias can
+  otherwise shadow a tool (e.g. `gh`).
+- Models run via **local Ollama** (`http://localhost:11434`); on Apple Silicon, use a native
+  **arm64** Python.
 
 ## Where things live
 
@@ -38,8 +39,8 @@ measured, not asserted. Secondarily, it's an AoC solver. See `README.md` for the
 - **Never conclude anything from `--trials 1` — including smoke tests.** The pipeline is
   non-deterministic: 4 of 6 problems flip between solved and unsolved across byte-identical configs
   (`dev/progress/baseline-2024-d1-3.md`). A single pass is a plumbing check, not a measurement. This
-  bit us for real — a one-shot smoke returned 0/2 right after an Ollama upgrade and looked exactly
-  like a runtime regression; `--trials 3` on the same config returned 6/6
+  has caused a real false alarm — a one-shot smoke returned 0/2 right after an Ollama upgrade and
+  looked exactly like a runtime regression; `--trials 3` on the same config returned 6/6
   (`dev/progress/ollama-0.32.14-runtime-check.md`). Pre-run checks use `--trials 3`.
 - **The oracle is authoritative.** Nothing counts as solved without independent verification against
   the cached accepted answer; keep `dev/verify_solutions.py` green.
