@@ -58,6 +58,12 @@ measured, not asserted. Secondarily, it's an AoC solver. See `README.md` for the
     disproves.
   Correct your own record when a later run disproves an earlier claim, and say so in the doc — a
   falsified claim is replaced with the correction, not silently deleted.
+- **Don't narrate the prose.** Never add a phrase whose only job is to observe something the
+  presentation, form, or wording already makes evident — *stated plainly*, *scoped precisely*, *in
+  plain English*, *held plainly*, *to be clear*, *put simply*, or a heading that estimates its own
+  reading time. If a passage is plain, it reads as plain; saying so adds a word and no information.
+  Name the content instead: "Six findings and their numbers", not "Six findings, each a
+  plain-language claim first, then the numbers".
 - **Run tests:** `PYTHONPATH=. venv/bin/pytest -q`.
 - **Never commit secrets or PII.** Configuration goes through `.env` (gitignored); see `.env.example`.
 

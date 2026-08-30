@@ -26,11 +26,14 @@ and, more to the point, whether that could be *measured* rather than asserted.
 > - **Where to go next** — [RESULTS.md](RESULTS.md) for the full science · [How it works](#how-it-works)
 >   for the pipeline · [Getting started](#getting-started) to run it yourself.
 
-**Three ways to read this repo:** the quick version above · the science in
-[RESULTS.md](RESULTS.md) · the code, starting at [How it works](#how-it-works).
+**Three ways to read this repo:**
+
+- The quick version above.
+- The science, in [RESULTS.md](RESULTS.md).
+- The code, starting at [How it works](#how-it-works).
 
 <details>
-<summary><strong>Terms in 30 seconds</strong> — the six words the rest of this leans on</summary>
+<summary><strong>Key terms</strong></summary>
 
 - **Oracle** — the automatic judge. It runs the model's code against the real puzzle input and
   compares the output to the known-correct answer. Cheap and exact, which is what makes everything
@@ -66,7 +69,7 @@ convert into correctness only because a cheap check can collapse many guesses to
 Where no such check exists, the coordination has little to grip — which is also where this approach
 stops being a good fit.
 
-Concretely, that objective is pursued through two pieces, in order of importance:
+That objective is pursued through two pieces, in order of importance:
 
 1. **A measurement platform.** A frozen, fingerprinted `SolverConfig`; an experiment harness
    (`experiment.py`, `shared/experiment/`) that runs a problem set under one or more configs with
@@ -81,9 +84,8 @@ Concretely, that objective is pursued through two pieces, in order of importance
 
 ## Headline results
 
-Six findings. Each is a plain-language claim first, then the numbers; every figure links to a
-committed write-up in [`dev/progress/`](dev/progress/), and the full statistics live in
-[RESULTS.md](RESULTS.md).
+Six findings and their numbers. Every figure links to a committed write-up in
+[`dev/progress/`](dev/progress/); the full statistics live in [RESULTS.md](RESULTS.md).
 
 **1. Coordinating attempts nearly doubles the solve rate — and *why* it works is now measured.**
 
@@ -104,12 +106,12 @@ rescued exactly the uncertain problems and nothing else, which is the signature 
 than a rate artifact. (`passk-ab-d13-d15.md`, `passk-replication-2025.md`)
 
 <details>
-<summary>The statistics, stated plainly</summary>
+<summary>The statistics</summary>
 
 The 2024 headline **alone is marginal** — one-sided Fisher exact p ≈ 0.06 on the aggregate. It is the
 **out-of-sample replication** that makes the claim solid (2025: 2/8 → 6/6, p ≈ 0.009; combined by
 Fisher's method, p ≈ 0.005). Neither year alone would survive review; together they do. Rates are not
-comparable across the two years — the problem ranges are not difficulty-matched. Caveats held plainly:
+comparable across the two years — the problem ranges are not difficulty-matched. Caveats:
 n = 3 trials per problem, k = 5 not run (so no dose-response curve or saturation point), one model,
 one temperature, four problems in the decisive band.
 
@@ -206,13 +208,12 @@ logged as solved. Every attempt (solved or not) is recorded with its outcome and
 runs are diagnosable after the fact.
 
 <details>
-<summary><strong>How each part of the thesis was tested — the full arm-by-arm chronology</strong></summary>
+<summary><strong>How each part of the thesis was tested</strong></summary>
 
-*This is the detailed audit trail behind the headline results above. [RESULTS.md](RESULTS.md) has the
-same findings organized cleanly by thesis arm; this section keeps the chronological "how it got here",
-including the milestones that were later superseded.*
+*The audit trail behind the headline results, in the order it happened, including milestones later
+superseded. [RESULTS.md](RESULTS.md) organizes the same findings by thesis arm.*
 
-### Early milestones — what the measurements found
+### Early milestones
 
 Every one of these is a committed A/B or analysis in `dev/progress/`, not an assertion:
 
@@ -243,9 +244,9 @@ Every one of these is a committed A/B or analysis in `dev/progress/`, not an ass
   one speed wall, described for months as a single phenomenon. Both are now solved and in the
   ledger. (`dev/progress/m2max-qwen38-27b-d4-7.md`, `m2max-qwen3coder30b-d4-7.md`)
 
-The honest headline, scoped precisely: **on this fixed problem set, the binding constraint was model
-capability, not orchestration** — and on 32 GB that constraint dissolved once a *newer-generation*
-model was available: `qwen3.8:27b` solved **all 8**, while a bigger *older* model did worse than
+The honest headline: **on this fixed problem set, the binding constraint was model capability, not
+orchestration** — and on 32 GB that constraint dissolved once a *newer-generation* model was
+available: `qwen3.8:27b` solved **all 8**, while a bigger *older* model did worse than
 16 GB managed. The set is now exhausted as a capability measure. Full numbers:
 `dev/benchmarks/cross-machine-results.md`. But that describes *a fixed band of problems*, not
 orchestration in general — which raises the project's central open question.
