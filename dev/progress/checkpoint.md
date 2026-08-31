@@ -270,9 +270,11 @@ mixing. That is a strategy question, not a compute question.
 these are *k samples + repair*, not pure pass@k — k1 was "1 sample + up to 2 feedback repairs", k3
 was "3 samples + up to 2 repair rounds each" (up to 9 generations). The comparison stays valid
 (repair identical in both arms) and the gain is if anything conservative, since the 42% baseline
-already contains repair's contribution. **Experiment now running** separates sampling from repair:
-`parallel3` (3 blind draws, repair=0) vs `sequential3` (1 draw + 2 feedback refinements) — equal
-generation budget, opposite topology.
+already contains repair's contribution. **Resolved** (`topology-parallel3.md`): `parallel3` — 3 blind
+draws, repair=0 — scored **7/12 (58%)**, giving the decomposition **42% (1+repair) → 58% (3 blind) →
+75% (3+repair)**. Sampling and repair each contribute and the combination exceeds either. The planned
+`sequential3` arm was **not run**: its config (`samp1, repair=2`) is byte-identical to k1 — the
+fingerprint made the duplicate obvious before it cost anything.
 
 Limits: n=3 trials/problem; **k5 deliberately not run** (maintainer scope call) so
 there is no dose-response curve or saturation point; one model, one temperature, four problems; and

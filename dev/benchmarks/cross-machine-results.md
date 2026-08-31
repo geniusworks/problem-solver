@@ -54,6 +54,9 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m2max-32** | **qwen3-coder:30b** (MoE) | **tk-off samp3** | d4–7 | 1 | **6/8** | **75%** | `m2max-qwen3coder30b-d4-7.md` |
 | **m2max-32** | **qwen3.8:27b** (generalist)† | **tk-off samp3** | d4–7 | 1 | **8/8** | **100%** | `m2max-qwen38-27b-d4-7.md` |
 | **m2max-32** | **qwen3.8:27b** | tk-off **samp1** | **2025** d1–12 | 1 | **16/23** | **70%** | `generality-2025-scan.md` |
+| **m2max-32** | qwen3.8:27b | tk-off **samp1 + repair2** (k1) | 2024 d13+d15 band | 3 | **10/24** | **42%** | `passk-ab-d13-d15.md` |
+| **m2max-32** | qwen3.8:27b | tk-off **samp3, repair0** (parallel3) | 2024 d13+d15 band | 3 | **7/12** | **58%** | `topology-parallel3.md` |
+| **m2max-32** | qwen3.8:27b | tk-off **samp3 + repair2** (k3) | 2024 d13+d15 band | 3 | **9/12** | **75%** | `passk-ab-d13-d15.md` |
 | **m2max-32** | **qwen3.8:27b** | tk-off **samp1** | **2025** band d2/4/9/10/11 | 3 | 14/30 | 47% | `band-2025-classification.md` |
 | **m2max-32** | **qwen3.8:27b** | tk-off **samp3** | **2025** d9/d11 | 3 | **9/12** | **75%** | `passk-replication-2025.md` |
 | **m2max-32** | **qwen3.8:27b** | tk-off samp3 **temp 1.0** | 2024 d15 + 2025 d9 | 3 | 5/12 | 42% | `temperature-diversity-negative.md` |
