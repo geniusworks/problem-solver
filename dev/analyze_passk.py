@@ -68,6 +68,10 @@ def main():
         "dev/experiments/*band-classify*.json"
     )
     k3_docs = load("dev/experiments/*_k3_*.json")
+    # parallel3: 3 blind draws, repair disabled -- the middle term that separates
+    # sampling from repair (dev/progress/topology-parallel3.md). Absent from the
+    # original globs, which is why RESULTS.md's 58% row long had no audit trail.
+    par_docs = load("dev/experiments/*parallel3*.json")
     k5_docs = load("dev/experiments/*_k5_*.json")
 
     print("samp1 sources:", [f.split("/")[-1] for f, _ in samp1_docs])
@@ -101,6 +105,19 @@ def main():
         if u3 is not None or u5 is not None:
             u = f"   [unbiased: @3 {u3 if u3 is None else format(u3, '.0%')}, @5 {u5 if u5 is None else format(u5, '.0%')}]"
         print(f"{pid:22} {c:>5}/{n:<6} {p:>6.0%}   {t3:>9.0%} {t5:>10.0%}{u}")
+
+    if par_docs:
+        got = defaultdict(list)
+        for _, d in par_docs:
+            for pid, outs in per_problem(d).items():
+                got[pid].extend(outs)
+        n = sum(len(v) for v in got.values())
+        c = sum(o == "solved" for v in got.values() for o in v)
+        print(f"\n=== parallel3 (3 blind draws, repair=0) ===")
+        for pid in sorted(got):
+            outs = got[pid]
+            print(f"{pid:22} {sum(o=='solved' for o in outs)}/{len(outs)}")
+        print(f"{'TOTAL':22} {c}/{n} = {c/n:.0%}")
 
     for label, docs, k in (("k3", k3_docs, 3), ("k5", k5_docs, 5)):
         if not docs:

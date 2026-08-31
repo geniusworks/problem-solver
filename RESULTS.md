@@ -67,7 +67,7 @@ which is the signature of a mechanism rather than a rate artifact.
 **Neither year alone is decisive; together they are.** The 2024 headline standing by itself would
 not survive review — the replication is what makes the claim reportable.
 
-*(`passk-ab-d13-d15.md`, `passk-replication-2025.md`, `topology`/`parallel3` arms.)*
+*(`passk-ab-d13-d15.md`, `topology-parallel3.md`, `passk-replication-2025.md`.)*
 
 ### Arm 2 — Cheap draws win on time, lose on tokens, and stop at a ceiling
 
