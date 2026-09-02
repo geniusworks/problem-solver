@@ -278,8 +278,11 @@ arm ran. (Precisely: *1 sample vs 3 samples with the repair loop held constant a
 arms* — so this is "k samples + repair", not textbook pass@k over independent draws.) The clearest
 case: a problem solved by **1 of 6** single draws was solved by **3 of 3** k3 trials — a problem
 twice called an "insight wall", so **sampling reaches insight problems, not only fiddly ones.**
-And one problem refutes the naive version: d15 p2 sits at 33% per draw, predicts 70% at k=3, and
-scored **0 of 3** — where a model fails *systematically*, extra draws re-roll the same die.
+And one problem came in under the naive prediction: d15 p2 was estimated at 33% per draw, which
+predicts 70% at k=3, and scored **0 of 3**. The *systematic-failure* reading of that was wrong — the
+full record puts d15 p2 at **2 of 16 (~12%)**, a very-low-rate "sometimes" rather than a wall, and
+0 of 3 is unremarkable at that rate (`dev/progress/CORRECTION-d15p2-is-not-a-wall.md`). The genuine
+case for *extra draws re-roll the same die* is **2025 d9 p2, 0 of 13** across every configuration.
 
 **Arm 2 — measured, and it splits.** *Many cheap draws beat one expensive pass* is **true on
 wall-clock** (0.64× per verified solution) and **false on tokens** (3.35×), and volume does not reach
