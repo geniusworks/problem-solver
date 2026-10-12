@@ -15,7 +15,7 @@ result rows tagged with the machine `id`. Keep config columns identical across m
 |----|------|-----|-------|-------|--------|-------------------|-------|
 | **m1-16** | Apple M1 | 16 GB | 8 | 26.5.2 (25F84) | 0.32.0 | ~dense-14B Q4 (~10 GB); ~10–11 GB usable after macOS | all runs below unless noted |
 | **m2max-32** | Apple M2 Max | 32 GB | 12 | 26.6.1 (25G76) | **0.32.14** (was 0.32.11 until 2026-08-16) | ~dense-30B / 30B-MoE Q4 — `qwen2.5-coder:32b` (19 GB), `qwen3-coder:30b` (18 GB), `qwen3.8:27b` (17 GB), all 100% GPU | bring-up 2026-08-15 (`m2max-handoff.md` §3); Python 3.14; cold learning DB. **The 4/8 and 6/8 rows below ran on 0.32.11**; upgraded to pull `qwen3.8:27b`, which 0.32.11 refuses. Upgrade verified behaviour-neutral: 6/6 on a 3-trial control (`ollama-0.32.14-runtime-check.md`) |
-| **m5pro-64** | Apple M5 Pro | 64 GB | 18 | 27.0.1 | **0.34.4** | resident: `qwen3.8:27b` (17 GB; 18.2 GB loaded, 100% GPU), `qwen3.6:35b-a3b` (35.5B MoE, 22.6 GB, unmeasured). The ~40 GB class fits on paper; none pulled or measured | bring-up 2026-10-12; **Python 3.11.16** (m2max-32 ran 3.14) and a newer Ollama and macOS than every row below, so the first run is a `qwen3.8:27b` calibration on d4–7 at `--trials 3` before any new-model result is read. No rows yet |
+| **m5pro-64** | Apple M5 Pro | 64 GB | 18 | 27.0.1 | **0.34.4** | resident: `qwen3.8:27b` (17 GB; 18.2 GB loaded, 100% GPU), `qwen3.6:35b-a3b` (35.5B MoE, 22.6 GB, unmeasured). The ~40 GB class fits on paper; none pulled or measured | bring-up 2026-10-12; **Python 3.11.16** (m2max-32 ran 3.14) and a newer Ollama and macOS than every row below, so the first run was a `qwen3.8:27b` calibration on d4–7 at `--trials 3`: **23/24 against the M2 Max's 16/16, about 2.3× faster** (`m5pro-calibration-qwen38-d4-7.md`) |
 
 ## Which models fit each machine (measured)
 
@@ -64,9 +64,13 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m2max-32** | qwen3-coder:30b | tk-off samp3 | 2024 d15 + 2025 d9 | 3 | 3/12 | 25% | `ensemble-precheck-negative.md` |
 | **m2max-32** | qwen3.8:27b | tk-off samp3 **(econ)** | d4–7 | 1 | **8/8** | 100% | `economic-arm-moe-vs-generalist.md` |
 | **m2max-32** | qwen3-coder:30b | tk-off **samp12 (econ)** | d4–7 | 1 | **7/8** | 88% | `economic-arm-moe-vs-generalist.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off samp3, fallback off **(calibration)**‡ | d4–7 | 3 | **23/24** | 96% | `m5pro-calibration-qwen38-d4-7.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
+
+‡ ran on ollama **0.34.4**, Python 3.11.16, with `enable_fallback_models=false` (fingerprint
+`d0e67ebf4cee`). The matching `m2max-32` rows had the fallback on and it never fired.
 
 ### Headline reads (m1-16)
 
@@ -153,6 +157,16 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
   **Caveat: 70% vs 2024's 56% is set composition, not a year difference** — 2025 d1–12 includes the
   easy early days, 2024 d8–15 does not. The *structure* transfers; the rate is not comparable.
 - **12 verified solutions** recorded (`solutions/README.md`), oracle-clean throughout.
+
+### Headline reads (m5pro-64)
+
+- **The reference model reproduces on the new runtime: `qwen3.8:27b` 23/24 on d4–7 over three
+  trials**, against 16/16 on the M2 Max (`m5pro-calibration-qwen38-d4-7.md`). The one miss is d6 p2,
+  the set's hardest problem, which verified only 3 of 6 draws on the M2 Max. Excluding it, 90% of
+  attempts verify on both machines.
+- **About 2.3× faster at the same token volume:** 4,383 s per trial against 9,602–11,112 s.
+- **Limit:** this rules out a gross regression, not a small one. A frontier comparison that turns on
+  a few points should re-run its `qwen3.8:27b` baseline here.
 
 ## What to run on m2max-32 (the next machine)
 
