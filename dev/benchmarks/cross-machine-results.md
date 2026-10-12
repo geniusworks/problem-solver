@@ -65,6 +65,8 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m2max-32** | qwen3.8:27b | tk-off samp3 **(econ)** | d4–7 | 1 | **8/8** | 100% | `economic-arm-moe-vs-generalist.md` |
 | **m2max-32** | qwen3-coder:30b | tk-off **samp12 (econ)** | d4–7 | 1 | **7/8** | 88% | `economic-arm-moe-vs-generalist.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp3, fallback off **(calibration)**‡ | d4–7 | 3 | **23/24** | 96% | `m5pro-calibration-qwen38-d4-7.md` |
+| **m5pro-64** | **qwen3.6:35b-a3b** (MoE) | tk-off samp3, fallback off | 2024 d15 + 2025 d9 | 3 | **7/12** | 58% | `arm3-precheck-qwen36-35b.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off samp3, fallback off‡ | 2024 d15 + 2025 d9 | 3 | 6/12 | 50% | `arm3-precheck-qwen36-35b.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
@@ -167,6 +169,12 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 - **About 2.3× faster at the same token volume:** 4,383 s per trial against 9,602–11,112 s.
 - **Limit:** this rules out a gross regression, not a small one. A frontier comparison that turns on
   a few points should re-run its `qwen3.8:27b` baseline here.
+- **`qwen3.6:35b-a3b` solves the same problems as the reference on the arm-3 targets: 7/12 against
+  6/12, same machine** (`arm3-precheck-qwen36-35b.md`). Entry criterion not met, ensemble not run —
+  a third failure at the entry condition, this time by redundancy, not domination.
+- **It did so in about a third of the wall-clock** (4,590 s against 13,236 s) with no token penalty
+  (221k against 230k per solve). Observed on four problems, not tested.
+- **2025 d9 p2 is now 0 of 22 problem-trials across three models.**
 
 ## What to run on m2max-32 (the next machine)
 

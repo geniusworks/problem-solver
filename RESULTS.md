@@ -89,18 +89,21 @@ not tokens, and only up to the cheap model's ceiling.*
 
 ### Arm 3 — Untested, for want of a suitable model pair
 
-Two ensemble attempts both failed at the **entry condition**, not at the mechanism:
+Three ensemble attempts all failed at the **entry condition**, not at the mechanism:
 
 - a same-tier, same-generation pair whose apparently complementary solves were sampling noise;
 - a cross-generation pair whose second model turned out to solve a **strict subset** of the first's
   problems — it solved nothing the stronger model couldn't, and *failed* one the stronger model
-  handles reliably.
+  handles reliably;
+- a second cross-generation pair (added 2026-10-12, on a third machine) whose candidate solved the
+  **same set** as the reference — 7/12 against 6/12 — so there was nothing to pool. Redundant where
+  the previous one was dominated.
 
-An ensemble can only pool what its members *differentially* solve. Neither pair had that. The entry
+An ensemble can only pool what its members *differentially* solve. No pair had that. The entry
 criterion is now explicit: **measure each member individually on the targets first; only run an
 ensemble if one solves something the others reliably miss.**
 
-*(`ensemble-samp3-d4-7.md`, `ensemble-precheck-negative.md`.)*
+*(`ensemble-samp3-d4-7.md`, `ensemble-precheck-negative.md`, `arm3-precheck-qwen36-35b.md`.)*
 
 ---
 

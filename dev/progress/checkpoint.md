@@ -41,8 +41,20 @@ frontier comparison that turns on a few points should re-run its own baseline on
 unmeasured. `qwen-coder:latest` is a local alias of the same weights with different sampling
 parameters, not a third model. Nothing in the ~40 GB class is pulled.
 
-**Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → profile `qwen3.6:35b-a3b` alone on
-the arm-3 targets → k=5 and the d16–25 replication → a 40 GB-class model.
+**❌ Arm-3 pre-check: `qwen3.6:35b-a3b` is redundant with the reference, not complementary**
+(`arm3-precheck-qwen36-35b.md`; prediction registered before the run and held on every line).
+Candidate **7/12**, reference **6/12** re-run on this machine, and the same solve set: d15 p1 3/3 vs
+3/3, d15 p2 1/3 vs 1/3, d9 p1 3/3 vs 2/3, d9 p2 0/3 vs 0/3. The ensemble was **not run**. Arm 3 is
+still untested for want of a pair, after **three** failures at the entry condition.
+
+Two things this adds to the record: **2025 d9 p2 is now 0 of 22 problem-trials across three
+models**, the first evidence the wall is not one model's blind spot; and **2024 d15 p2 stands at
+3 of 22** for the reference. One unregistered observation worth its own measurement: the candidate
+matched the reference in **about a third of the wall-clock** (4,590 s vs 13,236 s) with no token
+penalty — unlike the previous MoE, which lost 3.35× on tokens.
+
+**Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → ~~arm-3 pre-check~~ → k=5 and
+the d16–25 replication → a 40 GB-class model.
 
 ### 🏁 ENDGAME COMPLETE: `RESULTS.md` written (2026-08-23)
 
