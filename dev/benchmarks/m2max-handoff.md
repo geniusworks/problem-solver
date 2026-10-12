@@ -7,6 +7,18 @@ before running anything; it is the operational companion to `dev/benchmarks/cros
 
 This file is internal (not referenced from the public `README.md`).
 
+> **Bringing up a machine after the M2 Max (added 2026-10-12, from the M5 Pro / 64 GB bring-up).**
+> §3 says to bring `years/`. Two things it does not say, both of which bit:
+> - **Copy `years/` from the M2 Max, not the M1.** The M1's copy has `problem.html` and
+>   `answers.json` for 2024 d13–15 and all of 2025 but **no `input.txt` and no `examples/`** — those
+>   were fetched on the M2 Max. With the M1's copy `verify_solutions` reports `20 correct, 23 error`,
+>   and one overfit-gate unit test fails for want of the d13 examples (it now skips instead).
+> - **Copy `dev/experiments/` too.** It is gitignored like `years/`, and it holds the run JSONs that
+>   `RESULTS.md` was recomputed from and that baseline reuse depends on. The M2 Max has 58 JSONs; a
+>   machine seeded from the M1 has the first 35.
+>
+> Expected after both copies: `43 correct, 0 wrong`, and **210 passed**.
+
 ---
 
 ## 1. Where the M1 work landed (so you don't repeat it)

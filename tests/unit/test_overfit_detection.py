@@ -1,6 +1,8 @@
 """Overfit-gate heuristics: what must be caught, and what must not."""
 
-from shared.overfit_detection import analyze_overfit_risk
+import pytest
+
+from shared.overfit_detection import _load_example_inputs, analyze_overfit_risk
 
 
 class TestExampleLiteralsInProseAreNotOverfit:
@@ -55,6 +57,10 @@ def solve() -> int:
 
     def test_example_literal_in_control_flow_is_still_flagged(self):
         """The literal survives stripping, so the program can branch on it."""
+        # The gate compares against the cached examples under years/ (gitignored);
+        # without them it has nothing to match and this would fail for want of data.
+        if not _load_example_inputs(2024, 13):
+            pytest.skip("cached examples not available for 2024 day 13")
         cheat = (
             "def solve() -> int:\n"
             "    with open('input.txt') as f:\n"

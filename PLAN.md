@@ -269,6 +269,29 @@ Only now, and only what measures a positive delta through the harness.
 there is no unseen problem to submit against. The two questions that gated everything for months are
 now **answered**, which re-points the roadmap entirely.
 
+### The M5 Pro / 64 GB (2026-10-12) — what a third machine is for
+
+A faster machine with twice the memory does not reopen the orchestration mechanism; `RESULTS.md`
+says as much. It unblocks the tests that were left unrun for want of a model pair, of compute, or of
+problems. In order:
+
+1. **Calibrate.** `qwen3.8:27b` samp3 on 2024 d4–7 at `--trials 3`, against the M2 Max's 8/8.
+   Ollama, Python and macOS all changed with the hardware, so no new-model number is read until the
+   reference model reproduces. Running as of 2026-10-12.
+2. **Arm 3 entry check.** Profile `qwen3.6:35b-a3b` *alone* on the standing targets (2024 d15,
+   2025 d9) at k3, 3 trials — the entry criterion from `ensemble-precheck-negative.md`. Run the
+   ensemble only if it solves something `qwen3.8:27b` reliably misses. The previous MoE was
+   strictly dominated, so a third failure at the entry condition is a live outcome.
+3. **Statistical power.** n=3 per problem is the thinnest part of the record. Run the k=5 arm that
+   was deferred (dose-response and a saturation point), and widen the replication onto
+   **2024 d16–25, now cached**: scan at samp1, classify the band at `--trials 3`, then k1 vs k3.
+   These are orchestration comparisons, so contamination does not weaken them.
+4. **A model above the reference.** Nothing in the ~40 GB class is chosen or pulled. It would test
+   whether 2025 d9 p2 (0/10) is a capability wall, and extend the generation ladder — under the
+   contamination caveat, like every capability number here.
+5. **AoC 2026** (§4b) opens 2026-12-01 and this is the machine it runs on. Steps 1–3 should be done
+   before it.
+
 ### Answered (2026-08-15 → 17), so no longer roadmap items
 
 - **"Find a stronger model."** Done, and the answer was not the expected one: **generation beats

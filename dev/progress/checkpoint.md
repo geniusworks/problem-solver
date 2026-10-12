@@ -5,7 +5,35 @@ The **live status snapshot** — where the project actually stands right now. Th
 `dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
 file current as work lands so it never goes stale.
 
-## Current status (2026-08-21)
+## Current status (2026-10-12)
+
+### Machine: work has moved to the M5 Pro / 64 GB (2026-10-12)
+
+Third run host, `m5pro-64` in `dev/benchmarks/cross-machine-results.md`: Apple M5 Pro, 64 GB, 18
+cores, macOS 27.0.1, **ollama 0.34.4**, **Python 3.11.16**. No experiment has completed here yet.
+
+**State after bring-up:** oracle **43 correct / 0 wrong**, tests **210 passed**, all 58 run JSONs
+present. The machine arrived with the M1's `years/` — pages and answers for 2024 d13–15 and 2025 but
+no inputs or examples, so 23 of the 43 ledger entries could not be verified — and with only the 35
+M1-era run JSONs. Both were restored from an M2 Max export (`m2max-handoff.md`, note at the top).
+
+**New data: 2024 d16–25 is cached** (fetched 2026-10-12 with the same AoC account; the d1 input it
+returns is byte-identical to the cached one). 19 scoreable parts with accepted answers, never run by
+any model here. This is the set PLAN.md names for widening the replication.
+
+**Three variables changed at once versus every `m2max-32` row** — Ollama 0.32.14 → 0.34.4, Python
+3.14 → 3.11.16, macOS 26 → 27 — on top of the hardware. So the first run is a calibration, not an
+experiment: `qwen3.8:27b` samp3 on 2024 d4–7 at `--trials 3` (config `m5pro-calib-qwen38-samp3`,
+fingerprint `d0e67ebf4cee`; `enable_fallback_models=false`, because this machine's installed models
+differ and a fallback would put a different model into the comparison). The M2 Max reference is two
+independent single trials, both 8/8, verifying 20/24 and 21/24 attempts. **Running; no result yet.**
+
+**Models resident:** `qwen3.8:27b` (the reference), and `qwen3.6:35b-a3b`, a 35.5B MoE that is
+unmeasured. `qwen-coder:latest` is a local alias of the same weights with different sampling
+parameters, not a third model. Nothing in the ~40 GB class is pulled.
+
+**Next, in order (PLAN.md "The M5 Pro / 64 GB"):** calibration → profile `qwen3.6:35b-a3b` alone on
+the arm-3 targets → k=5 and the d16–25 replication → a 40 GB-class model.
 
 ### 🏁 ENDGAME COMPLETE: `RESULTS.md` written (2026-08-23)
 

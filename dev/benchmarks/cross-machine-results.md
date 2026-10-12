@@ -15,6 +15,7 @@ result rows tagged with the machine `id`. Keep config columns identical across m
 |----|------|-----|-------|-------|--------|-------------------|-------|
 | **m1-16** | Apple M1 | 16 GB | 8 | 26.5.2 (25F84) | 0.32.0 | ~dense-14B Q4 (~10 GB); ~10–11 GB usable after macOS | all runs below unless noted |
 | **m2max-32** | Apple M2 Max | 32 GB | 12 | 26.6.1 (25G76) | **0.32.14** (was 0.32.11 until 2026-08-16) | ~dense-30B / 30B-MoE Q4 — `qwen2.5-coder:32b` (19 GB), `qwen3-coder:30b` (18 GB), `qwen3.8:27b` (17 GB), all 100% GPU | bring-up 2026-08-15 (`m2max-handoff.md` §3); Python 3.14; cold learning DB. **The 4/8 and 6/8 rows below ran on 0.32.11**; upgraded to pull `qwen3.8:27b`, which 0.32.11 refuses. Upgrade verified behaviour-neutral: 6/6 on a 3-trial control (`ollama-0.32.14-runtime-check.md`) |
+| **m5pro-64** | Apple M5 Pro | 64 GB | 18 | 27.0.1 | **0.34.4** | resident: `qwen3.8:27b` (17 GB; 18.2 GB loaded, 100% GPU), `qwen3.6:35b-a3b` (35.5B MoE, 22.6 GB, unmeasured). The ~40 GB class fits on paper; none pulled or measured | bring-up 2026-10-12; **Python 3.11.16** (m2max-32 ran 3.14) and a newer Ollama and macOS than every row below, so the first run is a `qwen3.8:27b` calibration on d4–7 at `--trials 3` before any new-model result is read. No rows yet |
 
 ## Which models fit each machine (measured)
 
