@@ -10,7 +10,8 @@ file current as work lands so it never goes stale.
 ### Machine: work has moved to the M5 Pro / 64 GB (2026-10-12)
 
 Third run host, `m5pro-64` in `dev/benchmarks/cross-machine-results.md`: Apple M5 Pro, 64 GB, 18
-cores, macOS 27.0.1, **ollama 0.34.4**, **Python 3.11.16**. No experiment has completed here yet.
+cores, macOS 27.0.1, **ollama 0.34.4**, **Python 3.11.16**. The calibration is done (below); no
+experiment has run here yet.
 
 **State after bring-up:** oracle **43 correct / 0 wrong**, tests **210 passed**, all 58 run JSONs
 present. The machine arrived with the M1's `years/` — pages and answers for 2024 d13–15 and 2025 but
@@ -26,13 +27,21 @@ any model here. This is the set PLAN.md names for widening the replication.
 experiment: `qwen3.8:27b` samp3 on 2024 d4–7 at `--trials 3` (config `m5pro-calib-qwen38-samp3`,
 fingerprint `d0e67ebf4cee`; `enable_fallback_models=false`, because this machine's installed models
 differ and a fallback would put a different model into the comparison). The M2 Max reference is two
-independent single trials, both 8/8, verifying 20/24 and 21/24 attempts. **Running; no result yet.**
+independent single trials, both 8/8, verifying 20/24 and 21/24 attempts.
+
+**✅ Calibration result: 23/24, and about 2.3× faster** (`m5pro-calibration-qwen38-d4-7.md`; 3h 39m,
+74 attempts, 904k tokens, 0 wrong/unverified/overfit, ledger unchanged). Seven of eight problems
+solved in all three trials. The miss is d6 p2 in one trial — five wrong answers, no timeout — on the
+problem that verified only 3 of 6 draws on the M2 Max. Excluding d6 p2, **90% of attempts verify on
+both machines**. Per trial: 4,383 s here against 9,602–11,112 s. The run rules out a gross
+regression and not a small one (d6 p2 went 2/9 on initial draws against 3/6; p ≈ 0.29), so a
+frontier comparison that turns on a few points should re-run its own baseline on this machine.
 
 **Models resident:** `qwen3.8:27b` (the reference), and `qwen3.6:35b-a3b`, a 35.5B MoE that is
 unmeasured. `qwen-coder:latest` is a local alias of the same weights with different sampling
 parameters, not a third model. Nothing in the ~40 GB class is pulled.
 
-**Next, in order (PLAN.md "The M5 Pro / 64 GB"):** calibration → profile `qwen3.6:35b-a3b` alone on
+**Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → profile `qwen3.6:35b-a3b` alone on
 the arm-3 targets → k=5 and the d16–25 replication → a 40 GB-class model.
 
 ### 🏁 ENDGAME COMPLETE: `RESULTS.md` written (2026-08-23)

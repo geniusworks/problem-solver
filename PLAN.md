@@ -277,7 +277,8 @@ problems. In order:
 
 1. **Calibrate.** `qwen3.8:27b` samp3 on 2024 d4–7 at `--trials 3`, against the M2 Max's 8/8.
    Ollama, Python and macOS all changed with the hardware, so no new-model number is read until the
-   reference model reproduces. Running as of 2026-10-12.
+   reference model reproduces. ✅ **DONE 2026-10-12: 23/24, ~2.3× faster**
+   (`m5pro-calibration-qwen38-d4-7.md`). The one miss is d6 p2, the set's hardest problem.
 2. **Arm 3 entry check.** Profile `qwen3.6:35b-a3b` *alone* on the standing targets (2024 d15,
    2025 d9) at k3, 3 trials — the entry criterion from `ensemble-precheck-negative.md`. Run the
    ensemble only if it solves something `qwen3.8:27b` reliably misses. The previous MoE was
