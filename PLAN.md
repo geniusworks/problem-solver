@@ -283,6 +283,11 @@ problems. In order:
    2025 d9) at k3, 3 trials — the entry criterion from `ensemble-precheck-negative.md`. Run the
    ensemble only if it solves something `qwen3.8:27b` reliably misses. The previous MoE was
    strictly dominated, so a third failure at the entry condition is a live outcome.
+   ❌ **DONE 2026-10-12: entry criterion not met, ensemble not run**
+   (`arm3-precheck-qwen36-35b.md`). 7/12 against the reference's 6/12 on the same machine, with
+   the **same solve set** — redundant, where the previous candidate was dominated. Not planned, and
+   worth a measurement of its own: it did so in about a third of the wall-clock with no token
+   penalty, which would change arm 2's "loses on tokens" half if it holds on a designed comparison.
 3. **Statistical power.** n=3 per problem is the thinnest part of the record. Run the k=5 arm that
    was deferred (dose-response and a saturation point), and widen the replication onto
    **2024 d16–25, now cached**: scan at samp1, classify the band at `--trials 3`, then k1 vs k3.

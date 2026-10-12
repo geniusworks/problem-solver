@@ -290,11 +290,12 @@ the stronger model's ceiling (7/8 vs 8/8). The useful form of the claim: *cheap 
 binding cost is time, not tokens, and only up to the cheap model's ceiling.*
 (`economic-arm-moe-vs-generalist.md`)
 
-**Arm 3 — untested, for want of a suitable model pair, not for want of trying.** Two attempts failed
+**Arm 3 — untested, for want of a suitable model pair, not for want of trying.** Three attempts failed
 at the entry condition rather than at the mechanism: a same-tier pair whose complementary solves were
-sampling noise, and a cross-generation pair whose second model solved a **strict subset** of the
-first's problems (`ensemble-precheck-negative.md`, `ensemble-samp3-d4-7.md`). An ensemble can only pool
-what its members *differentially* solve; neither pair had that. The entry criterion is now explicit —
+sampling noise, a cross-generation pair whose second model solved a **strict subset** of the
+first's problems, and a second cross-generation pair whose candidate solved the **same set** as the
+reference (`ensemble-samp3-d4-7.md`, `ensemble-precheck-negative.md`, `arm3-precheck-qwen36-35b.md`).
+An ensemble can only pool what its members *differentially* solve; no pair had that. The entry criterion is now explicit —
 measure each member individually on the targets first.
 
 **In short:** the mechanism adds correctness at a strong model's frontier, measured rather than
