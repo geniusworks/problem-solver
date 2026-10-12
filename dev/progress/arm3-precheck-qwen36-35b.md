@@ -21,9 +21,9 @@ registers the run and its prediction before any result exists. Results replace t
 | problem | `qwen3.8:27b` at k3 | `qwen3-coder:30b` (the previous candidate) |
 |---|---|---|
 | 2024 d15 p1 | 3/3 | 3/3 |
-| 2024 d15 p2 | 0/3 (2 of 16 over all arms) | 0/3 |
+| 2024 d15 p2 | 0/3 (2 of 19 problem-trials over every recorded run) | 0/3 |
 | 2025 d9 p1 | 3/3 | 0/3 |
-| 2025 d9 p2 | 0/3 (0 of 10 over all arms) | 0/3 |
+| 2025 d9 p2 | 0/3 (0 of 13 problem-trials over every recorded run) | 0/3 |
 
 ## Prediction (registered 2026-10-12, before the run)
 
