@@ -295,6 +295,9 @@ problems. In order:
    **Scan ✅ DONE 2026-10-12: 9/19 (47%)**, Part 1 8/10, Part 2 1/9, ledger 52
    (`m5pro-scan-2024-d16-25.md`). Ten misses to classify; the count of "sometimes" problems among
    them decides whether this band can host the replication.
+   **Band ✅ DONE 2026-10-12: 2 "sometimes" (d20 p1 3/4, d19 p2 1/4), 8 at 0/4**
+   (`m5pro-band-2024-d16-25.md`). It can host a k1-vs-k3 test, thinly: one informative problem.
+   d19 p2 costs about two minutes a draw, so the cheap way to buy power is more trials on it.
 4. **A model above the reference.** Nothing in the ~40 GB class is chosen or pulled. It would test
    whether 2025 d9 p2 (0/10) is a capability wall, and extend the generation ladder — under the
    contamination caveat, like every capability number here.

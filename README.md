@@ -464,7 +464,7 @@ snapshot and `dev/docs/architecture.md` the design overview.
 **Working and measured:** the full solve pipeline (fetch → parse → generate → consensus →
 execute/verify → repair → fallback), the experiment harness with repeat trials and fingerprinted
 configs, the correctness oracle and overfit gate, self-consistency and answer-based consensus, and
-**52 verified solutions** across two AoC years (`dev/verify_solutions.py` clean).
+**54 verified solutions** across two AoC years (`dev/verify_solutions.py` clean).
 
 <details>
 <summary>Established findings, and what's still open (in priority order)</summary>

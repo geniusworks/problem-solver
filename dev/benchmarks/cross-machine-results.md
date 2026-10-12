@@ -68,6 +68,7 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m5pro-64** | **qwen3.6:35b-a3b** (MoE) | tk-off samp3, fallback off | 2024 d15 + 2025 d9 | 3 | **7/12** | 58% | `arm3-precheck-qwen36-35b.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp3, fallback off‡ | 2024 d15 + 2025 d9 | 3 | 6/12 | 50% | `arm3-precheck-qwen36-35b.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off **samp1**, fallback off | 2024 **d16–25** | 1 | **9/19** | **47%** | `m5pro-scan-2024-d16-25.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off | 2024 d16–25 **band** (the 10 misses) | 3 | 4/30 | 13% | `m5pro-band-2024-d16-25.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
@@ -180,6 +181,9 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
   (`m5pro-scan-2024-d16-25.md`), +9 verified solutions → ledger **52**. **Part 1 8/10, Part 2 1/9**
   — the widest Part 1/Part 2 gap of the three scans. The harness printed 9/20 because it scored a
   nonexistent d25 p2 as a miss; fixed the same day (`final-day-no-part2.md`).
+- **The d16–25 band is bimodal: 2 "sometimes", 8 at 0/4** (`m5pro-band-2024-d16-25.md`). d20 p1
+  3/4 and d19 p2 1/4, pooled with the scan. Ledger **54**. Two of the three classified bands are
+  now bimodal, so 2024 d8–15 (5 of 8 "sometimes") looks like the favourable exception.
 
 ## What to run on m2max-32 (the next machine)
 

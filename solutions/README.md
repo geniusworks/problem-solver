@@ -68,6 +68,8 @@ It exits non-zero if any recorded solution is wrong, errors, or cannot be verifi
 |2024|23|2|cl,df,ft,ir,iy,ny,qp,rb,sh,sl,sw,wm,wy|qwen3.8:27b|2026-10-12 18:43:07 UTC|solutions/2024_day23_part2.py|
 |2024|24|1|48063513640678|qwen3.8:27b|2026-10-12 18:45:47 UTC|solutions/2024_day24_part1.py|
 |2024|25|1|3663|qwen3.8:27b|2026-10-12 19:16:19 UTC|solutions/2024_day25_part1.py|
+|2024|20|1|1438|qwen3.8:27b|2026-10-12 19:59:55 UTC|solutions/2024_day20_part1.py|
+|2024|19|2|705756472327497|qwen3.8:27b|2026-10-12 21:08:09 UTC|solutions/2024_day19_part2.py|
 <!-- end verified rows -->
 
 ## Rejected — previously recorded as solved, verified wrong
