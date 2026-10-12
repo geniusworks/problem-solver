@@ -18,7 +18,9 @@ something about *coordinating LLMs* or something about *2024's puzzles*.
 ## Result
 
 **16 of 23 scoreable parts (70%).** The harness reports 16/24 (67%) because its denominator includes
-2025 d12 p2, which has no cached answer and cannot be scored — see below.
+2025 d12 p2, which has no cached answer and cannot be scored — see below. *(Corrected 2026-10-12:
+it has no answer because it is not a puzzle. Day 12 is 2025's last day and its Part Two is a finish
+button. The 16/23 stands; `final-day-no-part2.md`.)*
 
 | | 2024 d8–15 | **2025 d1–12** |
 |---|---|---|
@@ -73,6 +75,12 @@ A matched comparison would scan 2025 d8–12 alone, or 2024 d1–12 — worth do
 relative year difficulty.
 
 ## The genuinely unseen problem: 2025 d12 p2
+
+> **Corrected 2026-10-12 — this section is wrong, and is kept for the record.** 2025 d12 p2 is not
+> an unsolved problem. 2025 ran for 12 days; day 12 is the last, and its Part Two has no puzzle,
+> only a finish button. The harness did not "attempt the problem": no model was called (0 tokens).
+> There was never a target for the submission path, and this run is not a demonstration of how an
+> unseen problem is handled. The harness now skips such parts. `final-day-no-part2.md`
 
 **d12 p2 has no cached answer** — the only problem in the entire corpus the maintainer's account has
 not solved, so no ground truth exists to scrape. The harness handled it exactly as designed: it

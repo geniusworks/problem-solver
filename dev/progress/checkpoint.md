@@ -57,8 +57,14 @@ penalty — unlike the previous MoE, which lost 3.35× on tokens.
 1 trial, 2h 18m, 612k tokens, 0 wrong/unverified/overfit). Problems no model here had seen.
 **Part 1 8/10, Part 2 1/9** — the Part 1/Part 2 cliff for the third time, and the steepest. Ten
 misses: nine wrong answers (five of them degenerate `0` / `-1`), one crash, no timeouts. The harness
-prints 9/20 because it attempts a nonexistent d25 p2 and scores it as a miss — a new instance of the
-logged solver-side-outcome gap, unfixed.
+prints 9/20 because it attempts a nonexistent d25 p2 and scores it as a miss.
+
+**🔧 Fixed the same day: parts with no puzzle are no longer attempted** (`final-day-no-part2.md`;
+7 tests, suite 217). An event's last day may have one puzzle; the harness now reads that off the
+page and drops the part from the set. **It also falsifies an earlier claim:** 2025 d12 p2, recorded
+as "the first genuinely unseen problem" and a target for the submission path, is the same thing —
+2025's last day, no puzzle, no model ever called. So the `UNVERIFIED` path for unseen problems has
+**never been exercised by a real run**; AoC 2026 will be its first test.
 
 **Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → ~~arm-3 pre-check~~ →
 ~~d16–25 scan~~ → classify the ten misses at `--trials 3` (prediction registered in the scan doc:
@@ -291,6 +297,9 @@ includes easy early days, 2024 d8–15 does not. Structure transfers; the rate i
 it). The harness attempted it, scored nothing, and kept it out of the totals — the Milestone F
 scenario in miniature, and the first real target the deferred submission path has ever had. Nothing
 was submitted.
+
+> **Corrected 2026-10-12:** wrong. 2025 d12 p2 is not an unsolved problem — day 12 is 2025's last
+> day and its Part Two has no puzzle. No model was called on it. `final-day-no-part2.md`
 
 **Next:** classify a 2025 frontier band (`--trials 3` on the misses), then a k1-vs-k3 A/B there —
 which would be the first out-of-sample test of the project's *central* claim, not just its

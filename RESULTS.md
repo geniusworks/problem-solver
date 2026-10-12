@@ -160,7 +160,7 @@ emitted identical `TypeError`s every time.
 ## What the measurements cost in credibility, and why that matters
 
 Roughly half the work behind these numbers was discovering that earlier measurements were wrong.
-Eight instrument defects, each of which made results *look better or worse than reality*:
+Nine instrument defects, each of which made results *look better or worse than reality*:
 
 | defect | effect |
 |---|---|
@@ -172,6 +172,7 @@ Eight instrument defects, each of which made results *look better or worse than 
 | Repair ignored the configured temperature | a temperature experiment reached only ~1/3 of generations |
 | `success_rate` recorded at generation time, `success=True` for anything that parsed | **the sole signal model ranking used measured "returned code", not "solved the problem"** |
 | `StrategyOptimizer` read a second, dead database (0 rows) | strategy effectiveness computed over no data at all |
+| A last day's "Part Two" with no puzzle was attempted and scored as a miss *(found 2026-10-12)* | denominators off by one in two scans (16/24, 9/20), and **a nonexistent problem written up as "the first genuinely unseen problem"** |
 
 Each is fixed with regression tests. The sharpest lesson came from a tally accumulated in prose
 ("0/8… 0/11… never solved once") that turned out to have silently dropped the runs where the problem

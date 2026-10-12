@@ -411,8 +411,9 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
 - **Solver crashes are scored as model failures.** An exception out of the solve path lands in the
   same bucket as "the model could not do it" — which is how a `KeyError` corrupted results for eight
   months undetected (`strategy-keyerror-d8.md`). Wants a distinct `HARNESS_ERROR` outcome.
-  A second instance, 2026-10-12: 2024 d25 has no Part 2, but the harness attempts one and scores
-  it `no_candidate`, so the d16–25 scan prints 9/20 for what is 9/19.
+  A second instance, 2026-10-12: 2024 d25 has no Part 2, but the harness attempted one and scored
+  it `no_candidate`, so the d16–25 scan prints 9/20 for what is 9/19. ✅ **That instance is fixed**
+  (`final-day-no-part2.md`); the general `HARNESS_ERROR` gap is not.
 - **Error-shaped answers are scored `wrong`.** Generated code that catches its own exception and
   prints `An error occurred: …` then `0` is recorded as a wrong answer, understating crashes.
 
@@ -425,7 +426,10 @@ same problems, only the strategy varies — but the capability ladder is not.
 
 **AoC 2026 (December) would be genuinely unseen** for any model released before it, and the harness
 already handles a live year: fetch with `AOC_SESSION`, and problems with no cached answer score as
-`UNVERIFIED` rather than contaminating the totals (demonstrated on 2025 d12 p2). Re-running the
+`UNVERIFIED` rather than contaminating the totals. *(Corrected 2026-10-12: this said "demonstrated
+on 2025 d12 p2". It was not — that part has no puzzle and no model was called on it
+(`final-day-no-part2.md`). The `UNVERIFIED` path is implemented and has never run on a real unseen
+problem; exercise it deliberately in the first days of the event.)* Re-running the
 capability ladder and one orchestration arm on unseen problems would convert the weakest claims here
 into clean ones, and is the single highest-value experiment left.
 

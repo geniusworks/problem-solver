@@ -178,8 +178,8 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 - **2025 d9 p2 is now 0 of 22 problem-trials across three models.**
 - **A frontier exists on 2024 d16–25 too: 9/19 (47%) on a single-sample scan**
   (`m5pro-scan-2024-d16-25.md`), +9 verified solutions → ledger **52**. **Part 1 8/10, Part 2 1/9**
-  — the widest Part 1/Part 2 gap of the three scans. The harness prints 9/20 because it scores a
-  nonexistent d25 p2 as a miss.
+  — the widest Part 1/Part 2 gap of the three scans. The harness printed 9/20 because it scored a
+  nonexistent d25 p2 as a miss; fixed the same day (`final-day-no-part2.md`).
 
 ## What to run on m2max-32 (the next machine)
 

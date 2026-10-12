@@ -28,7 +28,9 @@ sys.path.insert(0, str(REPO_ROOT))
 from shared.experiment import ExperimentResult, Outcome, SolverConfig  # noqa: E402
 from shared.experiment.runner import (  # noqa: E402
     compare,
+    drop_parts_without_puzzle,
     parse_problem_set,
+    problem_id,
     run_experiment,
 )
 
@@ -159,7 +161,10 @@ async def async_main(args) -> int:
         format="%(levelname)s %(message)s",
     )
 
-    problems = parse_problem_set(args.problems)
+    problems, not_puzzles = drop_parts_without_puzzle(parse_problem_set(args.problems))
+    if not_puzzles:
+        names = ", ".join(problem_id(*spec) for spec in not_puzzles)
+        print(f"skipping {len(not_puzzles)} part(s) with no puzzle on the page: {names}")
     specs = args.config or ["name=default"]
     configs = [parse_config(spec) for spec in specs]
 
