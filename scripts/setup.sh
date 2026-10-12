@@ -81,9 +81,13 @@ echo "detected RAM: ${RAM_GB} GB  ->  model tier: ${TIER} GB"
 # 16 GB: what we measured on M1 -- gemma4:12b and qwen3.5:9b lead; 7b is the baseline.
 COMMON_16=( "qwen2.5-coder:7b" "qwen3.5:9b" "gemma4:12b" )
 # 32 GB: the class that swamps 16 GB. Verify tags at ollama.com/library.
-TIER_32=( "qwen2.5-coder:32b" "qwen3-coder:30b" )
-# 64 GB+: 70B dense / large MoE reasoning+coding.
-TIER_64=( "qwen2.5-coder:32b" "llama3.3:70b" )
+# qwen3.8:27b is the project's reference model (8/8 on d4-7) and needs ollama >= 0.32.14.
+TIER_32=( "qwen2.5-coder:32b" "qwen3-coder:30b" "qwen3.8:27b" )
+# 64 GB+: 70B dense / large MoE reasoning+coding. No model in this tier has been measured;
+# llama3.3:70b is a 2024-generation model, and scaling an old generation up has not paid
+# here (dev/progress/m2max-qwen25coder32b-d4-7.md). Pick a current-generation 40 GB-class
+# model before spending a run on it.
+TIER_64=( "llama3.3:70b" )
 
 MODELS=( "${COMMON_16[@]}" )
 [ "$TIER" -ge 32 ] && MODELS+=( "${TIER_32[@]}" )
