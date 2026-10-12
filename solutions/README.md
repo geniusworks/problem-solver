@@ -59,6 +59,15 @@ It exits non-zero if any recorded solution is wrong, errors, or cannot be verifi
 |2025|11|1|708|qwen3.8:27b|2026-08-18 19:01:31 UTC|solutions/2025_day11_part1.py|
 |2025|11|2|545394698933400|qwen3.8:27b|2026-08-19 02:46:38 UTC|solutions/2025_day11_part2.py|
 |2025|9|1|4781235324|qwen3.8:27b|2026-08-19 03:47:59 UTC|solutions/2025_day09_part1.py|
+|2024|16|1|109516|qwen3.8:27b|2026-10-12 17:04:08 UTC|solutions/2024_day16_part1.py|
+|2024|17|1|1,7,6,5,1,0,5,0,7|qwen3.8:27b|2026-10-12 17:13:13 UTC|solutions/2024_day17_part1.py|
+|2024|18|1|304|qwen3.8:27b|2026-10-12 17:26:00 UTC|solutions/2024_day18_part1.py|
+|2024|19|1|304|qwen3.8:27b|2026-10-12 17:39:53 UTC|solutions/2024_day19_part1.py|
+|2024|22|1|18941802053|qwen3.8:27b|2026-10-12 18:32:04 UTC|solutions/2024_day22_part1.py|
+|2024|23|1|1227|qwen3.8:27b|2026-10-12 18:40:09 UTC|solutions/2024_day23_part1.py|
+|2024|23|2|cl,df,ft,ir,iy,ny,qp,rb,sh,sl,sw,wm,wy|qwen3.8:27b|2026-10-12 18:43:07 UTC|solutions/2024_day23_part2.py|
+|2024|24|1|48063513640678|qwen3.8:27b|2026-10-12 18:45:47 UTC|solutions/2024_day24_part1.py|
+|2024|25|1|3663|qwen3.8:27b|2026-10-12 19:16:19 UTC|solutions/2024_day25_part1.py|
 <!-- end verified rows -->
 
 ## Rejected — previously recorded as solved, verified wrong
