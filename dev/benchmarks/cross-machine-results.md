@@ -67,6 +67,7 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m5pro-64** | qwen3.8:27b | tk-off samp3, fallback off **(calibration)**‡ | d4–7 | 3 | **23/24** | 96% | `m5pro-calibration-qwen38-d4-7.md` |
 | **m5pro-64** | **qwen3.6:35b-a3b** (MoE) | tk-off samp3, fallback off | 2024 d15 + 2025 d9 | 3 | **7/12** | 58% | `arm3-precheck-qwen36-35b.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp3, fallback off‡ | 2024 d15 + 2025 d9 | 3 | 6/12 | 50% | `arm3-precheck-qwen36-35b.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off **samp1**, fallback off | 2024 **d16–25** | 1 | **9/19** | **47%** | `m5pro-scan-2024-d16-25.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
@@ -175,6 +176,10 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 - **It did so in about a third of the wall-clock** (4,590 s against 13,236 s) with no token penalty
   (221k against 230k per solve). Observed on four problems, not tested.
 - **2025 d9 p2 is now 0 of 22 problem-trials across three models.**
+- **A frontier exists on 2024 d16–25 too: 9/19 (47%) on a single-sample scan**
+  (`m5pro-scan-2024-d16-25.md`), +9 verified solutions → ledger **52**. **Part 1 8/10, Part 2 1/9**
+  — the widest Part 1/Part 2 gap of the three scans. The harness prints 9/20 because it scores a
+  nonexistent d25 p2 as a miss.
 
 ## What to run on m2max-32 (the next machine)
 

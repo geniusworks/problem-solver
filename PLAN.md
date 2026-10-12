@@ -292,6 +292,9 @@ problems. In order:
    was deferred (dose-response and a saturation point), and widen the replication onto
    **2024 d16–25, now cached**: scan at samp1, classify the band at `--trials 3`, then k1 vs k3.
    These are orchestration comparisons, so contamination does not weaken them.
+   **Scan ✅ DONE 2026-10-12: 9/19 (47%)**, Part 1 8/10, Part 2 1/9, ledger 52
+   (`m5pro-scan-2024-d16-25.md`). Ten misses to classify; the count of "sometimes" problems among
+   them decides whether this band can host the replication.
 4. **A model above the reference.** Nothing in the ~40 GB class is chosen or pulled. It would test
    whether 2025 d9 p2 (0/10) is a capability wall, and extend the generation ladder — under the
    contamination caveat, like every capability number here.
@@ -408,6 +411,8 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
 - **Solver crashes are scored as model failures.** An exception out of the solve path lands in the
   same bucket as "the model could not do it" — which is how a `KeyError` corrupted results for eight
   months undetected (`strategy-keyerror-d8.md`). Wants a distinct `HARNESS_ERROR` outcome.
+  A second instance, 2026-10-12: 2024 d25 has no Part 2, but the harness attempts one and scores
+  it `no_candidate`, so the d16–25 scan prints 9/20 for what is 9/19.
 - **Error-shaped answers are scored `wrong`.** Generated code that catches its own exception and
   prints `An error occurred: …` then `0` is recorded as a wrong answer, understating crashes.
 

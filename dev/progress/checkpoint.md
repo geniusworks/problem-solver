@@ -53,8 +53,16 @@ models**, the first evidence the wall is not one model's blind spot; and **2024 
 matched the reference in **about a third of the wall-clock** (4,590 s vs 13,236 s) with no token
 penalty — unlike the previous MoE, which lost 3.35× on tokens.
 
-**Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → ~~arm-3 pre-check~~ → k=5 and
-the d16–25 replication → a 40 GB-class model.
+**Frontier scan, 2024 d16–25: 9/19 (47%), ledger 43 → 52** (`m5pro-scan-2024-d16-25.md`; samp1,
+1 trial, 2h 18m, 612k tokens, 0 wrong/unverified/overfit). Problems no model here had seen.
+**Part 1 8/10, Part 2 1/9** — the Part 1/Part 2 cliff for the third time, and the steepest. Ten
+misses: nine wrong answers (five of them degenerate `0` / `-1`), one crash, no timeouts. The harness
+prints 9/20 because it attempts a nonexistent d25 p2 and scores it as a miss — a new instance of the
+logged solver-side-outcome gap, unfixed.
+
+**Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → ~~arm-3 pre-check~~ →
+~~d16–25 scan~~ → classify the ten misses at `--trials 3` (prediction registered in the scan doc:
+2–5 are "sometimes") → k1 vs k3 on that band, and k=5 → a 40 GB-class model.
 
 ### 🏁 ENDGAME COMPLETE: `RESULTS.md` written (2026-08-23)
 
