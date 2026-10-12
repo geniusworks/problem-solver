@@ -12,11 +12,13 @@ import pytest
 from shared.experiment import Outcome, SolverConfig
 from shared.experiment.runner import (
     compare,
+    drop_parts_without_puzzle,
     parse_problem_set,
     problem_id,
     run_problem,
 )
 from shared.experiment.results import ExperimentResult, ProblemResult
+from shared.ground_truth import html_part_has_puzzle
 
 
 class TestParseProblemSet:
@@ -298,3 +300,65 @@ class TestTrialAggregation:
             "trials": 1, "solved": 1, "solve_rate": 1.0,
             "stable": True, "outcomes": ["solved"], "expected": "42",
         }
+
+
+class TestPartsWithoutAPuzzle:
+    """An event's last day may have one puzzle; its "Part Two" is not a problem.
+
+    The harness attempted it and scored a `no_candidate`, so a scan printed 9/20
+    for what was 9/19 (2024 d25), and an earlier one 16/24 for 16/23 (2025 d12).
+    Which day is the last one varies by year, so detection reads the page.
+    """
+
+    FINISH_FORM = (
+        '<article class="day-desc"><h2>--- Day 25 ---</h2></article>'
+        "<p>Your puzzle answer was <code>3663</code>.</p>"
+        '<article class="day-desc"><h2 id="part2">--- Part Two ---</h2></article>'
+        '<form method="post" action="25/answer">'
+        '<input type="hidden" name="level" value="2"/>'
+        '<input type="hidden" name="answer" value="0"/>'
+        '<p>If you like, you can <input type="submit" value="[{label}]"/>.</p></form>'
+    )
+    OPEN_PART_TWO = (
+        '<article class="day-desc"><h2>--- Day 3 ---</h2></article>'
+        "<p>Your puzzle answer was <code>42</code>.</p>"
+        '<article class="day-desc"><h2 id="part2">--- Part Two ---</h2></article>'
+        '<form method="post" action="3/answer">'
+        '<input type="hidden" name="level" value="2"/>'
+        '<p>Answer: <input type="text" name="answer" autocomplete="off"/>'
+        '<input type="submit" value="[Submit]"/></p></form>'
+    )
+    SOLVED_PART_TWO = (
+        '<article class="day-desc"><h2>--- Day 3 ---</h2></article>'
+        "<p>Your puzzle answer was <code>42</code>.</p>"
+        '<article class="day-desc"><h2 id="part2">--- Part Two ---</h2></article>'
+        "<p>Your puzzle answer was <code>43</code>.</p>"
+    )
+
+    @pytest.mark.parametrize("label", ["Finish", "Deliver The Chronicle Again"])
+    def test_finish_button_part_two_is_not_a_puzzle(self, label):
+        assert not html_part_has_puzzle(self.FINISH_FORM.format(label=label), 2)
+
+    def test_part_one_of_a_single_puzzle_day_is_a_puzzle(self):
+        assert html_part_has_puzzle(self.FINISH_FORM.format(label="Finish"), 1)
+
+    def test_unsolved_part_two_is_a_puzzle(self):
+        assert html_part_has_puzzle(self.OPEN_PART_TWO, 2)
+
+    def test_solved_part_two_is_a_puzzle(self):
+        assert html_part_has_puzzle(self.SOLVED_PART_TWO, 2)
+
+    def test_problem_set_drops_only_the_missing_part(self, monkeypatch):
+        monkeypatch.setattr(
+            "shared.experiment.runner.part_has_puzzle",
+            lambda year, day, part: (day, part) != (25, 2),
+        )
+        kept, dropped = drop_parts_without_puzzle(parse_problem_set("2024:24-25"))
+        assert kept == [(2024, 24, 1), (2024, 24, 2), (2024, 25, 1)]
+        assert dropped == [(2024, 25, 2)]
+
+    def test_uncached_page_is_assumed_to_be_a_puzzle(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("shared.ground_truth.get_problem_dir", lambda y, d: tmp_path)
+        from shared.ground_truth import part_has_puzzle
+
+        assert part_has_puzzle(2099, 25, 2)

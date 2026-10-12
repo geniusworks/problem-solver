@@ -21,7 +21,7 @@ from shared.experiment.results import (
     Outcome,
     ProblemResult,
 )
-from shared.ground_truth import get_known_answer
+from shared.ground_truth import get_known_answer, part_has_puzzle
 from shared.verification import Verdict, verify_solution_code
 
 logger = logging.getLogger(__name__)
@@ -74,6 +74,23 @@ def parse_problem_set(spec: str) -> List[ProblemSpec]:
             for p in ([part] if part else [1, 2]):
                 problems.append((year, day, p))
     return problems
+
+
+def drop_parts_without_puzzle(
+    problems: Sequence[ProblemSpec],
+) -> Tuple[List[ProblemSpec], List[ProblemSpec]]:
+    """Split a problem set into (parts to run, parts that are not puzzles).
+
+    An event's last day may have a single puzzle; its "Part Two" has no answer
+    to compute. Attempting it produces a `no_candidate` that reads as a model
+    failure and inflates the denominator, so such parts are removed from the
+    set rather than scored.
+    """
+    kept: List[ProblemSpec] = []
+    dropped: List[ProblemSpec] = []
+    for spec in problems:
+        (kept if part_has_puzzle(*spec) else dropped).append(spec)
+    return kept, dropped
 
 
 def _is_source_code(text: str) -> bool:
@@ -240,7 +257,17 @@ async def run_experiment(
 
     for trial in range(trials):
         for year, day, part in problems:
+            if not part_has_puzzle(year, day, part):
+                continue
             result = await run_problem(solver, year, day, part, config, trial=trial)
+            # A page first fetched by this very run can reveal that the part was
+            # never a puzzle; that attempt is not a result.
+            if not part_has_puzzle(year, day, part):
+                logger.warning(
+                    "%s has no puzzle on its page; attempt discarded",
+                    problem_id(year, day, part),
+                )
+                continue
             experiment.results.append(result)
             if on_result is not None:
                 on_result(result)

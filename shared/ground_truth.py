@@ -117,3 +117,42 @@ def backfill_from_cached_html(year: int, day: int) -> Dict[int, str]:
     if answers:
         save_known_answers(year, day, answers)
     return answers
+
+
+def html_part_has_puzzle(html: str, part: int) -> bool:
+    """Whether `part` of a cached AoC page is a puzzle with an answer to find.
+
+    The last day of an event may have only one puzzle. Its page still carries a
+    "Part Two" article, but that part is finished with a button rather than an
+    answer: the form posts ``level=2`` with a *hidden* ``answer`` field, both
+    before the day is complete and after ("... Again"). A real Part 2 either
+    shows a text ``answer`` field or, once solved, no form at all. Which days
+    are like this varies by year, so it is read from the page, never assumed
+    from the day number.
+    """
+    if int(part) != 2:
+        return True
+
+    soup = BeautifulSoup(html, "html.parser")
+    for form in soup.find_all("form"):
+        level = form.find("input", attrs={"name": "level"})
+        answer = form.find("input", attrs={"name": "answer"})
+        if level is None or answer is None:
+            continue
+        if level.get("value") == "2" and answer.get("type") == "hidden":
+            return False
+    return True
+
+
+def part_has_puzzle(year: int, day: int, part: int) -> bool:
+    """Whether a part exists as a puzzle, judged from the cached page.
+
+    Returns True when the page is not cached: absence of evidence is not a
+    reason to drop a problem from a run.
+    """
+    html_path = get_problem_dir(year, day) / config.HTML_FILE
+    if not html_path.exists():
+        return True
+
+    with open(html_path, "r", encoding="utf-8") as f:
+        return html_part_has_puzzle(f.read(), part)
