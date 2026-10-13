@@ -298,6 +298,10 @@ problems. In order:
    **Band ✅ DONE 2026-10-12: 2 "sometimes" (d20 p1 3/4, d19 p2 1/4), 8 at 0/4**
    (`m5pro-band-2024-d16-25.md`). It can host a k1-vs-k3 test, thinly: one informative problem.
    d19 p2 costs about two minutes a draw, so the cheap way to buy power is more trials on it.
+   **k1 vs k3 ✅ DONE 2026-10-12: all four cells as registered** (`m5pro-passk-2024-d16-25.md`):
+   d19 p2 1/4 → 2/3, d20 p1 3/3, d16 p2 0/3, d19 p1 3/3. Too thin to move the claim (Fisher p
+   0.37; one of the two d19 p2 solves was a repair). **Next here:** 20+ single-draft trials on
+   d19 p2 to pin its draft rate (2/13 so far), before k=5 on a band with one informative problem.
 4. **A model above the reference.** Nothing in the ~40 GB class is chosen or pulled. It would test
    whether 2025 d9 p2 (0/10) is a capability wall, and extend the generation ladder — under the
    contamination caveat, like every capability number here.
