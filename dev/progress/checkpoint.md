@@ -10,8 +10,8 @@ file current as work lands so it never goes stale.
 ### Machine: work has moved to the M5 Pro / 64 GB (2026-10-12)
 
 Third run host, `m5pro-64` in `dev/benchmarks/cross-machine-results.md`: Apple M5 Pro, 64 GB, 18
-cores, macOS 27.0.1, **ollama 0.34.4**, **Python 3.11.16**. The calibration is done (below); no
-experiment has run here yet.
+cores, macOS 27.0.1, **ollama 0.34.4**, **Python 3.11.16**. Calibration, the arm-3 pre-check, the 2024 d16–25 scan, band and k1-vs-k3 runs are done
+(below).
 
 **State after bring-up:** oracle **43 correct / 0 wrong**, tests **210 passed**, all 58 run JSONs
 present. The machine arrived with the M1's `years/` — pages and answers for 2024 d13–15 and 2025 but
@@ -67,8 +67,9 @@ as "the first genuinely unseen problem" and a target for the submission path, is
 **never been exercised by a real run**; AoC 2026 will be its first test.
 
 **Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → ~~arm-3 pre-check~~ →
-~~d16–25 scan~~ → ~~classify the band~~ → ~~k1 vs k3 on it~~ → more trials on d19 p2 → k=5 →
-a 40 GB-class model.
+~~d16–25 scan~~ → ~~classify the band~~ → ~~k1 vs k3 on it~~ → ~~20 trials per arm on d19 p2~~ → three arm-3
+candidates from other makers (pulled, not run; PLAN.md step 4) → AoC 2026. k=5 is deferred: the
+independence curve is measured on d19 p2 and predicts it (67%).
 
 **Band classified: 2 "sometimes", 8 walls** (`m5pro-band-2024-d16-25.md`; 3 trials pooled with the
 scan for n=4, 4h 18m, 1.31M tokens, 0 wrong/unverified/overfit, ledger 52 → **54**). **d20 p1 3/4,
@@ -86,6 +87,14 @@ before). First drafts on d19 p2 are 2/13 correct across both arms. d16 p2 answer
 `568`) in 13 of 13 first drafts: a shared misreading, not variance. Arm 1's status is unchanged.
 Reading the artifact exposed an accounting defect: repair records repeat their draft's tokens and
 time, so this run's token total is not reliable.
+
+**Powered follow-up on d19 p2: k1 6/20, k3 10/20** (`m5pro-d19p2-power.md`; 20 trials per arm,
+56 min and 2h 45m, 0 wrong/unverified/overfit). Both registered predictions held. Not significant
+alone (one-sided Fisher p = 0.17; 0.095 pooled with the earlier draws), so arm 1's status is
+unchanged. The mechanism is measured: first drafts are right 20% of the time (16/80), three
+independent drafts predict 49%, k3 delivered 50%, all from first drafts. Repair converted 1 of 52;
+the usual failure prints `0` and its repair prints `0` again. k3 cost 1.8× per verified solution.
+First artifacts with real repair cost: a repair is about a quarter of a draft in tokens.
 
 **Instrument defect fixed: repair records copied their draft's cost** (`repair-accounting-unwired.md`).
 The 2026-08-22 token fix corrected the provider only; the solver went on recording every repair
@@ -126,7 +135,7 @@ fresh post-token-fix, 0 wrong/unverified/overfit).
 | `qwen3-coder:30b` k=12 | 7/8 | **891 s (0.64×)** | 128,730 (3.35×) |
 
 **Arm 2 splits by which cost you pay:** cheap draws win on **time** (36% cheaper per solution), lose
-on **tokens** (3.35×), and do not reach the ceiling. *True for local GPU inference, false for
+on **tokens** (3.35×; *at least 3.10× after the 2026-10-12 correction, see top*), and do not reach the ceiling. *True for local GPU inference, false for
 token-metered APIs, bounded by the cheap model's ceiling* — sharper than the original claim.
 
 **Pre-registered prediction held:** volume bought d5 p1 (~25%/draw parsing failure — stochastic) and
@@ -160,7 +169,7 @@ run. Applying that lesson prospectively is the whole value. Entry criterion now 
 *measure each member individually on the targets first; only run an ensemble if one solves something
 the others reliably miss.*
 
-**Arm 3 status:** two failed attempts (M1 same-tier pair, this cross-generation pair), **no
+**Arm 3 status** *(as of 2026-08; three failed attempts as of 2026-10-12, see top)*: two failed attempts (M1 same-tier pair, this cross-generation pair), **no
 successful demonstration**, and no refutation either — it is **untested for want of a suitable
 model pair**.
 
@@ -322,6 +331,9 @@ should pay on the wrong-answer group and not the crash group.
 
 **Caveat, stated in the doc:** 70% > 2024's 56% is almost certainly **set composition** — 2025 d1–12
 includes easy early days, 2024 d8–15 does not. Structure transfers; the rate is not comparable.
+
+*Correction 2026-10-12: the paragraph below is wrong. 2025 d12 has no Part Two; the harness
+scored a nonexistent problem and no model was called (`final-day-no-part2.md`).*
 
 **The first genuinely unseen problem:** 2025 d12 p2 has no cached answer (the account never solved
 it). The harness attempted it, scored nothing, and kept it out of the totals — the Milestone F

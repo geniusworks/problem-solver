@@ -85,8 +85,9 @@ COMMON_16=( "qwen2.5-coder:7b" "qwen3.5:9b" "gemma4:12b" )
 TIER_32=( "qwen2.5-coder:32b" "qwen3-coder:30b" "qwen3.8:27b" )
 # 64 GB+: 70B dense / large MoE reasoning+coding. No model in this tier has been measured;
 # llama3.3:70b is a 2024-generation model, and scaling an old generation up has not paid
-# here (dev/progress/m2max-qwen25coder32b-d4-7.md). Pick a current-generation 40 GB-class
-# model before spending a run on it.
+# here (dev/progress/m2max-qwen25coder32b-d4-7.md). As of 2026-10-12 the Ollama library has no
+# current-generation model between ~25 GB and 64 GB at 4-bit, so the 64 GB machine's candidates
+# are 30B-class models from other makers (PLAN.md, "The M5 Pro / 64 GB", step 4).
 TIER_64=( "llama3.3:70b" )
 
 MODELS=( "${COMMON_16[@]}" )

@@ -18,6 +18,10 @@ what it is, how the pipeline works, how to run it — see the [README](README.md
 **Corpus:** 57 recorded experiment runs · 1,475 candidate attempts · ~121 GPU-hours · 16.3M tokens (includes draft counts copied onto repair records; see the defect table) ·
 **43 oracle-verified solutions across two AoC years, 0 wrong in the ledger.**
 
+*Since this report (2026-10-12): eight further runs on a third machine, `m5pro-64`, took the ledger
+to 54 and added a third frontier band (2024 d16–25). No arm's status changed; the dated corrections
+below mark what did. Live status: `dev/progress/checkpoint.md`.*
+
 > **Read the contamination section before the capability numbers.** AoC 2024/2025 solutions predate
 > the models used here and are public, so the *capability* results are descriptive of this testbed
 > rather than clean measurements. The *orchestration* comparisons — which hold the model and problems
@@ -217,7 +221,7 @@ stochastic but not systematic failures — do not depend on the problems being u
 **A partial argument against pure memorization, offered as weak evidence only.**
 The frontier band consists of problems the model solves *sometimes* — 17%, 25%, 33% per draw.
 Memorized solutions would be expected to reproduce reliably rather than intermittently, and the
-problems that resist every configuration (0/13) would be odd things to have memorized badly. This is
+problems that resist every configuration (0/13; 0/22 by 2026-10-12) would be odd things to have memorized badly. This is
 suggestive, not dispositive: partial or paraphrased memorization could plausibly produce exactly this
 intermittency.
 
@@ -247,7 +251,8 @@ intermittency.
   the installed set on a cold start. Every experiment here pins its models with `--config`, so the
   ranking has nothing to choose between and the headline comparisons are unaffected by it. The
   strategy-weight half of the same mechanism is an unimplemented stub.
-- **One hardware configuration.** Faster hardware would refine the capability numbers (larger models
+- **One hardware configuration** for everything in this report *(a third machine, M5 Pro / 64 GB,
+  came up 2026-10-12; it has not changed any arm's status)*. Faster hardware would refine the capability numbers (larger models
   fit, and execution-timeout "speed walls" move) and the wall-clock economics of arm 2, and would
   unblock the still-missing tests — k=5 for a dose-response curve, an arm-3 model pair, and AoC 2026
   as a clean contamination check. It is *not* expected to change the orchestration mechanism, which

@@ -302,9 +302,44 @@ problems. In order:
    d19 p2 1/4 → 2/3, d20 p1 3/3, d16 p2 0/3, d19 p1 3/3. Too thin to move the claim (Fisher p
    0.37; one of the two d19 p2 solves was a repair). **Next here:** 20+ single-draft trials on
    d19 p2 to pin its draft rate (2/13 so far), before k=5 on a band with one informative problem.
-4. **A model above the reference.** Nothing in the ~40 GB class is chosen or pulled. It would test
-   whether 2025 d9 p2 (0/10) is a capability wall, and extend the generation ladder — under the
-   contamination caveat, like every capability number here.
+   **20 trials per arm ✅ DONE 2026-10-12: k1 6/20, k3 10/20** (`m5pro-d19p2-power.md`), p = 0.17
+   alone. Draft rate 20%; k3 landed on the independence curve (49% predicted, 50% measured).
+   **k=5 is deferred, not dropped:** on this band the curve already predicts it (67%), so a run
+   would test the curve at one more point on one problem. If it is run, the band with the most
+   "sometimes" problems is 2024 d8–15.
+4. **Three more arm-3 candidates, from other makers.** *(Rewritten 2026-10-12. This step was "a
+   model above the reference", ~40 GB class.)* A survey of the Ollama library that day found no
+   current-generation model between ~25 GB and 64 GB at 4-bit: `laguna-s-2.1` starts at 66 GB and
+   `mistral-medium-3.5:128b` at 80 GB, and `llama3.3:70b` is the old generation that has not paid
+   here. So **whether a larger model moves the walls (2025 d9 p2, 0/22; 2024 d16 p2, 0/7) cannot
+   be tested at 64 GB** and stays open. What the machine can test is lineage: three 30B-class
+   models from makers other than the reference's, **pulled 2026-10-12, not yet run**:
+
+   | model | size | why |
+   |---|---|---|
+   | `gemma4:31b` | ~20 GB | Google; the 12B sibling already runs under the harness |
+   | `ornith-1.5:35b` | 23 GB | newest of the three; maker and architecture not stated on its page |
+   | `muse-glimmer:30b` | 18 GB | Meta, tuned for tool use and failure recovery |
+
+   **Procedure, per model, in that order:**
+   1. Plumbing check, `--trials 3` on `2024:1` at `samples_per_model=1`: does it emit runnable
+      code with `enable_thinking=false`? A model that cannot is dropped, and that is recorded.
+   2. Register a prediction in a new `dev/progress/arm3-precheck-<model>.md` and commit it.
+   3. Entry check, the same cells as `arm3-precheck-qwen36-35b.md`:
+      ```
+      venv/bin/python experiment.py --problems 2024:15,2025:9 --trials 3 \
+        --config "name=m5pro-arm3-<model>-k3,models=<MODEL>,temperature=0.7,samples_per_model=3,enable_thinking=false,enable_fallback_models=false"
+      ```
+      Expect 2 to 4 hours each. The reference's row on this machine is already on record
+      (6/12: d15 p1 3/3, d15 p2 1/3, d9 p1 2/3, d9 p2 0/3) and is not re-run.
+   4. **Entry criterion** (`ensemble-precheck-negative.md`): run an ensemble only if the candidate
+      solves something the reference reliably misses. Made concrete for these cells: the candidate
+      solves, in at least 2 of 3 trials, a cell the reference solved in at most 1 of 3 (d15 p2 or
+      d9 p2). Met → run the two-model ensemble against each member alone. Not met → record the
+      failure; arm 3 stays untested.
+
+   Optional and separate: `qwen3.8:27b-q8_0` (30 GB), the reference at 8-bit, on the same four
+   cells. It tests whether 4-bit quantization costs anything on the walls. Not pulled.
 5. **AoC 2026** (§4b) opens 2026-12-01 and this is the machine it runs on. Steps 1–3 should be done
    before it.
 
@@ -491,7 +526,7 @@ own thesis and neither of the other two. **Three steps finish every arm, then on
    targets first, and only run an ensemble if one solves something the others reliably miss.*
 3. ~~**The economic A/B**~~ — ✅ **DONE 2026-08-23** (`economic-arm-moe-vs-generalist.md`).
    **Arm 2 splits by which cost you pay:** per verified solution the fast weak model at k=12 is
-   **0.64× the wall-clock** (891 s vs 1,389 s) but **3.35× the tokens** (128,730 vs 38,460), and it
+   **0.64× the wall-clock** (891 s vs 1,389 s) but **3.35× the tokens** (128,730 vs 38,460; *at least 3.10× after the 2026-10-12 correction*), and it
    does not reach the ceiling (7/8 vs 8/8). True for local GPU inference, false for token-metered
    APIs, and bounded by the cheap model's ceiling. Volume bought the stochastic failure (d5 p1,
    ~25%/draw parsing) and not the systematic one (d6 p2, 6/6 identical `TypeError`s).
