@@ -70,6 +70,8 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m5pro-64** | qwen3.8:27b | tk-off **samp1**, fallback off | 2024 **d16–25** | 1 | **9/19** | **47%** | `m5pro-scan-2024-d16-25.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off | 2024 d16–25 **band** (the 10 misses) | 3 | 4/30 | 13% | `m5pro-band-2024-d16-25.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off **samp3**, fallback off | 2024 d19 p1+p2, d20 p1, d16 p2 (k1-vs-k3 cells) | 3 | 8/12 | 67% | `m5pro-passk-2024-d16-25.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off | 2024 d19 p2 only | 20 | 6/20 | 30% | `m5pro-d19p2-power.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off **samp3**, fallback off | 2024 d19 p2 only | 20 | 10/20 | 50% | `m5pro-d19p2-power.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
@@ -150,7 +152,7 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
   (`passk-replication-2025.md`). Stronger than a 2024 repeat because **2025 was the unfavourable
   venue** — its frontier is bimodal (4 reliable / 2 sometimes / 4 walls vs 2024's 5-of-8
   near-misses), flagged in advance as working against sampling. It replicated anyway.
-- **A standing boundary with one confirmed member:** **2025 d9 p2 (0/10)** resists every
+- **A standing boundary with one confirmed member:** **2025 d9 p2 (0/10; 0/22 across three models by 2026-10-12)** resists every
   configuration tried — k ∈ {1,3}, repair ∈ {0,2}, temperature ∈ {0.7,1.0}. *(Corrected 2026-08-20:
   2024 d15 p2 was listed here as a second wall at "0/11". It is not — it has solved **2 of 16**
   times (~12%). Neither problem has ever timed out; both fail by wrong answers and crashes.
@@ -189,6 +191,11 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
   (`m5pro-passk-2024-d16-25.md`). d19 p2 1/4 → 2/3, d20 p1 3/4 → 3/3, the wall d16 p2 0/4 → 0/3,
   control 3/3. One informative problem at n=3 (Fisher p 0.37), and one of its two solves came
   through repair, not the extra draw. d16 p2 gave the same wrong answer in 13 of 13 first drafts.
+- **d19 p2 at 20 trials per arm: 6/20 → 10/20** (`m5pro-d19p2-power.md`). Both registered
+  predictions held; p = 0.17 alone, 0.095 pooled with the earlier draws. First drafts are correct
+  20% of the time (16/80), which predicts 49% at k3 against a measured 50%: the draws behave as
+  independent. Repair converted 1 of 52. First runs with real repair cost: about a quarter of a
+  draft.
 
 ## What to run on m2max-32 (the next machine)
 

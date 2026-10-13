@@ -58,7 +58,10 @@ left as a logged gap.
 
 Across the corpus, 8.59M of 22.75M recorded tokens (38%) sit on repair records. A repair is one
 call carrying the failed code and its feedback; a draft is an analysis call plus an implementation
-call. Which is larger is not known, so the old totals are neither upper nor lower bounds. **The
+call. Which is larger was not known when this was written, so the old totals are neither upper
+nor lower bounds. *(First measurement, 2026-10-12, `m5pro-d19p2-power.md`: a repair cost about a
+quarter of a draft — 1.5–2.1k tokens against 7k — on one problem and one model. If that holds
+elsewhere the old totals overstate, and arm 2's ratio lies between 3.10× and 3.35×.)* **The
 draft-only sum is a firm lower bound on a run's true cost**, and is what the corrections below use.
 
 ## Claims that rested on token totals

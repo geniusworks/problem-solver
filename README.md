@@ -178,7 +178,7 @@ volume does not close the capability gap — 7/8 vs 8/8. (`economic-arm-moe-vs-g
 Tested out of sample on **AoC 2025 d1–12** — never measured, 23 scoreable parts — the model scored
 **16/23 (70%)**, and the structure carried over: a real frontier exists, the **Part 1/Part 2 cliff
 recurs** (83% vs 55%, six of seven misses are Part 2s), and the same failure classes reappear. The
-verified ledger stands at **43 solutions across two years, 0 wrong.** (`generality-2025-scan.md`,
+verified ledger stood at **43 solutions across two years, 0 wrong** after that scan (54 now). (`generality-2025-scan.md`,
 `band-2025-classification.md`)
 
 ## How it works
@@ -476,7 +476,7 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
 - **Generation beats size**: a 17 GB 2026 generalist swept a set where a 19 GB 2024 specialist
   managed half, scoring below what 12B models achieved on half the RAM.
 - **A named limit**: where a model fails *systematically*, extra attempts do nothing — 2025 d9 p2 is
-  0/13 across every configuration tried. Diversity, not volume, is the lever there.
+  0/22 across every configuration and three models tried. Diversity, not volume, is the lever there.
 - The "16 GB efficiency ceiling" turned out to be **two separate walls** — one algorithmic (a
   topological sort the earlier models never proposed), one a genuine speed limit — not the single
   phenomenon first diagnosed.
@@ -492,7 +492,9 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
 - **Known instrument gaps, logged not hidden:** solver crashes are scored in the same bucket as model
   failures (they want a distinct `HARNESS_ERROR` outcome), and generated code that catches its own
   exception and prints an error string is scored `wrong` rather than `error`.
-- **Hardware headroom:** these results are from one machine. Faster hardware would refine the
+- **Hardware headroom:** a third machine (M5 Pro / 64 GB, 2026-10-12) reproduced the reference
+  result about 2.3× faster and added the 2024 d16–25 band, but no current model larger than the
+  reference fits in 64 GB, so whether a bigger model moves the walls is still open. Faster hardware would refine the
   capability and economic numbers (larger models fit; execution-timeout "speed walls" move) and
   unblock the tests above, but is not expected to change the orchestration mechanism, which holds the
   model and machine fixed.

@@ -60,6 +60,21 @@ for the wall, and was unnecessary for the control. With one informative problem 
 agreement, not confirmation. The claim's weight still rests on `passk-ab-d13-d15.md` and
 `passk-replication-2025.md`; the status of arm 1 does not change.
 
-**Next:** d19 p2 costs one to five minutes a draft. Twenty or more single-draft trials would pin
-its draft rate, and with it whether 2/3 at k3 is the draw, the repair, or luck. That is cheaper
-and more informative than the k=5 arm on this band, which has the same single informative problem.
+## Next: a powered k1 vs k3 on d19 p2 alone (registered before it runs)
+
+*Run 2026-10-12; result in `m5pro-d19p2-power.md`: k1 6/20, k3 10/20, both predictions held.*
+
+One problem, many trials, both arms run fresh on the same code and machine.
+
+- **k1 arm:** `samples_per_model=1`, 20 trials (fingerprint `62ee65d6b521`).
+- **k3 arm:** `samples_per_model=3`, 20 trials (fingerprint `d0e67ebf4cee`), run straight after.
+- Both run on the solver with repair accounting fixed (`repair-accounting-unwired.md`), so these
+  are also the first artifacts whose repair records carry their own tokens.
+- **Prediction:** k1 solves 2 to 7 of 20 (the record is 1/4 by trial, 2/13 by first draft). k3
+  solves more trials than k1, and at least 7 of 20. If first drafts are independent at rate p,
+  three of them solve 1 − (1 − p)³ of trials before repair: 39% at p = 0.15, 58% at p = 0.25.
+- **What would count against the claim:** k3 at or below k1's count. With 20 per arm, a true
+  20% against 50% is detected at p < 0.05 about half the time, so a small k3 lead that misses
+  significance is inconclusive, not a refutation.
+- **Also read off:** how many k3 solves come from a first draft and how many from repair, which
+  the three-trial run could not separate.
