@@ -67,8 +67,15 @@ as "the first genuinely unseen problem" and a target for the submission path, is
 **never been exercised by a real run**; AoC 2026 will be its first test.
 
 **Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → ~~arm-3 pre-check~~ →
-~~d16–25 scan~~ → classify the ten misses at `--trials 3` (prediction registered in the scan doc:
-2–5 are "sometimes") → k1 vs k3 on that band, and k=5 → a 40 GB-class model.
+~~d16–25 scan~~ → ~~classify the band~~ → k1 vs k3 on it (registered in the band doc) → k=5 → a
+40 GB-class model.
+
+**Band classified: 2 "sometimes", 8 walls** (`m5pro-band-2024-d16-25.md`; 3 trials pooled with the
+scan for n=4, 4h 18m, 1.31M tokens, 0 wrong/unverified/overfit, ledger 52 → **54**). **d20 p1 3/4,
+d19 p2 1/4**; the other eight 0/4. The prediction (2–5 "sometimes") held at its lower bound. The
+band is bimodal like 2025's, which makes 2024 d8–15 the favourable exception among three. 0/4 is a
+weak "wall": a 12% problem goes 0 for 4 six times in ten. Every solve was a first draw; none of 41
+repair attempts converted.
 
 ### 🏁 ENDGAME COMPLETE: `RESULTS.md` written (2026-08-23)
 
