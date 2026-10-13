@@ -69,6 +69,7 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m5pro-64** | qwen3.8:27b | tk-off samp3, fallback off‡ | 2024 d15 + 2025 d9 | 3 | 6/12 | 50% | `arm3-precheck-qwen36-35b.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off **samp1**, fallback off | 2024 **d16–25** | 1 | **9/19** | **47%** | `m5pro-scan-2024-d16-25.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off | 2024 d16–25 **band** (the 10 misses) | 3 | 4/30 | 13% | `m5pro-band-2024-d16-25.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off **samp3**, fallback off | 2024 d19 p1+p2, d20 p1, d16 p2 (k1-vs-k3 cells) | 3 | 8/12 | 67% | `m5pro-passk-2024-d16-25.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
@@ -184,6 +185,10 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 - **The d16–25 band is bimodal: 2 "sometimes", 8 at 0/4** (`m5pro-band-2024-d16-25.md`). d20 p1
   3/4 and d19 p2 1/4, pooled with the scan. Ledger **54**. Two of the three classified bands are
   now bimodal, so 2024 d8–15 (5 of 8 "sometimes") looks like the favourable exception.
+- **k1 vs k3 on that band: all four cells as registered, on thin evidence**
+  (`m5pro-passk-2024-d16-25.md`). d19 p2 1/4 → 2/3, d20 p1 3/4 → 3/3, the wall d16 p2 0/4 → 0/3,
+  control 3/3. One informative problem at n=3 (Fisher p 0.37), and one of its two solves came
+  through repair, not the extra draw. d16 p2 gave the same wrong answer in 13 of 13 first drafts.
 
 ## What to run on m2max-32 (the next machine)
 

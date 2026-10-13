@@ -67,8 +67,8 @@ as "the first genuinely unseen problem" and a target for the submission path, is
 **never been exercised by a real run**; AoC 2026 will be its first test.
 
 **Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → ~~arm-3 pre-check~~ →
-~~d16–25 scan~~ → ~~classify the band~~ → k1 vs k3 on it (registered in the band doc) → k=5 → a
-40 GB-class model.
+~~d16–25 scan~~ → ~~classify the band~~ → ~~k1 vs k3 on it~~ → more trials on d19 p2 → k=5 →
+a 40 GB-class model.
 
 **Band classified: 2 "sometimes", 8 walls** (`m5pro-band-2024-d16-25.md`; 3 trials pooled with the
 scan for n=4, 4h 18m, 1.31M tokens, 0 wrong/unverified/overfit, ledger 52 → **54**). **d20 p1 3/4,
@@ -76,6 +76,16 @@ d19 p2 1/4**; the other eight 0/4. The prediction (2–5 "sometimes") held at it
 band is bimodal like 2025's, which makes 2024 d8–15 the favourable exception among three. 0/4 is a
 weak "wall": a 12% problem goes 0 for 4 six times in ten. Every solve was a first draw; none of 41
 repair attempts converted.
+
+**k1 vs k3 on the band: all four cells as registered** (`m5pro-passk-2024-d16-25.md`; samp3,
+3 trials, 2h 49m, 8/12, 0 wrong/unverified/overfit, ledger unchanged at 54). **d19 p2 1/4 → 2/3**,
+d20 p1 3/4 → 3/3, wall d16 p2 0/4 → 0/3, control d19 p1 3/3. Agreement, not confirmation: one
+informative problem at n=3 (one-sided Fisher p 0.37), and only one of its two solves came from the
+extra draw; the other was a repair, the first to convert on this band (1 of 11 here, 0 of 41
+before). First drafts on d19 p2 are 2/13 correct across both arms. d16 p2 answered `682` (accepted
+`568`) in 13 of 13 first drafts: a shared misreading, not variance. Arm 1's status is unchanged.
+Reading the artifact exposed an accounting defect: repair records repeat their draft's tokens and
+time, so this run's token total is not reliable.
 
 ### 🏁 ENDGAME COMPLETE: `RESULTS.md` written (2026-08-23)
 
