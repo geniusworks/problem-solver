@@ -31,6 +31,14 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
+# Value each later-added field had, implicitly, in every run made before it
+# existed. See fingerprint().
+_LEGACY_VALUES: Dict[str, Any] = {
+    "problem_context": "legacy",
+    "analysis_temperature": "model_default",
+}
+
+
 @dataclass(frozen=True)
 class SolverConfig:
     """A named, reproducible solver configuration."""
@@ -66,6 +74,25 @@ class SolverConfig:
     # problems flipped across identical configs). Needs temperature > 0 to help;
     # at 1 the solver behaves exactly as before.
     samples_per_model: int = 1
+
+    # What the model is shown about the problem.
+    #   "aoc"    -> what a solver on the site has at that step: for Part Two,
+    #               Part One's statement and accepted answer above the Part Two
+    #               text, plus the recorded Part One program; for both parts,
+    #               the first lines of the puzzle input. Not the site's "too
+    #               high" / "too low" on a wrong answer: feedback is never
+    #               given the accepted answer (test_never_leaks_the_expected_answer).
+    #   "legacy" -> the one article for the part and nothing else, which is
+    #               what every run before 2026-10-13 used. A Part Two posed
+    #               this way has no rules and no input format
+    #               (dev/progress/part2-prompt-omits-part1.md).
+    problem_context: str = "aoc"
+
+    # Temperature of the analysis call that precedes each draft.
+    #   "configured"    -> `temperature`, like the implementation and repair calls.
+    #   "model_default" -> unset, so Ollama uses the model's own default (1.0
+    #                      for qwen3.8:27b). Every run before 2026-10-13.
+    analysis_temperature: str = "configured"
 
     # --- repair and fallback --------------------------------------------
     max_repair_iterations: int = 2
@@ -133,6 +160,12 @@ class SolverConfig:
             raise ValueError("max_primary_models must be >= 1")
         if self.samples_per_model < 1:
             raise ValueError("samples_per_model must be >= 1")
+        if self.problem_context not in ("aoc", "legacy"):
+            raise ValueError("problem_context must be 'aoc' or 'legacy'")
+        if self.analysis_temperature not in ("configured", "model_default"):
+            raise ValueError(
+                "analysis_temperature must be 'configured' or 'model_default'"
+            )
 
     # -- serialisation ----------------------------------------------------
 
@@ -151,6 +184,12 @@ class SolverConfig:
         payload = self.to_dict()
         payload.pop("name", None)
         payload.pop("notes", None)
+        # Fields added after results were already on record are left out at
+        # the value those results ran with, so a run that sets them back
+        # reproduces the old fingerprint and the old hashes keep their meaning.
+        for key, legacy in _LEGACY_VALUES.items():
+            if payload.get(key) == legacy:
+                payload.pop(key)
         canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:12]
 

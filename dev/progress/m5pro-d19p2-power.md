@@ -51,6 +51,10 @@ One-sided Fisher exact, k3 above k1: **p = 0.17**. Pooled with the earlier draws
   A 20% draft rate gives sampling less to work with than the 25–33% problems there, and the curve
   says k=5 would reach 67% and k=10 89% on this problem.
 
+*Added 2026-10-13: the saved drafts show what is being drawn. The Part 2 prompt omits the input
+format, and a draft is correct only if it guesses it (16 of 26 that did; 0 of 54 that did not).
+See `part2-prompt-omits-part1.md`.*
+
 ## First artifacts with real repair cost
 
 These are the first runs whose repair records carry their own tokens and time; no repair record

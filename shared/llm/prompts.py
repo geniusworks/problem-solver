@@ -196,6 +196,10 @@ def generate_implementation_prompt(
     sections = [
         PromptSection("Problem", problem.description, priority=0),
         PromptSection("Examples", format_test_cases(problem.examples), priority=1),
+        *(
+            [PromptSection("What You Have", problem.supplement, priority=1)]
+            if getattr(problem, "supplement", "") else []
+        ),
         get_parsing_guidance(problem, strategies),
         get_strategy_guidance(strategies),
         get_implementation_requirements(),

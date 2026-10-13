@@ -87,6 +87,9 @@ class ParsedProblem:
         default_factory=list
     )  # Changes between example and full
     key_concepts: Set[str] = field(default_factory=set)
+    # What the solver has besides the statement (input preview, their Part One
+    # program). Kept out of `description`, which keyword heuristics scan.
+    supplement: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""

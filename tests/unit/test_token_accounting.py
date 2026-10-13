@@ -91,3 +91,25 @@ async def test_repair_honours_the_configured_temperature(monkeypatch):
     await p.improve_solution("x", _Problem(), feedback="f")
 
     assert seen["temperature"] == 0.9
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mode, expected", [("configured", 0.9), ("model_default", None)])
+async def test_analysis_call_temperature_follows_the_config(monkeypatch, mode, expected):
+    """The analysis call that precedes each draft was sent with no temperature,
+    so it ran at the model's default while the implementation call ran at the
+    configured one (dev/progress/part2-prompt-omits-part1.md)."""
+    p = OllamaProvider(model="m", temperature=0.9, analysis_temperature=mode)
+    seen = []
+
+    async def fake_generate(prompt, temperature=None):
+        seen.append(temperature)
+        return _Resp("```python\ndef solve():\n    return 1\n```", 10, 5)
+
+    monkeypatch.setattr(p, "generate", fake_generate)
+    from shared.parser import parse_problem_text
+    problem = parse_problem_text("--- Day 1: T ---\nAdd the numbers. What is the total?")
+    await p.generate_solution(problem, 2024, 1)
+
+    assert seen[0] == expected, "analysis call"
+    assert seen[-1] == 0.9, "implementation call"

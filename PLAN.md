@@ -321,6 +321,15 @@ problems. In order:
    | `ornith-1.5:35b` | 23 GB | newest of the three; maker and architecture not stated on its page |
    | `muse-glimmer:30b` | 18 GB | Meta, tuned for tool use and failure recovery |
 
+   **Before any candidate runs (added 2026-10-13):** the prompt context changed
+   (`part2-prompt-omits-part1.md`), and two of the four entry-check cells are Part 2s. In order:
+   (a) the registered d19 p2 A/B, legacy against `aoc` context, 20 trials;
+   (b) the walls under `aoc` context, 3 trials each (2024 d16 p2, 2025 d9 p2);
+   (c) **re-run the reference** on the four entry-check cells under the new defaults — its row on
+   record (6/12) is a legacy-context result and no longer the comparison.
+   If (b) and (c) show the walls falling for the reference itself, the entry-check cells no longer
+   separate models and the cells must be re-chosen from whatever still fails.
+
    **Procedure, per model, in that order:**
    1. Plumbing check, `--trials 3` on `2024:1` at `samples_per_model=1`: does it emit runnable
       code with `enable_thinking=false`? A model that cannot is dropped, and that is recorded.
@@ -330,8 +339,8 @@ problems. In order:
       venv/bin/python experiment.py --problems 2024:15,2025:9 --trials 3 \
         --config "name=m5pro-arm3-<model>-k3,models=<MODEL>,temperature=0.7,samples_per_model=3,enable_thinking=false,enable_fallback_models=false"
       ```
-      Expect 2 to 4 hours each. The reference's row on this machine is already on record
-      (6/12: d15 p1 3/3, d15 p2 1/3, d9 p1 2/3, d9 p2 0/3) and is not re-run.
+      Expect 2 to 4 hours each. The comparison row is the reference's re-run from (c) above,
+      not the legacy 6/12.
    4. **Entry criterion** (`ensemble-precheck-negative.md`): run an ensemble only if the candidate
       solves something the reference reliably misses. Made concrete for these cells: the candidate
       solves, in at least 2 of 3 trials, a cell the reference solved in at most 1 of 3 (d15 p2 or
@@ -443,6 +452,22 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
 
 ### 4. Instrument gaps — logged, unfixed, each one small
 
+- ~~**Every Part 2 prompt omitted the Part 1 statement**~~ — ✅ **FIXED 2026-10-13**
+  (`part2-prompt-omits-part1.md`). The model was shown only the "Part Two" article — no rules, no
+  input format. On 2024 d19 p2, 16 of 26 drafts that guessed the input format were correct and 0
+  of 54 that did not. `problem_context=aoc` (the default now) shows what a solver on the site has:
+  Part One's statement and accepted answer, the recorded Part One program, a preview of the input.
+  `problem_context=legacy` reproduces every earlier run. **The Part 1/Part 2 cliff and every
+  Part 2 "wall" are unestablished as capability findings until re-run**; the A/B is registered in
+  that doc and not yet run.
+- ~~**The analysis call ignored the configured temperature**~~ — ✅ **FIXED 2026-10-13** (same
+  doc). `analysis_temperature=model_default` reproduces earlier runs.
+- **Part Two examples are not paired with Part One's example input**, so a Part Two often has no
+  executable example and example-based repair feedback is thin. Unfixed: a heuristic pairing can
+  attach a wrong expected value.
+- **No "too high / too low" on a wrong answer**, which the site gives. Unfixed on purpose: it
+  would put the accepted answer inside the feedback builder, which a test forbids.
+
 - ~~**Token accounting is stale across repair attempts**~~ — ✅ **FIXED 2026-08-22**
   (`token-accounting-fix.md`). `improve_solution` never updated `last_token_usage`, so repair
   attempts reported the previous generation's counts. Fixing it surfaced a **second bug in the same
@@ -455,9 +480,9 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
   after it (642 of 642). ✅ **Fixed at the record 2026-10-12** (`repair-accounting-unwired.md`).
   Old token totals are neither upper nor lower bounds; the draft-only sum is a lower bound. Arm 2's
   3.35× becomes "at least 3.10×".
-- **Repair calls that yield no new candidate leave no record.** A repair that raises or returns
-  the code unchanged spends tokens that appear nowhere. Recording them adds attempt records and so
-  shifts `attempts` against the whole history; unfixed.
+- ~~**Repair calls that yield no new candidate leave no record.**~~ ✅ **FIXED 2026-10-13**: each
+  is recorded as a `repair` / `no_candidate` attempt with its own tokens and time. Attempt counts
+  from that date include them.
 - **Solver crashes are scored as model failures.** An exception out of the solve path lands in the
   same bucket as "the model could not do it" — which is how a `KeyError` corrupted results for eight
   months undetected (`strategy-keyerror-d8.md`). Wants a distinct `HARNESS_ERROR` outcome.

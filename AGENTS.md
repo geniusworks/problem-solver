@@ -74,3 +74,8 @@ venv/bin/python experiment.py --problems 2024:4-7 --trials 1 \
   --config "name=<run>,models=<MODEL>,temperature=0.7,samples_per_model=3,enable_thinking=false"
 ```
 Add `enable_thinking=false` for reasoning models or they over-reason and never emit code.
+
+To reproduce any result recorded before 2026-10-13, also add
+`problem_context=legacy,analysis_temperature=model_default`: those runs posed Part 2 without the
+Part 1 statement (`dev/progress/part2-prompt-omits-part1.md`), and these settings keep their
+fingerprints.

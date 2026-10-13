@@ -160,6 +160,9 @@ The thesis is scale-invariant only if voting still helps where the *strong* mode
 
 - **The model list is PIPE-separated, not comma:** `models=gemma4:12b|qwen3.5:9b`. `--config` splits
   `key=value` pairs on commas, so a comma inside `models=` mis-parses. (`experiment.py:parse_config`.)
+- **The commands in this doc predate the 2026-10-13 prompt fix.** To reproduce their results add
+  `problem_context=legacy,analysis_temperature=model_default`; without it a run uses the new
+  default context and is a different experiment (`dev/progress/part2-prompt-omits-part1.md`).
 - **Always `enable_thinking=false`** for reasoning models, or they emit tens of thousands of chars of
   chain-of-thought and never reach the code (`done_reason=length`). This applies to qwen3.x and any
   reasoning-native model; confirm the 30B's behavior early.
