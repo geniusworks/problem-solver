@@ -18,6 +18,11 @@ what it is, how the pipeline works, how to run it — see the [README](README.md
 **Corpus:** 57 recorded experiment runs · 1,475 candidate attempts · ~121 GPU-hours · 16.3M tokens (includes draft counts copied onto repair records; see the defect table) ·
 **43 oracle-verified solutions across two AoC years, 0 wrong in the ledger.**
 
+*Open since 2026-10-13: every Part 2 in this report was posed without the Part 1 statement
+(`dev/progress/part2-prompt-omits-part1.md`). Arm-to-arm comparisons are unaffected as
+measurements; the Part 1/Part 2 cliff and the Part 2 walls are not established as capability
+findings until re-run.*
+
 *Since this report (2026-10-12): eight further runs on a third machine, `m5pro-64`, took the ledger
 to 54 and added a third frontier band (2024 d16–25). No arm's status changed; the dated corrections
 below mark what did. Live status: `dev/progress/checkpoint.md`.*

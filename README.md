@@ -489,6 +489,9 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
   pair that solves genuinely different problems.
 - **A clean contamination test:** evaluating on problems published *after* the model's training cutoff
   (AoC 2026, in December) is the cheapest genuinely-unseen test available.
+- **Part 2 prompts omit the Part 1 statement** (found 2026-10-13): the model is shown only the
+  "Part Two" text, so the Part 1/Part 2 cliff and the Part 2 walls reported above are not yet
+  established as capability findings (`dev/progress/part2-prompt-omits-part1.md`).
 - **Known instrument gaps, logged not hidden:** solver crashes are scored in the same bucket as model
   failures (they want a distinct `HARNESS_ERROR` outcome), and generated code that catches its own
   exception and prints an error string is scored `wrong` rather than `error`.

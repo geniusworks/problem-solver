@@ -5,7 +5,19 @@ The **live status snapshot** — where the project actually stands right now. Th
 `dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
 file current as work lands so it never goes stale.
 
-## Current status (2026-10-12)
+## Current status (2026-10-13)
+
+### ⚠️ Open instrument finding: Part 2 prompts omit the Part 1 statement (2026-10-13)
+
+`part2-prompt-omits-part1.md`. `fetch_problem_text` gives the model only the "Part Two" article
+for a Part 2 — by design ("atomically"), and never connected to the results until the d19 p2
+drafts were read. On that problem the outcome is decided by whether a draft guesses the input
+format: 16 of 26 correct when it does, 0 of 54 when it does not. Comparisons between arms remain
+valid measurements of the pipeline as built; the **Part 1/Part 2 cliff, the Part 2 walls, and
+what sampling rescues are all open to reinterpretation** until a run with the full statement.
+Also logged there: the analysis call runs at the model's default temperature, not the configured
+one. **Neither is fixed. Nothing is running; the three arm-3 candidates are pulled and waiting on
+a decision about this.**
 
 ### Machine: work has moved to the M5 Pro / 64 GB (2026-10-12)
 

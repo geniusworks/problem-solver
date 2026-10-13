@@ -443,6 +443,18 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
 
 ### 4. Instrument gaps — logged, unfixed, each one small
 
+- **⚠️ Not small: every Part 2 prompt omits the Part 1 statement** (found 2026-10-13,
+  `part2-prompt-omits-part1.md`). The model is shown only the "Part Two" article — no rules, no
+  input format. On 2024 d19 p2, 16 of 26 drafts that guessed the input format were correct and 0
+  of 54 that did not. The Part 1/Part 2 cliff and every "wall" on a Part 2 are unestablished as
+  capability findings until re-run with the full statement. **Decide before the arm-3 candidate
+  checks (M5 Pro step 4)**: three of their four cells are affected (d15 p2, d9 p2 directly; the
+  comparison to the reference stays fair either way). Proposed test: d19 p2, 20 trials, full
+  statement, against the 6/20 on record.
+- **The analysis call ignores the configured temperature** (found 2026-10-13, same doc). It runs
+  at the model default (1.0 for the reference); only the implementation and repair calls get the
+  configured value. Shifts the reference's numbers if fixed.
+
 - ~~**Token accounting is stale across repair attempts**~~ — ✅ **FIXED 2026-08-22**
   (`token-accounting-fix.md`). `improve_solution` never updated `last_token_usage`, so repair
   attempts reported the previous generation's counts. Fixing it surfaced a **second bug in the same
