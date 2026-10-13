@@ -28,8 +28,8 @@ Part 1/Part 2 cliff, the Part 2 walls, and what sampling rescues are unestablish
 findings until re-run.** New runs are not comparable with old ones unless the legacy settings are
 passed.
 
-**AoC 2026 is not planned** (maintainer, 2026-10-13); work continues on 2024–2025. That leaves
-the contamination test undone and makes moot, for now, the fact that an unseen year cannot reach
+**AoC 2026 is undecided** (maintainer, 2026-10-13): not committed to, not ruled out. Work
+continues on 2024–2025. If it is run, it needs a decision first: an unseen year cannot reach
 Part 2 without the unwired submitter.
 
 **Not run yet, in order:** the registered d19 A/B (legacy 6/20 against the new context;
