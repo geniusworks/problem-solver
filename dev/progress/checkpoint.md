@@ -28,8 +28,9 @@ Part 1/Part 2 cliff, the Part 2 walls, and what sampling rescues are unestablish
 findings until re-run.** New runs are not comparable with old ones unless the legacy settings are
 passed.
 
-**Open decision:** an unseen year cannot reach Part 2 under these conditions without submitting
-Part 1, and the submitter is unwired. Settle before AoC 2026.
+**AoC 2026 is not planned** (maintainer, 2026-10-13); work continues on 2024–2025. That leaves
+the contamination test undone and makes moot, for now, the fact that an unseen year cannot reach
+Part 2 without the unwired submitter.
 
 **Not run yet, in order:** the registered d19 A/B (legacy 6/20 against the new context;
 prediction: Part 2 solved in at least 80% of the trials that reach it); the walls d16 p2 and 2025 d9 p2 under the new context; a re-run of
@@ -97,7 +98,7 @@ as "the first genuinely unseen problem" and a target for the submission path, is
 
 **Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → ~~arm-3 pre-check~~ →
 ~~d16–25 scan~~ → ~~classify the band~~ → ~~k1 vs k3 on it~~ → ~~20 trials per arm on d19 p2~~ → three arm-3
-candidates from other makers (pulled, not run; PLAN.md step 4) → AoC 2026. k=5 is deferred: the
+candidates from other makers (pulled, not run; PLAN.md step 4). k=5 is deferred: the
 independence curve is measured on d19 p2 and predicts it (67%).
 
 **Band classified: 2 "sometimes", 8 walls** (`m5pro-band-2024-d16-25.md`; 3 trials pooled with the
