@@ -7,17 +7,27 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-10-13)
 
-### ⚠️ Open instrument finding: Part 2 prompts omit the Part 1 statement (2026-10-13)
+### Instrument fixed: the model now sees what a solver on the site sees (2026-10-13)
 
-`part2-prompt-omits-part1.md`. `fetch_problem_text` gives the model only the "Part Two" article
-for a Part 2 — by design ("atomically"), and never connected to the results until the d19 p2
-drafts were read. On that problem the outcome is decided by whether a draft guesses the input
-format: 16 of 26 correct when it does, 0 of 54 when it does not. Comparisons between arms remain
-valid measurements of the pipeline as built; the **Part 1/Part 2 cliff, the Part 2 walls, and
-what sampling rescues are all open to reinterpretation** until a run with the full statement.
-Also logged there: the analysis call runs at the model's default temperature, not the configured
-one. **Neither is fixed. Nothing is running; the three arm-3 candidates are pulled and waiting on
-a decision about this.**
+`part2-prompt-omits-part1.md`. Every Part 2 to date was posed with the "Part Two" article alone —
+no rules, no input format. On 2024 d19 p2 the outcome was decided by whether a draft guessed the
+input format: 16 of 26 correct when it did, 0 of 54 when it did not. **Fixed** with
+`problem_context=aoc` (now the default): a Part 2 is shown Part One's statement and accepted
+answer, the Part Two text, the recorded Part One program and a preview of the input; a Part 1
+gains the input preview. Also fixed: the analysis call now uses the configured temperature
+(`analysis_temperature`), and repair calls that yield nothing are recorded with their tokens.
+
+**What this means for the record.** Every result before 2026-10-13 is a legacy-context result
+and is reproducible with `problem_context=legacy,analysis_temperature=model_default`, which keeps
+the old fingerprints. Arm-to-arm comparisons stand as measurements of that pipeline. **The
+Part 1/Part 2 cliff, the Part 2 walls, and what sampling rescues are unestablished as capability
+findings until re-run.** New runs are not comparable with old ones unless the legacy settings are
+passed.
+
+**Not run yet, in order:** the registered d19 p2 A/B (legacy 6/20 against the new context,
+prediction at least 14/20); the walls d16 p2 and 2025 d9 p2 under the new context; a re-run of
+the reference on the arm-3 entry cells; then the three candidates (`gemma4:31b`, `ornith-1.5:35b`,
+`muse-glimmer:30b`, pulled). **Nothing is running.**
 
 ### Machine: work has moved to the M5 Pro / 64 GB (2026-10-12)
 

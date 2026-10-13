@@ -40,10 +40,10 @@ the score was computed on the draft and no repair is scored.
 `test_solver_uses_repair_loop_when_all_initial_candidates_fail` asserts on the records themselves
 and fails without the change.
 
-**Still unrecorded:** a repair call that raises, or returns the code unchanged, produces no
-candidate and so no record. Its tokens are spent and appear nowhere. Recording them means adding
-attempt records, which changes `attempts` and `mean_attempts_to_solve` against the whole history;
-left as a logged gap.
+**Repair calls that yield nothing** — one that raises, or returns the code unchanged — produced
+no candidate and so no record; their tokens appeared nowhere. *Fixed 2026-10-13:* each now gets a
+`repair` record with outcome `no_candidate`, its own tokens and time, and the reason. Attempt
+counts in runs from that date therefore include calls that earlier runs silently dropped.
 
 ## What is and is not affected
 

@@ -1,6 +1,7 @@
 """Base solver class for Advent of Code problems."""
 
 import logging
+import re
 import os
 import json
 from pathlib import Path
@@ -12,6 +13,7 @@ from requests import RequestException
 from shared.execution import SolutionExecutor, TestCase
 from shared.llm.local import OllamaProvider
 from shared.parser import parse_problem_text
+from shared import problem_context
 from shared.aoc import fetch_problem_text, ensure_problem_files, ensure_problem_directory_structure
 from shared.ledger import record_solution
 from shared.strategy_recommender import StrategyRecommender
@@ -189,6 +191,7 @@ class BaseSolver:
                 temperature=self.config.temperature,
                 num_ctx=self.config.num_ctx,
                 think=self.config.enable_thinking,
+                analysis_temperature=self.config.analysis_temperature,
             )
             for model in model_names
         }
@@ -455,6 +458,19 @@ class BaseSolver:
 
         problem_text, _, _ = await fetch_problem_text(year, day, part)
         parsed_problem = parse_problem_text(problem_text)
+        if self.config.problem_context == "aoc":
+            # Examples and the final question stay those of the part's own
+            # article; only what the model reads around them is widened.
+            page = problem_context.page_description(
+                year, day, part, parsed_problem.description
+            )
+            if page != parsed_problem.description:
+                parsed_problem.description = page
+                heading = re.match(r"\s*--- .+? ---", page)
+                parsed_problem.title = (
+                    heading.group().strip() if heading else parsed_problem.title
+                )
+            parsed_problem.supplement = problem_context.supplement(year, day, part)
         if self.debug:
             logging.info("Problem text for part %d:", part)
             logging.info(problem_text)
@@ -693,26 +709,46 @@ class BaseSolver:
                     improve_fn = getattr(model, "improve_solution", None) if model else None
                     if not callable(improve_fn):
                         continue
+                    repair_start = datetime.now()
+                    stale_usage = getattr(model, "last_token_usage", None)
+                    repair_error: Optional[str] = None
+                    improved_code = None
                     try:
-                        repair_start = datetime.now()
                         improved_code = await improve_fn(
                             solution,
                             parsed_problem,
                             feedback_by_model[cand_id],
                         )
-                        if improved_code and improved_code != solution:
-                            improved_candidates[cand_id] = improved_code
-                            # The next iteration records this candidate; give it
-                            # the repair's own cost, not the draft's.
-                            attempt_times[cand_id] = (
-                                datetime.now() - repair_start
-                            ).total_seconds()
-                            attempt_tokens[cand_id] = dict(getattr(
-                                model, "last_token_usage",
-                                {"input_tokens": 0, "output_tokens": 0},
-                            ))
-                    except Exception:
-                        continue
+                    except Exception as e:
+                        repair_error = f"{type(e).__name__}: {e}"
+                    repair_seconds = (datetime.now() - repair_start).total_seconds()
+                    usage = getattr(model, "last_token_usage", None)
+                    # A call that raised before reporting usage leaves the
+                    # previous call's counts in place; those are not this call's.
+                    if repair_error is not None and usage is stale_usage:
+                        usage = None
+                    repair_tokens = dict(usage or {"input_tokens": 0, "output_tokens": 0})
+
+                    if improved_code and improved_code != solution:
+                        improved_candidates[cand_id] = improved_code
+                        # The next iteration records this candidate; give it
+                        # the repair's own cost, not the draft's.
+                        attempt_times[cand_id] = repair_seconds
+                        attempt_tokens[cand_id] = repair_tokens
+                    else:
+                        # The call was made and paid for but yielded nothing to
+                        # run, so no later iteration will record it.
+                        self._record_attempt(
+                            candidate_models.get(cand_id, cand_id),
+                            year, day, part, Outcome.NO_CANDIDATE,
+                            stage="repair",
+                            expected=known_answer,
+                            repair_iteration=iteration + 1,
+                            wall_clock_seconds=repair_seconds,
+                            input_tokens=repair_tokens.get("input_tokens", 0),
+                            output_tokens=repair_tokens.get("output_tokens", 0),
+                            error=repair_error or "repair returned the code unchanged",
+                        )
 
                 if not improved_candidates:
                     break

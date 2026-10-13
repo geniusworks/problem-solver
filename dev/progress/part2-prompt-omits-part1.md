@@ -4,8 +4,9 @@
 the rules, the input format, the worked example input — is not in it.** On 2024 d19 p2 this
 accounts for every result: of 80 first drafts, the 16 correct ones are exactly the correct subset
 of the 26 that guessed the input's first line is comma-separated; none of the 54 that did not
-guess it is correct. Found 2026-10-13 from the saved drafts of `m5pro-d19p2-power.md`. **Logged,
-not fixed**: the fix changes what every Part 2 number means, so it wants a measured A/B first.
+guess it is correct. Found 2026-10-13 from the saved drafts of `m5pro-d19p2-power.md`. **Fixed
+the same day** behind a config switch (below); the A/B that measures the difference is registered
+and not yet run.
 
 ## The mechanism
 
@@ -71,14 +72,61 @@ produced the accepted answer.
   Part 2 solve rates on a genuinely unseen year (AoC 2026) would be lower than these for a reason
   that has nothing to do with capability.
 
-## Proposed test (not run)
+## The fix: show the model what a solver on the site has
 
-One problem, one variable. 2024 d19 p2, `samples_per_model=1`, 20 trials, with the Part 2 prompt
-built from both articles; compare against the 6/20 on record. Then the full Part 2 set of one
-band. About an hour for the first; it needs a config switch so both prompt forms stay
-reproducible and old fingerprints keep their meaning.
+`SolverConfig.problem_context`, default `"aoc"`; `"legacy"` is the old behaviour. Assembled in
+`shared/problem_context.py` from the per-problem cache.
 
-## Second gap, same session: the analysis call ignores the configured temperature
+| step | a person on the site has | the model is now shown |
+|---|---|---|
+| Part One | the Part One statement; the puzzle input | the statement (as before); the first 12 lines of the input, clipped, with its size |
+| Part Two | Part One's statement, "Your puzzle answer was N", the Part Two statement; the input; their working Part One program | all of those, in page order; the recorded Part One program from the ledger |
+| after a wrong answer | "not the right answer", often "too high" / "too low" | "not accepted" (as before). **Not** the direction |
+
+Limits of the equivalence:
+
+- **No "too high / too low".** Computing it needs the accepted answer inside the feedback
+  builder, and `test_never_leaks_the_expected_answer` forbids that by design. Left as it was.
+- **The Part One program is the ledger's**, which may have been written by a different model
+  than the one now solving Part Two. It is offered only when the Part One answer is known.
+- **A Part Two is attempted even when this model has not solved Part One.** The site would not
+  show it. The statement and accepted Part One answer are still shown, from the cache.
+- **Part Two examples are not paired.** A Part Two usually reuses Part One's example input with a
+  new expected result. The model now reads both in the statement, but the harness still builds
+  executable test cases from the Part Two article alone (none on d19 p2), so example-based
+  feedback for Part Twos is as thin as before. Pairing them by heuristic risks a wrong expected
+  value, which is worse than none.
+- **The Part Two answer is never included.** Only the two statement articles and the Part One
+  answer are read; `tests/unit/test_problem_context.py` asserts it.
+
+Checked on real prompts for 2024 d19 p2, 2024 d16 p2 and 2025 d9 p2: Part One statement and
+answer present, Part Two answer absent, implementation prompt 14–23k characters against 8–18k.
+
+**Fingerprints.** Both new fields are left out of the hash at their legacy values, so the runs on
+record keep their fingerprints and can be reproduced:
+
+| settings | k1 reference | k3 reference |
+|---|---|---|
+| `problem_context=legacy,analysis_temperature=model_default` | `62ee65d6b521` | `d0e67ebf4cee` |
+| defaults (`aoc`, `configured`) | `907898143ff0` | `12412ed652a4` |
+
+**Every result before 2026-10-13 is a legacy-context result.** New runs are not comparable with
+them unless the legacy settings are passed.
+
+## The A/B (registered 2026-10-13, not yet run)
+
+2024 d19 p2, `samples_per_model=1`, 20 trials, `analysis_temperature=model_default` in both arms
+so that only the context differs:
+
+- **legacy:** the 6/20 on record (`62ee65d6b521`).
+- **aoc:** fingerprint `5d259bb8f103`.
+- **Prediction:** at least 14 of 20. The failure was a format guess; with the format stated and a
+  working parser in the Part One program, the remaining misses should be algorithmic. Below 10
+  would mean the diagnosis here is incomplete.
+- Then the walls, same design, 3 trials each: 2024 d16 p2 (0/7) and 2025 d9 p2 (0/22).
+  No prediction for d9 p2; for d16 p2, at least 1 of 3.
+
+## Second gap, same session: the analysis call ignored the configured temperature
 
 Each draft is two model calls. The second (implementation) and every repair are sent the
 configured temperature. The first (analysis) is `self.generate(prompt)` with no temperature, so
@@ -92,4 +140,5 @@ it runs at the model's own default — the same omission that was fixed for repa
 - Defaults differ by model (`gemma4:31b` and `muse-glimmer:30b` 1.0; `ornith-1.5:35b` declares
   none), so a cross-model comparison holds the code temperature fixed and not the analysis one.
 
-Logged, not fixed, for the same reason: fixing it shifts the reference's numbers.
+**Fixed 2026-10-13:** `SolverConfig.analysis_temperature`, default `"configured"`;
+`"model_default"` is the old behaviour and keeps the old fingerprints. Its effect is unmeasured.

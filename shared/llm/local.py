@@ -61,6 +61,7 @@ class OllamaProvider(LLMProvider):
     def __init__(self, model: str = "codellama:7b", debug: bool = False,
                  temperature: Optional[float] = None,
                  num_ctx: Optional[int] = None, think: Optional[bool] = None,
+                 analysis_temperature: str = "configured",
                  **kwargs):
         super().__init__(**kwargs)
         self.model = model
@@ -68,6 +69,9 @@ class OllamaProvider(LLMProvider):
         # None leaves Ollama's default. Setting it is what makes drawing
         # several independent samples from one model meaningful.
         self.temperature = temperature
+        # "model_default" sends the analysis call with no temperature, which
+        # is what it did before the omission was noticed.
+        self.analysis_temperature = analysis_temperature
         # Explicit override; None sizes the window to the prompt.
         self.num_ctx = num_ctx
         # Ollama's per-request thinking toggle for reasoning models. None uses
@@ -111,8 +115,13 @@ class OllamaProvider(LLMProvider):
 
 Examples:
 {format_test_cases(problem.examples)}
-
-Final Question: {problem.final_question}""")
+{self._supplement(problem)}
+Final Question: {problem.final_question}""",
+            temperature=(
+                self.temperature
+                if self.analysis_temperature == "configured" else None
+            ),
+        )
         analysis_in, analysis_out = self._tokens(analysis)
 
         # Phase 2: Strategy Selection.
@@ -529,6 +538,12 @@ Final Question: {problem.final_question}""")
     def is_local(self) -> bool:
         return True
         
+    @staticmethod
+    def _supplement(problem) -> str:
+        """The problem's supplement as a prompt block, or an empty line."""
+        text = getattr(problem, "supplement", "") or ""
+        return f"\n{text}\n" if text else ""
+
     async def improve_solution(self, solution: str, problem, feedback: Optional[str] = None) -> str:
         """Improve an existing solution based on feedback.
 
@@ -551,7 +566,7 @@ Problem Description:
 
 Examples:
 {format_test_cases(problem.examples)}
-
+{self._supplement(problem)}
 Final Question: {problem.final_question}
 
 {'Feedback: ' + feedback if feedback else 'Please improve this solution while maintaining the exact same output format.'}

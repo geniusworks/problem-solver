@@ -18,7 +18,7 @@ what it is, how the pipeline works, how to run it — see the [README](README.md
 **Corpus:** 57 recorded experiment runs · 1,475 candidate attempts · ~121 GPU-hours · 16.3M tokens (includes draft counts copied onto repair records; see the defect table) ·
 **43 oracle-verified solutions across two AoC years, 0 wrong in the ledger.**
 
-*Open since 2026-10-13: every Part 2 in this report was posed without the Part 1 statement
+*Found and fixed 2026-10-13: every Part 2 in this report was posed without the Part 1 statement
 (`dev/progress/part2-prompt-omits-part1.md`). Arm-to-arm comparisons are unaffected as
 measurements; the Part 1/Part 2 cliff and the Part 2 walls are not established as capability
 findings until re-run.*
@@ -173,7 +173,7 @@ emitted identical `TypeError`s every time.
 ## What the measurements cost in credibility, and why that matters
 
 Roughly half the work behind these numbers was discovering that earlier measurements were wrong.
-Ten instrument defects, each of which made results *look better or worse than reality*:
+Eleven instrument defects, each of which made results *look better or worse than reality*:
 
 | defect | effect |
 |---|---|
@@ -186,6 +186,7 @@ Ten instrument defects, each of which made results *look better or worse than re
 | `success_rate` recorded at generation time, `success=True` for anything that parsed | **the sole signal model ranking used measured "returned code", not "solved the problem"** |
 | `StrategyOptimizer` read a second, dead database (0 rows) | strategy effectiveness computed over no data at all |
 | That token fix stopped at the provider; the solver kept copying the draft's tokens and time onto every repair record *(found 2026-10-12)* | **642 of 642 repair records wrong, in runs after the "fix" too**; arm 2's 3.35× is really "at least 3.10×" |
+| Part 2 prompts carried only the "Part Two" article: no rules, no input format *(found 2026-10-13)* | **on 2024 d19 p2 a draft was right only if it guessed the format (16 of 26 that did, 0 of 54 that did not)**; the Part 1/Part 2 cliff and the Part 2 walls are unestablished until re-run |
 | A last day's "Part Two" with no puzzle was attempted and scored as a miss *(found 2026-10-12)* | denominators off by one in two scans (16/24, 9/20), and **a nonexistent problem written up as "the first genuinely unseen problem"** |
 
 Each is fixed with regression tests. The sharpest lesson came from a tally accumulated in prose

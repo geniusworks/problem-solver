@@ -377,3 +377,62 @@ async def test_self_consistency_draws_multiple_samples_per_model(monkeypatch, tm
     # Both samples were drawn, and the good one was accepted.
     assert model.calls == 2
     assert result is not None and "# good" in result
+
+
+class StubbornModel:
+    """Drafts bad code and hands the same code back when asked to repair it."""
+
+    def __init__(self) -> None:
+        self.last_token_usage = {"input_tokens": 900, "output_tokens": 110}
+
+    async def generate_solution(  # type: ignore[override]
+        self, parsed_problem, year, day, strategies, strategy_effectiveness
+    ) -> str:
+        return "def solve():\n    return 0\n  # bad"
+
+    async def improve_solution(self, solution: str, problem, feedback=None) -> str:  # type: ignore[override]
+        self.last_token_usage = {"input_tokens": 333, "output_tokens": 44}
+        return solution
+
+
+@pytest.mark.asyncio
+async def test_a_repair_call_that_yields_nothing_is_still_recorded(monkeypatch, tmp_path):
+    """The call was made and paid for. It used to leave no trace, so its tokens
+    were missing from every total (dev/progress/repair-accounting-unwired.md)."""
+
+    async def fake_fetch_problem_text(year, day, part=1):
+        return "Dummy problem text", None, None
+
+    async def fake_ensure_problem_files(year, day):
+        return {"problem": tmp_path / "p", "examples": tmp_path / "e", "input": tmp_path / "i"}
+
+    def fake_dirs(workspace_dir, year, day):
+        for sub in ("attempts", "examples"):
+            (tmp_path / sub).mkdir(parents=True, exist_ok=True)
+        return {"day": tmp_path, "attempts": tmp_path / "attempts", "examples": tmp_path / "examples"}
+
+    monkeypatch.setattr(solver_module, "fetch_problem_text", fake_fetch_problem_text)
+    monkeypatch.setattr(solver_module, "ensure_problem_files", fake_ensure_problem_files)
+    monkeypatch.setattr(solver_module, "ensure_problem_directory_structure", fake_dirs)
+    monkeypatch.setattr(solver_module, "parse_problem_text", lambda text: DummyParsedProblem())
+    monkeypatch.setattr(cq, "CodeQualityAnalyzer", DummyCodeQualityAnalyzer)
+    monkeypatch.setattr(learning, "LearningDatabase", DummyLearningDatabase)
+    monkeypatch.setattr(solver_module, "SolutionExecutor", RecordingExecutor)
+    monkeypatch.setattr(solver_module, "record_solution", lambda *a, **k: None)
+    monkeypatch.setattr(
+        solver_module.BaseSolver, "_get_top_models",
+        lambda self, problem_type, role, limit=3, min_success_rate=0.5:
+            ["stubborn"] if role == "primary" else [],
+    )
+
+    solver = solver_module.BaseSolver(tmp_path, debug=False)
+    solver.enable_collaborative_improvement = False
+    solver.models = {"stubborn": StubbornModel()}
+
+    assert await solver.solve_problem(2022, 1, 1, force=True) is None
+
+    repairs = [a for a in solver.attempts if a.stage == "repair"]
+    assert len(repairs) == 1
+    assert repairs[0].outcome is Outcome.NO_CANDIDATE
+    assert (repairs[0].input_tokens, repairs[0].output_tokens) == (333, 44)
+    assert "unchanged" in repairs[0].error
