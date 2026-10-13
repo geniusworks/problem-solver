@@ -350,10 +350,10 @@ problems. In order:
 
    Optional and separate: `qwen3.8:27b-q8_0` (30 GB), the reference at 8-bit, on the same four
    cells. It tests whether 4-bit quantization costs anything on the walls. Not pulled.
-5. **AoC 2026** (§4b) opens 2026-12-01. **Not planned as of 2026-10-13** (maintainer's decision):
-   work continues on the 2024–2025 data. The three arms are orchestration comparisons and do not
-   need an unseen year. What stays undone without it is the contamination test, so the capability
-   claims keep that caveat, and the `UNVERIFIED` path stays unexercised.
+5. **AoC 2026** (§4b) opens 2026-12-01. **Undecided as of 2026-10-13** (maintainer): not
+   committed to, not ruled out. Work continues on the 2024–2025 data, which is enough for the
+   three arms; they are orchestration comparisons. Running 2026 would add the contamination test
+   and the first real use of the `UNVERIFIED` path, and would need the submitter decision below.
 
 ### Answered (2026-08-15 → 17), so no longer roadmap items
 
@@ -475,8 +475,8 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
 - ~~**No "too high / too low" on a wrong answer**~~ — ✅ **FIXED 2026-10-13**. Only the two words
   reach the feedback builder. The site's wait between wrong submissions is not simulated.
 - **⚠️ An unseen year cannot reach Part Two without submission.** Reaching it needs an accepted
-  Part One answer, which for a new puzzle exists only after submitting. Moot while AoC 2026 is not planned
-  (see the M5 Pro step 5); it becomes a decision again if an unseen year is ever run.
+  Part One answer, which for a new puzzle exists only after submitting. Needs deciding only if AoC 2026 is run
+  (undecided; see the M5 Pro step 5): wire the submitter, or measure Part Ones only.
 
 - ~~**Token accounting is stale across repair attempts**~~ — ✅ **FIXED 2026-08-22**
   (`token-accounting-fix.md`). `improve_solution` never updated `last_token_usage`, so repair

@@ -151,6 +151,10 @@ that the context is the only difference:
 - Then the walls, same design, 3 trials each: 2024 d16 (Part Two 0/7 cold) and 2025 d9 (0/22
   cold). No prediction for 2025 d9 p2; for 2024 d16 p2, at least 1 of the trials that reach it.
 
+- Then the reference on the arm-3 entry cells (2024 d15, 2025 d9; `samples_per_model=3`, 3
+  trials) under the full new defaults, fingerprint `12412ed652a4`. A re-baseline, not a test: its
+  legacy row is 6/12 (d15 p1 3/3, d15 p2 1/3, d9 p1 2/3, d9 p2 0/3). No prediction.
+
 ## Second gap, same session: the analysis call ignored the configured temperature
 
 Each draft is two model calls. The second (implementation) and every repair are sent the

@@ -28,14 +28,30 @@ Part 1/Part 2 cliff, the Part 2 walls, and what sampling rescues are unestablish
 findings until re-run.** New runs are not comparable with old ones unless the legacy settings are
 passed.
 
-**AoC 2026 is not planned** (maintainer, 2026-10-13); work continues on 2024–2025. That leaves
-the contamination test undone and makes moot, for now, the fact that an unseen year cannot reach
+**AoC 2026 is undecided** (maintainer, 2026-10-13): not committed to, not ruled out. Work
+continues on 2024–2025. If it is run, it needs a decision first: an unseen year cannot reach
 Part 2 without the unwired submitter.
 
-**Not run yet, in order:** the registered d19 A/B (legacy 6/20 against the new context;
-prediction: Part 2 solved in at least 80% of the trials that reach it); the walls d16 p2 and 2025 d9 p2 under the new context; a re-run of
-the reference on the arm-3 entry cells; then the three candidates (`gemma4:31b`, `ornith-1.5:35b`,
-`muse-glimmer:30b`, pulled). **Nothing is running.**
+**Queued, not run.** Launched 2026-10-13 05:32 and stopped seven minutes later at the
+maintainer's request, before any trial completed; nothing was recorded. To start the queue
+(about eight hours unattended; predictions are in `part2-prompt-omits-part1.md`):
+
+```
+B="models=qwen3.8:27b,temperature=0.7,enable_thinking=false,enable_fallback_models=false"
+# 1. d19 A/B, new conditions against the legacy 6/20
+venv/bin/python experiment.py --problems 2024:19.2 --trials 20 \
+  --config "name=m5pro-aoc-d19-k1-n20,samples_per_model=1,analysis_temperature=model_default,$B"
+# 2. the two walls
+venv/bin/python experiment.py --problems 2024:16.2,2025:9.2 --trials 3 \
+  --config "name=m5pro-aoc-walls-k1,samples_per_model=1,analysis_temperature=model_default,$B"
+# 3. reference re-baseline on the arm-3 entry cells
+venv/bin/python experiment.py --problems 2024:15,2025:9 --trials 3 \
+  --config "name=m5pro-aoc-ref-entry-k3,samples_per_model=3,$B"
+```
+
+Expected fingerprints: `5d259bb8f103` for 1 and 2, `12412ed652a4` for 3. After them: the three
+arm-3 candidates (`gemma4:31b`, `ornith-1.5:35b`, `muse-glimmer:30b`, pulled), each against the
+new baseline from 3. **Nothing is running.**
 
 ### Machine: work has moved to the M5 Pro / 64 GB (2026-10-12)
 
