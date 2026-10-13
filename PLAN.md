@@ -448,8 +448,8 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
   input format. On 2024 d19 p2, 16 of 26 drafts that guessed the input format were correct and 0
   of 54 that did not. The Part 1/Part 2 cliff and every "wall" on a Part 2 are unestablished as
   capability findings until re-run with the full statement. **Decide before the arm-3 candidate
-  checks (M5 Pro step 4)**: three of their four cells are affected (d15 p2, d9 p2 directly; the
-  comparison to the reference stays fair either way). Proposed test: d19 p2, 20 trials, full
+  checks (M5 Pro step 4)**: two of their four cells are Part 2s (d15 p2, d9 p2), and those are the
+  two the entry criterion turns on; the comparison to the reference stays fair either way. Proposed test: d19 p2, 20 trials, full
   statement, against the 6/20 on record.
 - **The analysis call ignores the configured temperature** (found 2026-10-13, same doc). It runs
   at the model default (1.0 for the reference); only the implementation and repair calls get the
