@@ -87,6 +87,16 @@ before). First drafts on d19 p2 are 2/13 correct across both arms. d16 p2 answer
 Reading the artifact exposed an accounting defect: repair records repeat their draft's tokens and
 time, so this run's token total is not reliable.
 
+**Instrument defect fixed: repair records copied their draft's cost** (`repair-accounting-unwired.md`).
+The 2026-08-22 token fix corrected the provider only; the solver went on recording every repair
+attempt with the draft's tokens, time and quality score — 642 of 642 repair records in 64
+artifacts, 38% of all recorded tokens. Fixed in `_execute_and_repair` with a test on the records.
+Unaffected: every solve rate, per-problem and per-run wall-clock, the ledger. Affected: all token
+totals. Arm 2's "3.35× on tokens" is now "at least 3.10×" (draft-only lower bound); the arm-3
+pre-check's "no token penalty" holds on drafts alone (115k vs 128k per solve). Token figures quoted
+above for m5pro runs include the copies; draft-only values are in that doc. Runs from here on
+record repair cost properly.
+
 ### 🏁 ENDGAME COMPLETE: `RESULTS.md` written (2026-08-23)
 
 The consolidated findings report is at the repo root. All four endgame steps are done and **all three
@@ -161,6 +171,9 @@ on hard problems.
 `RESULTS.md`.
 
 ### ✅ ENDGAME STEP 1 DONE: token accounting fixed (+ a second bug it exposed) (2026-08-22)
+
+*Correction 2026-10-12: the token half of this fix did not reach the result JSONs until
+`repair-accounting-unwired.md`. The temperature half stands.*
 
 `improve_solution` never updated `last_token_usage`, so every repair attempt reported the *previous*
 generation's counts — the symptom being three attempts logging identical `(4283, 876)` while

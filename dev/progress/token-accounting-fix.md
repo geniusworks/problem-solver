@@ -4,6 +4,14 @@ Two bugs in one function, both in `OllamaProvider.improve_solution` (the repair 
 endgame sequence: **no cost claim is honest until this lands**, and arm 2 of the project's thesis is
 an economic claim measured in tokens.
 
+> **Correction, 2026-10-12.** Bug 1's fix was incomplete. It corrected `last_token_usage` on the
+> provider, but the solver never read it after a repair, so repair records in the result JSONs
+> kept repeating their draft's counts — in runs made after this fix as well as before. The claims
+> below that repair "records its own tokens" and that cost "can now be computed from the artifacts"
+> were false at the artifact level until `repair-accounting-unwired.md`. Wall-clock on repair
+> records was also a copy, contrary to "wall-clock was never affected"; per-problem and per-run
+> wall-clock were and are sound. Bug 2 (temperature) is unaffected by this correction.
+
 ## Bug 1: repair attempts reported the previous generation's tokens
 
 `improve_solution` called `self.generate(prompt)` and returned the extracted code **without touching

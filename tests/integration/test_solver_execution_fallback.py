@@ -66,6 +66,7 @@ class RepairablePrimaryModel:
     def __init__(self, name: str) -> None:
         self.name = name
         self.calls = []
+        self.last_token_usage = {"input_tokens": 900, "output_tokens": 110}
 
     async def generate_solution(  # type: ignore[override]
         self, parsed_problem, year: int, day: int, strategies, strategy_effectiveness
@@ -74,6 +75,7 @@ class RepairablePrimaryModel:
 
     async def improve_solution(self, solution: str, problem, feedback=None) -> str:  # type: ignore[override]
         self.calls.append((solution, feedback))
+        self.last_token_usage = {"input_tokens": 333, "output_tokens": 44}
         if "# good" in solution:
             return solution
         return "def solve():\n    return 2\n  # good"
@@ -295,6 +297,15 @@ async def test_solver_uses_repair_loop_when_all_initial_candidates_fail(
     assert primary_2.calls
     assert RecordingExecutor.last_instance is not None
     assert RecordingExecutor.last_instance.calls
+
+    # A repair record carries the repair call's own cost. It used to repeat the
+    # draft's tokens, time and quality score (dev/progress/repair-accounting-unwired.md).
+    drafts = [a for a in solver.attempts if a.model == "primary-2" and a.stage == "generate"]
+    repairs = [a for a in solver.attempts if a.model == "primary-2" and a.stage == "repair"]
+    assert drafts and repairs
+    assert (drafts[0].input_tokens, drafts[0].output_tokens) == (900, 110)
+    assert all((a.input_tokens, a.output_tokens) == (333, 44) for a in repairs)
+    assert all(a.quality_score is None for a in repairs)
 
     # A failed candidate must persist WHY it failed, so the wrong-vs-error split
     # is diagnosable from the result JSON without --include-replay. The recording

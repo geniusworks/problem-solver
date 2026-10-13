@@ -94,6 +94,9 @@ Three things the run was not designed to test, recorded as observations and not 
 - **Speed.** 4,590 s against 13,236 s on the same machine and problems, **2.9×**. Per verified
   solution: 656 s against 2,206 s, and 221k tokens against 230k. The previous MoE won on time and
   lost 3.35× on tokens (`economic-arm-moe-vs-generalist.md`); this one shows no token penalty here.
+  *Correction 2026-10-12: 44–48% of both totals were draft counts copied onto repair records
+  (`repair-accounting-unwired.md`). On drafts alone it is 115k against 128k per verified solution,
+  so the observation holds on the sound part of the data.*
   Four problems, one run each — a reason to measure it, not a result.
 - **d9 p1 per draw.** 7 of 9 initial draws against 3 of 9 (one-sided Fisher p ≈ 0.08, and the
   comparison was not registered).

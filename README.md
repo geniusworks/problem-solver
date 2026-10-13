@@ -169,7 +169,8 @@ At a matched wall-clock budget, a fast weak model taking many draws vs a slow st
 | `qwen3-coder:30b` k=12 (fast, weak) | 7/8 | **891 s** (0.64×) | 128,730 (3.35×) |
 
 **The answer depends on which cost you actually pay:** for local GPU inference, where cost is *time*,
-many cheap draws win by 36% per verified solution. For a token-metered API they lose by 3.35×. And
+many cheap draws win by 36% per verified solution. For a token-metered API they lose by at least 3.1×
+(first reported as 3.35×; corrected 2026-10-12, `repair-accounting-unwired.md`). And
 volume does not close the capability gap — 7/8 vs 8/8. (`economic-arm-moe-vs-generalist.md`)
 
 **6. The structural findings generalize to a second year.**
@@ -285,7 +286,7 @@ full record puts d15 p2 at **2 of 16 (~12%)**, a very-low-rate "sometimes" rathe
 case for *extra draws re-roll the same die* is **2025 d9 p2, 0 of 13** across every configuration.
 
 **Arm 2 — measured, and it splits.** *Many cheap draws beat one expensive pass* is **true on
-wall-clock** (0.64× per verified solution) and **false on tokens** (3.35×), and volume does not reach
+wall-clock** (0.64× per verified solution) and **false on tokens** (at least 3.1×), and volume does not reach
 the stronger model's ceiling (7/8 vs 8/8). The useful form of the claim: *cheap draws win when the
 binding cost is time, not tokens, and only up to the cheap model's ceiling.*
 (`economic-arm-moe-vs-generalist.md`)
