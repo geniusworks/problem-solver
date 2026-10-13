@@ -12,10 +12,14 @@ file current as work lands so it never goes stale.
 `part2-prompt-omits-part1.md`. Every Part 2 to date was posed with the "Part Two" article alone —
 no rules, no input format. On 2024 d19 p2 the outcome was decided by whether a draft guessed the
 input format: 16 of 26 correct when it did, 0 of 54 when it did not. **Fixed** with
-`problem_context=aoc` (now the default): a Part 2 is shown Part One's statement and accepted
-answer, the Part Two text, the recorded Part One program and a preview of the input; a Part 1
-gains the input preview. Also fixed: the analysis call now uses the configured temperature
-(`analysis_temperature`), and repair calls that yield nothing are recorded with their tokens.
+`problem_context=aoc` (now the default), which reproduces the site's conditions: a Part 2 is
+attempted only in a trial that solved Part 1, under Part One's statement and accepted answer,
+with that trial's own Part One program, a preview of the input, and Part One's worked example
+paired with Part Two's stated result (a guarded heuristic, right in 11 of 13 checked cases). A
+wrong integer answer is told "too high" or "too low". Also fixed: the analysis call now uses the
+configured temperature (`analysis_temperature`); repair calls that yield nothing are recorded
+with their tokens; a failure of the project's own code is `harness_error`, in no denominator; and
+a program that prints its own error message is scored `error`, not `wrong`.
 
 **What this means for the record.** Every result before 2026-10-13 is a legacy-context result
 and is reproducible with `problem_context=legacy,analysis_temperature=model_default`, which keeps
@@ -24,8 +28,12 @@ Part 1/Part 2 cliff, the Part 2 walls, and what sampling rescues are unestablish
 findings until re-run.** New runs are not comparable with old ones unless the legacy settings are
 passed.
 
-**Not run yet, in order:** the registered d19 p2 A/B (legacy 6/20 against the new context,
-prediction at least 14/20); the walls d16 p2 and 2025 d9 p2 under the new context; a re-run of
+**AoC 2026 is not planned** (maintainer, 2026-10-13); work continues on 2024–2025. That leaves
+the contamination test undone and makes moot, for now, the fact that an unseen year cannot reach
+Part 2 without the unwired submitter.
+
+**Not run yet, in order:** the registered d19 A/B (legacy 6/20 against the new context;
+prediction: Part 2 solved in at least 80% of the trials that reach it); the walls d16 p2 and 2025 d9 p2 under the new context; a re-run of
 the reference on the arm-3 entry cells; then the three candidates (`gemma4:31b`, `ornith-1.5:35b`,
 `muse-glimmer:30b`, pulled). **Nothing is running.**
 
@@ -90,7 +98,7 @@ as "the first genuinely unseen problem" and a target for the submission path, is
 
 **Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → ~~arm-3 pre-check~~ →
 ~~d16–25 scan~~ → ~~classify the band~~ → ~~k1 vs k3 on it~~ → ~~20 trials per arm on d19 p2~~ → three arm-3
-candidates from other makers (pulled, not run; PLAN.md step 4) → AoC 2026. k=5 is deferred: the
+candidates from other makers (pulled, not run; PLAN.md step 4). k=5 is deferred: the
 independence curve is measured on d19 p2 and predicts it (67%).
 
 **Band classified: 2 "sometimes", 8 walls** (`m5pro-band-2024-d16-25.md`; 3 trials pooled with the

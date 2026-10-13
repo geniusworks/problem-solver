@@ -70,6 +70,8 @@ generation produced nothing".
 **Worth a follow-up:** a solver-raised exception should be a distinct outcome (`HARNESS_ERROR`),
 never scored in the same bucket as a model failure. A measurement platform should not be able to
 blame the model for its own crash. Logged, not fixed here.
+*Fixed 2026-10-13: outcome `harness_error`, excluded from denominators
+(`part2-prompt-omits-part1.md`).*
 
 ## Regression tests
 

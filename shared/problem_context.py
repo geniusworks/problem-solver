@@ -12,7 +12,12 @@ Everything here is read from the per-problem cache. Nothing in this module may
 ever return the answer to the part being solved.
 """
 
-from typing import Optional
+import re
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+from typing import Optional, Tuple
 
 from bs4 import BeautifulSoup
 
@@ -93,14 +98,21 @@ def part_one_solution(year: int, day: int) -> Optional[str]:
     return code or None
 
 
-def supplement(year: int, day: int, part: int) -> str:
-    """Prompt text for what the solver has besides the statement."""
+def supplement(
+    year: int, day: int, part: int, part_one_code: Optional[str] = None
+) -> str:
+    """Prompt text for what the solver has besides the statement.
+
+    `part_one_code` is the program that solved Part One in this same trial. The
+    recorded one is used only when the caller has none, which happens outside
+    the experiment harness.
+    """
     sections = []
     preview = input_preview(year, day)
     if preview:
         sections.append(preview)
     if int(part) == 2:
-        code = part_one_solution(year, day)
+        code = part_one_code or part_one_solution(year, day)
         if code:
             sections.append(
                 "Your Part One solution, which produced the accepted Part One "
@@ -108,3 +120,89 @@ def supplement(year: int, day: int, part: int) -> str:
             )
     return "\n\n".join(sections)
 
+
+
+def answer_direction(candidate: Optional[str], accepted: Optional[str]) -> Optional[str]:
+    """'too high' / 'too low' for a wrong integer answer, as the site reports.
+
+    None when either value is not an integer or they are equal. Callers pass
+    the returned words on, never the accepted answer.
+    """
+    try:
+        got, want = int(str(candidate).strip()), int(str(accepted).strip())
+    except (TypeError, ValueError):
+        return None
+    if got == want:
+        return None
+    return "too high" if got > want else "too low"
+
+
+_ERROR_WORDS = re.compile(r"\b(error|exception|traceback)\b", re.IGNORECASE)
+
+
+def looks_like_error_output(output: Optional[str]) -> bool:
+    """Whether a program's whole output is an error report, not an answer.
+
+    Generated code often catches its own exception, prints a message and then a
+    placeholder such as 0. That is a crash the program hid, not a wrong answer.
+    """
+    return bool(output) and bool(_ERROR_WORDS.search(output))
+
+
+def _emphasised_result(article) -> Optional[str]:
+    """The last emphasised code span in an article: the worked example's result."""
+    spans = [e.get_text().strip() for e in article.select("code > em, em > code")]
+    return spans[-1] if spans else None
+
+
+def _run_on_example(code: str, example_input: str, timeout: int = 20) -> Optional[str]:
+    """Last line a program prints when `input.txt` holds `example_input`."""
+    with tempfile.TemporaryDirectory() as workdir:
+        Path(workdir, "input.txt").write_text(example_input, encoding="utf-8")
+        Path(workdir, "solution.py").write_text(code, encoding="utf-8")
+        try:
+            done = subprocess.run(
+                [sys.executable, "-I", "solution.py"], cwd=workdir,
+                capture_output=True, text=True, timeout=timeout,
+            )
+        except (subprocess.TimeoutExpired, OSError):
+            return None
+    lines = done.stdout.strip().splitlines()
+    return lines[-1].strip() if lines else None
+
+
+def part_two_example(
+    year: int, day: int, part_one_code: Optional[str]
+) -> Optional[Tuple[str, str]]:
+    """(example input, expected Part Two result) from the page, or None.
+
+    A Part Two usually reuses Part One's example and states a new result for
+    it. The pairing is offered only when it can be checked the way a solver
+    would check it: the Part One program must reproduce Part One's stated
+    result on that example, and the Part Two result must be an integer.
+    Against verified solutions this pairing was right in 11 of 13 cases
+    (dev/progress/part2-prompt-omits-part1.md), so it is feedback, never a veto.
+    """
+    if not part_one_code:
+        return None
+    html_path = get_problem_dir(year, day) / config.HTML_FILE
+    if not html_path.exists():
+        return None
+    soup = BeautifulSoup(html_path.read_text(encoding="utf-8"), "html.parser")
+    articles = soup.find_all("article", class_="day-desc")
+    if len(articles) < 2:
+        return None
+    pre = articles[0].find("pre")
+    block = pre.find("code") if pre else None
+    if block is None:
+        return None
+    example_input = block.get_text()
+    part_one_result = _emphasised_result(articles[0])
+    part_two_result = _emphasised_result(articles[1])
+    if not part_one_result or not part_two_result:
+        return None
+    if not re.fullmatch(r"-?\d+", part_two_result):
+        return None
+    if _run_on_example(part_one_code, example_input) != part_one_result:
+        return None
+    return example_input, part_two_result

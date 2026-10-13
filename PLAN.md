@@ -323,8 +323,9 @@ problems. In order:
 
    **Before any candidate runs (added 2026-10-13):** the prompt context changed
    (`part2-prompt-omits-part1.md`), and two of the four entry-check cells are Part 2s. In order:
-   (a) the registered d19 p2 A/B, legacy against `aoc` context, 20 trials;
-   (b) the walls under `aoc` context, 3 trials each (2024 d16 p2, 2025 d9 p2);
+   (a) the registered d19 A/B, legacy against `aoc` context, 20 trials;
+   (b) the walls under `aoc` context, 3 trials each (2024 d16, 2025 d9; each Part Two now runs
+   after its Part One in the same trial);
    (c) **re-run the reference** on the four entry-check cells under the new defaults — its row on
    record (6/12) is a legacy-context result and no longer the comparison.
    If (b) and (c) show the walls falling for the reference itself, the entry-check cells no longer
@@ -349,8 +350,10 @@ problems. In order:
 
    Optional and separate: `qwen3.8:27b-q8_0` (30 GB), the reference at 8-bit, on the same four
    cells. It tests whether 4-bit quantization costs anything on the walls. Not pulled.
-5. **AoC 2026** (§4b) opens 2026-12-01 and this is the machine it runs on. Steps 1–3 should be done
-   before it.
+5. **AoC 2026** (§4b) opens 2026-12-01. **Not planned as of 2026-10-13** (maintainer's decision):
+   work continues on the 2024–2025 data. The three arms are orchestration comparisons and do not
+   need an unseen year. What stays undone without it is the contamination test, so the capability
+   claims keep that caveat, and the `UNVERIFIED` path stays unexercised.
 
 ### Answered (2026-08-15 → 17), so no longer roadmap items
 
@@ -462,11 +465,18 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
   that doc and not yet run.
 - ~~**The analysis call ignored the configured temperature**~~ — ✅ **FIXED 2026-10-13** (same
   doc). `analysis_temperature=model_default` reproduces earlier runs.
-- **Part Two examples are not paired with Part One's example input**, so a Part Two often has no
-  executable example and example-based repair feedback is thin. Unfixed: a heuristic pairing can
-  attach a wrong expected value.
-- **No "too high / too low" on a wrong answer**, which the site gives. Unfixed on purpose: it
-  would put the accepted answer inside the feedback builder, which a test forbids.
+- ~~**Part Two was attempted cold, without having solved Part One**~~ — ✅ **FIXED 2026-10-13**
+  (same doc). A Part Two is attempted only in a trial that solved Part One, with that trial's own
+  program; otherwise it is `not_reached` and in no denominator. A requested Part Two brings its
+  Part One into the run.
+- ~~**Part Two examples were not paired with Part One's example input**~~ — ✅ **FIXED
+  2026-10-13**, as a guarded heuristic: right in 11 of 13 checked cases (misses: 2024 d2, d3).
+  Feedback only, never a veto. **Open:** the 2 in 13.
+- ~~**No "too high / too low" on a wrong answer**~~ — ✅ **FIXED 2026-10-13**. Only the two words
+  reach the feedback builder. The site's wait between wrong submissions is not simulated.
+- **⚠️ An unseen year cannot reach Part Two without submission.** Reaching it needs an accepted
+  Part One answer, which for a new puzzle exists only after submitting. Moot while AoC 2026 is not planned
+  (see the M5 Pro step 5); it becomes a decision again if an unseen year is ever run.
 
 - ~~**Token accounting is stale across repair attempts**~~ — ✅ **FIXED 2026-08-22**
   (`token-accounting-fix.md`). `improve_solution` never updated `last_token_usage`, so repair
@@ -483,13 +493,15 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
 - ~~**Repair calls that yield no new candidate leave no record.**~~ ✅ **FIXED 2026-10-13**: each
   is recorded as a `repair` / `no_candidate` attempt with its own tokens and time. Attempt counts
   from that date include them.
-- **Solver crashes are scored as model failures.** An exception out of the solve path lands in the
+- ~~**Solver crashes are scored as model failures.**~~ ✅ **FIXED 2026-10-13**: outcome
+  `harness_error`, in no denominator, counted on its own line. Was: An exception out of the solve path lands in the
   same bucket as "the model could not do it" — which is how a `KeyError` corrupted results for eight
   months undetected (`strategy-keyerror-d8.md`). Wants a distinct `HARNESS_ERROR` outcome.
   A second instance, 2026-10-12: 2024 d25 has no Part 2, but the harness attempted one and scored
   it `no_candidate`, so the d16–25 scan prints 9/20 for what is 9/19. ✅ **That instance is fixed**
   (`final-day-no-part2.md`); the general `HARNESS_ERROR` gap is not.
-- **Error-shaped answers are scored `wrong`.** Generated code that catches its own exception and
+- ~~**Error-shaped answers are scored `wrong`.**~~ ✅ **FIXED 2026-10-13**: scored `error`, and
+  under `aoc` context the output is shown back to the model. Was: Generated code that catches its own exception and
   prints `An error occurred: …` then `0` is recorded as a wrong answer, understating crashes.
 
 ### 4b. Contamination — the cheapest clean test this project could run

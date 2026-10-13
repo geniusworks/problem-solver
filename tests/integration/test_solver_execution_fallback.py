@@ -436,3 +436,61 @@ async def test_a_repair_call_that_yields_nothing_is_still_recorded(monkeypatch, 
     assert repairs[0].outcome is Outcome.NO_CANDIDATE
     assert (repairs[0].input_tokens, repairs[0].output_tokens) == (333, 44)
     assert "unchanged" in repairs[0].error
+
+
+@pytest.mark.asyncio
+async def test_part_two_preparation_runs_under_the_site_context(monkeypatch, tmp_path):
+    """The Part Two branch of problem preparation, end to end. A NameError here
+    once surfaced only in a live run, as three harness errors."""
+
+    async def fake_fetch_problem_text(year, day, part=1):
+        return "Dummy problem text", None, None
+
+    async def fake_ensure_problem_files(year, day):
+        return {"problem": tmp_path / "p", "examples": tmp_path / "e", "input": tmp_path / "i"}
+
+    def fake_dirs(workspace_dir, year, day):
+        for sub in ("attempts", "examples"):
+            (tmp_path / sub).mkdir(parents=True, exist_ok=True)
+        return {"day": tmp_path, "attempts": tmp_path / "attempts", "examples": tmp_path / "examples"}
+
+    seen = {}
+
+    def fake_part_two_example(year, day, code):
+        seen["code"] = code
+        return None
+
+    monkeypatch.setattr(solver_module, "fetch_problem_text", fake_fetch_problem_text)
+    monkeypatch.setattr(solver_module, "ensure_problem_files", fake_ensure_problem_files)
+    monkeypatch.setattr(solver_module, "ensure_problem_directory_structure", fake_dirs)
+    monkeypatch.setattr(solver_module, "parse_problem_text", lambda text: DummyParsedProblem())
+    monkeypatch.setattr(solver_module, "_known_answer", lambda y, d, p: "1234")
+    import shared.ground_truth as ground_truth
+    monkeypatch.setattr(ground_truth, "get_known_answer", lambda y, d, p: "1234")
+    monkeypatch.setattr(solver_module.problem_context, "part_two_example", fake_part_two_example)
+    monkeypatch.setattr(cq, "CodeQualityAnalyzer", DummyCodeQualityAnalyzer)
+    monkeypatch.setattr(learning, "LearningDatabase", DummyLearningDatabase)
+    monkeypatch.setattr(solver_module, "SolutionExecutor", RecordingExecutor)
+    monkeypatch.setattr(solver_module, "record_solution", lambda *a, **k: None)
+    monkeypatch.setattr(
+        solver_module.BaseSolver, "_get_top_models",
+        lambda self, problem_type, role, limit=3, min_success_rate=0.5:
+            ["good"] if role == "primary" else [],
+    )
+
+    class NoExpectedOutput(DummyParsedProblem):
+        def __init__(self) -> None:
+            super().__init__()
+            self.examples = []
+
+    monkeypatch.setattr(solver_module, "parse_problem_text", lambda text: NoExpectedOutput())
+
+    solver = solver_module.BaseSolver(tmp_path, debug=False)
+    solver.enable_collaborative_improvement = False
+    solver.models = {"good": DummyPrimaryModel("good", "def solve():\n    return 2\n  # good")}
+    solver.part_one_programs = {(2022, 1): "# this trial's part one"}
+
+    result = await solver.solve_problem(2022, 1, 2, force=True)
+
+    assert result is not None and "# good" in result
+    assert seen["code"] == "# this trial's part one"

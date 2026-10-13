@@ -12,7 +12,7 @@ import logging
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from shared.experiment.config import SolverConfig
 from shared.experiment.results import (
@@ -93,6 +93,23 @@ def drop_parts_without_puzzle(
     return kept, dropped
 
 
+def with_part_one_prerequisites(problems: Sequence[ProblemSpec]) -> List[ProblemSpec]:
+    """Order a problem set so every Part Two follows its own Part One.
+
+    The site shows Part Two only after Part One is accepted, so a Part Two
+    asked for alone has its Part One added. Days keep their first-seen order.
+    """
+    days: Dict[Tuple[int, int], set] = {}
+    for year, day, part in problems:
+        days.setdefault((year, day), set()).add(part)
+    ordered: List[ProblemSpec] = []
+    for (year, day), parts in days.items():
+        if 2 in parts:
+            parts = parts | {1}
+        ordered.extend((year, day, part) for part in sorted(parts))
+    return ordered
+
+
 def _is_source_code(text: str) -> bool:
     """Whether the solver returned source rather than a bare answer.
 
@@ -166,7 +183,12 @@ async def run_problem(
     elapsed = time.monotonic() - started
 
     if error is not None:
-        outcome, answer, expected = Outcome.ERROR, None, get_known_answer(year, day, part)
+        # An exception out of the solve path is the project's code failing,
+        # not the model: a KeyError here was once scored as model failure for
+        # eight months (dev/progress/strategy-keyerror-d8.md).
+        outcome, answer, expected = (
+            Outcome.HARNESS_ERROR, None, get_known_answer(year, day, part)
+        )
     else:
         outcome, answer, expected = _classify(code, year, day, part)
 
@@ -255,11 +277,38 @@ async def run_experiment(
         started_at=datetime.now(timezone.utc).isoformat(),
     )
 
+    # Under the site's conditions a Part Two exists only for a solver who has
+    # just solved Part One, and it is solved with that program to hand.
+    gated = config.problem_context == "aoc"
+    if gated:
+        problems = with_part_one_prerequisites(problems)
+
     for trial in range(trials):
+        part_one_programs: Dict[Tuple[int, int], str] = {}
         for year, day, part in problems:
             if not part_has_puzzle(year, day, part):
                 continue
+            if gated and part == 2:
+                program = part_one_programs.get((year, day))
+                if program is None:
+                    result = ProblemResult(
+                        problem_id=problem_id(year, day, part),
+                        year=year, day=day, part=part,
+                        config_fingerprint=config.fingerprint(),
+                        trial=trial,
+                        outcome=Outcome.NOT_REACHED,
+                        expected=get_known_answer(year, day, part),
+                    )
+                    experiment.results.append(result)
+                    if on_result is not None:
+                        on_result(result)
+                    continue
+                solver.part_one_programs = {(year, day): program}
             result = await run_problem(solver, year, day, part, config, trial=trial)
+            if gated and part == 1 and result.solved:
+                winner = next((a for a in result.attempts if a.succeeded and a.code), None)
+                if winner is not None:
+                    part_one_programs[(year, day)] = winner.code
             # A page first fetched by this very run can reveal that the part was
             # never a puzzle; that attempt is not a result.
             if not part_has_puzzle(year, day, part):

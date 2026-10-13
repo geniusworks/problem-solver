@@ -21,11 +21,21 @@ class Outcome(str, Enum):
     WRONG = "wrong"  # produced an answer, oracle says it is incorrect
     UNVERIFIED = "unverified"  # produced an answer, but nothing could check it
     NO_CANDIDATE = "no_candidate"  # no model produced runnable code
-    ERROR = "error"  # the harness itself failed
+    ERROR = "error"  # the candidate crashed, timed out, or printed an error
+    # The project's own code failed. Never the model's doing, so it is kept out
+    # of every denominator and any nonzero count is a bug to chase.
+    HARNESS_ERROR = "harness_error"
+    # A Part Two in a trial that did not solve Part One. The site does not show
+    # Part Two until Part One is accepted, so there was nothing to attempt.
+    NOT_REACHED = "not_reached"
     # Printed the accepted answer without computing it. Matching ground truth
     # cannot distinguish this from a real solution, so it is tracked separately
     # and never counted as solved -- otherwise solve rate is trivially gameable.
     OVERFIT = "overfit"
+
+
+# Outcomes that are not attempts by the model and so count in no denominator.
+UNSCORED = frozenset({Outcome.HARNESS_ERROR, Outcome.NOT_REACHED})
 
 
 @dataclass
@@ -168,7 +178,16 @@ class ExperimentResult:
 
     @property
     def attempted(self) -> int:
-        return len(self.results)
+        """Problem-trials the model was actually asked to solve."""
+        return sum(1 for r in self.results if r.outcome not in UNSCORED)
+
+    @property
+    def not_reached(self) -> int:
+        return sum(1 for r in self.results if r.outcome is Outcome.NOT_REACHED)
+
+    @property
+    def harness_errors(self) -> int:
+        return sum(1 for r in self.results if r.outcome is Outcome.HARNESS_ERROR)
 
     @property
     def solved(self) -> int:
@@ -270,10 +289,14 @@ class ExperimentResult:
         for pid, runs in by_problem.items():
             solved = sum(1 for r in runs if r.solved)
             outcomes = [r.outcome.value for r in runs]
+            scored = sum(1 for r in runs if r.outcome not in UNSCORED)
             stats[pid] = {
                 "trials": len(runs),
+                # Trials in which the problem was actually posed. For a Part
+                # Two this is the number of trials that solved Part One.
+                "scored": scored,
                 "solved": solved,
-                "solve_rate": round(solved / len(runs), 4) if runs else 0.0,
+                "solve_rate": round(solved / scored, 4) if scored else 0.0,
                 "stable": len(set(outcomes)) == 1,
                 "outcomes": outcomes,
                 "expected": next((r.expected for r in runs if r.expected), None),
@@ -294,7 +317,7 @@ class ExperimentResult:
         """Distinct problems solved in *every* trial (reliable capability)."""
         return sum(
             1 for s in self.per_problem().values()
-            if s["solved"] == s["trials"] and s["trials"] > 0
+            if s["solved"] == s["scored"] and s["scored"] > 0
         )
 
     def summary(self) -> Dict[str, Any]:
@@ -308,6 +331,8 @@ class ExperimentResult:
             "wrong": self.wrong,
             "unverified": self.unverified,
             "overfit": self.overfit,
+            "not_reached": self.not_reached,
+            "harness_errors": self.harness_errors,
             "solve_rate": round(self.solve_rate, 4),
             "solved_at_least_once": self.solved_at_least_once,
             "solved_every_time": self.solved_every_time,
