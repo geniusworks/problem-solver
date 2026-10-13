@@ -80,27 +80,52 @@ produced the accepted answer.
 | step | a person on the site has | the model is now shown |
 |---|---|---|
 | Part One | the Part One statement; the puzzle input | the statement (as before); the first 12 lines of the input, clipped, with its size |
-| Part Two | Part One's statement, "Your puzzle answer was N", the Part Two statement; the input; their working Part One program | all of those, in page order; the recorded Part One program from the ledger |
-| after a wrong answer | "not the right answer", often "too high" / "too low" | "not accepted" (as before). **Not** the direction |
+| reaching Part Two | shown only once Part One is accepted | **attempted only in a trial that solved Part One**; otherwise recorded `not_reached` and left out of every denominator |
+| Part Two | Part One's statement, "Your puzzle answer was N", the Part Two statement; the input; their working Part One program | all of those, in page order; **the program that solved Part One in this same trial** |
+| the worked example | Part One's example with the result Part Two states for it | the same, as a runnable example, when the Part One program reproduces Part One's stated result on it |
+| after a wrong answer | "not the right answer", and for a number "too high" / "too low" | "not accepted", and for an integer "too high" / "too low" |
 
-Limits of the equivalence:
+Details and limits:
 
-- **No "too high / too low".** Computing it needs the accepted answer inside the feedback
-  builder, and `test_never_leaks_the_expected_answer` forbids that by design. Left as it was.
-- **The Part One program is the ledger's**, which may have been written by a different model
-  than the one now solving Part Two. It is offered only when the Part One answer is known.
-- **A Part Two is attempted even when this model has not solved Part One.** The site would not
-  show it. The statement and accepted Part One answer are still shown, from the cache.
-- **Part Two examples are not paired.** A Part Two usually reuses Part One's example input with a
-  new expected result. The model now reads both in the statement, but the harness still builds
-  executable test cases from the Part Two article alone (none on d19 p2), so example-based
-  feedback for Part Twos is as thin as before. Pairing them by heuristic risks a wrong expected
-  value, which is worse than none.
+- **"Too high / too low"** is computed by the caller and only those words are passed on; the
+  feedback builder still never receives the accepted answer
+  (`test_never_leaks_the_expected_answer` is unchanged). The site's growing wait between wrong
+  submissions is not simulated.
+- **A requested Part Two brings its Part One.** `--problems 2024:19.2` runs 19.1 first in every
+  trial. A Part Two solve rate is now "solved, of the trials that reached it"; `per_problem`
+  reports `trials` and `scored` separately.
+- **The example pairing is a heuristic with a guard.** Checked offline against verified
+  solutions: where the Part One program reproduces Part One's example result, the paired Part Two
+  expectation was right in **11 of 13** cases. The misses are 2024 d2 and d3 (d3's Part Two
+  brings its own example). It is added only when an accepted Part Two answer is on file, so a
+  wrong pairing can mislead repair feedback but cannot reject a correct answer.
+- **Outside the experiment harness** (`solve.py`) there is no "this trial"; the recorded Part One
+  program from the ledger is used.
 - **The Part Two answer is never included.** Only the two statement articles and the Part One
   answer are read; `tests/unit/test_problem_context.py` asserts it.
+- **An unseen year cannot reach Part Two.** Reaching it needs an accepted Part One answer, which
+  for a new puzzle exists only after a submission, and submission is deliberately unwired. Under
+  these conditions AoC 2026 measures Part Ones only until that is decided (PLAN.md §4b).
+
+Two scoring labels changed with it. Neither alters what the model sees or what counts as solved:
+
+- **`harness_error`**: an exception out of the solve path, or while testing a candidate, is the
+  project's code failing. It was scored like a model failure (`strategy-keyerror-d8.md`). It is
+  now its own outcome, in no denominator, with its own count in the summary.
+- **A printed error is an `error`.** Code that catches its own exception and prints a message
+  then `0` was scored `wrong`. Its output is now recognised and, under `aoc` context, shown back
+  to the model as its program's output.
 
 Checked on real prompts for 2024 d19 p2, 2024 d16 p2 and 2025 d9 p2: Part One statement and
 answer present, Part Two answer absent, implementation prompt 14–23k characters against 8–18k.
+
+**Plumbing check** (2024 d1, 3 trials, reference model, defaults; not a measurement): Part One
+3/3 and Part Two 3/3, each Part Two posed after its trial's Part One. The prompt sent for Part Two
+held Part One's statement, its accepted answer, the trial's Part One program and the input
+preview, and not the Part Two answer. A first attempt at this check scored 0/3 on Part Two with
+three `harness_error`s — an undefined name in the new preparation step, since fixed and covered
+by a test — which is the new label doing its job. The example pairing was not exercised: d1's
+Part Two carries its own example.
 
 **Fingerprints.** Both new fields are left out of the hash at their legacy values, so the runs on
 record keep their fingerprints and can be reproduced:
@@ -113,18 +138,18 @@ record keep their fingerprints and can be reproduced:
 **Every result before 2026-10-13 is a legacy-context result.** New runs are not comparable with
 them unless the legacy settings are passed.
 
-## The A/B (registered 2026-10-13, not yet run)
+## The A/B (registered 2026-10-13 under the final conditions, not yet run)
 
-2024 d19 p2, `samples_per_model=1`, 20 trials, `analysis_temperature=model_default` in both arms
-so that only the context differs:
+2024 d19, `samples_per_model=1`, 20 trials, `analysis_temperature=model_default` in both arms so
+that the context is the only difference:
 
-- **legacy:** the 6/20 on record (`62ee65d6b521`).
-- **aoc:** fingerprint `5d259bb8f103`.
-- **Prediction:** at least 14 of 20. The failure was a format guess; with the format stated and a
-  working parser in the Part One program, the remaining misses should be algorithmic. Below 10
-  would mean the diagnosis here is incomplete.
-- Then the walls, same design, 3 trials each: 2024 d16 p2 (0/7) and 2025 d9 p2 (0/22).
-  No prediction for d9 p2; for d16 p2, at least 1 of 3.
+- **legacy:** Part Two posed cold, 6/20 on record (`62ee65d6b521`).
+- **aoc:** Part One then Part Two in each trial, fingerprint `5d259bb8f103`.
+- **Prediction:** Part Two is reached in at least 18 of 20 trials (Part One is 10/10 on record),
+  and solved in at least 80% of the trials that reach it. Below 50% would mean the diagnosis here
+  is incomplete.
+- Then the walls, same design, 3 trials each: 2024 d16 (Part Two 0/7 cold) and 2025 d9 (0/22
+  cold). No prediction for 2025 d9 p2; for 2024 d16 p2, at least 1 of the trials that reach it.
 
 ## Second gap, same session: the analysis call ignored the configured temperature
 

@@ -491,12 +491,14 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
   (AoC 2026, in December) is the cheapest genuinely-unseen test available.
 - **Every Part 2 result above was measured without the Part 1 statement in the prompt** (found
   and fixed 2026-10-13): the model was shown only the "Part Two" text. The Part 1/Part 2 cliff
-  and the Part 2 walls are not established as capability findings until re-run under the fixed
-  prompt; earlier runs reproduce with `problem_context=legacy,analysis_temperature=model_default`
+  and the Part 2 walls are not established as capability findings until re-run under the site's
+  conditions (Part 1 solved first in the same trial, its statement, answer and program carried
+  into Part 2); earlier runs reproduce with `problem_context=legacy,analysis_temperature=model_default`
   (`dev/progress/part2-prompt-omits-part1.md`).
-- **Known instrument gaps, logged not hidden:** solver crashes are scored in the same bucket as model
-  failures (they want a distinct `HARNESS_ERROR` outcome), and generated code that catches its own
-  exception and prints an error string is scored `wrong` rather than `error`.
+- **Known instrument gaps, logged not hidden:** the Part 2 worked-example pairing is a heuristic
+  that was right in 11 of 13 checked cases, and an unseen year cannot reach Part 2 without the
+  (unwired) answer submitter. Fixed 2026-10-13: solver crashes now score as `harness_error`, not
+  as model failures, and code that prints its own error message scores `error`, not `wrong`.
 - **Hardware headroom:** a third machine (M5 Pro / 64 GB, 2026-10-12) reproduced the reference
   result about 2.3× faster and added the 2024 d16–25 band, but no current model larger than the
   reference fits in 64 GB, so whether a bigger model moves the walls is still open. Faster hardware would refine the

@@ -29,6 +29,7 @@ from shared.experiment import ExperimentResult, Outcome, SolverConfig  # noqa: E
 from shared.experiment.runner import (  # noqa: E402
     compare,
     drop_parts_without_puzzle,
+    with_part_one_prerequisites,
     parse_problem_set,
     problem_id,
     run_experiment,
@@ -41,6 +42,8 @@ SYMBOL = {
     Outcome.OVERFIT: "CHEAT",
     Outcome.NO_CANDIDATE: "none ",
     Outcome.ERROR: "ERROR",
+    Outcome.HARNESS_ERROR: "BUG  ",
+    Outcome.NOT_REACHED: "skip ",
 }
 
 # Fields that are ints/floats/bools rather than strings, for --config parsing.
@@ -172,7 +175,15 @@ async def async_main(args) -> int:
     experiments: List[ExperimentResult] = []
 
     for config in configs:
-        print(f"\n=== {config} over {len(problems)} problem(s) ===")
+        if config.problem_context == "aoc":
+            run_set = with_part_one_prerequisites(problems)
+            added = [spec for spec in run_set if spec not in problems]
+            if added:
+                names = ", ".join(problem_id(*spec) for spec in added)
+                print(f"adding {len(added)} Part One(s) that a requested Part Two needs: {names}")
+        else:
+            run_set = problems
+        print(f"\n=== {config} over {len(run_set)} problem(s) ===")
 
         if args.dry_run:
             experiment = await _dry_run(problems, config)

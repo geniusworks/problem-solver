@@ -12,7 +12,7 @@ import requests
 from requests import RequestException
 from shared.execution import SolutionExecutor, TestCase
 from shared.llm.local import OllamaProvider
-from shared.parser import parse_problem_text
+from shared.parser import parse_problem_text, TestCase as StatementExample
 from shared import problem_context
 from shared.aoc import fetch_problem_text, ensure_problem_files, ensure_problem_directory_structure
 from shared.ledger import record_solution
@@ -182,6 +182,9 @@ class BaseSolver:
         # Per-model trace of the most recent solve, consumed by the experiment
         # harness. Reset at the start of each solve_problem call.
         self.attempts: List[AttemptRecord] = []
+        # (year, day) -> the program that solved Part One in the current trial.
+        # Set by the experiment harness before it asks for Part Two.
+        self.part_one_programs: Dict[Tuple[int, int], str] = {}
 
         # Initialize all available models, preferring those actually installed in Ollama
         model_names = self._resolve_available_models()
@@ -470,7 +473,29 @@ class BaseSolver:
                 parsed_problem.title = (
                     heading.group().strip() if heading else parsed_problem.title
                 )
-            parsed_problem.supplement = problem_context.supplement(year, day, part)
+            part_one_code = self.part_one_programs.get((year, day))
+            parsed_problem.supplement = problem_context.supplement(
+                year, day, part, part_one_code=part_one_code
+            )
+            # A Part Two article seldom repeats the worked example it refers
+            # to. Offered only with an accepted answer on file, so that a wrong
+            # pairing can mislead feedback but can never reject a right answer.
+            if (
+                part == 2
+                and _known_answer(year, day, part) is not None
+                and not any(e.expected_output for e in parsed_problem.examples)
+            ):
+                paired = problem_context.part_two_example(year, day, part_one_code)
+                if paired is not None:
+                    parsed_problem.examples.append(StatementExample(
+                        input_data=paired[0],
+                        expected_output=paired[1],
+                        order=len(parsed_problem.examples),
+                        description=(
+                            "Part One's worked example, with the result "
+                            "Part Two states for it"
+                        ),
+                    ))
         if self.debug:
             logging.info("Problem text for part %d:", part)
             logging.info(problem_text)
@@ -684,6 +709,14 @@ class BaseSolver:
                         logger.warning(
                             "Error testing candidate from %s: %s: %s",
                             model_name, type(e).__name__, e,
+                        )
+                        self._record_attempt(
+                            model_name, year, day, part, Outcome.HARNESS_ERROR,
+                            stage="repair" if iteration else "generate",
+                            expected=known_answer,
+                            repair_iteration=iteration,
+                            code=solution,
+                            error=f"{type(e).__name__}: {e}",
                         )
                         continue
 
@@ -1020,7 +1053,11 @@ class BaseSolver:
                 outcome=outcome,
                 answer=full_answer,
                 feedback=self._build_execution_feedback(
-                    model_name, test_cases, example_results, full_result, full_answer
+                    model_name, test_cases, example_results, full_result, full_answer,
+                    direction=(
+                        problem_context.answer_direction(full_answer, known_answer)
+                        if self.config.problem_context == "aoc" else None
+                    ),
                 ),
                 example_results=example_results,
             )
@@ -1041,6 +1078,10 @@ class BaseSolver:
                     "%s rejected: produced %r, accepted answer is %r",
                     model_name, full_answer.strip(), known_answer.strip(),
                 )
+                # Code that caught its own exception and printed a message
+                # crashed; it did not compute a wrong answer.
+                if problem_context.looks_like_error_output(full_answer):
+                    return _reject(Outcome.ERROR)
                 return _reject(Outcome.WRONG)
             outcome = Outcome.SOLVED
         else:
@@ -1062,6 +1103,7 @@ class BaseSolver:
         example_results: List[Any],
         full_result: Optional[Any],
         full_answer: Optional[str],
+        direction: Optional[str] = None,
     ) -> str:
         lines: List[str] = []
         lines.append(f"Execution feedback for model {model_name}.")
@@ -1098,6 +1140,16 @@ class BaseSolver:
                 lines.append("Full input run completed but produced an empty answer.")
             else:
                 lines.append("Full input run completed but the answer is still not accepted.")
+                if self.config.problem_context == "aoc":
+                    if problem_context.looks_like_error_output(full_answer):
+                        # The program's own output, which its author would see.
+                        lines.append(
+                            "Your program printed an error message instead of "
+                            f"an answer: {full_answer.strip()[:400]}"
+                        )
+                    elif direction:
+                        # What the site says about a wrong number, and no more.
+                        lines.append(f"Your answer {full_answer.strip()} is {direction}.")
                 if self.config.targeted_feedback:
                     lines.extend(_wrong_answer_guidance(full_answer))
         return "\n".join(lines)

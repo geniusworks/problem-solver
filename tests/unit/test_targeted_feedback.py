@@ -147,3 +147,38 @@ class TestWrongAnswerGuidance:
             "m", [], [], self.WRONG, "99999"
         )
         assert "1597035" not in fb  # a real accepted answer, for illustration
+
+
+class TestWhatTheSiteSaysAboutAWrongAnswer:
+    """The site reports which way a wrong number is off. The feedback builder is
+    given those two words and never the accepted answer."""
+
+    WRONG = _result(output="99999")
+
+    def test_direction_is_reported(self):
+        fb = _solver()._build_execution_feedback(
+            "m", [], [], self.WRONG, "99999", direction="too high"
+        )
+        assert "Your answer 99999 is too high." in fb
+
+    def test_legacy_context_says_nothing_more(self):
+        fb = _solver(problem_context="legacy")._build_execution_feedback(
+            "m", [], [], self.WRONG, "99999", direction="too high"
+        )
+        assert "too high" not in fb
+
+    def test_direction_is_derived_outside_and_only_for_integers(self):
+        from shared.problem_context import answer_direction
+        assert answer_direction("5", "7") == "too low"
+        assert answer_direction("9", "7") == "too high"
+        assert answer_direction("7", "7") is None
+        assert answer_direction("co,de", "ka,ta") is None
+        assert answer_direction(None, "7") is None
+
+    def test_a_printed_error_is_shown_back_as_the_programs_own_output(self):
+        out = "An error occurred: list index out of range\n0"
+        fb = _solver()._build_execution_feedback(
+            "m", [], [], _result(output=out), out, direction="too low"
+        )
+        assert "printed an error message instead of an answer" in fb
+        assert "too low" not in fb

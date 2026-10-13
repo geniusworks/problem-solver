@@ -33,7 +33,8 @@ inline `<think>` format incompatible with the pipeline). **These are the models 
 > **Every row dated before 2026-10-13 is a legacy-context result:** Part 2s were posed without
 > the Part 1 statement (`dev/progress/part2-prompt-omits-part1.md`). They reproduce with
 > `problem_context=legacy,analysis_temperature=model_default`. Rows run under the new default
-> are marked `ctx=aoc` in the config column and are not comparable with the legacy rows.
+> are marked `ctx=aoc` in the config column and are not comparable with the legacy rows: there a
+> Part 2 is attempted only in trials that solved Part 1, and its rate is over those trials.
 
 > **Fingerprint note (2026-08-20):** adding the `efficiency_feedback` field to `SolverConfig`
 > changed every config hash — the k3 settings recorded as `bb22870d2a6d` in earlier findings now

@@ -113,3 +113,55 @@ class TestFingerprintsKeepTheirMeaning:
             SolverConfig(problem_context="everything")
         with pytest.raises(ValueError):
             SolverConfig(analysis_temperature="hot")
+
+
+class TestErrorShapedOutput:
+    def test_a_caught_exception_is_not_an_answer(self):
+        assert problem_context.looks_like_error_output("An error occurred: boom\n0")
+        assert problem_context.looks_like_error_output("Traceback (most recent call last)")
+
+    def test_answers_are_left_alone(self):
+        assert not problem_context.looks_like_error_output("705756472327497")
+        assert not problem_context.looks_like_error_output("co,de,ka,ta")
+        assert not problem_context.looks_like_error_output("")
+
+
+class TestPartTwoExample:
+    """Part Two reuses Part One's worked example with a new stated result."""
+
+    PAGE = """<article class="day-desc"><h2>--- Day 1: Sums ---</h2>
+<pre><code>1
+2
+3
+</code></pre><p>The total is <code><em>6</em></code>.</p></article>
+<article class="day-desc"><h2 id="part2">--- Part Two ---</h2>
+<p>Now multiply. The product is <code><em>6</em></code>... no, <code><em>12</em></code>.</p></article>"""
+
+    ADDS = "print(sum(int(x) for x in open('input.txt').read().split()))\n"
+
+    @pytest.fixture
+    def page(self, tmp_path, monkeypatch):
+        (tmp_path / "problem.html").write_text(self.PAGE, encoding="utf-8")
+        monkeypatch.setattr(problem_context, "get_problem_dir", lambda y, d: tmp_path)
+        return tmp_path
+
+    def test_paired_when_the_part_one_program_reproduces_the_example(self, page):
+        assert problem_context.part_two_example(2024, 1, self.ADDS) == ("1\n2\n3\n", "12")
+
+    def test_not_paired_when_the_program_disagrees_with_the_example(self, page):
+        assert problem_context.part_two_example(2024, 1, "print(0)\n") is None
+
+    def test_not_paired_without_a_part_one_program(self, page):
+        assert problem_context.part_two_example(2024, 1, None) is None
+
+    def test_not_paired_when_the_stated_result_is_not_a_number(self, page):
+        (page / "problem.html").write_text(
+            self.PAGE.replace("<em>12</em>", "<em>co,de</em>"), encoding="utf-8"
+        )
+        assert problem_context.part_two_example(2024, 1, self.ADDS) is None
+
+    def test_supplement_prefers_this_trials_own_program(self, page, monkeypatch):
+        monkeypatch.setattr(problem_context, "get_known_answer", lambda y, d, p: "6")
+        (page / "2024_day01_part1.py").write_text("# someone else's\n")
+        text = problem_context.supplement(2024, 1, 2, part_one_code="# mine\n")
+        assert "# mine" in text and "someone else" not in text

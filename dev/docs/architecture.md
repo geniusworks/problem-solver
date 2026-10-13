@@ -15,7 +15,8 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
        correct per-part article for examples and the final question
      - `shared/problem_context.py` then widens what the model reads to what a solver on the
        site has: for Part 2, Part 1's statement and accepted answer and the recorded Part 1
-       program; for both, a preview of the input. `problem_context=legacy` turns this off
+       program; for both, a preview of the input. The experiment runner attempts a Part 2
+       only in a trial that solved Part 1. `problem_context=legacy` turns this off
        (`dev/progress/part2-prompt-omits-part1.md`)
      - AoC-style example and expected-output inference from `<pre><code>` blocks and
        surrounding prose

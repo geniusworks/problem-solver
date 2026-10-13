@@ -13,6 +13,8 @@ from shared.experiment import Outcome, SolverConfig
 from shared.experiment.runner import (
     compare,
     drop_parts_without_puzzle,
+    run_experiment,
+    with_part_one_prerequisites,
     parse_problem_set,
     problem_id,
     run_problem,
@@ -62,13 +64,14 @@ class _StubSolver:
 
 
 class TestRunProblem:
-    async def test_solver_exception_becomes_an_error_outcome(self):
-        """One failing problem must not abort the sweep."""
+    async def test_solver_exception_is_a_harness_error_not_a_model_failure(self):
+        """One failing problem must not abort the sweep, and must not be
+        scored against the model (dev/progress/strategy-keyerror-d8.md)."""
         solver = _StubSolver(raises=RuntimeError("ollama is down"))
 
         result = await run_problem(solver, 2024, 1, 1, SolverConfig())
 
-        assert result.outcome is Outcome.ERROR
+        assert result.outcome is Outcome.HARNESS_ERROR
         assert "ollama is down" in result.attempts[0].error
 
     async def test_no_candidate_when_solver_returns_none(self):
@@ -297,7 +300,7 @@ class TestTrialAggregation:
 
         per = exp.per_problem()["p1"]
         assert per == {
-            "trials": 1, "solved": 1, "solve_rate": 1.0,
+            "trials": 1, "scored": 1, "solved": 1, "solve_rate": 1.0,
             "stable": True, "outcomes": ["solved"], "expected": "42",
         }
 
@@ -362,3 +365,82 @@ class TestPartsWithoutAPuzzle:
         from shared.ground_truth import part_has_puzzle
 
         assert part_has_puzzle(2099, 25, 2)
+
+
+class TestPartTwoFollowsPartOne:
+    """The site shows Part Two only to a solver who has just solved Part One.
+
+    Every run before 2026-10-13 posed Part Two cold
+    (dev/progress/part2-prompt-omits-part1.md).
+    """
+
+    def test_a_lone_part_two_gains_its_part_one_first(self):
+        assert with_part_one_prerequisites([(2024, 19, 2), (2024, 16, 1)]) == [
+            (2024, 19, 1), (2024, 19, 2), (2024, 16, 1),
+        ]
+
+    @staticmethod
+    def _patch(monkeypatch, part_one_outcomes):
+        """run_experiment over a stub: Part One outcomes are scripted per trial."""
+        import shared.experiment.runner as runner
+        import shared.solver as solver_module
+        from shared.experiment.results import AttemptRecord
+
+        seen = []
+
+        class _Solver:
+            def __init__(self, *a, **k):
+                self.part_one_programs = {}
+
+        async def fake_run_problem(solver, year, day, part, config, force=True, trial=0):
+            outcome = part_one_outcomes[trial] if part == 1 else Outcome.SOLVED
+            seen.append((trial, part, dict(solver.part_one_programs)))
+            result = ProblemResult(
+                problem_id=problem_id(year, day, part), year=year, day=day, part=part,
+                config_fingerprint=config.fingerprint(), trial=trial, outcome=outcome,
+            )
+            result.attempts.append(AttemptRecord(
+                model="m", problem_id=result.problem_id,
+                config_fingerprint=config.fingerprint(), outcome=outcome,
+                code=f"# part {part} trial {trial}",
+            ))
+            return result
+
+        monkeypatch.setattr(solver_module, "BaseSolver", _Solver)
+        monkeypatch.setattr(runner, "run_problem", fake_run_problem)
+        monkeypatch.setattr(runner, "part_has_puzzle", lambda *a: True)
+        monkeypatch.setattr(runner, "get_known_answer", lambda *a: "42")
+        return seen
+
+    async def test_part_two_is_not_reached_when_the_trial_missed_part_one(self, monkeypatch, tmp_path):
+        seen = self._patch(monkeypatch, [Outcome.WRONG, Outcome.SOLVED])
+
+        exp = await run_experiment([(2024, 19, 2)], SolverConfig(), tmp_path, trials=2)
+
+        outcomes = [(r.trial, r.part, r.outcome) for r in exp.results]
+        assert outcomes == [
+            (0, 1, Outcome.WRONG), (0, 2, Outcome.NOT_REACHED),
+            (1, 1, Outcome.SOLVED), (1, 2, Outcome.SOLVED),
+        ]
+        # Part Two was posed once, with that trial's own Part One program.
+        assert [s for s in seen if s[1] == 2] == [(1, 2, {(2024, 19): "# part 1 trial 1"})]
+        # A Part Two that was never posed is in no denominator.
+        assert (exp.attempted, exp.solved, exp.not_reached) == (3, 2, 1)
+        per = exp.per_problem()["2024_day19_part2"]
+        assert (per["trials"], per["scored"], per["solve_rate"]) == (2, 1, 1.0)
+
+    async def test_legacy_context_poses_part_two_cold_as_before(self, monkeypatch, tmp_path):
+        self._patch(monkeypatch, [Outcome.WRONG])
+        legacy = SolverConfig(problem_context="legacy")
+
+        exp = await run_experiment([(2024, 19, 2)], legacy, tmp_path)
+
+        assert [(r.part, r.outcome) for r in exp.results] == [(2, Outcome.SOLVED)]
+
+    def test_harness_errors_are_in_no_denominator(self):
+        results = [
+            ProblemResult("p", 2024, 1, 1, "fp", outcome=Outcome.SOLVED),
+            ProblemResult("q", 2024, 2, 1, "fp", outcome=Outcome.HARNESS_ERROR),
+        ]
+        exp = ExperimentResult("c", "fp", {}, results)
+        assert (exp.attempted, exp.harness_errors, exp.solve_rate) == (1, 1, 1.0)
