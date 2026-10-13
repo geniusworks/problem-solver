@@ -15,7 +15,7 @@ This document is the consolidated result. The 31 write-ups in [`dev/progress/`](
 the audit trail; every figure here was recomputed from the run artifacts. For the project itself —
 what it is, how the pipeline works, how to run it — see the [README](README.md).
 
-**Corpus:** 57 recorded experiment runs · 1,475 candidate attempts · ~121 GPU-hours · 16.3M tokens ·
+**Corpus:** 57 recorded experiment runs · 1,475 candidate attempts · ~121 GPU-hours · 16.3M tokens (includes draft counts copied onto repair records; see the defect table) ·
 **43 oracle-verified solutions across two AoC years, 0 wrong in the ledger.**
 
 > **Read the contamination section before the capability numbers.** AoC 2024/2025 solutions predate
@@ -84,6 +84,10 @@ At a matched wall-clock budget, a fast weak model taking many draws vs a slow st
 
 **The useful form of the claim:** *cheap draws beat one expensive pass when the binding cost is time,
 not tokens, and only up to the cheap model's ceiling.*
+
+*Correction 2026-10-12: 3.35× counts tokens copied onto the MoE arm's five repair records. On
+drafts alone the ratio is 3.10×, a lower bound; the finding's direction and size stand
+(`repair-accounting-unwired.md`).*
 
 *(`economic-arm-moe-vs-generalist.md`.)*
 
@@ -160,7 +164,7 @@ emitted identical `TypeError`s every time.
 ## What the measurements cost in credibility, and why that matters
 
 Roughly half the work behind these numbers was discovering that earlier measurements were wrong.
-Nine instrument defects, each of which made results *look better or worse than reality*:
+Ten instrument defects, each of which made results *look better or worse than reality*:
 
 | defect | effect |
 |---|---|
@@ -172,6 +176,7 @@ Nine instrument defects, each of which made results *look better or worse than r
 | Repair ignored the configured temperature | a temperature experiment reached only ~1/3 of generations |
 | `success_rate` recorded at generation time, `success=True` for anything that parsed | **the sole signal model ranking used measured "returned code", not "solved the problem"** |
 | `StrategyOptimizer` read a second, dead database (0 rows) | strategy effectiveness computed over no data at all |
+| That token fix stopped at the provider; the solver kept copying the draft's tokens and time onto every repair record *(found 2026-10-12)* | **642 of 642 repair records wrong, in runs after the "fix" too**; arm 2's 3.35× is really "at least 3.10×" |
 | A last day's "Part Two" with no puzzle was attempted and scored as a miss *(found 2026-10-12)* | denominators off by one in two scans (16/24, 9/20), and **a nonexistent problem written up as "the first genuinely unseen problem"** |
 
 Each is fixed with regression tests. The sharpest lesson came from a tally accumulated in prose

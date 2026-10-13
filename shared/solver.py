@@ -568,6 +568,11 @@ class BaseSolver:
         candidate_models = cands.candidate_models
         generation_times = cands.generation_times
         generation_tokens = cands.generation_tokens
+        # Cost of the call that produced each candidate's *current* code: the
+        # draft's at first, then each repair's own. Kept apart from the
+        # generation_* dicts, which stay the draft's.
+        attempt_times: Dict[str, float] = dict(generation_times)
+        attempt_tokens: Dict[str, Dict[str, int]] = dict(generation_tokens)
         failures = cands.failures
         parsed_problem = prep.parsed_problem
         strategies, effectiveness = prep.strategies, prep.effectiveness
@@ -619,15 +624,16 @@ class BaseSolver:
                             model_name, solution, year, day, part,
                             exec_test_cases, known_answer,
                         )
-                        tokens = generation_tokens.get(cand_id, {})
+                        tokens = attempt_tokens.get(cand_id, {})
                         self._record_attempt(
                             model_name, year, day, part, verdict.outcome,
                             stage="repair" if iteration else "generate",
                             answer=verdict.answer,
                             expected=known_answer,
                             repair_iteration=iteration,
-                            wall_clock_seconds=generation_times.get(cand_id, 0.0),
-                            quality_score=quality_scores.get(cand_id),
+                            wall_clock_seconds=attempt_times.get(cand_id, 0.0),
+                            # quality_scores were computed on the drafts.
+                            quality_score=None if iteration else quality_scores.get(cand_id),
                             code=solution,
                             input_tokens=tokens.get("input_tokens", 0),
                             output_tokens=tokens.get("output_tokens", 0),
@@ -688,6 +694,7 @@ class BaseSolver:
                     if not callable(improve_fn):
                         continue
                     try:
+                        repair_start = datetime.now()
                         improved_code = await improve_fn(
                             solution,
                             parsed_problem,
@@ -695,6 +702,15 @@ class BaseSolver:
                         )
                         if improved_code and improved_code != solution:
                             improved_candidates[cand_id] = improved_code
+                            # The next iteration records this candidate; give it
+                            # the repair's own cost, not the draft's.
+                            attempt_times[cand_id] = (
+                                datetime.now() - repair_start
+                            ).total_seconds()
+                            attempt_tokens[cand_id] = dict(getattr(
+                                model, "last_token_usage",
+                                {"input_tokens": 0, "output_tokens": 0},
+                            ))
                     except Exception:
                         continue
 

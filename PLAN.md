@@ -415,6 +415,14 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
   the temperature experiment's manipulation reached only ~1/3 of generations (corrected in that
   doc). Historical result JSONs carry duplicated repair token counts and should be treated as lower
   bounds on repair cost.
+  **Correction 2026-10-12: that fix stopped at the provider.** The solver never read the repair's
+  usage, so repair records kept copying their draft's tokens and time, in every run before and
+  after it (642 of 642). ✅ **Fixed at the record 2026-10-12** (`repair-accounting-unwired.md`).
+  Old token totals are neither upper nor lower bounds; the draft-only sum is a lower bound. Arm 2's
+  3.35× becomes "at least 3.10×".
+- **Repair calls that yield no new candidate leave no record.** A repair that raises or returns
+  the code unchanged spends tokens that appear nowhere. Recording them adds attempt records and so
+  shifts `attempts` against the whole history; unfixed.
 - **Solver crashes are scored as model failures.** An exception out of the solve path lands in the
   same bucket as "the model could not do it" — which is how a `KeyError` corrupted results for eight
   months undetected (`strategy-keyerror-d8.md`). Wants a distinct `HARNESS_ERROR` outcome.
