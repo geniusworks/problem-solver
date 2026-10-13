@@ -62,6 +62,8 @@ agreement, not confirmation. The claim's weight still rests on `passk-ab-d13-d15
 
 ## Next: a powered k1 vs k3 on d19 p2 alone (registered before it runs)
 
+*Run 2026-10-12; result in `m5pro-d19p2-power.md`: k1 6/20, k3 10/20, both predictions held.*
+
 One problem, many trials, both arms run fresh on the same code and machine.
 
 - **k1 arm:** `samples_per_model=1`, 20 trials (fingerprint `62ee65d6b521`).
