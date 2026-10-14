@@ -495,8 +495,11 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
   conditions (Part 1 solved first in the same trial, its statement, answer and program carried
   into Part 2); earlier runs reproduce with `problem_context=legacy,analysis_temperature=model_default`
   (`dev/progress/part2-prompt-omits-part1.md`). The first re-run: 2024 d19 p2, 6/20 under the old
-  prompt, 19/19 under the site's conditions.
-- **Known instrument gaps, logged not hidden:** the Part 2 worked-example pairing is a heuristic
+  prompt, 19/19 under the site's conditions; then 2024 d16 p2, 0/7 to 3/3. 2025 d9 p2 is still
+  unsolved.
+- **Known instrument gaps, logged not hidden:** the example test fed to repairs is paired with the
+  wrong input block on up to 25 of 47 audited problems (found 2026-10-13, unfixed,
+  `dev/progress/example-tests-mispaired.md`); the Part 2 worked-example pairing is a heuristic
   that was right in 11 of 13 checked cases, and an unseen year cannot reach Part 2 without the
   (unwired) answer submitter. Fixed 2026-10-13: solver crashes now score as `harness_error`, not
   as model failures, and code that prints its own error message scores `error`, not `wrong`.
