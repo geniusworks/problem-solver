@@ -5,8 +5,8 @@ the rules, the input format, the worked example input — is not in it.** On 202
 accounts for every result: of 80 first drafts, the 16 correct ones are exactly the correct subset
 of the 26 that guessed the input's first line is comma-separated; none of the 54 that did not
 guess it is correct. Found 2026-10-13 from the saved drafts of `m5pro-d19p2-power.md`. **Fixed
-the same day** behind a config switch (below); the A/B that measures the difference is registered
-and not yet run.
+the same day** behind a config switch (below). **A/B run 2026-10-13: 6/20 under the old prompt,
+19/19 under the site's conditions** (Fisher exact p = 2.6e-6); the result is below.
 
 ## The mechanism
 
@@ -138,7 +138,7 @@ record keep their fingerprints and can be reproduced:
 **Every result before 2026-10-13 is a legacy-context result.** New runs are not comparable with
 them unless the legacy settings are passed.
 
-## The A/B (registered 2026-10-13 under the final conditions, not yet run)
+## The A/B (registered 2026-10-13 under the final conditions; d19 run the same day)
 
 2024 d19, `samples_per_model=1`, 20 trials, `analysis_temperature=model_default` in both arms so
 that the context is the only difference:
@@ -154,6 +154,40 @@ that the context is the only difference:
 - Then the reference on the arm-3 entry cells (2024 d15, 2025 d9; `samples_per_model=3`, 3
   trials) under the full new defaults, fingerprint `12412ed652a4`. A re-baseline, not a test: its
   legacy row is 6/12 (d15 p1 3/3, d15 p2 1/3, d9 p1 2/3, d9 p2 0/3). No prediction.
+
+### Result, 2024 d19: 6/20 → 19/19
+
+`m5pro-aoc-d19-k1-n20`, fingerprint `5d259bb8f103`, 20 trials, 6,650 s
+(`dev/experiments/20261014T001948Z_m5pro-aoc-d19-k1-n20_5d259bb8f103.json`).
+
+| | legacy (`62ee65d6b521`) | aoc (`5d259bb8f103`) |
+|---|---|---|
+| Part Two solved / reached | 6/20 | **19/19** |
+| solved by the first draft | 5/20 | 19/19 |
+| repair records | 18 | 0 |
+| Part Two wall-clock per trial | 169 s | 91 s |
+| Part One, same trial | not run | 19/20, 246 s per trial |
+
+- **Both predictions held:** Part Two was reached in 19 of 20 trials (predicted at least 18) and
+  solved in 19 of the 19 that reached it (predicted at least 80%). Fisher exact, 19/19 against
+  6/20: p = 2.6e-6.
+- **d19 p2 is not a "sometimes" problem.** With the statement in the prompt the reference solves
+  it on the first draft every time. Its 20% first-draft rate under the old prompt measured how
+  often a draft guessed the input format.
+- **Consequence for arm 1 on this machine:** d19 p2 was the one informative problem in the
+  k1-vs-k3 runs of `m5pro-d19p2-power.md` and `m5pro-passk-2024-d16-25.md`. Those runs still
+  show that drafts are independent (49% predicted, 50% measured), but what sampling rescued there
+  was a format guess. The M5 Pro has no "sometimes" band on record under the site's conditions;
+  one has to be found again before k1-vs-k3 is re-run here.
+- **The one trial that did not reach Part Two** was stopped by the hardcoding gate, not by a
+  wrong answer. Its Part One program read `input.txt` and printed the accepted answer, 304, but
+  also carried the worked example's input as a fallback for a missing file, and the gate rejects
+  any program that contains an example input verbatim. Recorded as `overfit` for Part One and
+  `not_reached` for Part Two. The gate is conservative by design; this is its cost, 1 in 20 here.
+- **Not exercised:** no draft failed, so the too-high/too-low hint and the repair path under the
+  new context are still untested on a live run.
+
+The walls and the reference re-baseline are still queued.
 
 ## Second gap, same session: the analysis call ignored the configured temperature
 

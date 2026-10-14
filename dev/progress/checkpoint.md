@@ -32,13 +32,15 @@ passed.
 continues on 2024–2025. If it is run, it needs a decision first: an unseen year cannot reach
 Part 2 without the unwired submitter.
 
-**Queued, not run.** Launched 2026-10-13 05:32 and stopped seven minutes later at the
-maintainer's request, before any trial completed; nothing was recorded. To start the queue
-(about eight hours unattended; predictions are in `part2-prompt-omits-part1.md`):
+**Run 1 of 3 done 2026-10-13: 2024 d19 p2 went from 6/20 under the old prompt to 19/19 under
+the site's conditions** (p = 2.6e-6; every solve a first draft; `part2-prompt-omits-part1.md`).
+d19 p2 is no longer a "sometimes" problem, so this machine has no band on record for k1-vs-k3
+under the new conditions. Runs 2 and 3 are queued, not run (about two and four hours;
+predictions are in `part2-prompt-omits-part1.md`):
 
 ```
 B="models=qwen3.8:27b,temperature=0.7,enable_thinking=false,enable_fallback_models=false"
-# 1. d19 A/B, new conditions against the legacy 6/20
+# 1. d19 A/B, new conditions against the legacy 6/20 -- DONE, 19/19
 venv/bin/python experiment.py --problems 2024:19.2 --trials 20 \
   --config "name=m5pro-aoc-d19-k1-n20,samples_per_model=1,analysis_temperature=model_default,$B"
 # 2. the two walls
