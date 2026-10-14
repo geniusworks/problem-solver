@@ -327,11 +327,25 @@ problems. In order:
    6/20 → 19/19**, every solve a first draft. d19 p2 leaves the "sometimes" band, so a new band
    must be found on this machine before k1-vs-k3 is re-run under the new conditions;
    (b) the walls under `aoc` context, 3 trials each (2024 d16, 2025 d9; each Part Two now runs
-   after its Part One in the same trial);
+   after its Part One in the same trial) — ✅ **DONE 2026-10-13: d16 p2 0/7 → 3/3, d9 p2 0/2
+   reached.** d16 p2 leaves the entry cells;
+   (b2) **fix the example pairing first** (`example-tests-mispaired.md`, found in (b)): the
+   example test is paired with the wrong input on up to 25 of 47 audited problems, including
+   2024 d15 and 2025 d9, and its false failure is fed to every repair;
    (c) **re-run the reference** on the four entry-check cells under the new defaults — its row on
    record (6/12) is a legacy-context result and no longer the comparison.
    If (b) and (c) show the walls falling for the reference itself, the entry-check cells no longer
    separate models and the cells must be re-chosen from whatever still fails.
+
+   **Re-earning the Part 2 record (added 2026-10-13).** (a) and (b) moved two of two re-run
+   Part 2s from failing to solved every time, so the legacy Part 2 record is not evidence of
+   capability. After (b2) and (c), in order:
+   (d) rescan, under the new defaults at `samples_per_model=1`, 3 trials each, every Part 2
+   recorded as failing or "sometimes" on any machine, to find which walls and bands survive.
+   Part 1 results are unaffected by the prompt defect and are not re-run for it;
+   (e) k1-vs-k3 on the band (d) finds — d19 p2, this machine's one informative problem, is now
+   solved on every first draft;
+   (f) re-choose the arm-3 entry cells from what still fails in (c) and (d), then the candidates.
 
    **Procedure, per model, in that order:**
    1. Plumbing check, `--trials 3` on `2024:1` at `samples_per_model=1`: does it emit runnable
@@ -456,6 +470,11 @@ spend. The pair to test it exists — `qwen3-coder:30b` is ~4× faster than `qwe
 bug is fixed** (below): a cost claim measured with broken cost accounting is worthless.
 
 ### 4. Instrument gaps — logged, unfixed, each one small
+
+- **Example tests are paired with the wrong input block** (found 2026-10-13, **open**,
+  `example-tests-mispaired.md`). A verified program fails its own example test on up to 25 of 47
+  audited problems; the false failure goes into every repair prompt. Solves are unaffected.
+  Blocks the reference re-baseline (M5 Pro step 4, b2).
 
 - ~~**Every Part 2 prompt omitted the Part 1 statement**~~ — ✅ **FIXED 2026-10-13**
   (`part2-prompt-omits-part1.md`). The model was shown only the "Part Two" article — no rules, no

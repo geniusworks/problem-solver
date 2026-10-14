@@ -187,7 +187,32 @@ that the context is the only difference:
 - **Not exercised:** no draft failed, so the too-high/too-low hint and the repair path under the
   new context are still untested on a live run.
 
-The walls and the reference re-baseline are still queued.
+### Result, the walls: 2024 d16 p2 0/7 → 3/3; 2025 d9 p2 still 0
+
+`m5pro-aoc-walls-k1`, fingerprint `5d259bb8f103`, 3 trials, 4,078 s
+(`dev/experiments/20261014T013038Z_m5pro-aoc-walls-k1_5d259bb8f103.json`).
+
+| | legacy | aoc |
+|---|---|---|
+| 2024 d16 Part One | — | 3/3 |
+| 2024 d16 Part Two | 0/7 (`682` in 13 of 13 first drafts) | **3/3**, each a first draft |
+| 2025 d9 Part One | — | 2/3 |
+| 2025 d9 Part Two | 0/22 | 0/2 reached (1 not reached) |
+
+- **Prediction held:** 2024 d16 p2 was predicted solved in at least 1 trial that reached it; it
+  was solved in all 3. The shared wrong answer `682` was a missing reading, not a misreading:
+  the Part Two text does not restate the move and turn costs.
+- **2024 d16 p2 is not a wall** and drops out of the arm-3 entry cells.
+- **2025 d9 p2 stays unsolved, but not cleanly.** One trial timed out on the full input in the
+  draft and both repairs. The other answered `4623431865` (too high), repeated it, then
+  `23426835` (too low). All six attempts were also told `expected '24', got '0'` on an example
+  test that is paired with the wrong input (`example-tests-mispaired.md`).
+- **First live use of the too-high/too-low hint:** five wrong numeric answers got it (three on
+  d9 p1, two on d9 p2). None of the repairs that followed was accepted.
+- **A repair that returns different code with the same answer** is recorded as `wrong`, not
+  `no_candidate` (d9 p1 trial 0: `4781096936` three times).
+
+The reference re-baseline is still queued, and should wait for the example-pairing fix.
 
 ## Second gap, same session: the analysis call ignored the configured temperature
 

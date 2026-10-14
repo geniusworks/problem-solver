@@ -35,15 +35,20 @@ Part 2 without the unwired submitter.
 **Run 1 of 3 done 2026-10-13: 2024 d19 p2 went from 6/20 under the old prompt to 19/19 under
 the site's conditions** (p = 2.6e-6; every solve a first draft; `part2-prompt-omits-part1.md`).
 d19 p2 is no longer a "sometimes" problem, so this machine has no band on record for k1-vs-k3
-under the new conditions. Runs 2 and 3 are queued, not run (about two and four hours;
-predictions are in `part2-prompt-omits-part1.md`):
+under the new conditions.
+
+**Run 2 of 3 done 2026-10-13: 2024 d16 p2 went from 0/7 to 3/3; 2025 d9 p2 is still 0 (0/2
+reached).** d16 p2 is not a wall. The run also exposed a second instrument defect, **not fixed**:
+the example test is paired with the wrong input block on up to 25 of 47 audited problems, and its
+false failure goes into every repair prompt (`example-tests-mispaired.md`). 2024 d15 and 2025 d9
+are both affected, so **run 3 waits for that fix**. Commands as registered:
 
 ```
 B="models=qwen3.8:27b,temperature=0.7,enable_thinking=false,enable_fallback_models=false"
 # 1. d19 A/B, new conditions against the legacy 6/20 -- DONE, 19/19
 venv/bin/python experiment.py --problems 2024:19.2 --trials 20 \
   --config "name=m5pro-aoc-d19-k1-n20,samples_per_model=1,analysis_temperature=model_default,$B"
-# 2. the two walls
+# 2. the two walls -- DONE, d16 p2 3/3, d9 p2 0/2
 venv/bin/python experiment.py --problems 2024:16.2,2025:9.2 --trials 3 \
   --config "name=m5pro-aoc-walls-k1,samples_per_model=1,analysis_temperature=model_default,$B"
 # 3. reference re-baseline on the arm-3 entry cells
@@ -54,6 +59,10 @@ venv/bin/python experiment.py --problems 2024:15,2025:9 --trials 3 \
 Expected fingerprints: `5d259bb8f103` for 1 and 2, `12412ed652a4` for 3. After them: the three
 arm-3 candidates (`gemma4:31b`, `ornith-1.5:35b`, `muse-glimmer:30b`, pulled), each against the
 new baseline from 3. **Nothing is running.**
+
+**Order from here** (`PLAN.md`, M5 Pro step 4): fix the example pairing → run 3 → rescan the
+Part 2s recorded as failing or "sometimes" → k1-vs-k3 on whatever band survives → re-choose the
+arm-3 entry cells → the three candidates.
 
 ### Machine: work has moved to the M5 Pro / 64 GB (2026-10-12)
 
