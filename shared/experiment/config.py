@@ -36,6 +36,7 @@ def _env_int(name: str, default: int) -> int:
 _LEGACY_VALUES: Dict[str, Any] = {
     "problem_context": "legacy",
     "analysis_temperature": "model_default",
+    "example_tests": "parser",
 }
 
 
@@ -93,6 +94,16 @@ class SolverConfig:
     #   "model_default" -> unset, so Ollama uses the model's own default (1.0
     #                      for qwen3.8:27b). Every run before 2026-10-13.
     analysis_temperature: str = "configured"
+
+    # Where the example tests fed back to a failed draft come from.
+    #   "page"   -> example inputs and their stated results read off the page:
+    #               a block is an example input if it resembles the puzzle
+    #               input (shared/problem_context.py::statement_examples).
+    #   "parser" -> the parser's pairing, which attaches a result to the code
+    #               block above it, often an illustration. Every run before
+    #               2026-10-14; a verified program fails 25 of 46 of these
+    #               (dev/progress/example-tests-mispaired.md).
+    example_tests: str = "page"
 
     # --- repair and fallback --------------------------------------------
     max_repair_iterations: int = 2
@@ -162,6 +173,8 @@ class SolverConfig:
             raise ValueError("samples_per_model must be >= 1")
         if self.problem_context not in ("aoc", "legacy"):
             raise ValueError("problem_context must be 'aoc' or 'legacy'")
+        if self.example_tests not in ("page", "parser"):
+            raise ValueError("example_tests must be 'page' or 'parser'")
         if self.analysis_temperature not in ("configured", "model_default"):
             raise ValueError(
                 "analysis_temperature must be 'configured' or 'model_default'"

@@ -493,14 +493,14 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
   and fixed 2026-10-13): the model was shown only the "Part Two" text. The Part 1/Part 2 cliff
   and the Part 2 walls are not established as capability findings until re-run under the site's
   conditions (Part 1 solved first in the same trial, its statement, answer and program carried
-  into Part 2); earlier runs reproduce with `problem_context=legacy,analysis_temperature=model_default`
+  into Part 2); earlier runs reproduce with `problem_context=legacy,analysis_temperature=model_default,example_tests=parser`
   (`dev/progress/part2-prompt-omits-part1.md`). The first re-run: 2024 d19 p2, 6/20 under the old
   prompt, 19/19 under the site's conditions; then 2024 d16 p2, 0/7 to 3/3. 2025 d9 p2 is still
   unsolved.
-- **Known instrument gaps, logged not hidden:** the example test fed to repairs is paired with the
-  wrong input block on up to 25 of 47 audited problems (found 2026-10-13, unfixed,
-  `dev/progress/example-tests-mispaired.md`); the Part 2 worked-example pairing is a heuristic
-  that was right in 11 of 13 checked cases, and an unseen year cannot reach Part 2 without the
+- **Known instrument gaps, logged not hidden:** the example test fed to repairs was paired with
+  the wrong input block, so a verified program failed its own example test on 25 of 46 audited
+  problems (found 2026-10-13, fixed 2026-10-14: 3 of 46, each a statement whose example uses
+  other parameters than the real input; `dev/progress/example-tests-mispaired.md`), and an unseen year cannot reach Part 2 without the
   (unwired) answer submitter. Fixed 2026-10-13: solver crashes now score as `harness_error`, not
   as model failures, and code that prints its own error message scores `error`, not `wrong`.
 - **Hardware headroom:** a third machine (M5 Pro / 64 GB, 2026-10-12) reproduced the reference

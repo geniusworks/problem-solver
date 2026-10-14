@@ -18,6 +18,10 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
        program; for both, a preview of the input. The experiment runner attempts a Part 2
        only in a trial that solved Part 1. `problem_context=legacy` turns this off
        (`dev/progress/part2-prompt-omits-part1.md`)
+     - Example tests are read off the page (`statement_examples`): a code block is an example
+       input if it resembles the puzzle input, and its result is the last emphasised integer
+       before the next one. `example_tests=parser` (and `problem_context=legacy`) keep the
+       parser's pairing (`dev/progress/example-tests-mispaired.md`)
      - AoC-style example and expected-output inference from `<pre><code>` blocks and
        surrounding prose
      - Separate example storage (.examples.txt)

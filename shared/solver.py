@@ -477,25 +477,50 @@ class BaseSolver:
             parsed_problem.supplement = problem_context.supplement(
                 year, day, part, part_one_code=part_one_code
             )
-            # A Part Two article seldom repeats the worked example it refers
-            # to. Offered only with an accepted answer on file, so that a wrong
-            # pairing can mislead feedback but can never reject a right answer.
-            if (
-                part == 2
-                and _known_answer(year, day, part) is not None
-                and not any(e.expected_output for e in parsed_problem.examples)
-            ):
-                paired = problem_context.part_two_example(year, day, part_one_code)
-                if paired is not None:
-                    parsed_problem.examples.append(StatementExample(
-                        input_data=paired[0],
-                        expected_output=paired[1],
-                        order=len(parsed_problem.examples),
-                        description=(
-                            "Part One's worked example, with the result "
-                            "Part Two states for it"
-                        ),
-                    ))
+            if self.config.example_tests == "page":
+                # The parser pairs a stated result with the code block above it,
+                # which is often an illustration; read the pairs off the page
+                # instead (dev/progress/example-tests-mispaired.md). Feedback
+                # only: the accepted answer decides what is solved.
+                pairs = problem_context.statement_examples(year, day, part)
+                if pairs is not None:
+                    for example in parsed_problem.examples:
+                        example.expected_output = ""
+                    for given, stated in pairs:
+                        match = next(
+                            (e for e in parsed_problem.examples
+                             if str(e.input_data or "").strip("\n") == given),
+                            None,
+                        )
+                        if match is not None:
+                            match.expected_output = stated
+                        else:
+                            parsed_problem.examples.append(StatementExample(
+                                input_data=given,
+                                expected_output=stated,
+                                order=len(parsed_problem.examples),
+                                description="The statement's worked example and its stated result",
+                            ))
+            else:
+                # A Part Two article seldom repeats the worked example it refers
+                # to. Offered only with an accepted answer on file, so that a wrong
+                # pairing can mislead feedback but can never reject a right answer.
+                if (
+                    part == 2
+                    and _known_answer(year, day, part) is not None
+                    and not any(e.expected_output for e in parsed_problem.examples)
+                ):
+                    paired = problem_context.part_two_example(year, day, part_one_code)
+                    if paired is not None:
+                        parsed_problem.examples.append(StatementExample(
+                            input_data=paired[0],
+                            expected_output=paired[1],
+                            order=len(parsed_problem.examples),
+                            description=(
+                                "Part One's worked example, with the result "
+                                "Part Two states for it"
+                            ),
+                        ))
         if self.debug:
             logging.info("Problem text for part %d:", part)
             logging.info(problem_text)

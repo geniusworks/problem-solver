@@ -456,9 +456,11 @@ async def test_part_two_preparation_runs_under_the_site_context(monkeypatch, tmp
 
     seen = {}
 
-    def fake_part_two_example(year, day, code):
-        seen["code"] = code
-        return None
+    real_supplement = solver_module.problem_context.supplement
+
+    def spy_supplement(year, day, part, part_one_code=None):
+        seen["code"] = part_one_code
+        return real_supplement(year, day, part, part_one_code=part_one_code)
 
     monkeypatch.setattr(solver_module, "fetch_problem_text", fake_fetch_problem_text)
     monkeypatch.setattr(solver_module, "ensure_problem_files", fake_ensure_problem_files)
@@ -467,7 +469,11 @@ async def test_part_two_preparation_runs_under_the_site_context(monkeypatch, tmp
     monkeypatch.setattr(solver_module, "_known_answer", lambda y, d, p: "1234")
     import shared.ground_truth as ground_truth
     monkeypatch.setattr(ground_truth, "get_known_answer", lambda y, d, p: "1234")
-    monkeypatch.setattr(solver_module.problem_context, "part_two_example", fake_part_two_example)
+    monkeypatch.setattr(solver_module.problem_context, "supplement", spy_supplement)
+    monkeypatch.setattr(
+        solver_module.problem_context, "statement_examples",
+        lambda year, day, part: [("1\n2\n", "2")],
+    )
     monkeypatch.setattr(cq, "CodeQualityAnalyzer", DummyCodeQualityAnalyzer)
     monkeypatch.setattr(learning, "LearningDatabase", DummyLearningDatabase)
     monkeypatch.setattr(solver_module, "SolutionExecutor", RecordingExecutor)

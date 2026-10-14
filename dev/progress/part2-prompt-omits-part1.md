@@ -133,7 +133,8 @@ record keep their fingerprints and can be reproduced:
 | settings | k1 reference | k3 reference |
 |---|---|---|
 | `problem_context=legacy,analysis_temperature=model_default` | `62ee65d6b521` | `d0e67ebf4cee` |
-| defaults (`aoc`, `configured`) | `907898143ff0` | `12412ed652a4` |
+| defaults of 2026-10-13 (`aoc`, `configured`); since 2026-10-14 add `example_tests=parser` | `907898143ff0` | `12412ed652a4` |
+| defaults since 2026-10-14 (`example_tests=page`, `example-tests-mispaired.md`) | `1ac712678732` | `839b40f0bfa8` |
 
 **Every result before 2026-10-13 is a legacy-context result.** New runs are not comparable with
 them unless the legacy settings are passed.
@@ -152,7 +153,8 @@ that the context is the only difference:
   cold). No prediction for 2025 d9 p2; for 2024 d16 p2, at least 1 of the trials that reach it.
 
 - Then the reference on the arm-3 entry cells (2024 d15, 2025 d9; `samples_per_model=3`, 3
-  trials) under the full new defaults, fingerprint `12412ed652a4`. A re-baseline, not a test: its
+  trials) under the full new defaults, fingerprint `839b40f0bfa8` (was `12412ed652a4` before the
+  example-pairing fix of 2026-10-14). A re-baseline, not a test: its
   legacy row is 6/12 (d15 p1 3/3, d15 p2 1/3, d9 p1 2/3, d9 p2 0/3). No prediction.
 
 ### Result, 2024 d19: 6/20 → 19/19
@@ -212,7 +214,8 @@ that the context is the only difference:
 - **A repair that returns different code with the same answer** is recorded as `wrong`, not
   `no_candidate` (d9 p1 trial 0: `4781096936` three times).
 
-The reference re-baseline is still queued, and should wait for the example-pairing fix.
+The reference re-baseline is still queued. The example pairing was fixed 2026-10-14
+(`example-tests-mispaired.md`), so it runs under `example_tests=page`.
 
 ## Second gap, same session: the analysis call ignored the configured temperature
 

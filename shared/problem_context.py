@@ -17,7 +17,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 from bs4 import BeautifulSoup
 
@@ -182,6 +182,8 @@ def part_two_example(
     result on that example, and the Part Two result must be an integer.
     Against verified solutions this pairing was right in 11 of 13 cases
     (dev/progress/part2-prompt-omits-part1.md), so it is feedback, never a veto.
+    Kept for `example_tests=parser`, to reproduce the runs of 2026-10-13;
+    `statement_examples` replaces it.
     """
     if not part_one_code:
         return None
@@ -206,3 +208,133 @@ def part_two_example(
     if _run_on_example(part_one_code, example_input) != part_one_result:
         return None
     return example_input, part_two_result
+
+
+# Above this many distinct letters an input is prose-like or a letter grid, and
+# an example may use letters the input happens not to.
+_FEW_LETTERS = 10
+
+
+def _shape(text: str, exact_letters: bool) -> frozenset:
+    """What a block is written in: digits as a class, symbols exactly."""
+    marks = set()
+    for ch in text:
+        if ch.isspace():
+            continue
+        if ch.isdigit():
+            marks.add("0")
+        elif ch.isalpha() and not exact_letters:
+            marks.add("a" if ch.islower() else "A")
+        else:
+            marks.add(ch)
+    return frozenset(marks)
+
+
+def _extra_marks(block: str, puzzle_input: str) -> frozenset:
+    letters = {ch for ch in puzzle_input if ch.isalpha()}
+    exact = len(letters) <= _FEW_LETTERS
+    return _shape(block, exact) - _shape(puzzle_input, exact)
+
+
+def _sectioned(text: str) -> bool:
+    return len([s for s in re.split(r"\n\s*\n", text.strip()) if s.strip()]) > 1
+
+
+def resembles_input(block: str, puzzle_input: str) -> bool:
+    """Whether a statement's code block is written the way the puzzle input is.
+
+    A statement illustrates its example with drawings and marked-up copies, in
+    characters the input never uses, or with one section of a sectioned input.
+    A solver tells them from the example input by comparing with the input
+    file; so does this.
+    """
+    if not block.strip() or _extra_marks(block, puzzle_input):
+        return False
+    return _sectioned(block) == _sectioned(puzzle_input)
+
+
+def _redraws(block: str, earlier: List[str]) -> bool:
+    """Whether a block re-shows an example input already given, not a new one.
+
+    Either an excerpt (every line is a line of an earlier input) or a later
+    state of it (same number of lines, same widths).
+    """
+    lines = block.splitlines()
+    widths = [len(line) for line in lines]
+    for other in earlier:
+        other_lines = other.splitlines()
+        if all(line in other_lines for line in lines):
+            return True
+        if len(lines) > 1 and widths == [len(line) for line in other_lines]:
+            return True
+    return False
+
+
+def statement_examples(
+    year: int, day: int, part: int
+) -> Optional[List[Tuple[str, str]]]:
+    """(example input, stated result) pairs for `part`, read off the page.
+
+    The parser attaches a result to the code block just above the sentence
+    stating it, which is often an illustration, and takes the result from the
+    first number-like phrase after the block (dev/progress/
+    example-tests-mispaired.md). Here an example input is a block that
+    resembles the puzzle input and does not re-show an earlier one; its result
+    is the last emphasised integer between it and the next example input. A
+    Part Two article with no example input of its own states a result for Part
+    One's example. When Part One has several examples, Part Two gets no pairs:
+    its results refer back to them by description.
+    A statement that works its example under other parameters than the real
+    input (a smaller grid, fewer steps) still yields a pair no correct program
+    reproduces; nothing on the page marks those. None without a cached page
+    and input to read.
+    """
+    html_path = get_problem_dir(year, day) / config.HTML_FILE
+    input_path = get_problem_dir(year, day) / config.INPUT_FILE
+    if not html_path.exists() or not input_path.exists():
+        return None
+    puzzle_input = input_path.read_text(encoding="utf-8", errors="replace")
+    if not puzzle_input.strip():
+        return None
+    soup = BeautifulSoup(html_path.read_text(encoding="utf-8"), "html.parser")
+    articles = soup.find_all("article", class_="day-desc")[: int(part)]
+    if len(articles) < int(part):
+        return None
+
+    inputs: List[str] = []
+    results = {}
+    for index, article in enumerate(articles):
+        own_part = index == int(part) - 1
+        blocks = [
+            pre.find("code").get_text().strip("\n")
+            for pre in article.find_all("pre") if pre.find("code") is not None
+        ]
+        lone = len(blocks) == 1 and not any(
+            mark.isalnum() for mark in _extra_marks(blocks[0], puzzle_input)
+        ) and len(_extra_marks(blocks[0], puzzle_input)) <= 1
+        if own_part and len(inputs) > 1:
+            # Part One worked several examples and Part Two's results refer
+            # back to them by description ("the larger example"); which one a
+            # result belongs to cannot be read off the markup.
+            return []
+        current = inputs[0] if own_part and inputs else None
+        for element in article.find_all(["pre", "em"]):
+            if element.name == "pre":
+                code = element.find("code")
+                if code is None:
+                    continue
+                block = code.get_text().strip("\n")
+                is_input = resembles_input(block, puzzle_input) or (
+                    lone and _sectioned(block) == _sectioned(puzzle_input)
+                )
+                if is_input and not _redraws(block, inputs):
+                    inputs.append(block)
+                    current = block
+                continue
+            if not own_part or current is None or element.find_parent("pre"):
+                continue
+            in_code = element.find_parent("code") or element.find("code")
+            text = element.get_text().strip()
+            if in_code and re.fullmatch(r"-?\d+", text):
+                results[current] = text
+    return [(block, results[block]) for block in inputs if block in results]
