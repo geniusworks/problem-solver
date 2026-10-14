@@ -188,7 +188,7 @@ Twelve instrument defects, each of which made results *look better or worse than
 | `StrategyOptimizer` read a second, dead database (0 rows) | strategy effectiveness computed over no data at all |
 | That token fix stopped at the provider; the solver kept copying the draft's tokens and time onto every repair record *(found 2026-10-12)* | **642 of 642 repair records wrong, in runs after the "fix" too**; arm 2's 3.35× is really "at least 3.10×" |
 | Part 2 prompts carried only the "Part Two" article: no rules, no input format *(found 2026-10-13)* | **on 2024 d19 p2 a draft was right only if it guessed the format (16 of 26 that did, 0 of 54 that did not)**; the Part 1/Part 2 cliff and the Part 2 walls are unestablished until re-run |
-| Example tests paired with an illustration instead of the example input *(found 2026-10-13, unfixed)* | a verified program fails its own example test on up to 25 of 47 audited problems; solves are unaffected (the oracle decides), **every repair prompt on those problems carried a false failure** |
+| Example tests paired with an illustration instead of the example input *(found 2026-10-13, fixed 2026-10-14)* | a verified program failed its own example test on 25 of 46 audited problems (3 after the fix); solves are unaffected (the oracle decides), **every repair prompt on those problems carried a false failure** |
 | A last day's "Part Two" with no puzzle was attempted and scored as a miss *(found 2026-10-12)* | denominators off by one in two scans (16/24, 9/20), and **a nonexistent problem written up as "the first genuinely unseen problem"** |
 
 Each is fixed with regression tests. The sharpest lesson came from a tally accumulated in prose

@@ -329,9 +329,9 @@ problems. In order:
    (b) the walls under `aoc` context, 3 trials each (2024 d16, 2025 d9; each Part Two now runs
    after its Part One in the same trial) — ✅ **DONE 2026-10-13: d16 p2 0/7 → 3/3, d9 p2 0/2
    reached.** d16 p2 leaves the entry cells;
-   (b2) **fix the example pairing first** (`example-tests-mispaired.md`, found in (b)): the
-   example test is paired with the wrong input on up to 25 of 47 audited problems, including
-   2024 d15 and 2025 d9, and its false failure is fed to every repair;
+   (b2) fix the example pairing (`example-tests-mispaired.md`, found in (b)) — ✅ **DONE
+   2026-10-14:** a verified program failed its own example test on 25 of 46 audited problems,
+   now 3 of 46 (`example_tests=page`, the default);
    (c) **re-run the reference** on the four entry-check cells under the new defaults — its row on
    record (6/12) is a legacy-context result and no longer the comparison.
    If (b) and (c) show the walls falling for the reference itself, the entry-check cells no longer
@@ -471,11 +471,13 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
 
 ### 4. Instrument gaps — logged, unfixed, each one small
 
-- **Example tests are paired with the wrong input block** (found 2026-10-13, **open**,
-  `example-tests-mispaired.md`). A verified program fails its own example test on up to 25 of 47
-  audited problems; the false failure goes into every repair prompt. Solves are unaffected.
-  Blocks the reference re-baseline (M5 Pro step 4, b2).
-
+- ~~**Example tests were paired with the wrong input block**~~ — ✅ **FIXED 2026-10-14**
+  (`example-tests-mispaired.md`): 25 of 46 verified programs failed their own example test, now 3.
+- **Examples worked under other parameters than the real input** (2024 d14 p1, d18 p1, 2025 d8
+  p1; **open**). The pairing is right and a correct program still fails it, so those repairs get
+  a false failure. Nothing in the markup marks them.
+- **Part Two has no example test when Part One worked several examples** (**open**, deliberate):
+  its results refer back by description. Five of 55 audited cells.
 - ~~**Every Part 2 prompt omitted the Part 1 statement**~~ — ✅ **FIXED 2026-10-13**
   (`part2-prompt-omits-part1.md`). The model was shown only the "Part Two" article — no rules, no
   input format. On 2024 d19 p2, 16 of 26 drafts that guessed the input format were correct and 0

@@ -86,7 +86,10 @@ class TestSupplement:
 class TestFingerprintsKeepTheirMeaning:
     """Runs on record hashed a config that had neither field."""
 
-    LEGACY = dict(problem_context="legacy", analysis_temperature="model_default")
+    LEGACY = dict(
+        problem_context="legacy", analysis_temperature="model_default",
+        example_tests="parser",
+    )
     REFERENCE = dict(
         models=("qwen3.8:27b",), temperature=0.7, enable_thinking=False,
         enable_fallback_models=False,
@@ -98,21 +101,31 @@ class TestFingerprintsKeepTheirMeaning:
         assert k1.fingerprint() == "62ee65d6b521"
         assert k3.fingerprint() == "d0e67ebf4cee"
 
+    def test_the_runs_of_2026_10_13_keep_theirs(self):
+        k1 = SolverConfig(
+            samples_per_model=1, analysis_temperature="model_default",
+            example_tests="parser", **self.REFERENCE,
+        )
+        assert k1.fingerprint() == "5d259bb8f103"
+
     def test_each_new_default_is_a_different_experiment(self):
         legacy = SolverConfig(**self.REFERENCE, **self.LEGACY)
         prints = {
             legacy.fingerprint(),
             legacy.with_overrides(problem_context="aoc").fingerprint(),
             legacy.with_overrides(analysis_temperature="configured").fingerprint(),
+            legacy.with_overrides(example_tests="page").fingerprint(),
             SolverConfig(**self.REFERENCE).fingerprint(),
         }
-        assert len(prints) == 4
+        assert len(prints) == 5
 
     def test_unknown_values_are_rejected(self):
         with pytest.raises(ValueError):
             SolverConfig(problem_context="everything")
         with pytest.raises(ValueError):
             SolverConfig(analysis_temperature="hot")
+        with pytest.raises(ValueError):
+            SolverConfig(example_tests="guess")
 
 
 class TestErrorShapedOutput:
@@ -159,6 +172,99 @@ class TestPartTwoExample:
             self.PAGE.replace("<em>12</em>", "<em>co,de</em>"), encoding="utf-8"
         )
         assert problem_context.part_two_example(2024, 1, self.ADDS) is None
+
+
+class TestStatementExamples:
+    """Stated results are paired with the block that resembles the input."""
+
+    PAGE = """<article class="day-desc"><h2>--- Day 9: Tiles ---</h2>
+<p>For example:</p>
+<pre><code>7,1
+11,1
+2,5
+</code></pre>
+<p>Drawn out, with a rectangle of area <code>24</code>:</p>
+<pre><code>.......#...#
+..#.........
+</code></pre>
+<p>The largest has area <code><em>50</em></code>.</p></article>
+<article class="day-desc"><h2 id="part2">--- Part Two ---</h2>
+<p>Now only some tiles count:</p>
+<pre><code>.......#XXX#
+..#XXXXX...X
+</code></pre>
+<p>The largest is now <code><em>24</em></code>.</p></article>"""
+
+    @pytest.fixture
+    def page(self, tmp_path, monkeypatch):
+        (tmp_path / "problem.html").write_text(self.PAGE, encoding="utf-8")
+        (tmp_path / "input.txt").write_text("97,3\n4,88\n15,60\n", encoding="utf-8")
+        monkeypatch.setattr(problem_context, "get_problem_dir", lambda y, d: tmp_path)
+        return tmp_path
+
+    def test_the_result_goes_to_the_input_not_the_drawing(self, page):
+        assert problem_context.statement_examples(2025, 9, 1) == [("7,1\n11,1\n2,5", "50")]
+
+    def test_part_two_states_a_result_for_part_ones_example(self, page):
+        assert problem_context.statement_examples(2025, 9, 2) == [("7,1\n11,1\n2,5", "24")]
+
+    def test_a_later_state_of_the_example_is_not_a_new_example(self, page):
+        (page / "input.txt").write_text("..#.\n#...\n....\n", encoding="utf-8")
+        (page / "problem.html").write_text(
+            """<article class="day-desc"><pre><code>.#.
+#..
+</code></pre><p>After one step:</p><pre><code>#..
+.#.
+</code></pre><p>That takes <code><em>41</em></code> steps.</p></article>""",
+            encoding="utf-8",
+        )
+        assert problem_context.statement_examples(2024, 6, 1) == [(".#.\n#..", "41")]
+
+    def test_each_example_keeps_its_own_result(self, page):
+        (page / "input.txt").write_text("ABCDEFGHIJKL\nMNOPQRSTUVWX\n", encoding="utf-8")
+        (page / "problem.html").write_text(
+            """<article class="day-desc"><pre><code>AAB
+ACB
+</code></pre><p>costs <code><em>140</em></code>.</p><pre><code>OOOOO
+OXOXO
+OOOOO
+</code></pre><p>costs <code><em>772</em></code>.</p></article>""",
+            encoding="utf-8",
+        )
+        assert problem_context.statement_examples(2024, 12, 1) == [
+            ("AAB\nACB", "140"), ("OOOOO\nOXOXO\nOOOOO", "772"),
+        ]
+
+    def test_part_two_gets_no_pairs_when_part_one_has_several_examples(self, page):
+        (page / "input.txt").write_text("ABCDEFGHIJKL\nMNOPQRSTUVWX\n", encoding="utf-8")
+        (page / "problem.html").write_text(
+            """<article class="day-desc"><pre><code>AAB
+ACB
+</code></pre><p><code><em>140</em></code></p><pre><code>OOOOO
+OXOXO
+</code></pre><p><code><em>772</em></code></p></article>
+<article class="day-desc"><p>The larger example now costs <code><em>1206</em></code>.</p></article>""",
+            encoding="utf-8",
+        )
+        assert problem_context.statement_examples(2024, 12, 2) == []
+
+    def test_one_section_of_a_sectioned_input_is_not_the_example(self, page):
+        (page / "input.txt").write_text("#.#\n#@#\n\n<^^>\n", encoding="utf-8")
+        (page / "problem.html").write_text(
+            """<article class="day-desc"><pre><code>#.#
+#@#
+
+&lt;^
+</code></pre><p>Afterwards:</p><pre><code>#@#
+#.#
+</code></pre><p>The sum is <code><em>2028</em></code>.</p></article>""",
+            encoding="utf-8",
+        )
+        assert problem_context.statement_examples(2024, 15, 1) == [("#.#\n#@#\n\n<^", "2028")]
+
+    def test_none_without_a_cached_input(self, page):
+        (page / "input.txt").unlink()
+        assert problem_context.statement_examples(2025, 9, 1) is None
 
     def test_supplement_prefers_this_trials_own_program(self, page, monkeypatch):
         monkeypatch.setattr(problem_context, "get_known_answer", lambda y, d, p: "6")

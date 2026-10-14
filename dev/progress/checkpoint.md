@@ -38,10 +38,12 @@ d19 p2 is no longer a "sometimes" problem, so this machine has no band on record
 under the new conditions.
 
 **Run 2 of 3 done 2026-10-13: 2024 d16 p2 went from 0/7 to 3/3; 2025 d9 p2 is still 0 (0/2
-reached).** d16 p2 is not a wall. The run also exposed a second instrument defect, **not fixed**:
-the example test is paired with the wrong input block on up to 25 of 47 audited problems, and its
-false failure goes into every repair prompt (`example-tests-mispaired.md`). 2024 d15 and 2025 d9
-are both affected, so **run 3 waits for that fix**. Commands as registered:
+reached).** d16 p2 is not a wall. The run also exposed a second instrument defect: the example
+test was paired with the wrong input block, so a verified program failed its own example test on
+25 of 46 audited problems and that false failure went into every repair prompt. **Fixed
+2026-10-14: 3 of 46**, all three statements whose example uses other parameters
+(`example-tests-mispaired.md`; `example_tests=page`, the new default). Runs 1 and 2 reproduce
+with `example_tests=parser`. **Run 3 is clear to start.** Commands as registered:
 
 ```
 B="models=qwen3.8:27b,temperature=0.7,enable_thinking=false,enable_fallback_models=false"
@@ -56,11 +58,12 @@ venv/bin/python experiment.py --problems 2024:15,2025:9 --trials 3 \
   --config "name=m5pro-aoc-ref-entry-k3,samples_per_model=3,$B"
 ```
 
-Expected fingerprints: `5d259bb8f103` for 1 and 2, `12412ed652a4` for 3. After them: the three
+Fingerprints: `5d259bb8f103` for 1 and 2 (add `example_tests=parser` to reproduce them),
+`839b40f0bfa8` for 3. After them: the three
 arm-3 candidates (`gemma4:31b`, `ornith-1.5:35b`, `muse-glimmer:30b`, pulled), each against the
 new baseline from 3. **Nothing is running.**
 
-**Order from here** (`PLAN.md`, M5 Pro step 4): fix the example pairing → run 3 → rescan the
+**Order from here** (`PLAN.md`, M5 Pro step 4): ~~fix the example pairing~~ (done) → run 3 → rescan the
 Part 2s recorded as failing or "sometimes" → k1-vs-k3 on whatever band survives → re-choose the
 arm-3 entry cells → the three candidates.
 
