@@ -323,7 +323,9 @@ problems. In order:
 
    **Before any candidate runs (added 2026-10-13):** the prompt context changed
    (`part2-prompt-omits-part1.md`), and two of the four entry-check cells are Part 2s. In order:
-   (a) the registered d19 A/B, legacy against `aoc` context, 20 trials;
+   (a) the registered d19 A/B, legacy against `aoc` context, 20 trials — ✅ **DONE 2026-10-13:
+   6/20 → 19/19**, every solve a first draft. d19 p2 leaves the "sometimes" band, so a new band
+   must be found on this machine before k1-vs-k3 is re-run under the new conditions;
    (b) the walls under `aoc` context, 3 trials each (2024 d16, 2025 d9; each Part Two now runs
    after its Part One in the same trial);
    (c) **re-run the reference** on the four entry-check cells under the new defaults — its row on

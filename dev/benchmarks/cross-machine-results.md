@@ -78,6 +78,7 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m5pro-64** | qwen3.8:27b | tk-off **samp3**, fallback off | 2024 d19 p1+p2, d20 p1, d16 p2 (k1-vs-k3 cells) | 3 | 8/12 | 67% | `m5pro-passk-2024-d16-25.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off | 2024 d19 p2 only | 20 | 6/20 | 30% | `m5pro-d19p2-power.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off **samp3**, fallback off | 2024 d19 p2 only | 20 | 10/20 | 50% | `m5pro-d19p2-power.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc** | 2024 d19 p1 then p2 | 20 | 38/39 (p1 19/20, p2 19/19; 1 not reached) | 97% | `part2-prompt-omits-part1.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
