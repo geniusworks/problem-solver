@@ -73,7 +73,8 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
    - `SolverConfig` (a frozen, fingerprinted config), `ExperimentResult`/
      `ProblemResult`/`AttemptRecord`, and `run_experiment`/`run_problem` in
      `shared/experiment/`; driven by `experiment.py` (`--trials N` for
-     repeat-trials, since the pipeline is non-deterministic).
+     repeat-trials, since the pipeline is non-deterministic). The result JSON is
+     rewritten after every result, so a stopped run keeps what it finished.
    - A correctness **oracle**: candidates are judged against cached accepted AoC
      answers (`shared/ground_truth.py`) and worked examples, with an overfit gate
      (`shared/overfit_detection.py`). Claimed vs. verified is tracked separately;

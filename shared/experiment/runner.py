@@ -257,12 +257,17 @@ async def run_experiment(
     debug: bool = False,
     on_result=None,
     trials: int = 1,
+    save_to: Optional[Path] = None,
+    include_replay: bool = False,
 ) -> ExperimentResult:
     """Run a problem set under one configuration, `trials` times each.
 
     on_result, if given, is called with each ProblemResult as it completes --
     useful for progress output on long sweeps. Trials are the outer loop so that
     partial progress covers every problem at least once before repeating.
+
+    save_to, if given, is rewritten after every result, so a run that is stopped
+    keeps what it finished. Its `finished_at` stays null until the run ends.
     """
     from shared.solver import BaseSolver
 
@@ -283,6 +288,13 @@ async def run_experiment(
     if gated:
         problems = with_part_one_prerequisites(problems)
 
+    def record(result: ProblemResult) -> None:
+        experiment.results.append(result)
+        if save_to is not None:
+            experiment.save(save_to, include_replay=include_replay)
+        if on_result is not None:
+            on_result(result)
+
     for trial in range(trials):
         part_one_programs: Dict[Tuple[int, int], str] = {}
         for year, day, part in problems:
@@ -299,9 +311,7 @@ async def run_experiment(
                         outcome=Outcome.NOT_REACHED,
                         expected=get_known_answer(year, day, part),
                     )
-                    experiment.results.append(result)
-                    if on_result is not None:
-                        on_result(result)
+                    record(result)
                     continue
                 solver.part_one_programs = {(year, day): program}
             result = await run_problem(solver, year, day, part, config, trial=trial)
@@ -317,11 +327,11 @@ async def run_experiment(
                     problem_id(year, day, part),
                 )
                 continue
-            experiment.results.append(result)
-            if on_result is not None:
-                on_result(result)
+            record(result)
 
     experiment.finished_at = datetime.now(timezone.utc).isoformat()
+    if save_to is not None:
+        experiment.save(save_to, include_replay=include_replay)
     return experiment
 
 

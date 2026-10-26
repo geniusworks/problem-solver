@@ -158,6 +158,14 @@ async def _dry_run(problems, config) -> ExperimentResult:
     return experiment
 
 
+def _shown(path: Path) -> Path:
+    """A path relative to the repo when it is inside it, as given otherwise."""
+    try:
+        return path.relative_to(REPO_ROOT)
+    except ValueError:
+        return path
+
+
 async def async_main(args) -> int:
     logging.basicConfig(
         level=logging.DEBUG if args.debug else logging.WARNING,
@@ -185,8 +193,12 @@ async def async_main(args) -> int:
             run_set = problems
         print(f"\n=== {config} over {len(run_set)} problem(s) ===")
 
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        path = out_dir / f"{stamp}_{config.name}_{config.fingerprint()}.json"
+
         if args.dry_run:
             experiment = await _dry_run(problems, config)
+            experiment.save(path, include_replay=args.include_replay)
         else:
             def report(result):
                 trial = f"[t{result.trial}] " if args.trials > 1 else ""
@@ -194,20 +206,19 @@ async def async_main(args) -> int:
                     f"  {trial}{SYMBOL[result.outcome]}  {result.problem_id:22} "
                     f"{str(result.answer or '-'):>16}  "
                     f"expected {result.expected or '-'}  "
-                    f"({result.wall_clock_seconds:.1f}s)"
+                    f"({result.wall_clock_seconds:.1f}s)",
+                    flush=True,
                 )
 
+            print(f"  results are saved after each one to {_shown(path)}", flush=True)
             experiment = await run_experiment(
                 problems, config, REPO_ROOT, debug=args.debug,
                 on_result=report, trials=args.trials,
+                save_to=path, include_replay=args.include_replay,
             )
 
         experiments.append(experiment)
-
-        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        path = out_dir / f"{stamp}_{config.name}_{config.fingerprint()}.json"
-        experiment.save(path, include_replay=args.include_replay)
-        print(f"  -> {path.relative_to(REPO_ROOT)}")
+        print(f"  -> {_shown(path)}")
 
     print()
     print(compare(experiments))

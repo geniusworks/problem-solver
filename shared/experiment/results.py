@@ -361,7 +361,11 @@ class ExperimentResult:
 
     def save(self, path: Path, include_replay: bool = False) -> Path:
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
+        # Written whole and then moved into place: a run stopped mid-write
+        # leaves the previous complete file, never half of one.
+        partial = path.with_name(path.name + ".partial")
+        with open(partial, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(include_replay), f, indent=2)
             f.write("\n")
+        partial.replace(path)
         return path
