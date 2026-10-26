@@ -471,6 +471,10 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
 
 ### 4. Instrument gaps — logged, unfixed, each one small
 
+- ~~**A stopped run lost every result**~~ — ✅ **FIXED 2026-10-26.** The result JSON was
+  written only at the end, so run 3 of the M5 Pro queue, stopped during its last cell, left 11
+  finished cells in its log and none in a result file. It is now rewritten after every result.
+
 - ~~**Example tests were paired with the wrong input block**~~ — ✅ **FIXED 2026-10-14**
   (`example-tests-mispaired.md`): 25 of 46 verified programs failed their own example test, now 3.
 - **Examples worked under other parameters than the real input** (2024 d14 p1, d18 p1, 2025 d8

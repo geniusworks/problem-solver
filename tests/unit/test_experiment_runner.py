@@ -275,6 +275,61 @@ class TestRunExperimentTrials:
         assert exp.solved_every_time == 1      # only day 1
 
 
+class TestResultsSurviveAStoppedRun:
+    async def test_each_result_is_on_disk_before_the_next_starts(self, monkeypatch, tmp_path):
+        import json
+        import shared.solver as solver_module
+        import shared.experiment.runner as runner
+
+        path = tmp_path / "run.json"
+        on_disk = []
+
+        def report(result):
+            saved = json.loads(path.read_text())
+            on_disk.append((len(saved["results"]), saved["finished_at"]))
+
+        monkeypatch.setattr(solver_module, "BaseSolver", _CountingSolver)
+        monkeypatch.setattr(runner, "get_known_answer", lambda y, d, p: "42")
+
+        exp = await runner.run_experiment(
+            [(2024, 1, 1), (2024, 2, 1)], SolverConfig(), Path("."),
+            trials=2, on_result=report, save_to=path,
+        )
+
+        assert on_disk == [(1, None), (2, None), (3, None), (4, None)]
+        final = json.loads(path.read_text())
+        assert len(final["results"]) == 4
+        assert final["finished_at"] == exp.finished_at is not None
+        assert not list(tmp_path.glob("*.partial"))
+
+    async def test_a_run_stopped_mid_way_leaves_what_it_finished(self, monkeypatch, tmp_path):
+        import json
+        import shared.solver as solver_module
+        import shared.experiment.runner as runner
+
+        path = tmp_path / "run.json"
+
+        class Stopped(Exception):
+            pass
+
+        def stop_after_three(result):
+            if len(json.loads(path.read_text())["results"]) == 3:
+                raise Stopped
+
+        monkeypatch.setattr(solver_module, "BaseSolver", _CountingSolver)
+        monkeypatch.setattr(runner, "get_known_answer", lambda y, d, p: "42")
+
+        with pytest.raises(Stopped):
+            await runner.run_experiment(
+                [(2024, 1, 1), (2024, 2, 1)], SolverConfig(), Path("."),
+                trials=2, on_result=stop_after_three, save_to=path,
+            )
+
+        saved = json.loads(path.read_text())
+        assert len(saved["results"]) == 3
+        assert saved["finished_at"] is None
+
+
 class TestTrialAggregation:
     def _result(self, pid, outcome, trial):
         from shared.experiment.results import ProblemResult

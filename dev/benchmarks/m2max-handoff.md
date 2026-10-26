@@ -173,12 +173,16 @@ The thesis is scale-invariant only if voting still helps where the *strong* mode
   before believing any Part-2 solve is a real capability. This bit us twice (gemma4 & 9b d7 p2).
 - **Reboots kill both the run and the monitor.** A long run is launched detached (`nohup … &`) and
   survives the session ending, but **not** a machine reboot — and the completion Monitor does **not**
-  survive a session teardown either. After any interruption, don't assume it's still running: check
-  `ps`, the log tail, and whether a `*_<config>_*.json` result file exists in `dev/experiments/`
-  (that JSON is written only on normal completion). Re-launch if incomplete.
+  survive a session teardown either. *(Correction 2026-10-26: run 3 of the M5 Pro queue stopped
+  during its last cell with no reboot, apparently when the session ended; the cause is unknown.)*
+  After any interruption, don't assume it's still running: check `ps` and the log tail. **Since
+  2026-10-26 the result JSON is rewritten after every result** and named for the run's start time,
+  so a stopped run keeps every cell it finished; a null `finished_at` marks one that did not end.
+  Re-launch only what is missing. Before then the JSON was written only on normal completion.
 - **Result JSONs live in `dev/experiments/` (gitignored).** They carry per-problem, per-candidate
   `model`/outcome/token data — the authoritative record of *which model solved what*. The `.log` file
-  is buffered and mostly pylint noise until the final summary table; trust the JSON.
+  is mostly pylint noise; the per-result lines are flushed as they happen (since 2026-10-26), but
+  trust the JSON.
 - **The ledger records the *first* model to solve a problem.** A later model re-solving an already
   recorded problem does not change attribution — don't read the ledger's model column as "the only
   model that can solve this."
