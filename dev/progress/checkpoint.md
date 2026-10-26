@@ -43,7 +43,13 @@ test was paired with the wrong input block, so a verified program failed its own
 25 of 46 audited problems and that false failure went into every repair prompt. **Fixed
 2026-10-14: 3 of 46**, all three statements whose example uses other parameters
 (`example-tests-mispaired.md`; `example_tests=page`, the new default). Runs 1 and 2 reproduce
-with `example_tests=parser`. **Run 3 is clear to start.** Commands as registered:
+with `example_tests=parser`.
+
+**Run 3 started 2026-10-13 20:39 and stopped about 01:09, during its last cell** (2025 d9 p2,
+trial 3), before writing its result file. The log has the other 11 cells: 2024 d15 p1 3/3, p2
+3/3; 2025 d9 p1 3/3, **p2 1/2, its first solve on record** (0/22 before); fingerprint
+`839b40f0bfa8`. Ledger 55 → **56**. Not yet written up; rerun scope undecided. Commands as
+registered:
 
 ```
 B="models=qwen3.8:27b,temperature=0.7,enable_thinking=false,enable_fallback_models=false"
