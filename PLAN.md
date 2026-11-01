@@ -333,9 +333,10 @@ problems. In order:
    2026-10-14:** a verified program failed its own example test on 25 of 46 audited problems,
    now 3 of 46 (`example_tests=page`, the default);
    (c) **re-run the reference** on the four entry-check cells under the new defaults — its row on
-   record (6/12) is a legacy-context result and no longer the comparison.
-   If (b) and (c) show the walls falling for the reference itself, the entry-check cells no longer
-   separate models and the cells must be re-chosen from whatever still fails.
+   record (6/12) is a legacy-context result and no longer the comparison. ✅ **DONE 2026-10-31:
+   d15 p1 3/3, d15 p2 3/3, d9 p1 6/6, d9 p2 3/5** (the first run stopped and left only its log;
+   2025 d9 rerun). The walls fell for the reference itself, so the entry-check cells no longer
+   separate models and must be re-chosen in (f).
 
    **Re-earning the Part 2 record (added 2026-10-13).** (a) and (b) moved two of two re-run
    Part 2s from failing to solved every time, so the legacy Part 2 record is not evidence of
@@ -344,7 +345,8 @@ problems. In order:
    recorded as failing or "sometimes" on any machine, to find which walls and bands survive.
    Part 1 results are unaffected by the prompt defect and are not re-run for it;
    (e) k1-vs-k3 on the band (d) finds — d19 p2, this machine's one informative problem, is now
-   solved on every first draft;
+   solved on every first draft. 2025 d9 p2 is the candidate from (c): 3 of 9 first drafts at k3,
+   which predicts about 1/3 per trial at k1;
    (f) re-choose the arm-3 entry cells from what still fails in (c) and (d), then the candidates.
 
    **Procedure, per model, in that order:**
@@ -409,6 +411,11 @@ successful replication attempt, not a confirmation at scale. More frontier probl
 **One problem resists everything:** 2025 d9 p2, **0 of 10** problem-trials across
 `samples_per_model` ∈ {1,3}, `max_repair_iterations` ∈ {0,2}, `temperature` ∈ {0.7,1.0} — the
 project's most reproducible negative result, and the benchmark any decorrelation claim must clear.
+
+> **Corrected 2026-10-31.** Every one of those trials posed Part Two without the Part One
+> statement. Under the site's conditions the reference solves 2025 d9 p2 in 3 of 5 trials at
+> k3 (`part2-prompt-omits-part1.md`). It is a "sometimes" problem, not a benchmark for
+> decorrelation; that needs a problem found to fail under the new defaults.
 
 > **Corrected 2026-08-20.** This said *two* problems, adding 2024 d15 p2 at "0/11, never solved
 > once". That was wrong: **d15 p2 has solved 2 of 16 times (~12%)** — the tally summed only the

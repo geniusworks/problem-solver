@@ -22,7 +22,8 @@ what it is, how the pipeline works, how to run it — see the [README](README.md
 (`dev/progress/part2-prompt-omits-part1.md`). Arm-to-arm comparisons are unaffected as
 measurements; the Part 1/Part 2 cliff and the Part 2 walls are not established as capability
 findings until re-run. First re-runs, 2026-10-13: with the statement in the prompt, 2024 d19 p2
-went from 6/20 to 19/19 and 2024 d16 p2 from 0/7 to 3/3; 2025 d9 p2 is still unsolved.*
+went from 6/20 to 19/19 and 2024 d16 p2 from 0/7 to 3/3. 2025 d9 p2, 0/22 before, is 3/5 at three
+drafts under the new defaults (2026-10-31).*
 
 *Since this report (2026-10-12): eight further runs on a third machine, `m5pro-64`, took the ledger
 to 54 and added a third frontier band (2024 d16–25). No arm's status changed; the dated corrections
@@ -168,6 +169,11 @@ repair ∈ {0,2}, temperature ∈ {0.7,1.0}, reworded feedback — across 13 pro
 *stochastic* failures; it does not buy *systematic* ones. The same split appeared independently in
 arm 2: four times the draws bought a ~25%-per-draw parsing failure and did not buy a problem that
 emitted identical `TypeError`s every time.
+
+> **Corrected 2026-10-31.** The 13 trials above posed Part Two without the Part One statement.
+> With it, the reference solves 2025 d9 p2 in 3 of 5 trials at k3
+> (`dev/progress/part2-prompt-omits-part1.md`), so it is no longer a standing boundary. The arm-2
+> `TypeError` case is a separate result and is unaffected.
 
 ---
 
