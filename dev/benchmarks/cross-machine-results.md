@@ -83,6 +83,7 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d1 p1 then p2 (plumbing check) | 3 | 6/6 | 100% | `example-tests-mispaired.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp3, fallback off, **ctx=aoc, example_tests=page** | 2024 d15 + 2025 d9, p1 then p2 (stopped in its last cell; from the log, GPU shared) | 3 | 10/11 (d15 p1 3/3, p2 3/3; d9 p1 3/3, p2 1/2) | 91% | `part2-prompt-omits-part1.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp3, fallback off, **ctx=aoc, example_tests=page** | 2025 d9 p1 then p2 | 3 | 5/6 (p1 3/3, p2 2/3) | 83% | `part2-prompt-omits-part1.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 15 Part 2s the reference had failed (2024 d6, 9, 11, 13, 14, 17, 18, 20–22, 24; 2025 d2, 4, 10, 11), p1 then p2 | 3 | 72/85 (p1 40/45, p2 32/40; 5 not reached) | 85% | `m5pro-rescan-part2-aoc.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).

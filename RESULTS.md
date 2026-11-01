@@ -23,7 +23,9 @@ what it is, how the pipeline works, how to run it — see the [README](README.md
 measurements; the Part 1/Part 2 cliff and the Part 2 walls are not established as capability
 findings until re-run. First re-runs, 2026-10-13: with the statement in the prompt, 2024 d19 p2
 went from 6/20 to 19/19 and 2024 d16 p2 from 0/7 to 3/3. 2025 d9 p2, 0/22 before, is 3/5 at three
-drafts under the new defaults (2026-10-31).*
+drafts under the new defaults (2026-10-31). The reference's 15 other failing Part 2s went from
+13/71 to 32/40 (2026-11-01, `dev/progress/m5pro-rescan-part2-aoc.md`), so the cliff is not
+established.*
 
 *Since this report (2026-10-12): eight further runs on a third machine, `m5pro-64`, took the ledger
 to 54 and added a third frontier band (2024 d16–25). No arm's status changed; the dated corrections
