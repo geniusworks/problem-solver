@@ -508,7 +508,10 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
   prompt, 19/19 under the site's conditions; then 2024 d16 p2, 0/7 to 3/3, and 2025 d9 p2, 0/22
   to 3/5 at three drafts. A rescan of the reference's 15 other failing Part 2s (2026-11-01):
   13/71 on record, 32/40 now, ledger 56 → 66 (`dev/progress/m5pro-rescan-part2-aoc.md`). None of
-  the re-run Part 2 walls has held; the one wall left in that set is a Part 1, 2024 d21.
+  the re-run Part 2 walls has held; the one wall left in that set is a Part 1, 2024 d21. Three
+  drafts against one on the cells left in between: 11/21 against 9/19, no measurable lift; at the
+  draft level those cells are solved by nearly every draft or nearly none
+  (`dev/progress/m5pro-band-k1-vs-k3-aoc.md`).
 - **Known instrument gaps, logged not hidden:** the example test fed to repairs was paired with
   the wrong input block, so a verified program failed its own example test on 25 of 46 audited
   problems (found 2026-10-13, fixed 2026-10-14: 3 of 46, each a statement whose example uses

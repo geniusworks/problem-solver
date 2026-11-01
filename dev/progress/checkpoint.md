@@ -56,9 +56,13 @@ least 3 times in 5, so the arm-3 cells must be re-chosen before any candidate ru
 **Rescan done 2026-11-01: the reference's 15 failing or "sometimes" Part 2s went from 13/71 on
 record to 32/40 reached** (k1, 3 trials, `1ac712678732`; `m5pro-rescan-part2-aoc.md`). Eight are
 now solved every time. **Ledger 56 → 66.** Still failing: **2024 d21 p1, 0/3** (a Part 1, so
-unaffected by the prompt defect), d24 p1 1/3, d17 p2 1/3, 2025 d10 p2 1/3. The "sometimes" band
-for k1-vs-k3: 2024 d9 p2, d14 p2, d17 p2, d24 p1; 2025 d4 p2, d10 p2, d9 p2. Commands as
-registered:
+unaffected by the prompt defect), d24 p1 1/3, d17 p2 1/3, 2025 d10 p2 1/3.
+
+**k1-vs-k3 on that band done 2026-11-01: 9/19 trials at k1, 11/21 at k3**, no measurable lift
+(`m5pro-band-k1-vs-k3-aoc.md`). At the draft level the band splits: three cells solved by 8–9 of
+9 drafts, four by 0–1 of 9. Only 2025 d9 p2 (3 of 9 drafts) sits where sampling can pay. No
+repair was accepted in either run. **Arm-3 entry cells:** 2024 d24 p2 (0/3 at k3), 2025 d10 p2
+(0/3), 2024 d14 p2 and d17 p2 (1/3 each), 2024 d21 p1 (0/3 at k1). Commands as registered:
 
 ```
 B="models=qwen3.8:27b,temperature=0.7,enable_thinking=false,enable_fallback_models=false"
@@ -78,11 +82,11 @@ venv/bin/python experiment.py --problems 2025:9 --trials 3 \
 
 Fingerprints: `5d259bb8f103` for 1 and 2 (add `example_tests=parser` to reproduce them),
 `839b40f0bfa8` for 3 and 3b, `1ac712678732` for the rescan. Next, per `PLAN.md` step 4:
-~~(d) rescan~~ (done), (e) k1-vs-k3 on the band above, (f) re-choose the arm-3 entry cells, then the three candidates (`gemma4:31b`,
+~~(d) rescan~~ (done), ~~(e) k1-vs-k3~~ (done), (f) the arm-3 entry check on the cells above, then the three candidates (`gemma4:31b`,
 `ornith-1.5:35b`, `muse-glimmer:30b`, pulled). **Nothing is running.**
 
 **Order from here** (`PLAN.md`, M5 Pro step 4): ~~fix the example pairing~~ (done) → ~~run 3~~ (done) → ~~rescan the
-Part 2s recorded as failing or "sometimes"~~ (done) → k1-vs-k3 on whatever band survives → re-choose the
+Part 2s recorded as failing or "sometimes"~~ (done) → ~~k1-vs-k3 on whatever band survives~~ (done) → re-choose the
 arm-3 entry cells → the three candidates.
 
 ### Machine: work has moved to the M5 Pro / 64 GB (2026-10-12)

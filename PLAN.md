@@ -349,25 +349,31 @@ problems. In order:
    2025 d10 p2 1/3. Part 2s failed only by other models were not rescanned;
    (e) k1-vs-k3 on the band (d) finds — d19 p2, this machine's one informative problem, is now
    solved on every first draft. The band from (c) and (d): 2024 d9 p2, d14 p2, d17 p2, d24 p1;
-   2025 d4 p2, d10 p2, d9 p2 (3 of 9 first drafts at k3);
+   2025 d4 p2, d10 p2, d9 p2 (3 of 9 first drafts at k3). ✅ **DONE 2026-11-01**
+   (`m5pro-band-k1-vs-k3-aoc.md`): 9/19 trials at k1, 11/21 at k3, no measurable lift. The
+   cells split at the draft level into 8–9 of 9 and 0–1 of 9, so only 2025 d9 p2 sits at a rate
+   where sampling can pay; a powered arm-1 test needs it at more trials;
    (f) re-choose the arm-3 entry cells from what still fails in (c) and (d), then the candidates.
 
    **Procedure, per model, in that order:**
    1. Plumbing check, `--trials 3` on `2024:1` at `samples_per_model=1`: does it emit runnable
       code with `enable_thinking=false`? A model that cannot is dropped, and that is recorded.
    2. Register a prediction in a new `dev/progress/arm3-precheck-<model>.md` and commit it.
-   3. Entry check, the same cells as `arm3-precheck-qwen36-35b.md`:
+   3. Entry check on the cells the reference misses under the new defaults (re-chosen
+      2026-11-01; the earlier cells, 2024 d15 and 2025 d9, no longer separate models):
       ```
-      venv/bin/python experiment.py --problems 2024:15,2025:9 --trials 3 \
+      venv/bin/python experiment.py --problems 2024:14.2,2024:17.2,2024:21,2024:24.2,2025:10.2 --trials 3 \
         --config "name=m5pro-arm3-<model>-k3,models=<MODEL>,temperature=0.7,samples_per_model=3,enable_thinking=false,enable_fallback_models=false"
       ```
-      Expect 2 to 4 hours each. The comparison row is the reference's re-run from (c) above,
-      not the legacy 6/12.
+      Expect about 9 hours each, at the reference's pace on these cells. The comparison rows are
+      `m5pro-band-k1-vs-k3-aoc.md` (k3) and, for 2024 d21 p1, the rescan's 0/3 at k1.
    4. **Entry criterion** (`ensemble-precheck-negative.md`): run an ensemble only if the candidate
       solves something the reference reliably misses. Made concrete for these cells: the candidate
       solves, in at least 2 of 3 trials, a cell the reference solved in at most 1 of 3. Those
       were d15 p2 and d9 p2, which the reference now solves 3/3 and 3/5; the candidates from (d)
-      are 2024 d21 p1, d24 p1, d17 p2 and 2025 d10 p2, to be confirmed in (e). Met → run the two-model ensemble against each member alone. Not met → record the
+      confirmed in (e) are 2024 d24 p2 (0/3 at k3), 2025 d10 p2 (0/3), 2024 d14 p2 and d17 p2
+      (1/3 each), and 2024 d21 p1 (0/3 at k1). The entry-check command takes
+      `--problems 2024:14.2,2024:17.2,2024:21,2024:24.2,2025:10.2`. Met → run the two-model ensemble against each member alone. Not met → record the
       failure; arm 3 stays untested.
 
    Optional and separate: `qwen3.8:27b-q8_0` (30 GB), the reference at 8-bit, on the same four
