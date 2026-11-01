@@ -182,8 +182,11 @@ volume does not close the capability gap — 7/8 vs 8/8. (`economic-arm-moe-vs-g
 
 Tested out of sample on **AoC 2025 d1–12** — never measured, 23 scoreable parts — the model scored
 **16/23 (70%)**, and the structure carried over: a real frontier exists, the **Part 1/Part 2 cliff
-recurs** (83% vs 55%, six of seven misses are Part 2s), and the same failure classes reappear. The
-verified ledger stood at **43 solutions across two years, 0 wrong** after that scan (54 now). (`generality-2025-scan.md`,
+recurs** (83% vs 55%, six of seven misses are Part 2s), and the same failure classes reappear.
+*(Corrected 2026-11-01: the cliff was measured with Part 2 posed without its Part 1 statement.
+With it, the reference solves 32 of 40 of its hardest Part 2s, so the cliff is not established;
+`dev/progress/m5pro-rescan-part2-aoc.md`.)* The
+verified ledger stood at **43 solutions across two years, 0 wrong** after that scan (66 now). (`generality-2025-scan.md`,
 `band-2025-classification.md`)
 
 ## How it works
@@ -503,7 +506,9 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
   into Part 2); earlier runs reproduce with `problem_context=legacy,analysis_temperature=model_default,example_tests=parser`
   (`dev/progress/part2-prompt-omits-part1.md`). The first re-run: 2024 d19 p2, 6/20 under the old
   prompt, 19/19 under the site's conditions; then 2024 d16 p2, 0/7 to 3/3, and 2025 d9 p2, 0/22
-  to 3/5 at three drafts. None of the re-run Part 2 walls has held.
+  to 3/5 at three drafts. A rescan of the reference's 15 other failing Part 2s (2026-11-01):
+  13/71 on record, 32/40 now, ledger 56 → 66 (`dev/progress/m5pro-rescan-part2-aoc.md`). None of
+  the re-run Part 2 walls has held; the one wall left in that set is a Part 1, 2024 d21.
 - **Known instrument gaps, logged not hidden:** the example test fed to repairs was paired with
   the wrong input block, so a verified program failed its own example test on 25 of 46 audited
   problems (found 2026-10-13, fixed 2026-10-14: 3 of 46, each a statement whose example uses

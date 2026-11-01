@@ -343,10 +343,13 @@ problems. In order:
    capability. After (b2) and (c), in order:
    (d) rescan, under the new defaults at `samples_per_model=1`, 3 trials each, every Part 2
    recorded as failing or "sometimes" on any machine, to find which walls and bands survive.
-   Part 1 results are unaffected by the prompt defect and are not re-run for it;
+   Part 1 results are unaffected by the prompt defect and are not re-run for it. ✅ **DONE
+   2026-11-01** for the reference's 15 (`m5pro-rescan-part2-aoc.md`): 13/71 on record → 32/40
+   reached, eight solved every time. Still failing: 2024 d21 p1 0/3, d24 p1 1/3, d17 p2 1/3,
+   2025 d10 p2 1/3. Part 2s failed only by other models were not rescanned;
    (e) k1-vs-k3 on the band (d) finds — d19 p2, this machine's one informative problem, is now
-   solved on every first draft. 2025 d9 p2 is the candidate from (c): 3 of 9 first drafts at k3,
-   which predicts about 1/3 per trial at k1;
+   solved on every first draft. The band from (c) and (d): 2024 d9 p2, d14 p2, d17 p2, d24 p1;
+   2025 d4 p2, d10 p2, d9 p2 (3 of 9 first drafts at k3);
    (f) re-choose the arm-3 entry cells from what still fails in (c) and (d), then the candidates.
 
    **Procedure, per model, in that order:**
@@ -362,8 +365,9 @@ problems. In order:
       not the legacy 6/12.
    4. **Entry criterion** (`ensemble-precheck-negative.md`): run an ensemble only if the candidate
       solves something the reference reliably misses. Made concrete for these cells: the candidate
-      solves, in at least 2 of 3 trials, a cell the reference solved in at most 1 of 3 (d15 p2 or
-      d9 p2). Met → run the two-model ensemble against each member alone. Not met → record the
+      solves, in at least 2 of 3 trials, a cell the reference solved in at most 1 of 3. Those
+      were d15 p2 and d9 p2, which the reference now solves 3/3 and 3/5; the candidates from (d)
+      are 2024 d21 p1, d24 p1, d17 p2 and 2025 d10 p2, to be confirmed in (e). Met → run the two-model ensemble against each member alone. Not met → record the
       failure; arm 3 stays untested.
 
    Optional and separate: `qwen3.8:27b-q8_0` (30 GB), the reference at 8-bit, on the same four
