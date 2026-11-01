@@ -149,6 +149,11 @@ information (a fresh draw, an actual traceback); what fails adds none. This is n
 benchmark any "the walls can be cracked" claim has to move.
 (`temperature-diversity-negative.md`, `targeted-feedback-negative.md`)
 
+> **Corrected 2026-10-31.** Those 13 trials posed Part Two without the Part One statement. With
+> it, the reference solves 2025 d9 p2 in 3 of 5 trials at three drafts
+> (`dev/progress/part2-prompt-omits-part1.md`). The problem is a "sometimes", so this section's
+> limit has no confirmed example under the site's conditions until a rescan finds one.
+
 **4. Measurement bugs flatter no one, and finding them is half the work.**
 
 Roughly half the effort behind these numbers went into discovering that earlier measurements were
@@ -283,7 +288,8 @@ And one problem came in under the naive prediction: d15 p2 was estimated at 33% 
 predicts 70% at k=3, and scored **0 of 3**. The *systematic-failure* reading of that was wrong — the
 full record puts d15 p2 at **2 of 16 (~12%)**, a very-low-rate "sometimes" rather than a wall, and
 0 of 3 is unremarkable at that rate (`dev/progress/CORRECTION-d15p2-is-not-a-wall.md`). The genuine
-case for *extra draws re-roll the same die* is **2025 d9 p2, 0 of 13** across every configuration.
+case for *extra draws re-roll the same die* was **2025 d9 p2, 0 of 13** across every configuration,
+all under the defective Part 2 prompt; with the Part 1 statement it is 3 of 5 (corrected 2026-10-31).
 
 **Arm 2 — measured, and it splits.** *Many cheap draws beat one expensive pass* is **true on
 wall-clock** (0.64× per verified solution) and **false on tokens** (at least 3.1×), and volume does not reach
@@ -475,8 +481,9 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
   sampling and repair contributing separately and superadditively.
 - **Generation beats size**: a 17 GB 2026 generalist swept a set where a 19 GB 2024 specialist
   managed half, scoring below what 12B models achieved on half the RAM.
-- **A named limit**: where a model fails *systematically*, extra attempts do nothing — 2025 d9 p2 is
-  0/22 across every configuration and three models tried. Diversity, not volume, is the lever there.
+- **A named limit, withdrawn 2026-10-31**: 2025 d9 p2 was 0/22 across every configuration and
+  three models tried, all with Part 2 posed without its Part 1 statement. Under the site's
+  conditions the reference solves it 3 of 5 times at three drafts.
 - The "16 GB efficiency ceiling" turned out to be **two separate walls** — one algorithmic (a
   topological sort the earlier models never proposed), one a genuine speed limit — not the single
   phenomenon first diagnosed.
@@ -495,8 +502,8 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
   conditions (Part 1 solved first in the same trial, its statement, answer and program carried
   into Part 2); earlier runs reproduce with `problem_context=legacy,analysis_temperature=model_default,example_tests=parser`
   (`dev/progress/part2-prompt-omits-part1.md`). The first re-run: 2024 d19 p2, 6/20 under the old
-  prompt, 19/19 under the site's conditions; then 2024 d16 p2, 0/7 to 3/3. 2025 d9 p2 is still
-  unsolved.
+  prompt, 19/19 under the site's conditions; then 2024 d16 p2, 0/7 to 3/3, and 2025 d9 p2, 0/22
+  to 3/5 at three drafts. None of the re-run Part 2 walls has held.
 - **Known instrument gaps, logged not hidden:** the example test fed to repairs was paired with
   the wrong input block, so a verified program failed its own example test on 25 of 46 audited
   problems (found 2026-10-13, fixed 2026-10-14: 3 of 46, each a statement whose example uses

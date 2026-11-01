@@ -45,10 +45,13 @@ test was paired with the wrong input block, so a verified program failed its own
 (`example-tests-mispaired.md`; `example_tests=page`, the new default). Runs 1 and 2 reproduce
 with `example_tests=parser`.
 
-**Run 3 started 2026-10-13 20:39 and stopped about 01:09, during its last cell** (2025 d9 p2,
-trial 3), before writing its result file. The log has the other 11 cells: 2024 d15 p1 3/3, p2
-3/3; 2025 d9 p1 3/3, **p2 1/2, its first solve on record** (0/22 before); fingerprint
-`839b40f0bfa8`. Ledger 55 → **56**. Not yet written up; rerun scope undecided. Commands as
+**Run 3 done: the reference on the arm-3 entry cells, 6/12 legacy → 2024 d15 p1 3/3, p2 3/3;
+2025 d9 p1 6/6, p2 3/5 (fingerprint `839b40f0bfa8`).** The first run stopped during its last
+cell on 2026-10-14 and left only its log; 2025 d9 was rerun 2026-10-31 (p1 3/3, p2 2/3,
+`part2-prompt-omits-part1.md`). **2025 d9 p2, 0/22 under the old prompt, is not a wall**, and
+it is this machine's candidate "sometimes" band (3 of 9 first drafts). Its failures are mostly
+60 s timeouts. **No entry-check cell now separates models**: the reference solves every one at
+least 3 times in 5, so the arm-3 cells must be re-chosen before any candidate runs. Commands as
 registered:
 
 ```
@@ -59,17 +62,21 @@ venv/bin/python experiment.py --problems 2024:19.2 --trials 20 \
 # 2. the two walls -- DONE, d16 p2 3/3, d9 p2 0/2
 venv/bin/python experiment.py --problems 2024:16.2,2025:9.2 --trials 3 \
   --config "name=m5pro-aoc-walls-k1,samples_per_model=1,analysis_temperature=model_default,$B"
-# 3. reference re-baseline on the arm-3 entry cells
+# 3. reference re-baseline on the arm-3 entry cells -- DONE, 10/11 from the log; d9 rerun below
 venv/bin/python experiment.py --problems 2024:15,2025:9 --trials 3 \
   --config "name=m5pro-aoc-ref-entry-k3,samples_per_model=3,$B"
+# 3b. 2025 d9 rerun (run 3 left no result file) -- DONE, p1 3/3, p2 2/3
+venv/bin/python experiment.py --problems 2025:9 --trials 3 \
+  --config "name=m5pro-aoc-ref-d9-k3,samples_per_model=3,$B"
 ```
 
 Fingerprints: `5d259bb8f103` for 1 and 2 (add `example_tests=parser` to reproduce them),
-`839b40f0bfa8` for 3. After them: the three
-arm-3 candidates (`gemma4:31b`, `ornith-1.5:35b`, `muse-glimmer:30b`, pulled), each against the
-new baseline from 3. **Nothing is running.**
+`839b40f0bfa8` for 3 and 3b. Next, per `PLAN.md` step 4: (d) rescan the failing and
+"sometimes" Part 2s at k1, (e) k1-vs-k3 on the band that survives (2025 d9 p2 is the
+candidate), (f) re-choose the arm-3 entry cells, then the three candidates (`gemma4:31b`,
+`ornith-1.5:35b`, `muse-glimmer:30b`, pulled). **Nothing is running.**
 
-**Order from here** (`PLAN.md`, M5 Pro step 4): ~~fix the example pairing~~ (done) → run 3 → rescan the
+**Order from here** (`PLAN.md`, M5 Pro step 4): ~~fix the example pairing~~ (done) → ~~run 3~~ (done) → rescan the
 Part 2s recorded as failing or "sometimes" → k1-vs-k3 on whatever band survives → re-choose the
 arm-3 entry cells → the three candidates.
 

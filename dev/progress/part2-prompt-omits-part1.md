@@ -214,8 +214,46 @@ that the context is the only difference:
 - **A repair that returns different code with the same answer** is recorded as `wrong`, not
   `no_candidate` (d9 p1 trial 0: `4781096936` three times).
 
-The reference re-baseline is still queued. The example pairing was fixed 2026-10-14
-(`example-tests-mispaired.md`), so it runs under `example_tests=page`.
+The reference re-baseline ran after the example pairing was fixed 2026-10-14
+(`example-tests-mispaired.md`), under `example_tests=page`.
+
+### Result, the reference on the arm-3 entry cells: 6/12 → 15/17; no wall left
+
+Two runs, both fingerprint `839b40f0bfa8` (`samples_per_model=3`, 3 trials):
+
+- `m5pro-aoc-ref-entry-k3`, all four cells, 2026-10-13 20:39. It stopped during its last cell,
+  2025 d9 p2 trial 3, about 01:09, before the harness saved results per cell, so it left no result
+  file. Its 11 finished cells are taken from `dev/experiments/m5pro-aoc-ref-entry-k3.log`. The
+  GPU was shared with other work for part of it, so its timings are not clean.
+- `m5pro-aoc-ref-d9-k3`, 2025 d9 only, 2026-10-31, GPU free, 4,920 s
+  (`dev/experiments/20261101T003031Z_m5pro-aoc-ref-d9-k3_839b40f0bfa8.json`).
+
+| | legacy (6/12 on record) | entry run (log) | d9 rerun | pooled, new defaults |
+|---|---|---|---|---|
+| 2024 d15 Part One | 3/3 | 3/3 | — | 3/3 |
+| 2024 d15 Part Two | 1/3 | 3/3 | — | 3/3 |
+| 2025 d9 Part One | 2/3 | 3/3 | 3/3 | 6/6 |
+| 2025 d9 Part Two | 0/3 (0/22 overall) | 1/2 (1 cut off) | **2/3** | **3/5** |
+
+- **2025 d9 p2 is not a wall.** It was 0 of 22 problem-trials under the old prompt, across every
+  configuration tried. Under the new defaults it is 3 of 5 at three drafts. In the d9 rerun, 3 of
+  its 9 first drafts were accepted, two in trial 0 and one in trial 2. A
+  per-draft rate of 1/3 predicts 70% at three drafts; 2 of 3 was measured.
+- **What still fails there is mostly speed, not reading.** Of the 12 failed d9 p2 attempts in the
+  rerun, 9 timed out on the full input at 60 s, 6 of them after passing the example. Two gave a
+  wrong answer, and one repair returned the code unchanged.
+- **The first repair success with true example feedback:** in d9 p1 trial 2, all three drafts
+  answered `4781096936` (too low), and each was told `expected '50', got '36'` by its example
+  test. The first repair round produced the accepted answer. That is one case, not a measurement
+  of repair. `4781096936` is the same wrong answer the walls run repeated three times, when the
+  example test was paired with the wrong input. In the rerun, all 7 wrong d9 p1 attempts failed
+  their example test.
+- **No entry-check cell separates models now.** The arm-3 entry criterion asks a candidate to
+  solve, in at least 2 of 3 trials, a cell the reference solved in at most 1 of 3. With the
+  reference at 3/3 on d15 p2 and 3/5 on d9 p2, no cell qualifies. The cells have to be
+  re-chosen (`PLAN.md`, step (f)).
+- **2025 d9 p2 is the candidate band for k1-vs-k3** under the site's conditions. The prediction
+  for k1 from this run is about 1/3 per trial.
 
 ## Second gap, same session: the analysis call ignored the configured temperature
 
