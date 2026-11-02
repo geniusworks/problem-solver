@@ -313,7 +313,9 @@ problems. In order:
    `mistral-medium-3.5:128b` at 80 GB, and `llama3.3:70b` is the old generation that has not paid
    here. So **whether a larger model moves the walls (2025 d9 p2, 0/22; 2024 d16 p2, 0/7) cannot
    be tested at 64 GB** and stays open. What the machine can test is lineage: three 30B-class
-   models from makers other than the reference's, **pulled 2026-10-12, not yet run**:
+   models from makers other than the reference's, **pulled 2026-10-12, not yet run**
+   (correction 2026-11-01: `gemma4:31b` and `muse-glimmer:30b` had been removed in between and
+   were pulled again that day):
 
    | model | size | why |
    |---|---|---|
@@ -355,7 +357,9 @@ problems. In order:
    where sampling can pay; a powered arm-1 test needs it at more trials;
    (f) re-choose the arm-3 entry cells from what still fails in (c) and (d), then the candidates.
 
-   **Procedure, per model, in that order:**
+   **Procedure, per model, in that order** (steps 1 and 2 done 2026-11-01 for all three: 6/6 each
+   on the plumbing check, predictions in `arm3-precheck-gemma4-31b.md`,
+   `arm3-precheck-ornith-1-5-35b.md` and `arm3-precheck-muse-glimmer-30b.md`):
    1. Plumbing check, `--trials 3` on `2024:1` at `samples_per_model=1`: does it emit runnable
       code with `enable_thinking=false`? A model that cannot is dropped, and that is recorded.
    2. Register a prediction in a new `dev/progress/arm3-precheck-<model>.md` and commit it.

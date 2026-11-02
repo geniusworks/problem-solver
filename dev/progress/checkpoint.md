@@ -83,7 +83,13 @@ venv/bin/python experiment.py --problems 2025:9 --trials 3 \
 Fingerprints: `5d259bb8f103` for 1 and 2 (add `example_tests=parser` to reproduce them),
 `839b40f0bfa8` for 3 and 3b, `1ac712678732` for the rescan. Next, per `PLAN.md` step 4:
 ~~(d) rescan~~ (done), ~~(e) k1-vs-k3~~ (done), (f) the arm-3 entry check on the cells above, then the three candidates (`gemma4:31b`,
-`ornith-1.5:35b`, `muse-glimmer:30b`, pulled). **Nothing is running.**
+`ornith-1.5:35b`, `muse-glimmer:30b`). **Nothing is running.**
+
+**Arm-3 candidates, 2026-11-01:** `gemma4:31b` and `muse-glimmer:30b` had been removed since
+2026-10-12 and were pulled again. All three passed the plumbing check, 6/6 each on 2024 d1 with
+thinking off, and each has a registered prediction (`arm3-precheck-<model>.md`): the entry
+criterion is not met. Next: the entry checks, one model at a time, about 9 hours each at the
+reference's pace.
 
 **Order from here** (`PLAN.md`, M5 Pro step 4): ~~fix the example pairing~~ (done) → ~~run 3~~ (done) → ~~rescan the
 Part 2s recorded as failing or "sometimes"~~ (done) → ~~k1-vs-k3 on whatever band survives~~ (done) → re-choose the
@@ -150,7 +156,7 @@ as "the first genuinely unseen problem" and a target for the submission path, is
 
 **Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → ~~arm-3 pre-check~~ →
 ~~d16–25 scan~~ → ~~classify the band~~ → ~~k1 vs k3 on it~~ → ~~20 trials per arm on d19 p2~~ → three arm-3
-candidates from other makers (pulled, not run; PLAN.md step 4). k=5 is deferred: the
+candidates from other makers (plumbing-checked 2026-11-01, entry checks not run; PLAN.md step 4). k=5 is deferred: the
 independence curve is measured on d19 p2 and predicts it (67%).
 
 **Band classified: 2 "sometimes", 8 walls** (`m5pro-band-2024-d16-25.md`; 3 trials pooled with the
