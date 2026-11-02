@@ -88,8 +88,15 @@ Fingerprints: `5d259bb8f103` for 1 and 2 (add `example_tests=parser` to reproduc
 **Arm-3 candidates, 2026-11-01:** `gemma4:31b` and `muse-glimmer:30b` had been removed since
 2026-10-12 and were pulled again. All three passed the plumbing check, 6/6 each on 2024 d1 with
 thinking off, and each has a registered prediction (`arm3-precheck-<model>.md`): the entry
-criterion is not met. Next: the entry checks, one model at a time, about 9 hours each at the
-reference's pace.
+criterion is not met.
+
+**Entry checks paused 2026-11-01 18:47 (maintainer).** `ornith-1.5:35b` finished: it meets the
+criterion on 2024 d14 p2 (3/3 against the reference's 1/3), so its prediction failed, but per draft
+it is 3/9 against the reference's 3/12 and the margin is thin (`arm3-precheck-ornith-1-5-35b.md`).
+`gemma4:31b` was stopped after 3 of 30 cells; its partial file
+(`20261102T022846Z_m5pro-arm3-gemma4-31b-k3_7eba430258b5.json`) is not a result and the run
+restarts from the beginning. `muse-glimmer:30b` has not run. Resume plan: `PLAN.md`, M5 Pro
+step 4, "Resume".
 
 **Order from here** (`PLAN.md`, M5 Pro step 4): ~~fix the example pairing~~ (done) → ~~run 3~~ (done) → ~~rescan the
 Part 2s recorded as failing or "sometimes"~~ (done) → ~~k1-vs-k3 on whatever band survives~~ (done) → re-choose the
