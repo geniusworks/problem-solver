@@ -77,3 +77,25 @@ solves every time (9 of 9 drafts at k3).
 
 **Before an ensemble:** 2024 d14 p2 for both models at k1, 10 trials each, to decide whether the
 candidate solves it more often than the reference. The ensemble runs only if it does.
+
+## Decider: 2024 d14 p2 at k1, 10 trials each (registered 2026-11-02, before the run)
+
+```
+B="temperature=0.7,samples_per_model=1,enable_thinking=false,enable_fallback_models=false"
+venv/bin/python experiment.py --problems 2024:14.2 --trials 10 --config "name=m5pro-d14p2-ornith-k1-n10,models=ornith-1.5:35b,$B"
+venv/bin/python experiment.py --problems 2024:14.2 --trials 10 --config "name=m5pro-d14p2-ref-k1-n10,models=qwen3.8:27b,$B"
+```
+
+Each Part Two runs after its Part One in the same trial, with the default two repair rounds. A
+trial whose Part One fails counts as a Part Two not solved: an ensemble member that cannot reach
+the cell does not help on it. Solves among trials reached are reported alongside.
+
+- **Rule:** the candidate's lead holds if it solves more Part Twos than the reference, one-sided
+  Fisher exact p < 0.05 (for example 7/10 against 2/10, or 6/10 against 1/10). Otherwise the
+  ensemble is not run on the strength of this cell.
+- **Prediction: the lead does not hold.** The per-draft rates on record, 3/9 and 3/12, are close.
+  Expected: the candidate 3–7 of 10, the reference 2–6 of 10.
+
+### Decider result
+
+Not yet run.
