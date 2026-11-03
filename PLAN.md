@@ -357,6 +357,23 @@ problems. In order:
    where sampling can pay; a powered arm-1 test needs it at more trials;
    (f) re-choose the arm-3 entry cells from what still fails in (c) and (d), then the candidates.
 
+   **Resume (paused 2026-11-01 18:47).** Ornith's entry check is done; gemma's stopped at 3 of 30
+   cells and restarts from the beginning. In order:
+   1. `gemma4:31b` entry check, the command in `arm3-precheck-gemma4-31b.md`. About 8–9 h (its
+      first cells ran at roughly the reference's pace).
+   2. `muse-glimmer:30b` entry check, the command in `arm3-precheck-muse-glimmer-30b.md`. About
+      14–16 h (its plumbing check ran at 1.8× gemma's time).
+   3. 2024 d14 p2 decider, Ornith against the reference at k1, 10 trials each, about 2 h:
+      ```
+      B="temperature=0.7,samples_per_model=1,enable_thinking=false,enable_fallback_models=false"
+      venv/bin/python experiment.py --problems 2024:14.2 --trials 10 --config "name=m5pro-d14p2-ornith-k1-n10,models=ornith-1.5:35b,$B"
+      venv/bin/python experiment.py --problems 2024:14.2 --trials 10 --config "name=m5pro-d14p2-ref-k1-n10,models=qwen3.8:27b,$B"
+      ```
+      Register the prediction first. It can run before 1 and 2.
+   4. Only if a candidate's lead holds (Ornith's in 3, or gemma's or muse's on any cell after
+      their own decider): the two-model ensemble against each member alone on the entry cells,
+      about 10–12 h at the reference's pace.
+
    **Procedure, per model, in that order** (steps 1 and 2 done 2026-11-01 for all three: 6/6 each
    on the plumbing check, predictions in `arm3-precheck-gemma4-31b.md`,
    `arm3-precheck-ornith-1-5-35b.md` and `arm3-precheck-muse-glimmer-30b.md`):
