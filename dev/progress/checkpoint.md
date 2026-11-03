@@ -98,6 +98,10 @@ it is 3/9 against the reference's 3/12 and the margin is thin (`arm3-precheck-or
 restarts from the beginning. `muse-glimmer:30b` has not run. Resume plan: `PLAN.md`, M5 Pro
 step 4, "Resume".
 
+**2024 d14 p2 decider done 2026-11-02: 1/10 for Ornith, 1/10 for the reference** (k1, 10
+trials each). The lead does not hold; Ornith does not meet the entry criterion and no ensemble
+runs for it. Next: the gemma and muse entry checks.
+
 **Order from here** (`PLAN.md`, M5 Pro step 4): ~~fix the example pairing~~ (done) → ~~run 3~~ (done) → ~~rescan the
 Part 2s recorded as failing or "sometimes"~~ (done) → ~~k1-vs-k3 on whatever band survives~~ (done) → re-choose the
 arm-3 entry cells → the three candidates.

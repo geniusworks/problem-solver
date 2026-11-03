@@ -1,4 +1,4 @@
-# Arm 3 pre-check: `ornith-1.5:35b` meets the entry criterion on one cell, narrowly
+# Arm 3 pre-check: `ornith-1.5:35b` met the entry criterion on one cell; the decider undid it
 
 The entry criterion from `ensemble-precheck-negative.md`: measure each candidate alone on cells the
 reference misses; run an ensemble only if it solves something the reference reliably misses. The
@@ -96,6 +96,29 @@ the cell does not help on it. Solves among trials reached are reported alongside
 - **Prediction: the lead does not hold.** The per-draft rates on record, 3/9 and 3/12, are close.
   Expected: the candidate 3–7 of 10, the reference 2–6 of 10.
 
-### Decider result
+### Decider result (2026-11-02): 1/10 against 1/10; the lead does not hold
 
-Not yet run.
+| | `ornith-1.5:35b` | `qwen3.8:27b` |
+|---|---|---|
+| run | `m5pro-d14p2-ornith-k1-n10`, `6f184b2a30df` | `m5pro-d14p2-ref-k1-n10`, `1ac712678732` |
+| 2024 d14 Part Two solved | **1/10** | **1/10** |
+| reached (Part One solved) | 7/10 | 10/10 |
+| Part Two solved among reached | 1/7 | 1/10 |
+| solved by a first draft / by repair | 1 / 0 | 1 / 0 |
+| wall-clock | 912 s | 6,113 s |
+| tokens | 263k | 468k |
+
+Result files: `dev/experiments/20261102T231119Z_m5pro-d14p2-ornith-k1-n10_6f184b2a30df.json`,
+`dev/experiments/20261102T232634Z_m5pro-d14p2-ref-k1-n10_1ac712678732.json`.
+
+- **The lead does not hold**; one-sided Fisher p = 0.76. The ensemble is not run on the strength
+  of this cell, and the entry criterion is not met by this candidate.
+- **The prediction held on the rule, not on the ranges.** Both models came in below the
+  predicted counts (3–7 and 2–6 of 10). Pooling every draft on record, d14 p2 is 4 of 16 for the
+  candidate and 4 of 22 for the reference: a low-rate cell for both.
+- **The entry check's 3/3 was three lucky trials**, which is what the per-draft margin said.
+  Arm 3's criterion, at least 2 of 3 trials against at most 1 of 3, cannot tell a 25% cell
+  from a 75% one. A later candidate's lead goes through a decider of this size before an
+  ensemble.
+- **How it fails:** too-low answers dominate for both (8 of 17 failed candidate attempts, 21 of
+  27 for the reference). The part has no worked example, so the example test gives no signal.
