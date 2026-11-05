@@ -498,7 +498,8 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
 - **The portfolio arm (arm 3):** diverse models decorrelating error. A fourth candidate,
   `ornith-1.5:35b`, met the entry criterion on one cell (2024 d14 p2, 3/3 against the reference's
   1/3; 2026-11-01); a 10-trial decider put both at 1/10, so the lead was luck and no ensemble ran
-  (`dev/progress/arm3-precheck-ornith-1-5-35b.md`). Two candidates remain to be checked.
+  (`dev/progress/arm3-precheck-ornith-1-5-35b.md`). A fifth, `gemma4:31b`, did not meet it
+  (2026-11-05, `dev/progress/arm3-precheck-gemma4-31b.md`). One candidate remains to be checked.
 - **A clean contamination test:** evaluating on problems published *after* the model's training cutoff
   (AoC 2026, in December) is the cheapest genuinely-unseen test available.
 - **Every Part 2 result above was measured without the Part 1 statement in the prompt** (found

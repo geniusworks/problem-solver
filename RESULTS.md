@@ -109,7 +109,8 @@ drafts alone the ratio is 3.10×, a lower bound; the finding's direction and siz
 *Update 2026-11-01: under the new defaults, `ornith-1.5:35b` met the entry criterion on one cell,
 2024 d14 p2 (3/3 against 1/3), with a thin per-draft margin (3/9 against 3/12). A 10-trial decider
 on 2026-11-02 put both models at 1/10, so no ensemble ran
-(`dev/progress/arm3-precheck-ornith-1-5-35b.md`).*
+(`dev/progress/arm3-precheck-ornith-1-5-35b.md`). On 2026-11-05 `gemma4:31b` did not meet the
+criterion: 2024 d14 p2 1/3, the other cells 0/3 (`dev/progress/arm3-precheck-gemma4-31b.md`).*
 
 Three ensemble attempts all failed at the **entry condition**, not at the mechanism:
 
