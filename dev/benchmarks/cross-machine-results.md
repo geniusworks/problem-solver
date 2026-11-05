@@ -91,6 +91,7 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m5pro-64** | ornith-1.5:35b | tk-off **samp3**, fallback off, **ctx=aoc, example_tests=page** | arm-3 entry cells: 2024 d14, d17, d21, d24; 2025 d10 | 3 | 13/25 (d14 p2 3/3; d17 p2, d24 p2 0/3; d21 p1 0/3; 2025 d10 p1 1/3, p2 0/1; 5 not reached) | 52% | `arm3-precheck-ornith-1-5-35b.md` |
 | **m5pro-64** | ornith-1.5:35b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d14 p1 then p2 (decider) | 10 | 8/17 (p1 7/10, p2 1/7; 3 not reached) | 47% | `arm3-precheck-ornith-1-5-35b.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d14 p1 then p2 (decider) | 10 | 11/20 (p1 10/10, p2 1/10) | 55% | `arm3-precheck-ornith-1-5-35b.md` |
+| **m5pro-64** | gemma4:31b | tk-off **samp3**, fallback off, **ctx=aoc, example_tests=page** | arm-3 entry cells: 2024 d14, d17, d21, d24; 2025 d10 | 3 | 13/27 (d14 p2 1/3; d17 p2, d24 p2, 2025 d10 p2 0/3; d21 p1 0/3; Part 1s 12/12; 3 not reached) | 48% | `arm3-precheck-gemma4-31b.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).

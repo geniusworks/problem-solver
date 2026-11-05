@@ -100,7 +100,11 @@ step 4, "Resume".
 
 **2024 d14 p2 decider done 2026-11-02: 1/10 for Ornith, 1/10 for the reference** (k1, 10
 trials each). The lead does not hold; Ornith does not meet the entry criterion and no ensemble
-runs for it. Next: the gemma and muse entry checks.
+runs for it.
+
+**`gemma4:31b` entry check done 2026-11-05: criterion not met** (`arm3-precheck-gemma4-31b.md`):
+2024 d14 p2 1/3, every other entry cell 0/3, as predicted; 13/27, 21,340 s. Next: the
+`muse-glimmer:30b` entry check, the last candidate (about 10–11 h, 1.8× gemma's 5.9 h). **Nothing is running.**
 
 **Order from here** (`PLAN.md`, M5 Pro step 4): ~~fix the example pairing~~ (done) → ~~run 3~~ (done) → ~~rescan the
 Part 2s recorded as failing or "sometimes"~~ (done) → ~~k1-vs-k3 on whatever band survives~~ (done) → re-choose the
@@ -167,7 +171,7 @@ as "the first genuinely unseen problem" and a target for the submission path, is
 
 **Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → ~~arm-3 pre-check~~ →
 ~~d16–25 scan~~ → ~~classify the band~~ → ~~k1 vs k3 on it~~ → ~~20 trials per arm on d19 p2~~ → three arm-3
-candidates from other makers (plumbing-checked 2026-11-01, entry checks not run; PLAN.md step 4). k=5 is deferred: the
+candidates from other makers (plumbing-checked 2026-11-01; Ornith and gemma entry-checked, neither met the criterion; muse not run; PLAN.md step 4). k=5 is deferred: the
 independence curve is measured on d19 p2 and predicts it (67%).
 
 **Band classified: 2 "sometimes", 8 walls** (`m5pro-band-2024-d16-25.md`; 3 trials pooled with the
