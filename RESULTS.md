@@ -107,8 +107,9 @@ drafts alone the ratio is 3.10×, a lower bound; the finding's direction and siz
 ### Arm 3 — Untested, for want of a suitable model pair
 
 *Update 2026-11-01: under the new defaults, `ornith-1.5:35b` met the entry criterion on one cell,
-2024 d14 p2 (3/3 against 1/3), with a thin per-draft margin (3/9 against 3/12). The ensemble waits
-on a 10-trial decider (`dev/progress/arm3-precheck-ornith-1-5-35b.md`).*
+2024 d14 p2 (3/3 against 1/3), with a thin per-draft margin (3/9 against 3/12). A 10-trial decider
+on 2026-11-02 put both models at 1/10, so no ensemble ran
+(`dev/progress/arm3-precheck-ornith-1-5-35b.md`).*
 
 Three ensemble attempts all failed at the **entry condition**, not at the mechanism:
 
