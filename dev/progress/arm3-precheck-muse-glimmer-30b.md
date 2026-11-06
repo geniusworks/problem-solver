@@ -44,6 +44,15 @@ of 3 trials, on a cell above. Specifically:
 - 2024 d14 p2, d17 p2 and d21 p1: at most 1/3 each.
 - A Part 2 not reached because its Part 1 failed counts as not solved.
 
+## Selection bias (registered 2026-11-06, during the entry check, before any decider)
+
+The entry cells were chosen because the reference failed them in earlier runs. Its rates there
+are low partly by selection: a cell that was unlucky in three trials makes the list, and would
+score higher on a fresh run. The candidate is measured fresh on the same cells, so the entry check
+favours it. A lead there is a reason to run a decider, which re-measures both models on the cell,
+not a result. Ornith's lead on 2024 d14 p2 (3/3 against 1/3) was of this kind: the decider put
+both at 1/10 (`arm3-precheck-ornith-1-5-35b.md`).
+
 ## Result
 
 Not yet run.

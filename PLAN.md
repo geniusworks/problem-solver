@@ -396,8 +396,13 @@ problems. In order:
       were d15 p2 and d9 p2, which the reference now solves 3/3 and 3/5; the candidates from (d)
       confirmed in (e) are 2024 d24 p2 (0/3 at k3), 2025 d10 p2 (0/3), 2024 d14 p2 and d17 p2
       (1/3 each), and 2024 d21 p1 (0/3 at k1). The entry-check command takes
-      `--problems 2024:14.2,2024:17.2,2024:21,2024:24.2,2025:10.2`. Met → run the two-model ensemble against each member alone. Not met → record the
+      `--problems 2024:14.2,2024:17.2,2024:21,2024:24.2,2025:10.2`. Met → a 10-trial decider at k1
+      on that cell (one-sided Fisher p < 0.05), then the two-model ensemble against each member alone. Not met → record the
       failure; arm 3 stays untested.
+      **The criterion is biased toward the candidate** (noted 2026-11-06): the cells were chosen
+      because the reference failed them, so the reference's rate on them is understated by
+      selection, and a candidate measured fresh is not. The decider re-measures both models on
+      the cell; a lead from the entry check alone is never reported as a result.
 
    Optional and separate: `qwen3.8:27b-q8_0` (30 GB), the reference at 8-bit, on the same four
    cells. It tests whether 4-bit quantization costs anything on the walls. Not pulled.
