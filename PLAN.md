@@ -362,7 +362,10 @@ problems. In order:
    1. ✅ **DONE 2026-11-05: criterion not met** (`arm3-precheck-gemma4-31b.md`): 2024 d14 p2
       1/3, the other cells 0/3; 5.9 h, against the 8–9 h estimated.
       `gemma4:31b` entry check, the command in `arm3-precheck-gemma4-31b.md`.
-   2. `muse-glimmer:30b` entry check, the command in `arm3-precheck-muse-glimmer-30b.md`. About
+   2. ✅ **DONE 2026-11-06: criterion met on 2024 d14 p2**, 3/3 and 9 of 9 drafts
+      (`arm3-precheck-muse-glimmer-30b.md`); also the first verified 2024 d21. 9.8 h. Its decider,
+      registered in that doc, is next: 10 trials at k1 against the reference's 1/10 on record.
+      `muse-glimmer:30b` entry check, the command in `arm3-precheck-muse-glimmer-30b.md`. About
       10–11 h (its plumbing check ran at 1.8× gemma's time; gemma's entry check took 5.9 h).
    3. ✅ **DONE 2026-11-02: 1/10 against 1/10, the lead does not hold**
       (`arm3-precheck-ornith-1-5-35b.md`); no ensemble for Ornith. Ran first, 1.9 h.

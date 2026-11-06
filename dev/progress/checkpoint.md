@@ -5,7 +5,7 @@ The **live status snapshot** — where the project actually stands right now. Th
 `dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
 file current as work lands so it never goes stale.
 
-## Current status (2026-10-13)
+## Current status (2026-11-06)
 
 ### Instrument fixed: the model now sees what a solver on the site sees (2026-10-13)
 
@@ -55,7 +55,7 @@ least 3 times in 5, so the arm-3 cells must be re-chosen before any candidate ru
 
 **Rescan done 2026-11-01: the reference's 15 failing or "sometimes" Part 2s went from 13/71 on
 record to 32/40 reached** (k1, 3 trials, `1ac712678732`; `m5pro-rescan-part2-aoc.md`). Eight are
-now solved every time. **Ledger 56 → 66.** Still failing: **2024 d21 p1, 0/3** (a Part 1, so
+now solved every time. **Ledger 56 → 66** (68 after muse's d21, 2026-11-06). Still failing for the reference: **2024 d21 p1, 0/3** (a Part 1, so
 unaffected by the prompt defect), d24 p1 1/3, d17 p2 1/3, 2025 d10 p2 1/3.
 
 **k1-vs-k3 on that band done 2026-11-01: 9/19 trials at k1, 11/21 at k3**, no measurable lift
@@ -83,7 +83,7 @@ venv/bin/python experiment.py --problems 2025:9 --trials 3 \
 Fingerprints: `5d259bb8f103` for 1 and 2 (add `example_tests=parser` to reproduce them),
 `839b40f0bfa8` for 3 and 3b, `1ac712678732` for the rescan. Next, per `PLAN.md` step 4:
 ~~(d) rescan~~ (done), ~~(e) k1-vs-k3~~ (done), (f) the arm-3 entry check on the cells above, then the three candidates (`gemma4:31b`,
-`ornith-1.5:35b`, `muse-glimmer:30b`). **Nothing is running.**
+`ornith-1.5:35b`, `muse-glimmer:30b`).
 
 **Arm-3 candidates, 2026-11-01:** `gemma4:31b` and `muse-glimmer:30b` had been removed since
 2026-10-12 and were pulled again. All three passed the plumbing check, 6/6 each on 2024 d1 with
@@ -104,7 +104,14 @@ runs for it.
 
 **`gemma4:31b` entry check done 2026-11-05: criterion not met** (`arm3-precheck-gemma4-31b.md`):
 2024 d14 p2 1/3, every other entry cell 0/3, as predicted; 13/27, 21,340 s. Next: the
-`muse-glimmer:30b` entry check, the last candidate (about 10–11 h, 1.8× gemma's 5.9 h). **Nothing is running.**
+`muse-glimmer:30b` entry check, the last candidate.
+
+**`muse-glimmer:30b` entry check done 2026-11-06: criterion met on 2024 d14 p2**
+(`arm3-precheck-muse-glimmer-30b.md`): 3/3, 9 of 9 first drafts, against the reference's 1/3 and
+3 of 12 drafts. It also gave the first verified 2024 d21, both parts (ledger 66 → 68); the
+reference has never solved d21 p1. 18/28, 35,389 s. The 2024 d14 p2 decider is registered in the
+same doc. Next: that decider (about 1–1.5 h), then the ensemble only if the lead holds.
+**Nothing is running.**
 
 **Order from here** (`PLAN.md`, M5 Pro step 4): ~~fix the example pairing~~ (done) → ~~run 3~~ (done) → ~~rescan the
 Part 2s recorded as failing or "sometimes"~~ (done) → ~~k1-vs-k3 on whatever band survives~~ (done) → re-choose the
@@ -171,7 +178,7 @@ as "the first genuinely unseen problem" and a target for the submission path, is
 
 **Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → ~~arm-3 pre-check~~ →
 ~~d16–25 scan~~ → ~~classify the band~~ → ~~k1 vs k3 on it~~ → ~~20 trials per arm on d19 p2~~ → three arm-3
-candidates from other makers (plumbing-checked 2026-11-01; Ornith and gemma entry-checked, neither met the criterion; muse not run; PLAN.md step 4). k=5 is deferred: the
+candidates from other makers (plumbing-checked 2026-11-01; Ornith's lead failed its decider, gemma did not meet the criterion, muse met it on 2024 d14 p2 and its decider is next; PLAN.md step 4). k=5 is deferred: the
 independence curve is measured on d19 p2 and predicts it (67%).
 
 **Band classified: 2 "sometimes", 8 walls** (`m5pro-band-2024-d16-25.md`; 3 trials pooled with the
