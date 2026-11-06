@@ -1,4 +1,4 @@
-# Arm 3 pre-check: `muse-glimmer:30b` (registered, not yet run)
+# Arm 3 pre-check: `muse-glimmer:30b` met the entry criterion on 2024 d14 p2, 9 of 9 drafts
 
 The entry criterion from `ensemble-precheck-negative.md`: measure each candidate alone on cells the
 reference misses; run an ensemble only if it solves something the reference reliably misses. The
@@ -53,6 +53,53 @@ favours it. A lead there is a reason to run a decider, which re-measures both mo
 not a result. Ornith's lead on 2024 d14 p2 (3/3 against 1/3) was of this kind: the decider put
 both at 1/10 (`arm3-precheck-ornith-1-5-35b.md`).
 
-## Result
+## Result (2026-11-06): criterion met on 2024 d14 p2; the prediction failed
+
+`m5pro-arm3-muse-glimmer-30b-k3`, fingerprint `52aa94a05ce9`, 3 trials, 35,389 s, GPU free
+(`dev/experiments/20261106T091713Z_m5pro-arm3-muse-glimmer-30b-k3_52aa94a05ce9.json`). 18 of 28
+reached cells solved; 0 wrong, 0 overfit; 1.58M tokens.
+
+| cell | `muse-glimmer:30b` k3 | its first drafts | reference k3 | reference first drafts, k1 + k3 | candidate's failures |
+|---|---|---|---|---|---|
+| 2024 d14 p2 | **3/3** | **9/9** | 1/3 | 3/12 | none |
+| 2024 d17 p2 | 1/3 (by a repair) | 0/9 | 1/3 | 2/12 | 8 crashes, 1 too low |
+| 2024 d21 p1 | **1/3** | 1/9 | 0/3 at k1 | 0/3 (0/7 on record) | 6 crashes, 4 too low, 2 too high, 2 timeouts |
+| 2024 d24 p2 | 0/3 | 0/9 | 0/3 | 0/10 | 20 wrong, 3 timeouts, 3 crashes |
+| 2025 d10 p2 | 0/3 | 0/9 | 0/3 | 1/12 | 12 crashes, 11 too low, 2 too high, 2 timeouts |
+
+Prerequisite Part 1s: 2024 d14, d17, d24 and 2025 d10, 3/3 each. 2024 d21 p2, reached once, was
+solved by all three drafts.
+
+- **The prediction failed on 2024 d14 p2**: predicted at most 1/3, solved 3/3, every draft
+  correct. Per draft that is 9 of 9 against the reference's 3 of 12 over its two runs, one-sided
+  Fisher p = 0.0007. Ornith met the criterion on the same cell with 3 of 9 drafts, which was
+  not distinguishable from the reference's rate; this is.
+- **First verified 2024 d21**, both parts (ledger 66 → 68). The reference has never solved d21
+  p1 (0/7 on record). One trial in three does not meet the criterion. The selection bias above
+  weighs less here: 0/7 is the reference's whole record on the cell, not a three-trial sample.
+- **The rest of the prediction held:** 0/3 on 2024 d24 p2 and 2025 d10 p2, 1/3 on d17 p2.
+- **Its failures differ in kind from the reference's.** On the entry cells muse failed mostly by
+  crashing or by a wrong answer, with 7 timeouts in 76 failed attempts; the reference's failures
+  on the hardest of them were mostly 60 s timeouts (`m5pro-band-k1-vs-k3-aoc.md`).
+- **Slower than the reference** on these cells: 35,389 s against roughly 30,000 s.
+
+## Decider: 2024 d14 p2 at k1, 10 trials (registered 2026-11-06, before the run)
+
+```
+B="temperature=0.7,samples_per_model=1,enable_thinking=false,enable_fallback_models=false"
+venv/bin/python experiment.py --problems 2024:14.2 --trials 10 --config "name=m5pro-d14p2-muse-k1-n10,models=muse-glimmer:30b,$B"
+```
+
+The reference's side is the run already on record under the same defaults:
+`m5pro-d14p2-ref-k1-n10`, fingerprint `1ac712678732`, 1/10 (`arm3-precheck-ornith-1-5-35b.md`).
+Same rules as Ornith's decider: a trial whose Part One fails counts as a Part Two not solved.
+
+- **Rule:** the lead holds if the candidate solves more Part Twos than the reference's 1/10,
+  one-sided Fisher exact p < 0.05, which means at least 6/10.
+- **Prediction: the lead holds.** Expected 7–10 of 10, from 9 of 9 drafts at k3 and 9 of 9 on
+  d14 p1.
+- About 1–1.5 h.
+
+### Decider result
 
 Not yet run.

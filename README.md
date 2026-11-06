@@ -186,7 +186,7 @@ recurs** (83% vs 55%, six of seven misses are Part 2s), and the same failure cla
 *(Corrected 2026-11-01: the cliff was measured with Part 2 posed without its Part 1 statement.
 With it, the reference solves 32 of 40 of its hardest Part 2s, so the cliff is not established;
 `dev/progress/m5pro-rescan-part2-aoc.md`.)* The
-verified ledger stood at **43 solutions across two years, 0 wrong** after that scan (66 now). (`generality-2025-scan.md`,
+verified ledger stood at **43 solutions across two years, 0 wrong** after that scan (68 now). (`generality-2025-scan.md`,
 `band-2025-classification.md`)
 
 ## How it works
@@ -499,7 +499,10 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
   `ornith-1.5:35b`, met the entry criterion on one cell (2024 d14 p2, 3/3 against the reference's
   1/3; 2026-11-01); a 10-trial decider put both at 1/10, so the lead was luck and no ensemble ran
   (`dev/progress/arm3-precheck-ornith-1-5-35b.md`). A fifth, `gemma4:31b`, did not meet it
-  (2026-11-05, `dev/progress/arm3-precheck-gemma4-31b.md`). One candidate remains to be checked.
+  (2026-11-05, `dev/progress/arm3-precheck-gemma4-31b.md`). A sixth, `muse-glimmer:30b`, met it on
+  the same cell with every draft correct (9 of 9 against the reference's 3 of 12; 2026-11-06), and
+  gave the first verified 2024 d21; its 10-trial decider is next
+  (`dev/progress/arm3-precheck-muse-glimmer-30b.md`).
 - **A clean contamination test:** evaluating on problems published *after* the model's training cutoff
   (AoC 2026, in December) is the cheapest genuinely-unseen test available.
 - **Every Part 2 result above was measured without the Part 1 statement in the prompt** (found
@@ -511,7 +514,8 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
   prompt, 19/19 under the site's conditions; then 2024 d16 p2, 0/7 to 3/3, and 2025 d9 p2, 0/22
   to 3/5 at three drafts. A rescan of the reference's 15 other failing Part 2s (2026-11-01):
   13/71 on record, 32/40 now, ledger 56 → 66 (`dev/progress/m5pro-rescan-part2-aoc.md`). None of
-  the re-run Part 2 walls has held; the one wall left in that set is a Part 1, 2024 d21. Three
+  the re-run Part 2 walls has held; the one wall left in that set is a Part 1, 2024 d21, which `muse-glimmer:30b` solved in 1 of 3
+  trials (2026-11-06). Three
   drafts against one on the cells left in between: 11/21 against 9/19, no measurable lift; at the
   draft level those cells are solved by nearly every draft or nearly none
   (`dev/progress/m5pro-band-k1-vs-k3-aoc.md`).

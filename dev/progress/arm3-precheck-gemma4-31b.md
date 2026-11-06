@@ -70,4 +70,4 @@ Prerequisite Part 1s: 2024 d14, d17, d24 and 2025 d10, 3/3 each.
 - **Faster than the reference** on these cells (21,340 s against roughly 30,000 s), at 1.86M
   tokens. Every Part 2 was reached.
 
-No decider and no ensemble for this candidate. One candidate remains, `muse-glimmer:30b`.
+No decider and no ensemble for this candidate.

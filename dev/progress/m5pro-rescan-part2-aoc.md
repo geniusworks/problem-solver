@@ -51,7 +51,9 @@ those already re-run (2024 d15, d16, d19; 2025 d9) and the two days with no Part
   d11, d14, d17, d18, d20, d22; 2025 d2, d4, d10).
 - **The surviving failure is a Part 1.** 2024 d21 p1 is 0/3 here and 0/4 on record, with wrong
   answers both too high and too low, each failing the example test. Part 1 prompts were not
-  affected by the defect, so this wall stands as measured. 2024 d24 p1 is 1/3; its one Part 2
+  affected by the defect, so this wall stands as measured. *(2026-11-06: it is the reference's wall, not
+  the task's; `muse-glimmer:30b` solved d21 p1 and p2 in 1 of 3 trials,
+  `arm3-precheck-muse-glimmer-30b.md`.)* 2024 d24 p1 is 1/3; its one Part 2
   attempt timed out twice and then gave a wrong answer.
 
 ### How the "sometimes" cells fail
