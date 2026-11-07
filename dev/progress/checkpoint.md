@@ -114,7 +114,7 @@ same doc.
 
 **Muse's 2024 d14 p2 decider done 2026-11-06: 10/10 against the reference's 1/10** (k1, p =
 0.0001). The lead holds: the first candidate to reliably solve a cell the reference reliably
-misses. Next: register the two-model ensemble's design and prediction, then run it.
+misses. Next: the portfolio test (`arm3-portfolio-test.md`), stage A batch 1, about 2–4 h.
 **Nothing is running.**
 
 **Order from here** (`PLAN.md`, M5 Pro step 4): ~~fix the example pairing~~ (done) → ~~run 3~~ (done) → ~~rescan the

@@ -376,8 +376,12 @@ problems. In order:
       venv/bin/python experiment.py --problems 2024:14.2 --trials 10 --config "name=m5pro-d14p2-ref-k1-n10,models=qwen3.8:27b,$B"
       ```
       Register the prediction first. It can run before 1 and 2.
-   4. **Next: muse's lead held.** Register the design and prediction first. Only if a candidate's lead holds (muse's on any cell, after a decider like 3): the two-model ensemble against each member alone on the entry cells,
-      about 10–12 h at the reference's pace.
+   4. **Next: muse's lead held; the portfolio test** (`arm3-portfolio-test.md`, registered
+      2026-11-06). Replaces the ensemble against each member at 3 drafts, which would have measured
+      6 draws against 3. Stage A, muse on 14 cells the reference solves (three batches, about
+      2–4 h each) → stage B, choose cells with winners both ways → stage C, the ensemble at 3 + 3
+      against each model alone at 6, about 20–27 h in parts. No cell where the reference wins → no
+      stage C; arm 3 is recorded as one-way dominance.
 
    **Procedure, per model, in that order** (steps 1 and 2 done 2026-11-01 for all three: 6/6 each
    on the plumbing check, predictions in `arm3-precheck-gemma4-31b.md`,
