@@ -110,7 +110,11 @@ runs for it.
 (`arm3-precheck-muse-glimmer-30b.md`): 3/3, 9 of 9 first drafts, against the reference's 1/3 and
 3 of 12 drafts. It also gave the first verified 2024 d21, both parts (ledger 66 → 68); the
 reference has never solved d21 p1. 18/28, 35,389 s. The 2024 d14 p2 decider is registered in the
-same doc. Next: that decider (about 1–1.5 h), then the ensemble only if the lead holds.
+same doc.
+
+**Muse's 2024 d14 p2 decider done 2026-11-06: 10/10 against the reference's 1/10** (k1, p =
+0.0001). The lead holds: the first candidate to reliably solve a cell the reference reliably
+misses. Next: register the two-model ensemble's design and prediction, then run it.
 **Nothing is running.**
 
 **Order from here** (`PLAN.md`, M5 Pro step 4): ~~fix the example pairing~~ (done) → ~~run 3~~ (done) → ~~rescan the
@@ -178,7 +182,7 @@ as "the first genuinely unseen problem" and a target for the submission path, is
 
 **Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → ~~arm-3 pre-check~~ →
 ~~d16–25 scan~~ → ~~classify the band~~ → ~~k1 vs k3 on it~~ → ~~20 trials per arm on d19 p2~~ → three arm-3
-candidates from other makers (plumbing-checked 2026-11-01; Ornith's lead failed its decider, gemma did not meet the criterion, muse met it on 2024 d14 p2 and its decider is next; PLAN.md step 4). k=5 is deferred: the
+candidates from other makers (plumbing-checked 2026-11-01; Ornith's lead failed its decider, gemma did not meet the criterion, muse met it on 2024 d14 p2 and its decider held, 10/10 against 1/10; the ensemble is next; PLAN.md step 4). k=5 is deferred: the
 independence curve is measured on d19 p2 and predicts it (67%).
 
 **Band classified: 2 "sometimes", 8 walls** (`m5pro-band-2024-d16-25.md`; 3 trials pooled with the

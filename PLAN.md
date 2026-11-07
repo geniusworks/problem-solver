@@ -363,8 +363,8 @@ problems. In order:
       1/3, the other cells 0/3; 5.9 h, against the 8–9 h estimated.
       `gemma4:31b` entry check, the command in `arm3-precheck-gemma4-31b.md`.
    2. ✅ **DONE 2026-11-06: criterion met on 2024 d14 p2**, 3/3 and 9 of 9 drafts
-      (`arm3-precheck-muse-glimmer-30b.md`); also the first verified 2024 d21. 9.8 h. Its decider,
-      registered in that doc, is next: 10 trials at k1 against the reference's 1/10 on record.
+      (`arm3-precheck-muse-glimmer-30b.md`); also the first verified 2024 d21. 9.8 h. Its decider
+      held 2026-11-06: 10/10 against the reference's 1/10 at k1 (p = 0.0001), 1 h.
       `muse-glimmer:30b` entry check, the command in `arm3-precheck-muse-glimmer-30b.md`. About
       10–11 h (its plumbing check ran at 1.8× gemma's time; gemma's entry check took 5.9 h).
    3. ✅ **DONE 2026-11-02: 1/10 against 1/10, the lead does not hold**
@@ -376,7 +376,7 @@ problems. In order:
       venv/bin/python experiment.py --problems 2024:14.2 --trials 10 --config "name=m5pro-d14p2-ref-k1-n10,models=qwen3.8:27b,$B"
       ```
       Register the prediction first. It can run before 1 and 2.
-   4. Only if a candidate's lead holds (muse's on any cell, after a decider like 3): the two-model ensemble against each member alone on the entry cells,
+   4. **Next: muse's lead held.** Register the design and prediction first. Only if a candidate's lead holds (muse's on any cell, after a decider like 3): the two-model ensemble against each member alone on the entry cells,
       about 10–12 h at the reference's pace.
 
    **Procedure, per model, in that order** (steps 1 and 2 done 2026-11-01 for all three: 6/6 each
