@@ -1,4 +1,4 @@
-# Arm 3 pre-check: `muse-glimmer:30b` met the entry criterion on 2024 d14 p2, 9 of 9 drafts
+# Arm 3 pre-check: `muse-glimmer:30b` met the entry criterion on 2024 d14 p2, and the decider held it (10/10 against 1/10)
 
 The entry criterion from `ensemble-precheck-negative.md`: measure each candidate alone on cells the
 reference misses; run an ensemble only if it solves something the reference reliably misses. The
@@ -100,6 +100,25 @@ Same rules as Ornith's decider: a trial whose Part One fails counts as a Part Tw
   d14 p1.
 - About 1–1.5 h.
 
-### Decider result
+### Decider result (2026-11-06): 10/10 against 1/10; the lead holds
 
-Not yet run.
+| | `muse-glimmer:30b` | `qwen3.8:27b` |
+|---|---|---|
+| run | `m5pro-d14p2-muse-k1-n10`, `a9ae29f29a7a` | `m5pro-d14p2-ref-k1-n10`, `1ac712678732` |
+| 2024 d14 Part Two solved | **10/10** | **1/10** |
+| reached (Part One solved) | 10/10 | 10/10 |
+| solved by a first draft / by repair | 9 / 1 | 1 / 0 |
+| wall-clock | 3,552 s | 6,113 s |
+| tokens | 234k | 468k |
+
+`dev/experiments/20261107T035120Z_m5pro-d14p2-muse-k1-n10_a9ae29f29a7a.json`; the fingerprint is
+the plumbing check's, since the config is the same. One-sided Fisher exact p = 0.0001.
+
+- **The prediction held**: 10/10, within the expected 7–10.
+- **Across both runs muse solves 2024 d14 p2 with 18 of 19 first drafts**, against the
+  reference's 4 of 22. This is the first cell where a candidate reliably solves what the
+  reference reliably misses, the condition `ensemble-precheck-negative.md` set for running an
+  ensemble.
+- **At under 60% of the reference's time and half its tokens** on this cell.
+
+The ensemble is next; its design and prediction are registered before it runs.
