@@ -10,13 +10,19 @@ own errors solved far more of them than a single attempt did — **42% → 75%**
 hardest — and the same pattern held on a second year the models had never been tested on. Because the
 puzzles are public, the raw *"how capable is the model"* numbers carry a caveat (below); the *"does
 coordinating attempts help"* comparisons pit the model against itself and are unaffected.
+*Narrowed 2026-11-01:* under the corrected prompts, most problems are solved by nearly every draft
+or by nearly none, and three drafts beat one only where a single draft succeeds part of the time
+(arm 1 below). *Measured 2026-11-08:* mixing models from different makers did not beat choosing
+the better one (arm 3).
 
-This document is the consolidated result. The 31 write-ups in [`dev/progress/`](dev/progress/) are
+This document is the consolidated result. The write-ups in [`dev/progress/`](dev/progress/) are
 the audit trail; every figure here was recomputed from the run artifacts. For the project itself —
 what it is, how the pipeline works, how to run it — see the [README](README.md).
 
-**Corpus:** 57 recorded experiment runs · 1,475 candidate attempts · ~121 GPU-hours · 16.3M tokens (includes draft counts copied onto repair records; see the defect table) ·
-**43 oracle-verified solutions across two AoC years, 0 wrong in the ledger.**
+**Corpus (2026-11-08):** 88 recorded experiment runs · 3,086 candidate attempts · ~195 GPU-hours ·
+38.0M tokens (result files in `dev/experiments/`; runs that left only a log are not counted; the
+token total includes draft counts copied onto repair records before 2026-10-12, see the defect
+table) · **68 oracle-verified solutions across two AoC years, 0 wrong in the ledger.**
 
 *Found and fixed 2026-10-13: every Part 2 in this report was posed without the Part 1 statement
 (`dev/progress/part2-prompt-omits-part1.md`). Arm-to-arm comparisons are unaffected as
@@ -27,9 +33,9 @@ drafts under the new defaults (2026-10-31). The reference's 15 other failing Par
 13/71 to 32/40 (2026-11-01, `dev/progress/m5pro-rescan-part2-aoc.md`), so the cliff is not
 established.*
 
-*Since this report (2026-10-12): eight further runs on a third machine, `m5pro-64`, took the ledger
-to 54 and added a third frontier band (2024 d16–25). No arm's status changed; the dated corrections
-below mark what did. Live status: `dev/progress/checkpoint.md`.*
+*Since this report was first written (2026-08-23), runs on a third machine, `m5pro-64`, took the
+ledger to 68, narrowed arm 1 and measured arm 3; the dated notes below mark each change. Live
+status: `dev/progress/checkpoint.md`.*
 
 > **Read the contamination section before the capability numbers.** AoC 2024/2025 solutions predate
 > the models used here and are public, so the *capability* results are descriptive of this testbed
@@ -45,9 +51,9 @@ now been tested.
 
 | arm | claim | verdict |
 |---|---|---|
-| **1. pass@k** | the gap between "sometimes solves" and "solves" never closes at a model's own frontier | ✅ **confirmed and replicated** |
+| **1. pass@k** | the gap between "sometimes solves" and "solves" never closes at a model's own frontier | ✅ **confirmed and replicated**; narrowed 2026-11-01: it pays only where a single draft succeeds part of the time |
 | **2. economics** | many cheap draws + a verifier beat one expensive pass at equal cost | ⚖️ **splits by which cost you pay** |
-| **3. portfolios** | diverse models decorrelate error | ⚠️ **untested — no suitable model pair** |
+| **3. portfolios** | diverse models decorrelate error | ➖ **not supported where measured**: the one complementary pair was one-way, so choosing the better model gave the gain (2026-11-08) |
 
 ### Arm 1 — Sampling works at the frontier, and why it works is measured
 
@@ -82,6 +88,22 @@ not survive review — the replication is what makes the claim reportable.
 
 *(`passk-ab-d13-d15.md`, `topology-parallel3.md`, `passk-replication-2025.md`.)*
 
+**Narrowed 2026-11-01, under the corrected prompts.** Both years' bands were measured with Part 2
+posed without its Part 1 statement and with repair prompts carrying mispaired example tests (see
+the defect table). Re-run under the site's conditions on a third machine, the reference's
+"sometimes" cells gave 9/19 at one draft and 11/21 at three, no measurable lift
+(`m5pro-band-k1-vs-k3-aoc.md`). At the draft level those cells split in two: solved by 8–9 of 9
+drafts, or by 0–1 of 9. Independent draws predict exactly this: three draws lift a 10% draft rate
+little and a 90% one has no room to rise. The mechanism stands; the band it acts on is smaller
+than the 42% → 75% suggested, and under the corrected prompts one cell (2025 d9 p2, 3 of 9 drafts)
+sits where sampling pays.
+
+**Repair depends on the model.** With true example feedback and too-high/too-low hints, the
+reference's repairs rescued none of its hard cells (`m5pro-band-k1-vs-k3-aoc.md`); across all its
+runs under the corrected prompts, 2 of its 145 solved cells were solved by repair. The candidate
+`muse-glimmer:30b`, in the same harness, solved 14 of its 131 by repair, among them 3 of its 6
+solves of 2024 d20 p2 (`arm3-portfolio-test.md`).
+
 ### Arm 2 — Cheap draws win on time, lose on tokens, and stop at a ceiling
 
 At a matched wall-clock budget, a fast weak model taking many draws vs a slow strong model taking few:
@@ -104,37 +126,39 @@ drafts alone the ratio is 3.10×, a lower bound; the finding's direction and siz
 
 *(`economic-arm-moe-vs-generalist.md`.)*
 
-### Arm 3 — Untested, for want of a suitable model pair
+### Arm 3 — Measured: the better model, not the mix
 
-*Update 2026-11-01: under the new defaults, `ornith-1.5:35b` met the entry criterion on one cell,
-2024 d14 p2 (3/3 against 1/3), with a thin per-draft margin (3/9 against 3/12). A 10-trial decider
-on 2026-11-02 put both models at 1/10, so no ensemble ran
-(`dev/progress/arm3-precheck-ornith-1-5-35b.md`). On 2026-11-05 `gemma4:31b` did not meet the
-criterion: 2024 d14 p2 1/3, the other cells 0/3 (`dev/progress/arm3-precheck-gemma4-31b.md`). On
-2026-11-06 `muse-glimmer:30b` met it on 2024 d14 p2 with 9 of 9 drafts against 3 of 12, and a
-10-trial decider held it, 10/10 against 1/10 (`dev/progress/arm3-precheck-muse-glimmer-30b.md`).
-A portfolio test found no cell where the reference beats muse, so no ensemble ran (2026-11-08,
-`dev/progress/arm3-portfolio-test.md`).*
+*Until 2026-11-08 this section read "Untested, for want of a suitable model pair".*
 
-Three ensemble attempts all failed at the **entry condition**, not at the mechanism:
+An ensemble can only pool what its members *differentially* solve. The entry criterion: measure
+each candidate alone on cells the reference misses, and go on only if it solves something the
+reference reliably misses, confirmed by a 10-trial decider. Six candidates were tried:
 
-- a same-tier, same-generation pair whose apparently complementary solves were sampling noise;
-- a cross-generation pair whose second model turned out to solve a **strict subset** of the first's
-  problems — it solved nothing the stronger model couldn't, and *failed* one the stronger model
-  handles reliably;
-- a second cross-generation pair (added 2026-10-12, on a third machine) whose candidate solved the
-  **same set** as the reference — 7/12 against 6/12 — so there was nothing to pool. Redundant where
-  the previous one was dominated.
+- three earlier pairs failed at entry: complementary solves that were sampling noise, a second model
+  that solved a **strict subset** of the first's problems, and one that solved the **same set**
+  (`ensemble-samp3-d4-7.md`, `ensemble-precheck-negative.md`, `arm3-precheck-qwen36-35b.md`);
+- `ornith-1.5:35b` met the criterion on 2024 d14 p2 (3/3 against 1/3); the decider put both at
+  1/10 (`arm3-precheck-ornith-1-5-35b.md`);
+- `gemma4:31b` did not meet it (`arm3-precheck-gemma4-31b.md`);
+- **`muse-glimmer:30b` met it and held**: 2024 d14 p2 with 18 of 19 first drafts across two runs,
+  10/10 against the reference's 1/10 in the decider, p = 0.0001. It also gave the first verified
+  2024 d21 (`arm3-precheck-muse-glimmer-30b.md`).
 
-An ensemble can only pool what its members *differentially* solve. No pair had that. The entry
-criterion is now explicit: **measure each member individually on the targets first; only run an
-ensemble if one solves something the others reliably miss.**
+**The portfolio test.** A mix of 3 drafts from each model is 6 drafts, so it was to be compared
+with each model alone at 6; with independent draws, it can beat both only summed over cells where
+the better model differs. Muse alone on 14 cells the reference solves (34/42 Part 2 trials) gave
+two cells where the reference looked ahead. Neither held: on 2024 d15 p2 the reference solved
+0/10, and on d20 p2 it was 9/10 against muse's 6/10, p = 0.15 (`arm3-portfolio-test.md`). No cell
+favours the reference, so the ensemble was not run.
 
-*(`ensemble-samp3-d4-7.md`, `ensemble-precheck-negative.md`, `arm3-precheck-qwen36-35b.md`.)*
+**Result:** on these cells the complementarity runs one way. Muse covers what the reference solves
+and adds 2024 d14 p2; choosing muse gives the gain a mix could. This does not show that a mix
+cannot beat its best member: differences smaller than 9/10 against 4/10 go undetected at 10
+trials, and the cells were chosen from the reference's record, not sampled.
 
 ---
 
-## Two findings the thesis did not predict
+## Findings the thesis did not predict
 
 ### Model *generation* beats model *size*, decisively
 
@@ -153,6 +177,15 @@ stronger than a gap: the generalist's solve set is a **strict superset** of the 
 Two problems the project had written off as impossible fell to this: one to a *better algorithm*
 (a topological sort), one to a *plain brute force* that finally ran inside the timeout. They had
 been described for months as a single "efficiency ceiling"; they were two different walls.
+
+### On the hardest cells the limit is often speed
+
+On the cells the reference fails under the corrected prompts, the commonest failure is a program
+that passes the worked example and then runs past the 60 s execution timeout: 27 of 51 failed
+attempts on 2024 d24 p2 and 2025 d10 p2 (`m5pro-band-k1-vs-k3-aoc.md`), 9 of 12 on 2025 d9 p2
+(`part2-prompt-omits-part1.md`). `gemma4:31b` timed out on 19 of 27 attempts at 2025 d10 p2.
+`muse-glimmer:30b` timed out rarely (7 of 76 failed attempts on the same cells) and failed by
+crashing or answering wrong instead (`arm3-precheck-*.md`).
 
 ### Interventions that add no new information do not help
 
@@ -247,7 +280,8 @@ stochastic but not systematic failures — do not depend on the problems being u
 **A partial argument against pure memorization, offered as weak evidence only.**
 The frontier band consists of problems the model solves *sometimes* — 17%, 25%, 33% per draw.
 Memorized solutions would be expected to reproduce reliably rather than intermittently, and the
-problems that resist every configuration (0/13; 0/22 by 2026-10-12) would be odd things to have memorized badly. This is
+problem that resisted every configuration (2025 d9 p2, 0/22 by 2026-10-12, all under the defective Part 2 prompt;
+3/5 since) would have been an odd thing to have memorized badly. This is
 suggestive, not dispositive: partial or paraphrased memorization could plausibly produce exactly this
 intermittency.
 
@@ -262,7 +296,8 @@ intermittency.
 
 - **Training-data contamination is uncontrolled** (see the section above) — the single largest threat
   to the capability claims, and the first thing a reader should discount.
-- **One strong model** for the headline results; three models compared for the generation finding.
+- **One strong model** for the headline results; three models compared for the generation finding;
+  six candidates measured against it for arm 3.
 - **Three trials per cell** in most experiments; solve counts are directional, cost ratios are
   aggregates and more robust.
 - **Two AoC years**, 2024 and 2025 — a single problem domain with a cheap exact checker, which is
@@ -277,12 +312,35 @@ intermittency.
   the installed set on a cold start. Every experiment here pins its models with `--config`, so the
   ranking has nothing to choose between and the headline comparisons are unaffected by it. The
   strategy-weight half of the same mechanism is an unimplemented stub.
-- **One hardware configuration** for everything in this report *(a third machine, M5 Pro / 64 GB,
-  came up 2026-10-12; it has not changed any arm's status)*. Faster hardware would refine the capability numbers (larger models
-  fit, and execution-timeout "speed walls" move) and the wall-clock economics of arm 2, and would
-  unblock the still-missing tests — k=5 for a dose-response curve, an arm-3 model pair, and AoC 2026
-  as a clean contamination check. It is *not* expected to change the orchestration mechanism, which
-  holds the model and machine fixed.
+- **Hardware:** arms 1 and 2 were measured on one machine; a third, M5 Pro / 64 GB (2026-10-12),
+  narrowed arm 1 under the corrected prompts and measured arm 3. Faster hardware moves the
+  capability numbers (larger models fit, execution-timeout "speed walls" move) and arm 2's
+  wall-clock economics. Still missing: k=5 for a dose-response curve, and AoC 2026 as a clean
+  contamination check.
+
+## Practical recommendations
+
+For a verifier-gated setup like this one (a cheap, exact check picks among candidates), from what
+was measured with local models of about 30B:
+
+1. **Spend extra draws where a single draft succeeds part of the time.** At roughly 25–75% per
+   draft, three draws lift the solve rate sharply; near 0% or near 100% they buy little. Measure
+   the per-draft rate first.
+2. **Don't count on repair to rescue hard problems.** Feedback with true example results and
+   too-high/too-low hints rescued nothing for the reference on its hard cells (2 of its 145 solves
+   came from repair); another model's repairs did better (14 of 131). A fresh draft or a different
+   model is the more reliable second try.
+3. **Check whether failures are timeouts.** Many hard-cell failures pass the example and run out of
+   time on the full input. Asking for an efficient algorithm, or allowing more execution time,
+   addresses a different limit from a bigger model.
+4. **Choose a second model by measurement, not by its maker.** Of six candidates, one reliably
+   solved something the reference missed, and no cell was found where the reference reliably beat
+   it, so a mix had nothing to add. Measure each model alone on your failure cases and on your
+   successes; often one model should replace the other rather than join it.
+5. **Confirm any lead with more trials before acting on it.** Three trials found two leads that
+   did not survive ten (Ornith on 2024 d14 p2, the reference on 2024 d15 p2).
+6. **Without a cheap checker, none of this is measured.** Consensus here only ranks candidates;
+   the oracle decides. Majority voting without a checker is a different arrangement.
 
 ## Where this generalizes, and where it doesn't
 

@@ -123,9 +123,12 @@ predicted (1–3): 2024 d15 p2 and d20 p2, both 1/3 for muse and thin.
 **Portfolio deciders done 2026-11-08: neither lead holds.** 2024 d15 p2: the reference 0/10, so
 muse's run was dropped; d20 p2: 9/10 against muse's 6/10, p = 0.15. No cell favours the
 reference, stage C was not run, and arm 3 ends here as one-way: muse beats the reference on
-2024 d14 p2 and nothing the other way was found. Next: the documentation coherence pass (arm
-verdicts, repair and timeout findings, corpus line, practical recommendations). **Nothing is
-running.**
+2024 d14 p2 and nothing the other way was found.
+
+**Documentation coherence pass done 2026-11-08:** README and RESULTS carry arm 1's narrowing, arm
+3's result, the repair and timeout findings, the recomputed corpus line (88 runs, 68 solutions)
+and a practical-recommendations section (`RESULTS.md`). Open: a powered arm-1 test on 2025 d9 p2;
+AoC 2026 as the contamination check in December. **Nothing is running.**
 
 **Order from here** (`PLAN.md`, M5 Pro step 4): ~~fix the example pairing~~ (done) → ~~run 3~~ (done) → ~~rescan the
 Part 2s recorded as failing or "sometimes"~~ (done) → ~~k1-vs-k3 on whatever band survives~~ (done) → re-choose the
