@@ -112,7 +112,8 @@ on 2026-11-02 put both models at 1/10, so no ensemble ran
 (`dev/progress/arm3-precheck-ornith-1-5-35b.md`). On 2026-11-05 `gemma4:31b` did not meet the
 criterion: 2024 d14 p2 1/3, the other cells 0/3 (`dev/progress/arm3-precheck-gemma4-31b.md`). On
 2026-11-06 `muse-glimmer:30b` met it on 2024 d14 p2 with 9 of 9 drafts against 3 of 12, and a
-10-trial decider held it, 10/10 against 1/10; the ensemble is next (`dev/progress/arm3-precheck-muse-glimmer-30b.md`).*
+10-trial decider held it, 10/10 against 1/10; a portfolio test against each model at equal draws is under way
+(`dev/progress/arm3-portfolio-test.md`) (`dev/progress/arm3-precheck-muse-glimmer-30b.md`).*
 
 Three ensemble attempts all failed at the **entry condition**, not at the mechanism:
 
