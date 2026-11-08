@@ -382,8 +382,9 @@ problems. In order:
       2–4 h each) → stage B, choose cells with winners both ways → stage C, the ensemble at 3 + 3
       against each model alone at 6, about 20–27 h in parts. No cell where the reference wins → no
       stage C; arm 3 is recorded as one-way dominance.
-      Stage A done 2026-11-08, 5.9 h: two reference-favoured cells, 2024 d15 p2 and d20 p2. Next: their
-      deciders, both models at k1, 10 trials each (four runs, about 1.5–2.5 h each).
+      Stage A done 2026-11-08, 5.9 h: two reference-favoured cells, 2024 d15 p2 and d20 p2.
+      ✅ **Deciders done 2026-11-08: neither holds** (d15 p2 reference 0/10; d20 p2 9/10 against
+      6/10, p = 0.15). Stage C not run; arm 3 recorded as one-way (`arm3-portfolio-test.md`).
 
    **Procedure, per model, in that order** (steps 1 and 2 done 2026-11-01 for all three: 6/6 each
    on the plumbing check, predictions in `arm3-precheck-gemma4-31b.md`,
