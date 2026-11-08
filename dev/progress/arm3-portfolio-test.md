@@ -1,4 +1,4 @@
-# Arm 3 portfolio test: `qwen3.8:27b` with `muse-glimmer:30b` (stage A: two cells favour the reference; deciders registered)
+# Arm 3 portfolio test: `qwen3.8:27b` with `muse-glimmer:30b` — no cell favours the reference; stage C not run
 
 Arm 3 claims that models from different makers fail on different problems, so a mix of them
 covers more than any one. `muse-glimmer:30b` is the first candidate to pass the entry criterion
@@ -125,6 +125,41 @@ trial whose Part One fails counts as a Part Two not solved.
 - **If neither holds,** no cell favours the reference, stage C is not run, and arm 3 is recorded
   as one-way dominance on these cells.
 
-## Result
+## Decider results (2026-11-08): neither lead holds; the prediction held
 
-Deciders not yet run.
+| cell | reference, k1 | muse, k1 | one-sided p | lead holds |
+|---|---|---|---|---|
+| 2024 d15 p2 | **0/10** (0 of 7 reached) | 1/3 in stage A; decider not run | — | no |
+| 2024 d20 p2 | **9/10** (9 of 9 reached) | **6/10** (6 of 7 reached) | 0.15 | no |
+
+Runs: `m5pro-d15p2-ref-k1-n10`, `1ac712678732`, 6,862 s, 765k tokens
+(`dev/experiments/20261108T140905Z_m5pro-d15p2-ref-k1-n10_1ac712678732.json`);
+`m5pro-d20p2-ref-k1-n10`, `1ac712678732`, 6,123 s, 515k tokens
+(`20261108T162848Z_m5pro-d20p2-ref-k1-n10_1ac712678732.json`); `m5pro-d20p2-muse-k1-n10`,
+`a9ae29f29a7a`, 8,476 s, 448k tokens (`20261108T181103Z_m5pro-d20p2-muse-k1-n10_a9ae29f29a7a.json`).
+
+- **2024 d15 p2: the reference solved none.** Its Part One was 7/10; of the 7 Part Twos reached,
+  4 gave wrong answers and 3 crashed, and no repair was accepted. A reference at 0/10 cannot
+  solve more than muse, so **muse's d15 p2 decider was not run**: one of the four registered runs,
+  dropped because no result of it could change the decision. Muse's 1/3 in stage A is the better
+  record.
+- **2024 d20 p2: 9/10 against 6/10, p = 0.15.** The reference is ahead, not shown to be. Muse's
+  four misses were three failed Part Ones (Part One 7/10, against the reference's 9/10) and one
+  Part Two with a wrong answer; of the Part Twos it reached it solved 6 of 7, three of them by
+  repair.
+- **Correction, the reference's d15 p2 record.** Its 3/3 at k3 under the new defaults
+  (`part2-prompt-omits-part1.md`) came from a run with a shared GPU that left only a log. Here, at
+  k1 and GPU free, it is 0 of 7 reached. A per-draft rate low enough for 0 of 7 makes 3/3 at k3
+  unlikely; the 3/3 stands as logged but does not describe the reference's rate on this cell.
+
+## Result: no cell favours the reference; stage C not run
+
+Arm 3 needed cells where each model beats the other. Muse beats the reference on 2024 d14 p2
+(10/10 against 1/10) and solved 2024 d21, which the reference never has. No cell was found where
+the reference beats muse: of the two candidates from stage A, one went to muse and one is not
+separable at 10 trials. On these cells, choosing muse gives the gain an ensemble could, so the
+ensemble against each model at equal draws was not run.
+
+What this does not show: that an ensemble cannot beat its best member somewhere. Differences
+smaller than 9/10 against 4/10 are not detected at 10 trials, and the cells are those the
+reference solves or once failed, not a sample of all problems.

@@ -95,6 +95,9 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m5pro-64** | muse-glimmer:30b | tk-off **samp3**, fallback off, **ctx=aoc, example_tests=page** | arm-3 entry cells: 2024 d14, d17, d21, d24; 2025 d10 | 3 | 18/28 (d14 p2 3/3; d17 p2 1/3; d21 p1 1/3, p2 1/1; d24 p2, 2025 d10 p2 0/3; 2 not reached) | 64% | `arm3-precheck-muse-glimmer-30b.md` |
 | **m5pro-64** | muse-glimmer:30b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d14 p1 then p2 (decider) | 10 | 20/20 (p1 10/10, p2 10/10) | 100% | `arm3-precheck-muse-glimmer-30b.md` |
 | **m5pro-64** | muse-glimmer:30b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | portfolio stage A: 14 Part 2s the reference solves (2024 d6, 9, 11, 13, 15, 16, 18, 19, 20, 22; 2025 d2, 4, 9, 11) and their Part 1s, three batches | 3 | 74/82 (Part 2 34/42, Part 1 40/42; 2 not reached) | 90% | `arm3-portfolio-test.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d15 p1 then p2 (decider) | 10 | 7/17 (p1 7/10, p2 0/7; 3 not reached) | 41% | `arm3-portfolio-test.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d20 p1 then p2 (decider) | 10 | 18/19 (p1 9/10, p2 9/9; 1 not reached) | 95% | `arm3-portfolio-test.md` |
+| **m5pro-64** | muse-glimmer:30b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d20 p1 then p2 (decider) | 10 | 13/17 (p1 7/10, p2 6/7; 3 not reached) | 76% | `arm3-portfolio-test.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).

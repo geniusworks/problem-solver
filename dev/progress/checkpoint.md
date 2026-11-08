@@ -118,9 +118,14 @@ misses.
 
 **Portfolio test stage A done 2026-11-08** (`arm3-portfolio-test.md`): muse on 14 Part 2s the
 reference solves, 34/42 Part 2 trials and 40/42 Part 1s. Two cells favour the reference, as
-predicted (1–3): 2024 d15 p2 and d20 p2, both 1/3 for muse and thin. Next: their four deciders
-(about 1.5–2.5 h each), registered in the same doc; stage C runs only if one holds.
-**Nothing is running.**
+predicted (1–3): 2024 d15 p2 and d20 p2, both 1/3 for muse and thin.
+
+**Portfolio deciders done 2026-11-08: neither lead holds.** 2024 d15 p2: the reference 0/10, so
+muse's run was dropped; d20 p2: 9/10 against muse's 6/10, p = 0.15. No cell favours the
+reference, stage C was not run, and arm 3 ends here as one-way: muse beats the reference on
+2024 d14 p2 and nothing the other way was found. Next: the documentation coherence pass (arm
+verdicts, repair and timeout findings, corpus line, practical recommendations). **Nothing is
+running.**
 
 **Order from here** (`PLAN.md`, M5 Pro step 4): ~~fix the example pairing~~ (done) → ~~run 3~~ (done) → ~~rescan the
 Part 2s recorded as failing or "sometimes"~~ (done) → ~~k1-vs-k3 on whatever band survives~~ (done) → re-choose the

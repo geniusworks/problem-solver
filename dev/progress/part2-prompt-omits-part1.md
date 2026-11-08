@@ -235,6 +235,10 @@ Two runs, both fingerprint `839b40f0bfa8` (`samples_per_model=3`, 3 trials):
 | 2025 d9 Part One | 2/3 | 3/3 | 3/3 | 6/6 |
 | 2025 d9 Part Two | 0/3 (0/22 overall) | 1/2 (1 cut off) | **2/3** | **3/5** |
 
+*Correction 2026-11-08: at k1 with the GPU free the reference solved 2024 d15 p2 in 0 of 7
+trials that reached it (`arm3-portfolio-test.md`). The 3/3 above is from the logged run with a
+shared GPU and overstates its rate on that cell.*
+
 - **2025 d9 p2 is not a wall.** It was 0 of 22 problem-trials under the old prompt, across every
   configuration tried. Under the new defaults it is 3 of 5 at three drafts. In the d9 rerun, 3 of
   its 9 first drafts were accepted, two in trial 0 and one in trial 2. A

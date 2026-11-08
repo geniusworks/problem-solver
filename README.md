@@ -501,9 +501,11 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
   (`dev/progress/arm3-precheck-ornith-1-5-35b.md`). A fifth, `gemma4:31b`, did not meet it
   (2026-11-05, `dev/progress/arm3-precheck-gemma4-31b.md`). A sixth, `muse-glimmer:30b`, met it on
   the same cell with every draft correct (9 of 9 against the reference's 3 of 12; 2026-11-06), and
-  gave the first verified 2024 d21; a 10-trial decider held it, 10/10 against 1/10, and a
-  portfolio test against each model at equal draws is under way (`dev/progress/arm3-portfolio-test.md`)
-  (`dev/progress/arm3-precheck-muse-glimmer-30b.md`).
+  gave the first verified 2024 d21; a 10-trial decider held it, 10/10 against 1/10
+  (`dev/progress/arm3-precheck-muse-glimmer-30b.md`). A portfolio test then looked for cells where
+  the reference beats muse, so that a mix could beat both at equal draws; none held (2026-11-08,
+  `dev/progress/arm3-portfolio-test.md`), so no ensemble ran: on these cells, choosing muse gives
+  the gain.
 - **A clean contamination test:** evaluating on problems published *after* the model's training cutoff
   (AoC 2026, in December) is the cheapest genuinely-unseen test available.
 - **Every Part 2 result above was measured without the Part 1 statement in the prompt** (found
