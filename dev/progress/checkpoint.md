@@ -114,7 +114,12 @@ same doc.
 
 **Muse's 2024 d14 p2 decider done 2026-11-06: 10/10 against the reference's 1/10** (k1, p =
 0.0001). The lead holds: the first candidate to reliably solve a cell the reference reliably
-misses. Next: the portfolio test (`arm3-portfolio-test.md`), stage A batch 1, about 2–4 h.
+misses.
+
+**Portfolio test stage A done 2026-11-08** (`arm3-portfolio-test.md`): muse on 14 Part 2s the
+reference solves, 34/42 Part 2 trials and 40/42 Part 1s. Two cells favour the reference, as
+predicted (1–3): 2024 d15 p2 and d20 p2, both 1/3 for muse and thin. Next: their four deciders
+(about 1.5–2.5 h each), registered in the same doc; stage C runs only if one holds.
 **Nothing is running.**
 
 **Order from here** (`PLAN.md`, M5 Pro step 4): ~~fix the example pairing~~ (done) → ~~run 3~~ (done) → ~~rescan the

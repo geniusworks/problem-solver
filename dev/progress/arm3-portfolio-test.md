@@ -1,4 +1,4 @@
-# Arm 3 portfolio test: `qwen3.8:27b` with `muse-glimmer:30b` (registered, stage A not yet run)
+# Arm 3 portfolio test: `qwen3.8:27b` with `muse-glimmer:30b` (stage A: two cells favour the reference; deciders registered)
 
 Arm 3 claims that models from different makers fail on different problems, so a mix of them
 covers more than any one. `muse-glimmer:30b` is the first candidate to pass the entry criterion
@@ -62,6 +62,69 @@ bias runs the other way here: these cells were chosen because the reference solv
 among the 14, most likely among the reference's harder ones (2024 d15 p2, d16 p2; 2025 d9 p2).
 Muse solves at least 2 of 3 trials on the rest.
 
+## Stage A result (2026-11-08): two reference-favoured cells; the prediction held
+
+Three runs, fingerprint `a9ae29f29a7a`, 3 trials each, GPU free, 21,076 s in all, 1.11M tokens:
+`dev/experiments/20261107T064550Z_m5pro-arm3-muse-sweep-b1_a9ae29f29a7a.json`,
+`20261107T153106Z_m5pro-arm3-muse-sweep-b2_a9ae29f29a7a.json`,
+`20261108T071536Z_m5pro-arm3-muse-sweep-b3_a9ae29f29a7a.json`. 74 of 82 reached cells solved; 0
+wrong, 0 overfit; ledger unchanged (68).
+
+| Part 2 | muse, k1 | reference on record | Part 1, muse |
+|---|---|---|---|
+| 2024 d6 | 2/3 | 3/3 k1 | 3/3 |
+| 2024 d9 | 3/3 | 2/3 k1, 3/3 k3 | 3/3 |
+| 2024 d11 | 3/3 | 3/3 k1 | 3/3 |
+| 2024 d13 | 3/3 | 3/3 k1 | 3/3 |
+| **2024 d15** | **1/3** | **3/3 k3** | 3/3 |
+| 2024 d16 | 2/3 | 3/3 | 3/3 |
+| 2024 d18 | 3/3 | 3/3 k1 | 3/3 |
+| 2024 d19 | 3/3 | 19/19 | 3/3 |
+| **2024 d20** | **1/3** (1 not reached) | **3/3 k1, 3 of 3 drafts** | 2/3 |
+| 2024 d22 | 3/3 | 3/3 k1 | 3/3 |
+| 2025 d2 | 3/3 | 3/3 k1 | 3/3 |
+| 2025 d4 | 3/3 | 2/3 k1, 3/3 k3 | 3/3 |
+| 2025 d9 | 1/3 (1 not reached) | 3/5 k3, 3 of 9 drafts | 2/3 |
+| 2025 d11 | 3/3 | 3/3 k1 | 3/3 |
+| **total** | **34/42** | | **40/42** |
+
+- **Two cells favour the reference, within the predicted 1–3**: 2024 d15 p2 and d20 p2. The
+  location was half right: d15 p2 was named, d20 p2 was not; d16 p2 (2/3) does not qualify.
+- **2025 d9 p2 does not qualify.** The reference's 3/5 is under 2 of 3, and at k3; its per-draft
+  rate is 3 of 9, about what muse showed at k1.
+- **The two qualifying cells are thin.** On d15 p2 both failures were too-low answers that repair
+  did not move. On d20 p2 one trial was not reached (d20 p1 failed) and one produced no code.
+  The reference's d15 p2 record is at k3, against muse at k1.
+- **Two of muse's eight failures produced no code because the reply hit the output length
+  limit** (`done_reason=length`, d6 p2 and d20 p2). That counts against muse under the harness's
+  token cap, not as a wrong answer.
+- **On cells the reference solves, muse is close to it:** 34 of 42 Part 2 trials and 40 of 42
+  Part 1s, against a reference record of 2/3 or better on every cell.
+
+## Deciders: 2024 d15 p2 and d20 p2 at k1, 10 trials each (registered 2026-11-08, before the runs)
+
+```
+B="temperature=0.7,samples_per_model=1,enable_thinking=false,enable_fallback_models=false"
+venv/bin/python experiment.py --problems 2024:15.2 --trials 10 --config "name=m5pro-d15p2-ref-k1-n10,models=qwen3.8:27b,$B"
+venv/bin/python experiment.py --problems 2024:15.2 --trials 10 --config "name=m5pro-d15p2-muse-k1-n10,models=muse-glimmer:30b,$B"
+venv/bin/python experiment.py --problems 2024:20.2 --trials 10 --config "name=m5pro-d20p2-ref-k1-n10,models=qwen3.8:27b,$B"
+venv/bin/python experiment.py --problems 2024:20.2 --trials 10 --config "name=m5pro-d20p2-muse-k1-n10,models=muse-glimmer:30b,$B"
+```
+
+Four runs, about 1.5–2.5 h each, runnable one at a time. Same rules as the entry deciders: a
+trial whose Part One fails counts as a Part Two not solved.
+
+- **Rule:** the reference's lead holds on a cell if it solves more Part Twos than muse,
+  one-sided Fisher exact p < 0.05 (for example 10 against 6 or fewer, 9 against 4, 8 against 3).
+  A cell enters the portfolio only if its lead holds.
+- **Prediction, 2024 d15 p2: the lead does not hold.** Expected reference 4–8 of 10, muse 1–4.
+  The reference's 3/3 was at k3, with no per-draft count on record, and its old-prompt per-draft
+  rate was about 1 in 8.
+- **Prediction, 2024 d20 p2: the lead does not hold.** Expected reference 9–10 of 10, muse 5–8:
+  muse's two misses were a missed Part One and a length cut-off, not wrong answers.
+- **If neither holds,** no cell favours the reference, stage C is not run, and arm 3 is recorded
+  as one-way dominance on these cells.
+
 ## Result
 
-Not yet run.
+Deciders not yet run.
