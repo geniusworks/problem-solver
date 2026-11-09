@@ -2,7 +2,7 @@
 
 import logging
 import re
-from typing import Tuple
+from typing import Match, Tuple
 
 import autopep8
 import black
@@ -116,7 +116,7 @@ def format_code(source_code: str) -> Tuple[str, bool]:
         # so debug output printed before the answer is already harmless.
 
         # Fix f-strings with assignment expressions
-        def fix_fstring_assignments(match):
+        def fix_fstring_assignments(match: Match[str]) -> str:
             """Fix f-string that contains assignment expressions."""
             content = match.group(1)
             # Replace value=var with str(var)

@@ -60,7 +60,7 @@ def export(source: Path, target: Path) -> dict:
             "config": json.dumps(config, sort_keys=True),
         })
         # Files written before trials were numbered list each problem's trials in order.
-        seen = defaultdict(int)
+        seen: defaultdict = defaultdict(int)
         for result in run.get("results", []):
             pid = result["problem_id"]
             trial = result.get("trial", seen[pid])

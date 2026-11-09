@@ -18,14 +18,14 @@ class LLMResponse:
 class LLMProvider(ABC):
     """Base class for LLM providers."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         self.config = kwargs
         self.name = self.__class__.__name__
 
     @abstractmethod
     async def generate_solution(
         self, 
-        problem,
+        problem: Any,
         year: int,
         day: int,
         strategies: Optional[List[str]] = None,
@@ -40,7 +40,7 @@ class LLMProvider(ABC):
         pass
 
     @abstractmethod
-    def validate_solution(
+    async def validate_solution(
         self, solution: str, test_cases: List[Dict[str, str]]
     ) -> bool:
         """Validate a solution against test cases."""
@@ -59,7 +59,7 @@ class LLMProvider(ABC):
         pass
 
     @abstractmethod
-    async def improve_solution(self, solution: str, problem, feedback: Optional[str] = None) -> str:
+    async def improve_solution(self, solution: str, problem: Any, feedback: Optional[str] = None) -> str:
         """Improve an existing solution based on feedback.
 
         Args:

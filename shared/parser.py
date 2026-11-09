@@ -4,7 +4,7 @@ import json
 import logging
 import re
 try:
-    from bs4 import BeautifulSoup  # type: ignore
+    from bs4 import BeautifulSoup
 except Exception:  # ImportError or others
     BeautifulSoup = None  # Fallback to plain-text parsing when bs4 unavailable
 from dataclasses import dataclass, field
@@ -272,7 +272,7 @@ def _extract_examples(article: BeautifulSoup) -> List[TestCase]:
     "a total distance of 11").
     """
     logger.debug("Starting example extraction...")
-    examples = []
+    examples: List[TestCase] = []
 
     # Find all pre blocks
     pre_blocks = article.find_all("pre")

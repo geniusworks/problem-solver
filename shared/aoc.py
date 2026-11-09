@@ -161,7 +161,9 @@ async def make_request(url: str, timeout: int = 30) -> str:
             "User-Agent": config.USER_AGENT,
         }
         logger.debug("Request headers: %s", headers)
-        async with session.get(url, headers=headers, timeout=timeout) as response:
+        async with session.get(
+            url, headers=headers, timeout=aiohttp.ClientTimeout(total=timeout)
+        ) as response:
             logger.debug("Response status: %d", response.status)
             if response.status == 400:
                 raise SessionError("Authentication failed: Your session token appears to be invalid or expired. Please update AOC_SESSION in your .env file with a valid session cookie from adventofcode.com")
@@ -354,7 +356,6 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, A
         # each part is solved atomically. This avoids including Part Two
         # instructions when solving Part One and vice versa.
         # Return HTML (not just text) so parse_problem_text can use HTML parsing.
-        problem_text: str
         articles = soup.find_all("article", class_="day-desc") if soup else []
         if articles:
             if part == 2 and len(articles) > 1:
@@ -527,7 +528,7 @@ def _extract_problem_text(soup: BeautifulSoup) -> str:
     """Extract problem text from BeautifulSoup object."""
     article = soup.find("article", class_="day-desc")
     if article:
-        return article.get_text()
+        return str(article.get_text())
     return ""
 
 
