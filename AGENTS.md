@@ -57,7 +57,9 @@ measured, not asserted. Secondarily, it's an AoC solver. See `README.md` for the
   - `dev/benchmarks/m2max-handoff.md` and other operational docs — correct anything a real run
     disproves.
   Correct your own record when a later run disproves an earlier claim, and say so in the doc — a
-  falsified claim is replaced with the correction, not silently deleted.
+  falsified claim is replaced with the correction, not silently deleted. A documentation mistake
+  (wrong count, stale status, overstated wording about existing data) is fixed in place with no
+  note: the docs are the source of truth for the project, not a log of their own edits.
 - **Don't narrate the prose.** Never add a phrase whose only job is to observe something the
   presentation, form, or wording already makes evident — *stated plainly*, *scoped precisely*, *in
   plain English*, *held plainly*, *to be clear*, *put simply*, or a heading that estimates its own
