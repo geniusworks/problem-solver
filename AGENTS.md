@@ -46,6 +46,10 @@ general code.
 - **Measure before building.** New orchestration ideas are A/B'd through the harness
   (`experiment.py --trials N`, comparing `SolverConfig` fingerprints), with a committed result set
   and a written delta in `dev/progress/`. Don't add capability on faith.
+- **Never start a run or a download without the maintainer's go.** Experiments, model pulls and
+  package installs all wait for an explicit yes, and so does anything outward-facing (publishing,
+  submitting to AoC). After a run, export it (`dev/export_results.py`), write it up and update the
+  docs, in one PR.
 - **Never conclude anything from `--trials 1` — including smoke tests.** The pipeline is
   non-deterministic: 4 of 6 problems flip between solved and unsolved across byte-identical configs
   (`dev/progress/baseline-2024-d1-3.md`). A single pass is a plumbing check, not a measurement. This
@@ -54,6 +58,14 @@ general code.
   (`dev/progress/ollama-0.32.14-runtime-check.md`). Pre-run checks use `--trials 3`.
 - **The oracle is authoritative.** Nothing counts as solved without independent verification against
   the cached accepted answer; keep `dev/verify_solutions.py` green.
+- **Model-written code runs only through `shared/sandbox.py`**: an environment without `.env`
+  secrets, under resource limits. A new code path that executes generated code uses it; none may
+  inherit `os.environ`.
+- **An instrument change is recorded before results are compared.** Ollama, a model, the machine,
+  or a package on the measurement path (`requirements.lock`) changing goes into
+  `dev/benchmarks/cross-machine-results.md`, then the `--trials 3` pre-run check. Where a cheaper
+  direct check exists, run it first (the autopep8 upgrade was checked by comparing formatter output
+  on all 74 recorded programs: byte-identical).
 - **Docs currency is a standing rule, not a courtesy.** This is a research project: a stale doc is
   a wrong claim. Every PR that changes what is true must update the docs that state it, in the same
   PR — never in a later pass. The doc map, so nothing is missed:
@@ -69,17 +81,38 @@ general code.
   - `README.md` — only when a *claim* it makes changes (findings, status, thesis).
   - `dev/benchmarks/m2max-handoff.md` and other operational docs — correct anything a real run
     disproves.
+  Some facts are repeated across docs: counts (tests, ledger, corpus), versions, and the open
+  items. A PR that changes one searches for the old value and updates every occurrence. The
+  open-items lists in `PLAN.md`, `checkpoint.md` and README agree: priority order, each item saying
+  what it waits on (a maintainer decision, code, or GPU time).
   Correct your own record when a later run disproves an earlier claim, and say so in the doc — a
   falsified claim is replaced with the correction, not silently deleted. A documentation mistake
   (wrong count, stale status, overstated wording about existing data) is fixed in place with no
   note: the docs are the source of truth for the project, not a log of their own edits.
+- **Published results lead with what is true now.** Current findings first, the history of how
+  they changed below. A headline compares like with like (same draft count, problems and
+  settings), or names every difference; its caveat sits beside it, not in a later section. Say
+  whether a test is one- or two-sided; round a lower bound down, never up; keep what was measured
+  apart from what is argued. Every figure README, RESULTS or the social card publishes is a claim
+  in `dev/recompute_results.py`.
+- **Prune in the PR that orphans something.** A file, dependency (`requirements*.txt`,
+  `requirements.lock`, `mypy.ini`), code path, config section, diagram or doc that nothing uses or
+  links any more is deleted in the same PR. History lives in git, not in stale files, and docs
+  name only what exists.
+- **Check a claim before acting on it**, whoever made it: an outside review, an earlier doc, or
+  this agent's own last message. Recompute numbers from `dev/results/`, read the code a claim is
+  about, and name the claims that were wrong or overstated.
 - **Don't narrate the prose.** Never add a phrase whose only job is to observe something the
   presentation, form, or wording already makes evident — *stated plainly*, *scoped precisely*, *in
   plain English*, *held plainly*, *to be clear*, *put simply*, or a heading that estimates its own
   reading time. If a passage is plain, it reads as plain; saying so adds a word and no information.
   Name the content instead: "Six findings and their numbers", not "Six findings, each a
   plain-language claim first, then the numbers".
-- **Run tests:** `PYTHONPATH=. venv/bin/pytest -q`.
+- **Tests are part of the change.** Run them with `PYTHONPATH=. venv/bin/pytest -q`. Passing is
+  not the same as covering: a PR that adds or changes behaviour adds a test that fails without it,
+  and a bug fix adds the test that reproduces the bug. Never weaken, skip or delete a test to make
+  it pass. Tests that need `years/` skip when it is absent. CI (tests, `mypy`,
+  `dev/recompute_results.py --check`) passes before merge.
 - **Never commit secrets or PII.** Configuration goes through `.env` (gitignored); see `.env.example`.
 
 ## Reproducing experiments
