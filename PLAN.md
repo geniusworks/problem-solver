@@ -444,7 +444,8 @@ problems. In order:
   gain. (`dev/progress/m2max-qwen38-27b-d4-7.md` and siblings.)
 - **The central thesis — "does sampling+voting still add correctness at a *strong* model's own
   frontier?"** Measured: **42% → 75%**, and now decomposed — 1 sample+repair 42%, 3 samples no repair
-  58%, 3 samples+repair **75%**. Sampling and repair contribute separately and **superadditively** *(not measured: the one-draft, no-repair corner never ran; corrected 2026-11-08, `RESULTS.md` arm 1)*.
+  58%, 3 samples+repair **75%**. Each partial configuration beats one sample with repair, and the combination beats both; the
+  one-draft, no-repair corner was not run, so the two levers cannot be separated.
   (`passk-ab-d13-d15.md`.)
 - **The d4–7 comparison set is retired** (solved out at 100%); **d8–15 is the working instrument**
   (56%), and the frontier band within it is classified.

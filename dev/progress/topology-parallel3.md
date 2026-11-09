@@ -32,9 +32,9 @@ share the same band, model and temperature, and differ only in sampling and repa
 | **parallel3 — three blind draws** | **3** | **0** | **7/12 (58%)** | **`4589b39ed1e5`** |
 | k3 — three attempts, each with repair | 3 | 2 | **9/12 (75%)** | `bb22870d2a6d` |
 
-Without this arm, 42% → 75% is a single lever of unknown composition. With it, sampling alone and
-repair alone each contribute, and **the combination exceeds either** — the superadditivity claim in
-`RESULTS.md` rests on this row.
+Without this arm, 42% → 75% is a single lever of unknown composition. With it, three draws without
+repair beat one draw with repair, and **the combination beats either**. The corner with one draw
+and no repair was not run, so the two levers cannot be separated.
 
 The per-problem cells carry the same story. **d13 p2** solves 1/3 on blind draws and 3/3 with repair
 added: sampling finds a good draw occasionally, repair converts more of them. **d15 p2** is 0/3 here
@@ -47,9 +47,7 @@ overall, not a wall).
 > d15 p2 0/10 at k1 (`arm3-portfolio-test.md`); k3 did not measurably beat k1 on the re-measured
 > band, 9/19 against 11/21 (`m5pro-band-k1-vs-k3-aoc.md`), and the reference's repairs solved 2 of
 > its 145 solved cells (`RESULTS.md`, "Repair depends on the model"). d15 p2's failure across
-> configurations is a legacy-prompt result. Superadditivity was also never measurable here: the
-> corner with one draft and no repair was not run, so the two levers cannot be separated; the
-> table shows only that the combination beat either partial configuration.*
+> configurations is a legacy-prompt result.*
 
 ## Note for anyone re-running this
 

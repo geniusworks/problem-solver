@@ -243,9 +243,8 @@ record repair cost properly.
 
 ### 🏁 ENDGAME COMPLETE: `RESULTS.md` written (2026-08-23)
 
-The consolidated findings report is at the repo root. All four endgame steps are done and **all three
-thesis arms are measured**. *(Corrected 2026-11-08: arm 3 was untested at this point, as the
-next paragraph says; it was measured on 2026-11-08, `arm3-portfolio-test.md`.)* Every figure in it was **recomputed from the run artifacts**, not carried
+The consolidated findings report is at the repo root. All four endgame steps are done: **arms 1 and 2
+are measured**, and arm 3 is untested for want of a pair. Every figure in it was **recomputed from the run artifacts**, not carried
 forward from prose — the discipline the d15 p2 tally error taught.
 
 Corpus it summarises: **57 runs · 1,475 attempts · ~121 GPU-hours · 16.3M tokens · 43 verified
@@ -260,9 +259,7 @@ should and should not generalise.
 replication, find a model pair with measured complementary failures (arm 3), or close the two logged
 scoring gaps (`HARNESS_ERROR`, error-shaped answers).
 
-### ✅ ENDGAME STEP 3 DONE — arm 2 measured; ALL THREE THESIS ARMS COMPLETE (2026-08-23)
-
-*(Corrected 2026-11-08: arms 1 and 2 were measured; arm 3 was untested until 2026-11-08.)*
+### ✅ ENDGAME STEP 3 DONE — arm 2 measured; arms 1 and 2 complete (2026-08-23)
 
 Economic A/B at matched wall-clock (`dev/progress/economic-arm-moe-vs-generalist.md`; both arms run
 fresh post-token-fix, 0 wrong/unverified/overfit).

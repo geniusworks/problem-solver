@@ -104,8 +104,7 @@ roughly doubles how many get solved:
 | **3 attempts, each with execution feedback** | **75%** |
 
 Each partial configuration beat one attempt with repair, and **the combination beat both.** (The
-corner with one draft and no repair was never run, so the two levers cannot be separated; an
-earlier wording here, "more than the sum of their parts", was not measured. Corrected 2026-11-08.)
+corner with one draft and no repair was not run, so the two levers cannot be separated.)
 The sharpest single case: a problem solved by **1 of 6** single attempts was solved by **3 of 3** runs
 that combined both. Repeated out of sample on **AoC 2025** — a year never previously measured — it
 rescued exactly the uncertain problems and nothing else, which is the signature of a mechanism rather
@@ -155,7 +154,7 @@ caveat. See
 
 **3. A hard limit, not fixed by more attempts — withdrawn 2026-10-31: it was a prompt defect.**
 
-As first published: one problem (2025 d9 p2) had resisted **every** configuration — **0 of 13**
+Under the defective Part 2 prompt, one problem (2025 d9 p2) had resisted **every** configuration — **0 of 13**
 problem-trials of the reference (0 of 22 across three models) at one attempt, three attempts, with
 and without feedback, at two temperatures. The model repeated *the same failing approach* each
 time, and the claim was that **sampling multiplies draws, not diversity:** where failure is

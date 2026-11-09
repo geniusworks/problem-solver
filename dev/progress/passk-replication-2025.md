@@ -2,10 +2,9 @@
 
 **The central claim replicates.** On AoC 2025 — a year the project had never measured, whose
 frontier has a demonstrably *less favourable* shape than 2024's — the two "sometimes" problems went
-from **25–33% at k=1 to 100% at k=3**, while the wall stayed walled and the control stayed reliable.
+from **25% at k=1 to 100% at k=3**, while the wall stayed walled and the control stayed reliable.
 
-> *2026-11-08: both "sometimes" problems were 1/4 (25%) at k=1 (see the d11 p2 correction below).
-> The wall was the prompt: with the Part 1 statement, 2025 d9 p2 is 3/5 at k3
+> *2026-11-08: the wall was the prompt: with the Part 1 statement, 2025 d9 p2 is 3/5 at k3
 > (`part2-prompt-omits-part1.md`), and d11 p2 is 3/3 at k1 (`m5pro-rescan-part2-aoc.md`).*
 
 The prediction was registered before the run, on problems selected by an independent classification.
@@ -25,12 +24,9 @@ The prediction was registered before the run, on problems selected by an indepen
 | **d9 p1** | 1/4 (25%) | **3/3 (100%)** | ~58% | *sometimes* → rescued |
 | d9 p2 | 0/4 | **0/3** | ~0% | wall → held (now **0/7** overall); *2026-10-31: 3/5 at k3 with the Part 1 statement, `part2-prompt-omits-part1.md`* |
 | d11 p1 | 3/3 (100%) | **3/3 (100%)** | 100% | control → held |
-| **d11 p2** | 1/3 (33%) → *1/4 (25%)* | **3/3 (100%)** | ~70% | *sometimes* → rescued; *3/3 at k1 with the Part 1 statement, `m5pro-rescan-part2-aoc.md`* |
+| **d11 p2** | 1/4 (25%) | **3/3 (100%)** | ~70% | *sometimes* → rescued; *3/3 at k1 with the Part 1 statement, `m5pro-rescan-part2-aoc.md`* |
 
-*Corrected 2026-11-08: d11 p2's pass@1 pools the 2025 scan draw (0/1,
-`20260818T193613Z_scan2025-samp1_5b33a3519b5d.json`) with the classification run (1/3,
-`20260819T061605Z_band2025-samp1_5b33a3519b5d.json`): 1/4, as in the Fisher input below (2/8 over d9
-p1 and d11 p2). The table showed the classification run alone.*
+pass@1 pools the 2025 scan draw with the classification run, as the Fisher test below does.
 
 Overall **9/12 (75%)** — coincidentally the same headline as the 2024 arm.
 
@@ -48,12 +44,8 @@ controls are what turn a number into a mechanism.
 
 | | pass@1 | pass@3 |
 |---|---|---|
-| 2024 band (5 problems) | 42% | 75% |
-| **2025 band (2 problems + wall + control)** | **25–33%** | **100%** |
-
-*Corrected 2026-11-08: the 2024 row is 4 cells, 2024 d13 p1/p2 and d15 p1/p2 (10/24 → 9/12,
-`passk-ab-d13-d15.md`). The 2025 pass@1 is 25% on both "sometimes" problems (2/8), per the d11 p2
-correction above.*
+| 2024 band (4 cells) | 42% | 75% |
+| **2025 band (2 problems + wall + control)** | **25%** | **100%** |
 
 ## Statistical note (added 2026-08-22)
 

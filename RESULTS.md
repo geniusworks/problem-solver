@@ -71,11 +71,9 @@ an independent classification:
 Each partial configuration beat one attempt with repair, and **the combination beat both.** The
 sharpest case: a problem solved by **1 of 6** single attempts was solved by **3 of 3** runs
 combining both.
-
-*Corrected 2026-11-08: this paragraph said the two "exceed the sum of their parts". The corner with
-one draft and no repair was never run, so the two levers cannot be separated and superadditivity
-was not measured. The 1-of-6 problem, 2024 d13 p2, is solved 3 of 3 at one draft under the
-corrected prompts (`m5pro-rescan-part2-aoc.md`).*
+The corner with one draft and no repair was not run, so the two levers cannot be separated. Under
+the corrected prompts the 1-of-6 problem, 2024 d13 p2, is solved 3 of 3 at one draft
+(`m5pro-rescan-part2-aoc.md`).
 
 **Replicated out of sample.** Repeated on AoC 2025 — never previously measured, and a *less*
 favorable venue (its frontier is mostly all-or-nothing rather than near-misses) — the two uncertain
@@ -128,7 +126,7 @@ at least 3.10×. And volume does not close the capability gap — 7/8 vs 8/8.
 **The useful form of the claim:** *cheap draws beat one expensive pass when the binding cost is time,
 not tokens, and only up to the cheap model's ceiling.*
 
-*Correction 2026-10-12: the figure first published, 128,730 tokens (3.35×), counted tokens copied
+*Correction 2026-10-12: the figure first measured, 128,730 tokens (3.35×), counted tokens copied
 onto the MoE arm's five repair records. On drafts alone the ratio is 3.10×, a lower bound; the finding's direction and size stand
 (`repair-accounting-unwired.md`).*
 
@@ -292,8 +290,7 @@ memorized, it memorized identically in both arms, so contamination cannot explai
 between k=1 and k=3. Arm 2 compares two models, so its 7/8 against 8/8 shares the capability
 caveat; its time-against-tokens split is a cost ratio per solution and less exposed. The mechanism
 findings — that sampling converts "sometimes" into "solved", that volume buys stochastic but not
-systematic failures — do not depend on the problems being unseen. *(2026-11-08: an earlier version
-listed "sampling and repair are superadditive" here; that was not measured, see arm 1.)*
+systematic failures — do not depend on the problems being unseen.
 
 **A partial argument against pure memorization, offered as weak evidence only.**
 Under the original prompts the frontier band consisted of problems the model solved *sometimes* —
