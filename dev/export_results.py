@@ -32,7 +32,7 @@ TRIAL_FIELDS = ["run", "problem_id", "trial", "outcome", "winning_model", "wall_
                 "attempts_to_solve", "total_tokens"]
 ATTEMPT_FIELDS = ["run", "problem_id", "trial", "model", "stage", "repair_iteration",
                   "sample_index", "outcome", "input_tokens", "output_tokens",
-                  "wall_clock_seconds", "overfit_flagged"]
+                  "wall_clock_seconds", "examples_passed", "examples_total", "overfit_flagged"]
 
 
 def _duration(run: dict) -> float:

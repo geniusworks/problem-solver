@@ -545,8 +545,9 @@ one-way, so the ensemble was not run. Open, in priority order (`PLAN.md`, "Open"
 - **A clean contamination test:** AoC 2026, in December, is the first set of problems published
   after the models' training cutoff. It needs the answer submitter wired first: without it an
   unseen year cannot reach Part 2.
-- **Beyond AoC:** how far the results depend on an exact checker, measured with the worked
-  examples as the only check; then a second domain (`PLAN.md`, "Beyond AoC").
+- **Beyond AoC:** how far the results depend on an exact checker. Every attempt records the
+  worked examples' verdict beside the oracle's from 2026-11-09, so the next runs measure it; then
+  a second domain (`PLAN.md`, "Beyond AoC").
 - **Does the Part 1 context inform, or cue recall?** The headline's caveat, tested by paraphrased
   and information-stripped Part 1 text on public puzzles and by AoC 2026
   (`dev/progress/part2-context-heldout-plan.md`).
