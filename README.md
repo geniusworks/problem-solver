@@ -162,7 +162,8 @@ trials did not survive ten. (`arm3-precheck-muse-glimmer-30b.md`, `arm3-portfoli
 **4. Repair depends on the model, and what still fails is mostly speed.**
 
 Shown its own failure with true example results and a too-high/too-low hint, the reference fixed
-almost nothing: 2 of its 145 solves came from repair, against 14 of 131 for muse. On the hardest
+almost nothing: its repairs succeeded 2 times in 128 attempts, muse's 14 in 80 (on the problems
+both repaired, 1 in 118 against 8 in 67). On the hardest
 problems the commonest failure is a program that runs past the 60 s timeout on the full input (27 of
 51 failed attempts on two of them), often after passing the example. Larger models did not move
 those problems. (`m5pro-band-k1-vs-k3-aoc.md`, `arm3-portfolio-test.md`)
@@ -537,8 +538,10 @@ execute/verify → repair → fallback), the experiment harness with repeat tria
 configs, the correctness oracle and overfit gate, self-consistency and answer-based consensus, and
 **69 verified solutions** across two AoC years (`dev/verify_solutions.py` clean).
 
-**All three thesis arms are measured** ([What we learned](#what-we-learned)). Open, in priority
-order (`PLAN.md`, "Open"):
+**Each thesis arm has a verdict** ([What we learned](#what-we-learned)): sampling measured and
+replicated under the original harness, not yet re-established under the corrected one; economics
+splits by whether time or tokens is the binding cost; portfolios: the one complementary pair was
+one-way, so the ensemble was not run. Open, in priority order (`PLAN.md`, "Open"):
 - **A clean contamination test:** AoC 2026, in December, is the first set of problems published
   after the models' training cutoff. It needs the answer submitter wired first: without it an
   unseen year cannot reach Part 2.

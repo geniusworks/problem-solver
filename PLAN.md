@@ -5,8 +5,11 @@ roadmap got here.
 
 ## Open (as of 2026-11-09)
 
-All three thesis arms are measured (`RESULTS.md`). In priority order; nothing starts without the
-maintainer's go, and each item says what it waits on:
+Each thesis arm has a verdict (`RESULTS.md`): sampling measured and replicated under the original
+harness, not yet re-established under the corrected one; economics splits by whether time or tokens
+is the binding cost; portfolios: the one complementary pair was one-way, so the ensemble was not
+run. In priority order; nothing starts without the maintainer's go, and each item says what it waits
+on:
 
 1. **AoC 2026** (§4b), opening **2026-12-01**: the clean contamination test, and the only item
    with a deadline. *Waits on a maintainer decision:* submit automatically or by hand, and the
@@ -22,8 +25,10 @@ maintainer's go, and each item says what it waits on:
    AoC 2026 arm (cold against verbatim) runs with item 1.
 4. **A powered arm-1 test under the corrected prompts** on 2025 d9 p2, the one cell measured at a
    mid-range draft rate: k1 against k3, about 20 trials each for about 80% power, about
-   13 GPU-hours in chunks. *Waits on GPU time*; design and prediction registered first. A lift
-   triggers the conditional second reference model below.
+   13 GPU-hours in chunks. *Waits on GPU time*; design and prediction registered first. It needs
+   neither the AoC 2026 decision nor new code, so it can run whenever the GPU is free, ideally
+   after item 2 so the run records example verdicts. A lift triggers the conditional second
+   reference model below.
 
 ## Beyond AoC — the larger objective
 
@@ -49,6 +54,16 @@ have measured value here and some do not (mixing models lost to choosing one; re
    (registered prediction, `--trials` ≥ 3).
 
 None of this displaces AoC 2026, which has a date; step 1 can run alongside it.
+
+## Parked: speed-directed repair under the corrected harness
+
+On the hardest cells the commonest failure is now a timeout on the full input, often after the
+worked example passed (27 of 51 failed attempts on 2024 d24 p2 and 2025 d10 p2). The solver
+already carries repair guidance for exactly that case (`_efficiency_guidance` in
+`shared/solver.py`, behind `targeted_feedback`), but it was only measured under the original
+harness with mispaired example tests (`targeted-feedback-negative.md`), so it is untested where it
+would matter. **If** item 2's example verdicts confirm the passed-example-then-timeout pattern on
+those cells, A/B `targeted_feedback` on them under the corrected harness. Registered design first.
 
 ## Conditional: a second reference model
 

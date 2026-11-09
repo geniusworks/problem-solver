@@ -197,6 +197,25 @@ def arm3() -> str:
     return f"{frac(muse)} vs {frac(ref)}, p {2 * fisher_greater(*ref, *muse):.4f}"
 
 
+def repair_by_model() -> str:
+    """Repair attempts that solved, per model, under the corrected harness."""
+    corrected = {name for name, run in RUNS.items()
+                 if run["config"].get("problem_context", "legacy") == "aoc"}
+    repairs: Dict[str, List[dict]] = defaultdict(list)
+    for attempt in ATTEMPTS:
+        if attempt["run"] in corrected and int(attempt["repair_iteration"] or 0) > 0:
+            repairs[attempt["model"]].append(attempt)
+    ref, muse = repairs[REFERENCE], repairs["muse-glimmer:30b"]
+    shared = {a["problem_id"] for a in ref} & {a["problem_id"] for a in muse}
+
+    def rate(rows: List[dict]) -> str:
+        return f"{sum(a['outcome'] == 'solved' for a in rows)}/{len(rows)}"
+
+    return (f"{rate(ref)} vs {rate(muse)}; same problems "
+            f"{rate([a for a in ref if a['problem_id'] in shared])} vs "
+            f"{rate([a for a in muse if a['problem_id'] in shared])}")
+
+
 @dataclass
 class Claim:
     name: str
@@ -235,6 +254,9 @@ CLAIMS = [
           "1,389 s vs 891 s (0.64x); 38,460 vs >=119,068 tokens (>=3.09x)",
           {"RESULTS.md": ["| 7/8 | **891 s** (0.64×) | ≥119,068 (≥3.09×) |", "1,389 s"],
            "README.md": ["| 7/8 | **891 s** (0.64×) | ≥119,068 (≥3.09×) |"]}),
+    Claim("repair by model", repair_by_model, "2/128 vs 14/80; same problems 1/118 vs 8/67",
+          {"RESULTS.md": ["muse's 14 times in 80. On the problems both models repaired, 1 in 118 against 8 in 67"],
+           "README.md": ["succeeded 2 times in 128 attempts, muse's 14 in 80", "both repaired, 1 in 118 against 8 in 67"]}),
     Claim("arm 3 decider", arm3, "10/10 vs 1/10, p 0.0001",
           {"RESULTS.md": ["10/10 against the reference's 1/10 in the decider, p = 0.0001"]}),
 ]
