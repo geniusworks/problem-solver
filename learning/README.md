@@ -2,7 +2,7 @@
 
 The learning system helps improve problem-solving performance by tracking strategy effectiveness and solution patterns.
 
-> **Honest status (2026-08-15):** of the tables below, only **`model_performance`** has ever held
+> **Status (2026-08-15):** of the tables below, only **`model_performance`** has ever held
 > measured data — it records each model's oracle-verified outcomes and feeds `_get_top_models`
 > ranking (with a cold-start fallback to the installed models when empty). The **strategy** tables
 > (`strategy_results`, `strategy_weights`, `problem_characteristics`, `improvement_history`) have

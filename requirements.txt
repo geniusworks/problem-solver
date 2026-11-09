@@ -3,22 +3,7 @@ beautifulsoup4>=4.9.3
 python-dotenv>=0.19.0
 psutil>=5.9.0
 requests==2.31.0
-pydantic>=2.12    # For data validation. Not imported by our code directly (it comes
-                  # in via anthropic/openai); the old ==2.5.2 pin had no wheel for
-                  # Python >=3.13 and forced a from-source Rust build that fails.
-rich==13.7.0      # For beautiful console output
-httpx>=0.25.2
 pyyaml>=6.0.1
-
-# Remote LLM providers. Optional at runtime: they are only imported when remote
-# providers are explicitly enabled, and the solver runs on local Ollama models by
-# default.
-#
-# NOTE: the official OpenAI package is `openai`. A line reading
-# `openai-python>=0.1.0` used to sit here; that is not the official package name.
-# It was never installed, but do not reintroduce it.
-anthropic>=0.7.4  # For Claude API
-openai>=1.3.7     # For OpenAI API
 
 # Runtime dependencies of shared/quality: these are imported by the code-quality
 # analyser and formatter during a normal solve, not just in development.
