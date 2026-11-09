@@ -5,19 +5,21 @@ The **live status snapshot** — where the project actually stands right now. Th
 `dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
 file current as work lands so it never goes stale.
 
-## Current status (2026-11-08)
+## Current status (2026-11-09)
 
 **Now:** nothing is running. All three thesis arms are measured (`RESULTS.md`): arm 1 confirmed
 under the original prompts and not re-established under the corrected ones, arm 2 splits by cost
 type, arm 3 one-way. Ledger 69 verified, 0 wrong (2024 d2 p2 added 2026-11-09 by the sandbox
 plumbing check, 12/12 at k1, `1ac712678732`); tests 297 passing, and CI runs them plus
 `dev/recompute_results.py --check` on every PR. Generated code now runs without `.env` secrets
-(`shared/sandbox.py`), and each result file records Ollama, model digests and machine. A reconciliation pass on
-2026-11-08 checked every published claim against the result files and added dated correction
-notes where later runs had overturned earlier write-ups. Open, both awaiting the maintainer: a
-powered arm-1 test on 2025 d9 p2 (`PLAN.md`, "Open"); AoC 2026 in December,
-which needs the submitter decision first. Next on the project's larger objective, generality: wire
-the per-attempt example verdict and measure how far the results depend on an exact checker
+(`shared/sandbox.py`), and each result file records Ollama, model digests and machine. A
+reconciliation pass on 2026-11-08 checked every published claim against the result files and added
+dated correction notes where later runs had overturned earlier write-ups; on 2026-11-09 the headline
+was restated on matched trials (2/53 → 29/37) with its contamination caveat. Open, all awaiting the
+maintainer (`PLAN.md`, "Open"): a powered arm-1 test on 2025 d9 p2; AoC 2026 in December, which
+needs the submitter decision first; and the held-out test of whether the Part 1 context informs or
+cues recall (`part2-context-heldout-plan.md`). Next on the project's larger objective, generality:
+wire the per-attempt example verdict and measure how far the results depend on an exact checker
 (`PLAN.md`, "Beyond AoC"). The sections below are the dated record, newest first.
 
 ### Instrument fixed: the model now sees what a solver on the site sees (2026-10-13)

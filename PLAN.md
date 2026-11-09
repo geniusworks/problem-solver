@@ -3,15 +3,19 @@
 What is open now, then the path beyond AoC. The sections after those are the record of how the
 roadmap got here.
 
-## Open (as of 2026-11-08)
+## Open (as of 2026-11-09)
 
-All three thesis arms are measured (`RESULTS.md`). Two items remain,
-both optional and both awaiting the maintainer:
+All three thesis arms are measured (`RESULTS.md`). Three items remain, all awaiting the
+maintainer:
 1. **A powered arm-1 test under the corrected prompts** on 2025 d9 p2, the one cell measured at a
    mid-range draft rate: k1 against k3, about 20 trials each for about 80% power. Design and
    prediction to be registered first.
 2. **AoC 2026** (§4b), opening 2026-12-01: the clean contamination test. Needs the submitter
    decision and wiring (§5) before then.
+3. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered design
+   in `part2-context-heldout-plan.md`: four arms on ten public Part 2s (about 7 GPU-hours, after
+   a small harness change and hand-checked text variants), and cold against verbatim on AoC
+   2026, which can share item 2's runs.
 
 ## Beyond AoC — the larger objective
 

@@ -541,6 +541,9 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
 - **A clean contamination test:** AoC 2026, in December, is the first set of problems published
   after the models' training cutoff. It needs the answer submitter wired first: without it an
   unseen year cannot reach Part 2.
+- **Does the Part 1 context inform, or cue recall?** The headline's caveat, tested by paraphrased
+  and information-stripped Part 1 text on public puzzles and by AoC 2026
+  (`dev/progress/part2-context-heldout-plan.md`).
 - **What decorrelates draws?** Temperature and reworded feedback moved nothing, and mixing models
   was one-way on the problems measured. Prompt variants remain untested.
 - **Beyond AoC:** how far the results depend on an exact checker, measured with the worked
