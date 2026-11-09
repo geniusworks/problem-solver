@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from shared.experiment.config import SolverConfig
+from shared.experiment.environment import capture_environment
 from shared.experiment.results import (
     AttemptRecord,
     ExperimentResult,
@@ -280,6 +281,7 @@ async def run_experiment(
         config=config.to_dict(),
         trials=trials,
         started_at=datetime.now(timezone.utc).isoformat(),
+        environment=capture_environment(config.models or ()),
     )
 
     # Under the site's conditions a Part Two exists only for a solver who has

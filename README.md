@@ -433,8 +433,10 @@ anyway. This repo is built so that constraint is structural rather than a matter
   ledger (`solutions/README.md`), and the experiment write-ups in `dev/progress/`. A few of those
   quote **short fragments of the public worked *examples*** (never real inputs) where a specific
   parsing failure has to be shown to be understood.
-- **Raw run artifacts** (`dev/experiments/*.json`) are gitignored too — they can embed generated
-  source and execution output. The numbers that matter are transcribed into the committed findings.
+- **Raw run artifacts** (`dev/experiments/*.json`) are gitignored too — they embed accepted
+  answers, generated source and execution output. Their outcomes, timings and token counts, with
+  none of that, are committed as tables in `dev/results/`, and `dev/recompute_results.py`
+  recomputes the published figures from them (CI checks that the docs match).
 
 <details>
 <summary>Why this is compliant with AoC's guidelines</summary>
@@ -504,6 +506,7 @@ solve.py                 Single-problem entry point
 shared/
   experiment/            The platform: SolverConfig, results, runner
   verification.py        Correctness oracle (candidate vs accepted answer)
+  sandbox.py             What generated code may see: no .env secrets, resource limits
   ground_truth.py        Cached accepted answers
   overfit_detection.py   Overfit gate before a solution is recorded
   solver.py              BaseSolver.solve_problem orchestrator + stages
@@ -516,6 +519,7 @@ learning/                One SQLite DB: model + strategy performance
 submission/              Real AoC submitter -- isolated and UNWIRED (reserved for the solver phase)
 solutions/               Verified solutions + the ledger (README.md)
 dev/progress/            The measured findings (baselines, A/Bs, the capability frontier)
+dev/results/             Run outcomes as tables; recompute_results.py checks the docs against them
 dev/benchmarks/          Cross-machine results, keyed by hardware (solve rate by model/config)
 years/                   Cached problem data (gitignored)
 ```
@@ -528,7 +532,7 @@ snapshot and `dev/docs/architecture.md` the design overview.
 **Working and measured:** the full solve pipeline (fetch → parse → generate → consensus →
 execute/verify → repair → fallback), the experiment harness with repeat trials and fingerprinted
 configs, the correctness oracle and overfit gate, self-consistency and answer-based consensus, and
-**68 verified solutions** across two AoC years (`dev/verify_solutions.py` clean).
+**69 verified solutions** across two AoC years (`dev/verify_solutions.py` clean).
 
 **All three thesis arms are measured** ([What we learned](#what-we-learned)). Open, in priority order:
 - **A powered sampling test under the corrected harness:** 2025 d9 p2 is the one problem measured

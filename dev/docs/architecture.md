@@ -74,7 +74,12 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
      `ProblemResult`/`AttemptRecord`, and `run_experiment`/`run_problem` in
      `shared/experiment/`; driven by `experiment.py` (`--trials N` for
      repeat-trials, since the pipeline is non-deterministic). The result JSON is
-     rewritten after every result, so a stopped run keeps what it finished.
+     rewritten after every result, so a stopped run keeps what it finished, and records what the
+     run ran on (Ollama version, model digests, package versions, machine, commit) outside the
+     fingerprint (`shared/experiment/environment.py`).
+   - Generated code always runs in a child process started by `shared/sandbox.py`: an
+     environment without `.env` secrets, and CPU, file-size and process limits (memory too on
+     Linux). It keeps network access and the user's file permissions.
    - A correctness **oracle**: candidates are judged against cached accepted AoC
      answers (`shared/ground_truth.py`) and worked examples, with an overfit gate
      (`shared/overfit_detection.py`). Claimed vs. verified is tracked separately;

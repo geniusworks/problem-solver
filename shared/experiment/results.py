@@ -173,6 +173,8 @@ class ExperimentResult:
     trials: int = 1
     started_at: Optional[str] = None
     finished_at: Optional[str] = None
+    # What the run ran on (shared/experiment/environment.py); not in the fingerprint.
+    environment: Optional[Dict[str, Any]] = None
 
     # -- headline metrics (over all problem-trials) -----------------------
 
@@ -356,6 +358,7 @@ class ExperimentResult:
             "config": self.config,
             "started_at": self.started_at,
             "finished_at": self.finished_at,
+            "environment": self.environment,
             "results": [r.to_dict(include_replay) for r in self.results],
         }
 

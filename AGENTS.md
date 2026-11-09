@@ -58,6 +58,9 @@ general code.
   - `dev/progress/<finding>.md` — one committed write-up per substantive result.
   - `dev/benchmarks/cross-machine-results.md` — every measured run adds/updates a row; machine
     specs filled in the moment a machine is real, never left *TBD*.
+  - `dev/results/*.csv` — every measured run is exported (`venv/bin/python dev/export_results.py`);
+    a published figure that changes is updated in `dev/recompute_results.py` in the same PR, and
+    `venv/bin/python dev/recompute_results.py --check` must pass (CI runs it).
   - `PLAN.md` — re-point the roadmap when a blocker clears or a priority resolves.
   - `README.md` — only when a *claim* it makes changes (findings, status, thesis).
   - `dev/benchmarks/m2max-handoff.md` and other operational docs — correct anything a real run

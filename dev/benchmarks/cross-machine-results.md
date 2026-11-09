@@ -105,6 +105,7 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d15 p1 then p2 (decider) | 10 | 7/17 (p1 7/10, p2 0/7; 3 not reached) | 41% | `arm3-portfolio-test.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d20 p1 then p2 (decider) | 10 | 18/19 (p1 9/10, p2 9/9; 1 not reached) | 95% | `arm3-portfolio-test.md` |
 | **m5pro-64** | muse-glimmer:30b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d20 p1 then p2 (decider) | 10 | 13/17 (p1 7/10, p2 6/7; 3 not reached) | 76% | `arm3-portfolio-test.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page**, child env without `.env` secrets | 2024 d1–2, both parts (plumbing check after `shared/sandbox.py`) | 3 | 12/12 | 100% | ledger 68 → 69 (first verified 2024 d2 p2); Ollama 0.40.11 |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).

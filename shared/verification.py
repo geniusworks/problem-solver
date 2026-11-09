@@ -19,6 +19,7 @@ from typing import Optional
 from shared import config
 from shared.ground_truth import get_known_answer
 from shared.paths import get_problem_dir
+from shared.sandbox import child_env, configured_limiter
 
 SOLUTION_FILENAME_RE = re.compile(r"(\d{4})_day(\d{1,2})_part(\d)\.py$")
 
@@ -84,6 +85,8 @@ def run_solution_file(
         proc = subprocess.run(
             [sys.executable, str(path.resolve())],
             cwd=str(problem_dir),
+            env=child_env(),
+            preexec_fn=configured_limiter(timeout),
             capture_output=True,
             text=True,
             timeout=timeout,
