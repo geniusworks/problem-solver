@@ -61,7 +61,7 @@ call carrying the failed code and its feedback; a draft is an analysis call plus
 call. Which is larger was not known when this was written, so the old totals are neither upper
 nor lower bounds. *(First measurement, 2026-10-12, `m5pro-d19p2-power.md`: a repair cost about a
 quarter of a draft — 1.5–2.1k tokens against 7k — on one problem and one model. If that holds
-elsewhere the old totals overstate, and arm 2's ratio lies between 3.10× and 3.35×.)* **The
+elsewhere the old totals overstate, and arm 2's ratio lies between 3.09× and 3.35×.)* **The
 draft-only sum is a firm lower bound on a run's true cost**, and is what the corrections below use.
 
 ## Claims that rested on token totals
@@ -69,7 +69,7 @@ draft-only sum is a firm lower bound on a run's true cost**, and is what the cor
 - **Arm 2, "loses 3.35× on tokens"** (`economic-arm-moe-vs-generalist.md`). The generalist arm
   made no repairs, so its 307,684 is sound. The MoE arm's 901,111 includes 67,635 copied onto 5
   repair records; its drafts alone are 833,476, or 119,068 per verified solution. **The ratio is
-  at least 3.10×**, and higher by whatever the five repairs really cost. The direction and rough
+  at least 3.09×**, and higher by whatever the five repairs really cost. The direction and rough
   size of the finding stand; the figure 3.35× is not a measurement.
 - **Arm-3 pre-check, "no token penalty"** (`arm3-precheck-qwen36-35b.md`). 44–48% of both arms'
   totals were copies. On drafts alone: candidate 803,969 for 7 solves (115k each), reference

@@ -238,7 +238,7 @@ The 2026-08-22 token fix corrected the provider only; the solver went on recordi
 attempt with the draft's tokens, time and quality score — 642 of 642 repair records in 64
 artifacts, 38% of all recorded tokens. Fixed in `_execute_and_repair` with a test on the records.
 Unaffected: every solve rate, per-problem and per-run wall-clock, the ledger. Affected: all token
-totals. Arm 2's "3.35× on tokens" is now "at least 3.10×" (draft-only lower bound); the arm-3
+totals. Arm 2's "3.35× on tokens" is now "at least 3.09×" (draft-only lower bound); the arm-3
 pre-check's "no token penalty" holds on drafts alone (115k vs 128k per solve). Token figures quoted
 above for m5pro runs include the copies; draft-only values are in that doc. Runs from here on
 record repair cost properly.
@@ -272,7 +272,7 @@ fresh post-token-fix, 0 wrong/unverified/overfit).
 | `qwen3-coder:30b` k=12 | 7/8 | **891 s (0.64×)** | 128,730 (3.35×) |
 
 **Arm 2 splits by which cost you pay:** cheap draws win on **time** (36% cheaper per solution), lose
-on **tokens** (3.35×; *at least 3.10× after the 2026-10-12 correction, see top*), and do not reach the ceiling. *True for local GPU inference, false for
+on **tokens** (3.35×; *at least 3.09× after the 2026-10-12 correction, see top*), and do not reach the ceiling. *True for local GPU inference, false for
 token-metered APIs, bounded by the cheap model's ceiling* — sharper than the original claim.
 
 **Pre-registered prediction held:** volume bought d5 p1 (~25%/draw parsing failure — stochastic) and

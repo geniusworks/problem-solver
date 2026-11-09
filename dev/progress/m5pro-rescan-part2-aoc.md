@@ -46,6 +46,11 @@ those already re-run (2024 d15, d16, d19; 2025 d9) and the two days with no Part
 - **The Part 2 record was mostly the prompt.** 13 of 71 legacy trials against 32 of 40 reached
   now. Eight of the fifteen are solved every time; ten of the twelve that the reference had
   never solved now have been.
+- **Matched on draft count:** the legacy column pools trials at one and three drafts, and 11 of
+  its 13 solves came from three-draft trials. Single-draft trials only, on the 13 cells that have
+  them and reached Part 2 here (all but 2024 d6 and d21): **2/53 before, 29/37 now.** The legacy
+  trials ran on the M2 Max in August and the M5 Pro in October; this run also changed the example
+  source and the analysis temperature (fingerprint `1ac712678732`).
 - **Every Part 2 solve was a first draft.** No repair was accepted.
 - **Ledger 56 → 66, 0 wrong** (`dev/verify_solutions.py`): ten first verified Part 2s (2024 d9,
   d11, d14, d17, d18, d20, d22; 2025 d2, d4, d10).

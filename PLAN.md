@@ -636,7 +636,7 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
   usage, so repair records kept copying their draft's tokens and time, in every run before and
   after it (642 of 642). ✅ **Fixed at the record 2026-10-12** (`repair-accounting-unwired.md`).
   Old token totals are neither upper nor lower bounds; the draft-only sum is a lower bound. Arm 2's
-  3.35× becomes "at least 3.10×".
+  3.35× becomes "at least 3.09×".
 - ~~**Repair calls that yield no new candidate leave no record.**~~ ✅ **FIXED 2026-10-13**: each
   is recorded as a `repair` / `no_candidate` attempt with its own tokens and time. Attempt counts
   from that date include them.
@@ -713,7 +713,7 @@ own thesis and neither of the other two. **Three steps finish every arm, then on
    targets first, and only run an ensemble if one solves something the others reliably miss.*
 3. ~~**The economic A/B**~~ — ✅ **DONE 2026-08-23** (`economic-arm-moe-vs-generalist.md`).
    **Arm 2 splits by which cost you pay:** per verified solution the fast weak model at k=12 is
-   **0.64× the wall-clock** (891 s vs 1,389 s) but **3.35× the tokens** (128,730 vs 38,460; *at least 3.10× after the 2026-10-12 correction*), and it
+   **0.64× the wall-clock** (891 s vs 1,389 s) but **3.35× the tokens** (128,730 vs 38,460; *at least 3.09× after the 2026-10-12 correction*), and it
    does not reach the ceiling (7/8 vs 8/8). True for local GPU inference, false for token-metered
    APIs, and bounded by the cheap model's ceiling. Volume bought the stochastic failure (d5 p1,
    ~25%/draw parsing) and not the systematic one (d6 p2, 6/6 identical `TypeError`s).
