@@ -540,7 +540,7 @@ Runs recorded before 2026-10-13 posed Part 2 without the Part 1 statement and re
 (`dev/progress/part2-prompt-omits-part1.md`); runs of 2026-10-13 itself need only
 `example_tests=parser` (`dev/progress/example-tests-mispaired.md`).
 
-**Deliberately unwired:** the AoC answer submitter (`submission/`) is real and tested in isolation but
+**Deliberately unwired:** the AoC answer submitter (`submission/`) is real but untested, and
 kept out of the solve loop by design — the evaluation set is *past* AoC years, already solved on the
 maintainer's account, so there is no unseen answer to submit. Wiring it is the live-contest path.
 

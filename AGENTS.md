@@ -27,7 +27,7 @@ general code.
 
 ## Where things live
 
-- `PLAN.md` — the forward roadmap and "Next steps for the maintainer".
+- `PLAN.md` — the roadmap: what is open now and the path beyond AoC, then the record.
 - `dev/progress/checkpoint.md` — the **live status snapshot**. Read it at the start of a work
   session; update it (and the roadmap) as work lands so the docs never go stale.
 - `dev/progress/*.md` — the committed findings (baselines, A/Bs, the capability frontier).
