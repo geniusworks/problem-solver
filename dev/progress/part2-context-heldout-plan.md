@@ -1,7 +1,7 @@
-# Plan: does the Part 1 context inform, or cue recall? — registered design, not yet run
+# Plan: does the Part 1 context inform, or cue recall? — registered design on AoC 2026, not yet run
 
-**Status (2026-11-09): design only.** No code written, nothing run. Needs the maintainer's go, a
-small harness change (below), and hand-checked text variants for ten problems.
+**Status (2026-11-09): approved design; runs during AoC 2026** (opens 2026-12-01). Depends on
+the AoC 2026 submitter decision (`PLAN.md`, "Open").
 
 ## The question
 
@@ -14,73 +14,55 @@ capability limit", needs the first to carry the effect. The saved d19 drafts sho
 failed for want of information (none of the 54 drafts that guessed the input format wrong was
 correct); they do not show that the fix works by information alone.
 
-## Arms
+## Why public puzzles cannot answer it
 
-The corrected context is a bundle: Part 1's statement, its accepted answer, a Part 1 program, and
-a preview of the input (`shared/problem_context.py`). Only the statement is published wording, so
-the arms vary the statement and hold the rest fixed.
+The first design rewrote Part 1 on ten public Part 2s: a paraphrase (same information, new
+wording) and a cue-only version (published wording, information removed). Writing the texts
+showed that editing Part 1 cannot separate the two:
 
-| arm | Part 1 statement | rest of the bundle | tests |
-|---|---|---|---|
-| **A0 cold** | none | none | baseline (`problem_context=legacy`) |
-| **A1 verbatim** | published text | yes | the current default |
-| **A2 paraphrase** | same rules, input format and worked example; new story, names and wording; example values changed and its answer recomputed with the verified Part 1 solution | yes | information without the published wording |
-| **A3 cue only** | published text with the input-format description and worked example removed; title, story and distinctive phrasing kept | no | the recall cue without the information |
+- **Part 2 depends on Part 1's text.** Its article uses Part 1's terms ("file", "block",
+  "checksum" on 2024 d9) and often refers to, or reproduces, Part 1's worked example ("The first
+  example from above now proceeds differently"). A paraphrase that renames the terms or changes
+  the example makes the prompt inconsistent, which would lower its score for a reason other than
+  recall; one that keeps them keeps the published cues in every arm.
+- **Cue-only text is not information-free.** Removing the input format and example still leaves
+  Part 1's rules, so a cue-only gain could be information as well as recall.
 
-The Part 2 article is published wording in every arm, A0 included, so A3 measures the cue that
-Part 1's text *adds*.
+Rewriting both parts in full would avoid the first problem, but a model could still recognise a
+puzzle's structure. Problems published after the model's training cutoff remove the cue entirely,
+so the test runs there.
 
-**Held constant across arms:** model `qwen3.8:27b`, `samples_per_model=1`, `temperature=0.7`,
-`enable_thinking=false`, `enable_fallback_models=false`, the current `example_tests` and
-`analysis_temperature`, one machine (`m5pro-64`), one Ollama version, arm order rotated within
-each trial so drift cannot line up with an arm. Part 2 is posed directly in every arm, with the
-verified Part 1 program where the bundle is used, so no arm depends on the trial solving Part 1
-first (the rescan lost 5 of 45 trials to that gate).
+## Design
 
-**Cells (10):** 2024 d9, d11, d14, d16, d18, d19, d20, d22 p2; 2025 d2, d4 p2. Each was solved by
-at most one single draft under the old prompt and by most drafts under the new one, so the arms
-have room to differ in both directions.
+- **Problems:** the AoC 2026 Part 2s (12 days, opening 2026-12-01; days without a Part 2 are
+  skipped), each run once Part 1 is solved on the account, since Part 2's text is only visible then.
+- **Arms**, interleaved one trial at a time:
+  - **cold:** `problem_context=legacy`, Part 2 posed with its own article only.
+  - **with context:** `problem_context=aoc, gate_part_two=false`: Part 2 posed with Part 1's
+    statement, its accepted answer, the verified Part 1 program and an input preview, without
+    re-solving Part 1 in the trial.
+- **Held constant:** `models=qwen3.8:27b, samples_per_model=1, temperature=0.7,
+  enable_thinking=false, enable_fallback_models=false`, the current `example_tests` and
+  `analysis_temperature`, one machine, one Ollama version (recorded in each result file).
+- **Trials:** 3 per Part 2 per arm, about 33 per arm.
+- **Scoring:** Part 2's accepted answer is unknown until it is submitted, so these runs record
+  `unverified` with each attempt's answer; once the accepted answer is cached, the recorded
+  answers are scored against it. Nothing is counted solved before then.
+- **Primary outcome: the first draft.** A trial counts as solved by its first draft if the first
+  implementation attempt produced the accepted answer. Repair rounds differ between the arms in
+  more than the context (the example tests read off the page include Part 1's), so solve rates
+  with repair are reported beside it, not tested.
+- **Time:** about 250 s per single-draft Part 2 trial, so about 4.6 GPU-hours over the event.
 
-## Size and time
+## Registered readings
 
-3 trials per cell per arm, 30 Part 2 trials per arm, 120 in all. At the observed rates
-(A0 about 5%, A1 about 85%), 30 per arm detects a 30-point difference with about 80% power at
-one-sided α = 0.05 (80% against 50% needs 30 per arm; 5% against 30% needs 25). It cannot show
-two arms are *equal*: the 95% interval on a difference at n = 30 is roughly ±20 points, so "A2
-matches A1" is read as "within that interval", not as equivalence. Trials cluster by problem;
-per-cell results are reported alongside the pooled rate.
-
-Time on `m5pro-64`: a single-draft Part 2 trial took 91–250 s in the d19 A/B and the rescan; at
-about 200 s, 120 trials is **about 7 GPU-hours**, run in two or three chunks, plus a `--trials 3`
-plumbing check of the new arms on one cell first.
-
-## Registered predictions and readings
-
-Written before any run; rates are pooled over the 10 cells.
+Written before any run; first-draft rates pooled over the Part 2s.
 
 | outcome | reading |
 |---|---|
-| A2 within 15 points of A1, and A3 within 15 points of A0 | **information carries the effect.** The headline stands as stated. |
-| A3 at least 25 points above A0 | **the published wording alone helps**, so recall contributes; the headline must say so. |
-| A2 at least 25 points below A1 | **the wording matters beyond its information**; same consequence. |
-| anything else | inconclusive at this size; report the intervals, do not restate the headline. |
+| with context at least 30 points above cold | **confirms** that the context effect does not need recall: the headline stands |
+| with context less than 15 points above cold | **undercuts** the headline: on public puzzles the gain was largely recall |
+| anything else | inconclusive at this size; report the interval |
+| with context solves fewer than 5 first drafts in all | the problem set is too hard for this model to inform; inconclusive |
 
-## The clean confirmation: AoC 2026
-
-Paraphrase removes the published wording but not the puzzle's structure, which a model may also
-recall. Problems published after the model's training cutoff remove both. AoC 2026 opens
-2026-12-01 with 12 days: run **A0 against A1** on each day's Part 2, single draft, 3 trials per
-arm, once Part 1 is solved on the account (Part 2's text is only visible then). About 36 trials per
-arm and about 4 GPU-hours spread over the event. **A1 at least 30 points above A0** on unseen
-problems confirms that the context effect does not need recall; a gap under 15 points undercuts
-the headline whatever the paraphrase arms showed.
-
-## What it needs before running
-
-- **Harness:** `problem_context` values for A2 and A3 that read a per-problem Part 1 text file,
-  and a runner option that poses Part 2 without running Part 1 first. Both enter the fingerprint.
-- **Text variants:** ten paraphrases and ten cue-only versions, drafted and then checked by hand
-  against the original for preserved (A2) or removed (A3) information. They derive from AoC's
-  text, so they live under `years/` (gitignored) like the originals, with their hashes recorded
-  in the result write-up.
-- **AoC 2026:** the submitter wired, or Part 1 solved by hand each day (`PLAN.md`, §5).
+Trials cluster by problem; per-problem results are reported alongside the pooled rate.

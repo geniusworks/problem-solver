@@ -16,16 +16,17 @@ on:
    rate limit. Then the submitter is wired into the solve loop (§5; it is tested, about half a
    day of code). Decide by about 2026-11-25 to leave time.
 2. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered
-   design in `part2-context-heldout-plan.md`. *Waits on code:* a small harness change and ten
-   paraphrased plus ten cue-only Part 1 texts, checked by hand; then about 7 GPU-hours. Its
-   AoC 2026 arm (cold against verbatim) runs with the AoC 2026 item.
-3. **A powered arm-1 test under the corrected prompts** on 2025 d9 p2, the one cell measured at a
+   design in `part2-context-heldout-plan.md`: Part 2 cold against Part 2 with the Part 1 context,
+   on the AoC 2026 Part 2s, about 4.6 GPU-hours over the event. *Waits on the AoC 2026 item*
+   (its decision, and the accepted answers to score against); the harness option it needs,
+   `gate_part_two=false`, is built. Arms that rewrote Part 1 on public puzzles were dropped:
+   Part 2's text depends on Part 1's, so the edits cannot separate information from recall.
+3. **Running since 2026-11-09:** a powered arm-1 test under the corrected prompts on 2025 d9 p2, the one cell measured at a
    mid-range draft rate: k1 against k3, about 20 trials each for about 80% power. About
    14 GPU-hours in chunks (per trial on this problem, Part 1 then Part 2: k1 about 850 s, k3
    about 1,640 s, so about 4.7 h and 9.1 h; roughly 12 to 16 h depending on timeouts).
-   *Waits on GPU time*; design and prediction registered first. It needs neither the AoC 2026
-   decision nor new code, so it can run whenever the GPU is free. A lift triggers the
-   conditional second reference model below.
+   Registered in `m5pro-d9p2-power-aoc.md` before launch. A lift triggers the conditional second
+   reference model below.
 
 Done 2026-11-09: every verified attempt now records the worked examples' verdict beside the
 oracle's (`examples_passed`/`examples_total`; "Beyond AoC", step 1), so each of these runs

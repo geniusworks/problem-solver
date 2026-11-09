@@ -56,7 +56,7 @@ _INT_FIELDS = {
 _FLOAT_FIELDS = {"consensus_threshold", "temperature"}
 _BOOL_FIELDS = {
     "enable_fallback_models", "enable_collaborative_improvement",
-    "require_oracle", "enable_thinking",
+    "require_oracle", "enable_thinking", "gate_part_two",
 }
 
 
