@@ -40,8 +40,21 @@ echo "installing dependencies ..."
 # them in two passes lets the second silently downgrade the first. Note this
 # script does NOT use `set -e` -- check the status explicitly or a failed install
 # gets reported as success and the failure only surfaces much later.
+#
+# On Python 3.11 install requirements.lock: the exact versions the published
+# results were measured with. On any other Python the lock may not install, so
+# fall back to the ranges in requirements*.txt and say so.
+VENV_PY="$(./venv/bin/python -c 'import sys;print(f"{sys.version_info[0]}.{sys.version_info[1]}")')"
 DEV_REQ=(); [ -f requirements-dev.txt ] && DEV_REQ=( -r requirements-dev.txt )
-if ! ./venv/bin/python -m pip install -q -r requirements.txt "${DEV_REQ[@]}"; then
+if [ "$VENV_PY" = "3.11" ] && [ -f requirements.lock ]; then
+  INSTALL=( -r requirements.lock )
+else
+  echo "WARNING: venv is Python $VENV_PY, not 3.11: installing from requirements*.txt ranges." >&2
+  echo "  Package versions will differ from those the results were measured with" >&2
+  echo "  (requirements.lock). Use PYTHON=python3.11 ./scripts/setup.sh to match them." >&2
+  INSTALL=( -r requirements.txt "${DEV_REQ[@]}" )
+fi
+if ! ./venv/bin/python -m pip install -q "${INSTALL[@]}"; then
   echo "ERROR: dependency install failed (see pip output above)." >&2
   echo "  If a package tried to build from source, your python ($("$PY" --version 2>&1))" >&2
   echo "  is probably newer than a pinned dependency has wheels for. Either install a" >&2
