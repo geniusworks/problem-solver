@@ -307,10 +307,8 @@ systematic failures — do not depend on the problems being unseen.
 Under the original harness the frontier band consisted of problems the model solved *sometimes* —
 17%, 25%, 33% per draw (under the corrected harness most of those cells are solved by nearly every
 draft or by nearly none, which weakens this argument further).
-Memorized solutions would be expected to reproduce reliably rather than intermittently. The
-harness defect adds a second point: a model recalling a published 2024 d19 p2 solution would
-parse the real input format, yet with the format withheld none of the 54 drafts that guessed it
-wrong was correct. This is suggestive, not dispositive: partial or paraphrased memorization could
+Memorized solutions would be expected to reproduce reliably rather than intermittently. This is
+suggestive, not dispositive: partial or paraphrased memorization could
 plausibly produce exactly this intermittency.
 
 **What would actually settle it**, and none of it was done here:
