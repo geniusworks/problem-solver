@@ -89,7 +89,7 @@ is uncertain.* It also replicates the pattern the MoE showed (d4 p2 on 1/3, d5 p
 different model, a different architecture, and a different runtime.
 
 **It is still not the controlled A/B.** This is one trial, and pass@1 is inferred from the first
-draw of a samp3 run rather than measured in a dedicated samp1 run. The honest statement is that two
+draw of a samp3 run rather than measured in a dedicated samp1 run. Two
 independent models now show the predicted shape, which is strong enough to make the formal
 samp1-vs-samp3 A/B at `--trials 5` worth running — and, importantly, it must now be run on a
 **harder problem set**, because this model has no frontier left on d4–7.

@@ -115,3 +115,9 @@ Three things the run was not designed to test, recorded as observations and not 
   same way — passing nothing, mostly `expected '24', got '18'` on the worked example — is the first
   evidence that the wall is not one model's blind spot. A pair for arm 3 has to differ on exactly
   this kind of problem, and nothing measured so far does.
+
+*2026-11-08: both points are superseded. Arm 3 has been measured: `muse-glimmer:30b` passed the entry criterion (2024 d14 p2, 10/10 against the reference's 1/10),
+and no cell was found where the reference beats it, so the ensemble was not run
+(`arm3-portfolio-test.md`). And 2025 d9 p2 is not a
+wall: with the Part 1 statement in the prompt the reference solved it in 3 of 5 trials at k3
+(`part2-prompt-omits-part1.md`); the 0 of 22 was posed without it.*

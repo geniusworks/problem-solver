@@ -69,7 +69,8 @@ Prompt guidance must empower LLM problem-solving intuition without constraining 
 4. **Pull Request**
    - Push your changes to your fork
    - Create a Pull Request against the main repository
-   - Fill out the PR template completely
+   - Describe what changed, how it was measured, and which docs you updated (the doc map in
+     `AGENTS.md`)
    - Respond to review comments
 
 ## Testing
@@ -89,22 +90,9 @@ Update documentation when you:
 
 ## Commit Messages
 
-Follow conventional commits format:
-```
-type(scope): description
-
-[optional body]
-[optional footer]
-```
-
-Types:
-- feat: New feature
-- fix: Bug fix
-- docs: Documentation changes
-- style: Code style changes
-- refactor: Code refactoring
-- test: Adding tests
-- chore: Maintenance tasks
+Use a short imperative subject that states the change or the result (e.g. "Portfolio deciders:
+neither lead holds; stage C not run"), with detail in the body. The history does not use
+conventional-commit prefixes.
 
 ## Questions?
 

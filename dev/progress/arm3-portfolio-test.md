@@ -156,8 +156,8 @@ Runs: `m5pro-d15p2-ref-k1-n10`, `1ac712678732`, 6,862 s, 765k tokens
 
 Arm 3 needed cells where each model beats the other. Muse beats the reference on 2024 d14 p2
 (10/10 against 1/10) and solved 2024 d21, which the reference never has. No cell was found where
-the reference beats muse: of the two candidates from stage A, one went to muse and one is not
-separable at 10 trials. On these cells, choosing muse gives the gain an ensemble could, so the
+the reference beats muse: of the two candidates from stage A, on one (d15 p2) the reference solved 0 of 10, and the other
+(d20 p2) is not separable at 10 trials. On these cells, choosing muse gives the gain an ensemble could, so the
 ensemble against each model at equal draws was not run.
 
 What this does not show: that an ensemble cannot beat its best member somewhere. Differences

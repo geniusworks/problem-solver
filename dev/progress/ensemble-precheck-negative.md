@@ -46,12 +46,18 @@ README arm 3 argues that **diverse portfolios decorrelate error**. It now has:
 - **no successful demonstration.**
 
 That is not a refutation. Both failures share a cause that is about the *models available*, not about
-the mechanism: neither pair had **measured, reproducible, complementary** failures. The honest status
-is that arm 3 remains **untested for want of a suitable pair**, and the entry criterion for any
-future attempt is now explicit:
+the mechanism: neither pair had **measured, reproducible, complementary** failures. Arm 3 remains
+**untested for want of a suitable pair**, and the entry criterion for any future attempt is now
+explicit:
 
 > Do not run an ensemble until each member is measured *individually* on the target problems and at
 > least one solves something the others reliably miss.
+
+*2026-11-08: superseded. Arm 3 has been measured under this criterion: `muse-glimmer:30b` passed the entry criterion (2024 d14 p2, 10/10 against the reference's 1/10),
+and no cell was found where the reference beats it, so the ensemble was not run
+(`arm3-portfolio-test.md`). 2025 d9 p2,
+0/3 for both models here, is 3/5 at k3 for the reference with the Part 1 statement in the prompt
+(`part2-prompt-omits-part1.md`).*
 
 ## It also sharpens "generation beats size"
 

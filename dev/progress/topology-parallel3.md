@@ -42,6 +42,15 @@ and 0/3 with repair — the configuration-independent failure discussed in
 `temperature-diversity-negative.md` and `CORRECTION-d15p2-is-not-a-wall.md` (it is a ~12% problem
 overall, not a wall).
 
+> *2026-11-08: all three rows posed Part 2 without the Part 1 statement
+> (`part2-prompt-omits-part1.md`). With it, d13 p2 is 3/3 at k1 (`m5pro-rescan-part2-aoc.md`) and
+> d15 p2 0/10 at k1 (`arm3-portfolio-test.md`); k3 did not measurably beat k1 on the re-measured
+> band, 9/19 against 11/21 (`m5pro-band-k1-vs-k3-aoc.md`), and the reference's repairs solved 2 of
+> its 145 solved cells (`RESULTS.md`, "Repair depends on the model"). d15 p2's failure across
+> configurations is a legacy-prompt result. Superadditivity was also never measurable here: the
+> corner with one draft and no repair was not run, so the two levers cannot be separated; the
+> table shows only that the combination beat either partial configuration.*
+
 ## Note for anyone re-running this
 
 `dev/analyze_passk.py` does **not** cover this arm — it globs `*_k1_*`, `*band-classify*`, `*_k3_*`

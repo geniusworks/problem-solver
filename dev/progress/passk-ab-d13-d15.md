@@ -1,5 +1,12 @@
 # The pass@k A/B: sampling nearly doubles the solve rate at a strong model's frontier
 
+> *2026-11-08: both Part 2 cells here were posed without the Part 1 statement
+> (`part2-prompt-omits-part1.md`). With it, 2024 d13 p2 is 3/3 at k1 (`m5pro-rescan-part2-aoc.md`)
+> and d15 p2 is 0/10 at k1 (`arm3-portfolio-test.md`). On the re-measured band, k3 showed no
+> measurable lift, 9/19 at k1 against 11/21 at k3 (`m5pro-band-k1-vs-k3-aoc.md`). Arm 1 is
+> confirmed under the original prompts and not re-established under the corrected ones
+> (`RESULTS.md`, arm 1).*
+
 **pass@1 = 42% → pass@3 = 75%.** The project's central open thesis — *does sampling + voting still
 add correctness at a strong model's own frontier?* — now has a direct, controlled answer on the
 model that had outgrown every earlier problem set. **It does.**
@@ -82,12 +89,12 @@ Two consequences, and neither overturns the result:
    the baseline is inflated relative to a true single-shot pass@1. It also means k3 cost up to 9
    generations, not 3, so the cost side of the comparison is worse than the label suggests.
 
-The honest statement of the headline: **going from 1 sample to 3 samples, with repair held constant
+**Going from 1 sample to 3 samples, with repair held constant
 at 2, lifts the solve rate from 42% to 75% on this band.** Whether the gain comes from *sampling*
 or from *sampling interacting with repair* is exactly what the follow-up experiment separates
 (`topology`: 3 blind draws vs 1 draw refined twice, both capped at 3 generations).
 
-## Honest limits
+## Limits
 
 - **n = 3 trials per problem.** Every per-problem cell has a wide interval; 3/3 and 0/3 are strong
   directional signals, not precise rates.
@@ -103,6 +110,9 @@ or from *sampling interacting with repair* is exactly what the follow-up experim
 
 - **README's central open thesis is no longer open** in its k1-vs-k3 form: the decisive test ran, on
   a strong model, at its own frontier, and sampling nearly doubled the solve rate.
+  *(Corrected 2026-11-01: under the corrected prompts the band split into cells solved by nearly
+  every draft and cells solved by almost none, and k3 did not measurably beat k1, 9/19 against
+  11/21 (`m5pro-band-k1-vs-k3-aoc.md`). Arm 1 is open again under the corrected prompts.)*
 - **A new, sharper question replaces it:** *when does sampling fail?* d15 p2 says correlated draws
   are the failure mode, which makes **draw diversity** the next orchestration lever to measure —
   and that is a strategy question, not a compute question.

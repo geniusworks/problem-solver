@@ -1,5 +1,10 @@
 # 2025 frontier band: mostly walls, only two "sometimes" — a harder venue than 2024
 
+> *2026-11-08: the walls were largely the prompt. Every Part 2 here was posed without the Part 1
+> statement (`part2-prompt-omits-part1.md`). With it, d2 p2 is 3/3 and d11 p2 3/3 at k1, d4 p2 2/3 at
+> k1 and 3/3 at k3, d10 p2 1/3 at k1 and 0/3 at k3 (`m5pro-rescan-part2-aoc.md`,
+> `m5pro-band-k1-vs-k3-aoc.md`), and d9 p2 3/5 at k3 (`part2-prompt-omits-part1.md`).*
+
 **Classifying the 2025 misses at `--trials 3` found only two problems the model solves
 *sometimes*.** 2025's frontier is far more **bimodal** than 2024's: reliable problems are perfectly
 reliable, failures are mostly total, and very little sits in between. That makes it a **harder test
@@ -56,7 +61,8 @@ Measured:
 
 - **crash-class `d11 p2` is a "sometimes"** (1/3) — it failed `error` 3/3 in the scan, then solved.
 - **three of four wrong-answer problems are hard walls** (d2 p2, d4 p2, d9 p2, all 0/4). Only
-  d9 p1 showed variance.
+  d9 p1 showed variance. *(2026-11-08: all three were solved once the Part 1 statement was in the
+  prompt, d2 p2 3/3, d4 p2 3/3 at k3, d9 p2 3/5 at k3; see the note under the title.)*
 
 **How a problem failed once does not predict whether it is sometimes-solvable.** That has to be
 measured per problem. This is the third time in this line of work that a tidy taxonomy of failure
@@ -73,9 +79,9 @@ The out-of-sample sampling test is runnable — **d9 p1 and d11 p2, both 33%**, 
 **pass@3 ≈ 70%** if draws are independent (the same prediction that held on 2024's d13 p2 and failed
 on d15 p2).
 
-**Stated up front: a two-problem band is thin.** A positive result would be encouraging but not
+**A two-problem band is thin.** A positive result would be encouraging but not
 strong; a null result would be **under-powered rather than decisive**. Any conclusion drawn from it
-must carry that caveat, and the honest framing is a *replication attempt* on a harder venue, not a
+must carry that caveat: it is a *replication attempt* on a harder venue, not a
 second independent confirmation.
 
 ## Reproduce

@@ -51,6 +51,9 @@ exactly as pre-registered:
 
 This is the pass@k finding and the five-null rule agreeing on one problem: **draws buy stochastic
 failures, not systematic ones.** It also matches the d15 p2 / d9 p2 pattern, from a different angle.
+*(2026-11-08: neither half of that pattern held. d15 p2 was a ~12% problem rather than a systematic
+failure (`CORRECTION-d15p2-is-not-a-wall.md`), and 2025 d9 p2 is 3/5 at k3 with the Part 1
+statement in the prompt (`part2-prompt-omits-part1.md`).)*
 
 ## Why the ordering of the endgame mattered
 

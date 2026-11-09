@@ -133,7 +133,8 @@ See `.env.example` for available environment variables.
 
 ### Learning System (`learning/`)
 
-The learning system optimizes solution strategies based on past performance:
+The learning system records performance; model ranking reads it, and the strategy-weight half is
+an unimplemented stub (`learning/optimizer.py`):
 
 - `database.py`: Performance metrics storage
 - `optimizer.py`: Strategy selection and optimization
@@ -174,7 +175,8 @@ The learning system optimizes solution strategies based on past performance:
   - Infer the expected output (e.g. `11` for Part 1, `31` for Part 2) from AoC-style prose
     and emphasized `<em>` numbers.
 - `BaseSolver.solve_problem` always uses this part-specific parse, so Part 1 prompts never
-  include Part 2 instructions, and vice versa.
+  include Part 2 instructions. Under `problem_context=aoc` (the default) a Part 2 prompt also
+  carries Part 1's statement, accepted answer and program; under `legacy` it carries Part 2 alone.
 
 ## Development Guidelines
 

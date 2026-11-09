@@ -10,10 +10,12 @@ own errors solved far more of them than a single attempt did — **42% → 75%**
 hardest — and the same pattern held on a second year the models had never been tested on. Because the
 puzzles are public, the raw *"how capable is the model"* numbers carry a caveat (below); the *"does
 coordinating attempts help"* comparisons pit the model against itself and are unaffected.
-*Narrowed 2026-11-01:* under the corrected prompts, most problems are solved by nearly every draft
-or by nearly none, and three drafts beat one only where a single draft succeeds part of the time
-(arm 1 below). *Measured 2026-11-08:* mixing models from different makers did not beat choosing
-the better one (arm 3).
+*Narrowed 2026-11-01:* the 42% → 75% was measured with Part 2 posed without its Part 1 statement.
+Under the corrected prompts most problems are solved by nearly every draft or by nearly none, and
+three drafts gave no measurable lift over one (9/19 against 11/21). Independent draws predict a
+gain only where a single draft succeeds part of the time; under the corrected prompts that is not
+yet tested at power (arm 1 below). *Measured 2026-11-08:* no cell was found where a mix of two
+models could beat choosing the better one, so no mix was run (arm 3).
 
 This document is the consolidated result. The write-ups in [`dev/progress/`](dev/progress/) are
 the audit trail; every figure here was recomputed from the run artifacts. For the project itself —
@@ -39,8 +41,8 @@ status: `dev/progress/checkpoint.md`.*
 
 > **Read the contamination section before the capability numbers.** AoC 2024/2025 solutions predate
 > the models used here and are public, so the *capability* results are descriptive of this testbed
-> rather than clean measurements. The *orchestration* comparisons — which hold the model and problems
-> fixed and vary only the strategy — are largely unaffected.
+> rather than clean measurements. The *orchestration* comparisons — which hold the problems fixed
+> and vary the strategy — are largely unaffected.
 
 ---
 
@@ -51,11 +53,11 @@ now been tested.
 
 | arm | claim | verdict |
 |---|---|---|
-| **1. pass@k** | the gap between "sometimes solves" and "solves" never closes at a model's own frontier | ✅ **confirmed and replicated**; narrowed 2026-11-01: it pays only where a single draft succeeds part of the time |
+| **1. pass@k** | the gap between "sometimes solves" and "solves" never closes at a model's own frontier | ⚠️ **confirmed and replicated under the original prompts; not re-established under the corrected ones** (2026-11-01): no measurable lift (9/19 vs 11/21), and the one mid-rate cell has no one-draft comparison yet |
 | **2. economics** | many cheap draws + a verifier beat one expensive pass at equal cost | ⚖️ **splits by which cost you pay** |
 | **3. portfolios** | diverse models decorrelate error | ➖ **not supported where measured**: the one complementary pair was one-way, so choosing the better model gave the gain (2026-11-08) |
 
-### Arm 1 — Sampling works at the frontier, and why it works is measured
+### Arm 1 — Sampling at the frontier: measured under the original prompts, narrowed under the corrected ones
 
 On problems the strongest model solves only *sometimes* — its own frontier, identified beforehand by
 an independent classification:
@@ -66,12 +68,18 @@ an independent classification:
 | 3 attempts, no feedback | **58%** |
 | **3 attempts, each with execution feedback** | **75%** |
 
-Sampling helps, repair helps, and **together they exceed the sum of their parts.** The sharpest
-case: a problem solved by **1 of 6** single attempts was solved by **3 of 3** runs combining both.
+Each partial configuration beat one attempt with repair, and **the combination beat both.** The
+sharpest case: a problem solved by **1 of 6** single attempts was solved by **3 of 3** runs
+combining both.
+
+*Corrected 2026-11-08: this paragraph said the two "exceed the sum of their parts". The corner with
+one draft and no repair was never run, so the two levers cannot be separated and superadditivity
+was not measured. The 1-of-6 problem, 2024 d13 p2, is solved 3 of 3 at one draft under the
+corrected prompts (`m5pro-rescan-part2-aoc.md`).*
 
 **Replicated out of sample.** Repeated on AoC 2025 — never previously measured, and a *less*
 favorable venue (its frontier is mostly all-or-nothing rather than near-misses) — the two uncertain
-problems went **25–33% → 100%**, while a problem that never solves stayed unsolved and a problem
+problems went **25% → 100%** (2 of 8 → 6 of 6), while a problem that never solves stayed unsolved and a problem
 that always solves was unaffected. Sampling rescued exactly the uncertain cases and nothing else,
 which is the signature of a mechanism rather than a rate artifact.
 
@@ -95,8 +103,8 @@ the defect table). Re-run under the site's conditions on a third machine, the re
 (`m5pro-band-k1-vs-k3-aoc.md`). At the draft level those cells split in two: solved by 8–9 of 9
 drafts, or by 0–1 of 9. Independent draws predict exactly this: three draws lift a 10% draft rate
 little and a 90% one has no room to rise. The mechanism stands; the band it acts on is smaller
-than the 42% → 75% suggested, and under the corrected prompts one cell (2025 d9 p2, 3 of 9 drafts)
-sits where sampling pays.
+than the 42% → 75% suggested. Under the corrected prompts one cell (2025 d9 p2, 3 of 9 drafts)
+sits at a rate where independent draws predict a gain, and it has no one-draft comparison yet.
 
 **Repair depends on the model.** With true example feedback and too-high/too-low hints, the
 reference's repairs rescued none of its hard cells (`m5pro-band-k1-vs-k3-aoc.md`); across all its
@@ -111,17 +119,17 @@ At a matched wall-clock budget, a fast weak model taking many draws vs a slow st
 | config | solved | **s / verified solution** | **tokens / verified solution** |
 |---|---|---|---|
 | `qwen3.8:27b` k=3 (slow, strong) | **8/8** | 1,389 s | **38,460** |
-| `qwen3-coder:30b` k=12 (fast, weak) | 7/8 | **891 s** (0.64×) | 128,730 (3.35×) |
+| `qwen3-coder:30b` k=12 (fast, weak) | 7/8 | **891 s** (0.64×) | ≥119,068 (≥3.10×) |
 
 **The answer depends on which cost you actually pay.** For local GPU inference, where cost is
 *time*, many cheap draws win by 36% per verified solution. For a token-metered API they lose by
-3.35×. And volume does not close the capability gap — 7/8 vs 8/8.
+at least 3.10×. And volume does not close the capability gap — 7/8 vs 8/8.
 
 **The useful form of the claim:** *cheap draws beat one expensive pass when the binding cost is time,
 not tokens, and only up to the cheap model's ceiling.*
 
-*Correction 2026-10-12: 3.35× counts tokens copied onto the MoE arm's five repair records. On
-drafts alone the ratio is 3.10×, a lower bound; the finding's direction and size stand
+*Correction 2026-10-12: the figure first published, 128,730 tokens (3.35×), counted tokens copied
+onto the MoE arm's five repair records. On drafts alone the ratio is 3.10×, a lower bound; the finding's direction and size stand
 (`repair-accounting-unwired.md`).*
 
 *(`economic-arm-moe-vs-generalist.md`.)*
@@ -180,12 +188,13 @@ been described for months as a single "efficiency ceiling"; they were two differ
 
 ### On the hardest cells the limit is often speed
 
-On the cells the reference fails under the corrected prompts, the commonest failure is a program
-that passes the worked example and then runs past the 60 s execution timeout: 27 of 51 failed
-attempts on 2024 d24 p2 and 2025 d10 p2 (`m5pro-band-k1-vs-k3-aoc.md`), 9 of 12 on 2025 d9 p2
-(`part2-prompt-omits-part1.md`). `gemma4:31b` timed out on 19 of 27 attempts at 2025 d10 p2.
-`muse-glimmer:30b` timed out rarely (7 of 76 failed attempts on the same cells) and failed by
-crashing or answering wrong instead (`arm3-precheck-*.md`).
+On the cells the reference fails under the corrected prompts, the commonest failure is a run past
+the 60 s execution timeout on the full input: 27 of 51 failed attempts on 2024 d24 p2 and 2025 d10
+p2 (`m5pro-band-k1-vs-k3-aoc.md`), 9 of 12 on 2025 d9 p2 (`part2-prompt-omits-part1.md`). Many of
+those programs passed the worked example first: 11 of the 27 (15 had no example result to compare)
+and 6 of the 9. `gemma4:31b` timed out on 19 of 27 attempts at 2025 d10 p2. `muse-glimmer:30b`
+timed out rarely (7 of 76 failed attempts on its four entry cells) and failed by crashing or
+answering wrong instead (`arm3-precheck-*.md`).
 
 ### Interventions that add no new information do not help
 
@@ -209,8 +218,16 @@ Read together they are sharper than any one of them:
 
 This is now the filter for what to try next: *what does the model learn that it did not already know?*
 
+*2026-11-08: all five were measured with Part 2 posed without its Part 1 statement. Hypotheses 1–3
+lose their evidence under the corrected prompts: the problem behind 1 and 2 (2024 d13 p2) is solved
+3 of 3 at one draft, and the 2025 Part 2 "walls" behind 3 have since been solved at least
+sometimes (`m5pro-rescan-part2-aoc.md`, `part2-prompt-omits-part1.md`). Hypotheses 4 and 5 stand
+as nulls on the defective prompts only; 5 also ran with mispaired example tests
+(`example-tests-mispaired.md`), and under the corrected prompts the reference's repairs solved 2 of
+its 145 cells, which leaves "repair contributes an actual traceback" model-dependent (arm 1).*
+
 **A standing boundary:** one problem (2025 d9 p2) has resisted **every** configuration — k ∈ {1,3},
-repair ∈ {0,2}, temperature ∈ {0.7,1.0}, reworded feedback — across 13 problem-trials. Volume buys
+repair ∈ {0,2}, temperature ∈ {0.7,1.0}, reworded feedback — across 13 problem-trials of the reference (0/22 counting three models). Volume buys
 *stochastic* failures; it does not buy *systematic* ones. The same split appeared independently in
 arm 2: four times the draws bought a ~25%-per-draw parsing failure and did not buy a problem that
 emitted identical `TypeError`s every time.
@@ -260,25 +277,28 @@ released in **August 2026**. Community solutions to both years have been public 
 personal blogs since the events ran. It is likely that solutions to these problems — or close
 paraphrases — were in the model's training data.
 
-This is stated first among the limits because it is the objection a reader should raise, and because
-it affects the findings unevenly:
+It is the first objection a reader should raise, and it affects the findings unevenly:
 
 **Weakened by contamination — the capability claims.**
-The 8/8 sweep of 2024 d4–7, the "generation beats size" ladder, and the 43-solution ledger all
+The 8/8 sweep of 2024 d4–7, the "generation beats size" ladder, and the 68-solution ledger all
 measure *something*, but they cannot distinguish "this model is more capable" from "this model has
 seen more of this benchmark". A newer model is both stronger *and* more likely to have ingested the
 2024/2025 corpus, and those two explanations are entangled here. **Treat the capability numbers as
 descriptive of this testbed, not as a capability measurement.**
 
 **Largely robust to contamination — the orchestration comparisons.**
-Arms 1 and 2 compare *configurations of the same model on the same problems*. Whatever the model
+Arm 1 compares *configurations of the same model on the same problems*. Whatever the model
 memorized, it memorized identically in both arms, so contamination cannot explain a difference
-between k=1 and k=3, or between two sampling budgets. The mechanism findings — that sampling
-converts "sometimes" into "solved", that sampling and repair are superadditive, that volume buys
-stochastic but not systematic failures — do not depend on the problems being unseen.
+between k=1 and k=3. Arm 2 compares two models, so its 7/8 against 8/8 shares the capability
+caveat; its time-against-tokens split is a cost ratio per solution and less exposed. The mechanism
+findings — that sampling converts "sometimes" into "solved", that volume buys stochastic but not
+systematic failures — do not depend on the problems being unseen. *(2026-11-08: an earlier version
+listed "sampling and repair are superadditive" here; that was not measured, see arm 1.)*
 
 **A partial argument against pure memorization, offered as weak evidence only.**
-The frontier band consists of problems the model solves *sometimes* — 17%, 25%, 33% per draw.
+Under the original prompts the frontier band consisted of problems the model solved *sometimes* —
+17%, 25%, 33% per draw (under the corrected prompts most of those cells are solved by nearly every
+draft or by nearly none, which weakens this argument further).
 Memorized solutions would be expected to reproduce reliably rather than intermittently, and the
 problem that resisted every configuration (2025 d9 p2, 0/22 by 2026-10-12, all under the defective Part 2 prompt;
 3/5 since) would have been an odd thing to have memorized badly. This is
@@ -323,22 +343,23 @@ intermittency.
 For a verifier-gated setup like this one (a cheap, exact check picks among candidates), from what
 was measured with local models of about 30B:
 
-1. **Spend extra draws where a single draft succeeds part of the time.** At roughly 25–75% per
-   draft, three draws lift the solve rate sharply; near 0% or near 100% they buy little. Measure
-   the per-draft rate first.
+1. **Spend extra draws where a single draft succeeds part of the time.** Independent draws predict
+   that at roughly 25–75% per draft three draws lift the solve rate sharply, and near 0% or near
+   100% buy little. The lift was measured under the original prompts and is not yet tested at power
+   under the corrected ones. Measure the per-draft rate first.
 2. **Don't count on repair to rescue hard problems.** Feedback with true example results and
    too-high/too-low hints rescued nothing for the reference on its hard cells (2 of its 145 solves
    came from repair); another model's repairs did better (14 of 131). A fresh draft or a different
    model is the more reliable second try.
-3. **Check whether failures are timeouts.** Many hard-cell failures pass the example and run out of
-   time on the full input. Asking for an efficient algorithm, or allowing more execution time,
+3. **Check whether failures are timeouts.** Many hard-cell failures are timeouts on the full input,
+   often after passing the example. Asking for an efficient algorithm, or allowing more execution time,
    addresses a different limit from a bigger model.
 4. **Choose a second model by measurement, not by its maker.** Of six candidates, one reliably
    solved something the reference missed, and no cell was found where the reference reliably beat
    it, so a mix had nothing to add. Measure each model alone on your failure cases and on your
    successes; often one model should replace the other rather than join it.
-5. **Confirm any lead with more trials before acting on it.** Three trials found two leads that
-   did not survive ten (Ornith on 2024 d14 p2, the reference on 2024 d15 p2).
+5. **Confirm any lead with more trials before acting on it.** Three trials found three leads that
+   did not survive ten (Ornith on 2024 d14 p2, the reference on 2024 d15 p2 and d20 p2).
 6. **Without a cheap checker, none of this is measured.** Consensus here only ranks candidates;
    the oracle decides. Majority voting without a checker is a different arrangement.
 
@@ -347,7 +368,7 @@ was measured with local models of about 30B:
 The mechanism needs a **cheap, exact verifier**. Sampling and repair convert into correctness only
 because a check can collapse many guesses to one verified answer. Where that check exists — unit
 tests, a compiler, a proof checker, a simulator — the findings should transfer. Where correctness is
-subjective or expensive to verify, the coordination has little to grip, and the honest expectation
+subjective or expensive to verify, the coordination has little to grip, and the expectation
 is that none of this applies.
 
 ## Reproducing

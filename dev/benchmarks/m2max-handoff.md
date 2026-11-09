@@ -7,6 +7,10 @@ before running anything; it is the operational companion to `dev/benchmarks/cros
 
 This file is internal (not referenced from the public `README.md`).
 
+> **Historical (2026-11-08).** The M2 Max experiments this file was written for ran in August 2026
+> and work has since moved to the M5 Pro / 64 GB. Keep it as the bring-up guide and the record of
+> its gotchas; for what to run now, read `dev/progress/checkpoint.md` and `PLAN.md`.
+
 > **Bringing up a machine after the M2 Max (added 2026-10-12, from the M5 Pro / 64 GB bring-up).**
 > §3 says to bring `years/`. Two things it does not say, both of which bit:
 > - **Copy `years/` from the M2 Max, not the M1.** The M1's copy has `problem.html` and
@@ -17,7 +21,8 @@ This file is internal (not referenced from the public `README.md`).
 >   `RESULTS.md` was recomputed from and that baseline reuse depends on. The M2 Max has 58 JSONs; a
 >   machine seeded from the M1 has the first 35.
 >
-> Expected after both copies: `43 correct, 0 wrong`, and **210 passed**.
+> Expected after both copies: `43 correct, 0 wrong`, and **210 passed** (the counts on
+> 2026-10-12; on 2026-11-08 they are 68 correct and 257 passed).
 
 ---
 
@@ -91,7 +96,7 @@ Notes:
   in `StrategyRecommender` had never actually been active on any M1 run. The warm data only fed
   `_get_top_models` ranking, which a single-model `models=` run doesn't exercise. So M1↔M2 runs stay
   comparable; restore the backup over `solver.db` if you ever need the exact M1 state.
-- **`gh` is not installed on the M2 Max.** `AGENTS.md` mentions `/opt/homebrew/bin/gh`; that was the
+- **`gh` is not installed on the M2 Max.** `AGENTS.md` mentioned `/opt/homebrew/bin/gh` at the time; that was the
   M1. Push the branch and open the PR in a browser, or `brew install gh`.
 - **Python 3.14 works** (verified on the M2 Max, 2026-08-15) after two dependency fixes landed:
   `pydantic` was pinned to `==2.5.2`, which has no cp314 wheel and forced a doomed from-source Rust
@@ -138,7 +143,7 @@ The thesis is scale-invariant only if voting still helps where the *strong* mode
    ```
    **The thesis holds if k3/k5 solve the "sometimes" problems at a materially higher rate than k1.**
    Report per-problem k/5 (the harness prints any/all across trials). A flat line (k3 ≈ k1 on the
-   frontier band) would be evidence *against* scale-invariance — record either honestly.
+   frontier band) would be evidence *against* scale-invariance — record either.
 3. Temperature matters for pass@k (need diverse draws). 0.7 is the standing default; if k>1 shows no
    spread, try 0.8–1.0 and note it.
 

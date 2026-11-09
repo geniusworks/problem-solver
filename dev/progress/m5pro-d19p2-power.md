@@ -75,3 +75,9 @@ and one model; `repair-accounting-unwired.md` carries the note.
 Unchanged: confirmed and replicated on the two earlier bands. This is a third test that agrees in
 direction and in mechanism and does not reach significance alone. It is the only one of the three
 with enough trials to check the independence assumption directly, and the assumption held.
+
+*2026-11-01: arm 1 was narrowed. With the Part 1 statement in the prompt, d19 p2 is 19/19 at k1
+(`part2-prompt-omits-part1.md`), and on the re-measured band three drafts did not measurably beat
+one, 9/19 against 11/21 (`m5pro-band-k1-vs-k3-aoc.md`). Independent draws predict a gain only
+where a single draft succeeds part of the time; under the corrected prompts that is not yet
+tested at power.*

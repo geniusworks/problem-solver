@@ -86,7 +86,7 @@ Nothing is evaluable at n=1 against the observed variance. Smallest change, unbl
   (`shared/experiment/runner.py:196`). Wire `AttemptRecord.sample_index` (`results.py:56`, already
   exists) and set a per-trial seed/index.
 - Aggregate in `ExperimentResult`: solve rate as *k/N per problem* and a stability count (how often
-  each problem flips). Add a `solved_at_least_once` / `solved_every_time` split — the honest way to
+  each problem flips). Add a `solved_at_least_once` / `solved_every_time` split — the way to
   report a variable pipeline.
 - Produce a real baseline: `qwen2.5-coder:7b`, 2024 days 1–3, **5 trials**, committed to
   `dev/experiments/` with a short written summary in `dev/progress/`.
@@ -180,10 +180,12 @@ one remaining chunk that could be extracted next.
 
 ### Deferred to a later cleanup (not blocking)
 
-- **Config sprawl:** delete `config/cache.yaml` and the now-dead `models.yaml`/`hardware.yaml` (the
-  code reading them is gone); prune dead `.env.example` vars.
-- **Collapse remaining duplicate types** (taxonomy, `TestCase`, `ExamplePurpose`); remove the
-  builtin-shadowing `TimeoutError`/`RuntimeError` in `shared/errors.py`.
+- ~~**Config sprawl:** delete `config/cache.yaml` and the now-dead `models.yaml`/`hardware.yaml`;
+  prune dead `.env.example` vars.~~ ✅ Done (PR #26): `config/` holds only `resources.yaml`.
+- ~~**Collapse remaining duplicate types** (taxonomy, `TestCase`, `ExamplePurpose`); remove the
+  builtin-shadowing `TimeoutError`/`RuntimeError` in `shared/errors.py`.~~ ✅ Done (PR #26): the
+  shadowing errors are gone; the remaining types turned out to be distinct and were kept
+  (`dev/progress/checkpoint.md`).
 
 **Verify (C1, met):** full suite green (165; −23 were the deleted dead-module tests); `pylint -E`
 clean; `dev/verify_solutions.py` 4/4.
@@ -231,7 +233,7 @@ regression into `wrong`; result JSONs now carry non-zero token counts.
 
 Only now, and only what measures a positive delta through the harness.
 
-- **Self-consistency sampling — IN PROGRESS (PR: milestone-e-self-consistency).** `samples_per_model`
+- **Self-consistency sampling — ✅ DONE (PR: milestone-e-self-consistency).** `samples_per_model`
   draws N candidates per model instead of one; at temperature > 0 the draws differ, giving several
   shots at the oracle in one run — the direct attack on the measured run-to-run variance (4 of 6
   problems flipped). Keyed the candidate pool by candidate id (with a candidate→model map for
@@ -264,6 +266,16 @@ Only now, and only what measures a positive delta through the harness.
 ---
 
 ## Next steps for the maintainer
+
+**Open as of 2026-11-08.** All three thesis arms are measured (`RESULTS.md`). Two items remain,
+both optional and both awaiting the maintainer:
+1. **A powered arm-1 test under the corrected prompts** on 2025 d9 p2, the one cell measured at a
+   mid-range draft rate: k1 against k3, about 20 trials each for about 80% power. Design and
+   prediction to be registered first.
+2. **AoC 2026** (§4b), opening 2026-12-01: the clean contamination test. Needs the submitter
+   decision and wiring (§5) before then.
+
+Everything below is the record of how the roadmap got here.
 
 **Milestones A–F status:** A–E done, codebase consolidated (C1–C3), F (submission) still deferred —
 there is no unseen problem to submit against. The two questions that gated everything for months are
@@ -312,7 +324,9 @@ problems. In order:
    current-generation model between ~25 GB and 64 GB at 4-bit: `laguna-s-2.1` starts at 66 GB and
    `mistral-medium-3.5:128b` at 80 GB, and `llama3.3:70b` is the old generation that has not paid
    here. So **whether a larger model moves the walls (2025 d9 p2, 0/22; 2024 d16 p2, 0/7) cannot
-   be tested at 64 GB** and stays open. What the machine can test is lineage: three 30B-class
+   be tested at 64 GB** and stays open. *(Superseded: both walls fell once Part 2 carried its
+   Part 1 statement, 3/5 and 3/3, `part2-prompt-omits-part1.md`; all three candidates below have
+   run, ✅ DONE 2026-11-08.)* What the machine can test is lineage: three 30B-class
    models from makers other than the reference's, **pulled 2026-10-12, not yet run**
    (correction 2026-11-01: `gemma4:31b` and `muse-glimmer:30b` had been removed in between and
    were pulled again that day):
@@ -376,7 +390,7 @@ problems. In order:
       venv/bin/python experiment.py --problems 2024:14.2 --trials 10 --config "name=m5pro-d14p2-ref-k1-n10,models=qwen3.8:27b,$B"
       ```
       Register the prediction first. It can run before 1 and 2.
-   4. **Next: muse's lead held; the portfolio test** (`arm3-portfolio-test.md`, registered
+   4. ✅ **DONE 2026-11-08: muse's lead held; the portfolio test** (`arm3-portfolio-test.md`, registered
       2026-11-06). Replaces the ensemble against each member at 3 drafts, which would have measured
       6 draws against 3. Stage A, muse on 14 cells the reference solves (three batches, about
       2–4 h each) → stage B, choose cells with winners both ways → stage C, the ensemble at 3 + 3
@@ -417,7 +431,7 @@ problems. In order:
    Optional and separate: `qwen3.8:27b-q8_0` (30 GB), the reference at 8-bit, on the same four
    cells. It tests whether 4-bit quantization costs anything on the walls. Not pulled.
 5. **AoC 2026** (§4b) opens 2026-12-01. **Undecided as of 2026-10-13** (maintainer): not
-   committed to, not ruled out. Work continues on the 2024–2025 data, which is enough for the
+   committed to, not ruled out. *(2026-11-08: one of the two open items, above.)* Work continues on the 2024–2025 data, which is enough for the
    three arms; they are orchestration comparisons. Running 2026 would add the contamination test
    and the first real use of the `UNVERIFIED` path, and would need the submitter decision below.
 
@@ -430,7 +444,7 @@ problems. In order:
   gain. (`dev/progress/m2max-qwen38-27b-d4-7.md` and siblings.)
 - **The central thesis — "does sampling+voting still add correctness at a *strong* model's own
   frontier?"** Measured: **42% → 75%**, and now decomposed — 1 sample+repair 42%, 3 samples no repair
-  58%, 3 samples+repair **75%**. Sampling and repair contribute separately and **superadditively**.
+  58%, 3 samples+repair **75%**. Sampling and repair contribute separately and **superadditively** *(not measured: the one-draft, no-repair corner never ran; corrected 2026-11-08, `RESULTS.md` arm 1)*.
   (`passk-ab-d13-d15.md`.)
 - **The d4–7 comparison set is retired** (solved out at 100%); **d8–15 is the working instrument**
   (56%), and the frontier band within it is classified.
@@ -453,10 +467,13 @@ problems. In order:
 Remaining under this heading: **widen the replication.** Two "sometimes" problems × 3 trials is a
 successful replication attempt, not a confirmation at scale. More frontier problems — 2024 d16–25
 (uncached), or a third year — would firm up the effect size rather than just its direction.
+*(2026-11-08: 2024 d16–25 has since been scanned and banded, and arm 1 was narrowed under the
+corrected prompts; see the open items at the top of this section.)*
 
 ### 2. Draw diversity — temperature RULED OUT; strategy-level diversity is the live lever
 
-**One problem resists everything:** 2025 d9 p2, **0 of 10** problem-trials across
+*(Corrected 2026-10-31: with the Part 1 statement in the prompt the reference solves 2025 d9 p2 in
+3 of 5 trials, `part2-prompt-omits-part1.md`.)* **One problem resists everything:** 2025 d9 p2, **0 of 10** problem-trials across
 `samples_per_model` ∈ {1,3}, `max_repair_iterations` ∈ {0,2}, `temperature` ∈ {0.7,1.0} — the
 project's most reproducible negative result, and the benchmark any decorrelation claim must clear.
 
@@ -493,8 +510,10 @@ variance without information and failed; reworded feedback added exhortation wit
 failed (`targeted-feedback-negative.md`).
 
 1. **Targeted feedback — BUILT AND TESTED; both variants are NULL (2026-08-20/21).** Implemented and gated
-   behind `SolverConfig.efficiency_feedback`, with tests, and it fires only on timeouts — but
-   **neither target problem ever times out**, so it is inert on them and its A/B was stopped before
+   behind `SolverConfig.efficiency_feedback` (renamed `targeted_feedback` when re-aimed at wrong
+   answers), with tests, and it fires only on timeouts — but
+   **neither target problem ever times out** *(under the defective Part 2 prompt; with the Part 1
+   statement, 9 of 2025 d9 p2's 12 failed attempts timed out, `part2-prompt-omits-part1.md`)*, so it is inert on them and its A/B was stopped before
    it could produce a false negative. The "execution-bound" premise came from long *wall-clock*,
    which is generation plus repair, not execution. Re-aim it at the failure modes that actually
    occur (wrong answers, crashes) or find problems that genuinely time out. The
@@ -504,7 +523,8 @@ failed (`targeted-feedback-negative.md`).
 2. **Prompt variants across draws — DEMOTED by the filter.** Rewording without new information is
    the same class as the null above. Cheap, but now a low prior; run it only if the promoted options
    are blocked.
-3. **Cross-generation model mixing — PROMOTED.** A second model's differing answer *is* new
+3. **Cross-generation model mixing — PROMOTED.** *(Done: pre-checked 2026-08-22,
+   `ensemble-precheck-negative.md`; arm 3 measured one-way 2026-11-08, `arm3-portfolio-test.md`.)* A second model's differing answer *is* new
    information. The M1's ensemble failed with two *same-tier, same-generation* models; mixing
    `qwen3.8:27b` with `qwen3-coder:30b` (different architecture *and* generation) is untested, and is
    arm 3 ("decorrelated portfolios") of the README thesis.
@@ -515,9 +535,13 @@ failed (`targeted-feedback-negative.md`).
 
 **Caution learned the hard way:** four mechanistic hypotheses in this line of work have now been
 falsified by the next run. Treat each of the above as a *measurement to make*, not a fix to apply —
-and A/B it against the two resistant benchmarks before believing it.
+and A/B it against the two resistant benchmarks before believing it. *(2026-11-08: neither
+benchmark resists under the corrected prompts; see §4.)*
 
 ### 3. The economic arm of the thesis — blocked on an instrument fix
+
+✅ **Done 2026-08-23** (`economic-arm-moe-vs-generalist.md`); see Sequencing, step 3. The plan as
+written:
 
 Arm 2 of the README thesis is a *cost* claim: many cheap draws beat one expensive pass at equal
 spend. The pair to test it exists — `qwen3-coder:30b` is ~4× faster than `qwen3.8:27b` — as
@@ -543,8 +567,9 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
   of 54 that did not. `problem_context=aoc` (the default now) shows what a solver on the site has:
   Part One's statement and accepted answer, the recorded Part One program, a preview of the input.
   `problem_context=legacy` reproduces every earlier run. **The Part 1/Part 2 cliff and every
-  Part 2 "wall" are unestablished as capability findings until re-run**; the A/B is registered in
-  that doc and not yet run.
+  Part 2 "wall" are unestablished as capability findings until re-run**. *(Re-run: 2024 d19 p2
+  6/20 → 19/19 on 2026-10-13, and the rescan of 2026-11-01 left the cliff not established,
+  `m5pro-rescan-part2-aoc.md`.)*
 - ~~**The analysis call ignored the configured temperature**~~ — ✅ **FIXED 2026-10-13** (same
   doc). `analysis_temperature=model_default` reproduces earlier runs.
 - ~~**Part Two was attempted cold, without having solved Part One**~~ — ✅ **FIXED 2026-10-13**
@@ -581,7 +606,8 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
   months undetected (`strategy-keyerror-d8.md`). Wants a distinct `HARNESS_ERROR` outcome.
   A second instance, 2026-10-12: 2024 d25 has no Part 2, but the harness attempted one and scored
   it `no_candidate`, so the d16–25 scan prints 9/20 for what is 9/19. ✅ **That instance is fixed**
-  (`final-day-no-part2.md`); the general `HARNESS_ERROR` gap is not.
+  (`final-day-no-part2.md`), and the general gap was fixed 2026-10-13: solver crashes score
+  `harness_error` (`shared/experiment/results.py`).
 - ~~**Error-shaped answers are scored `wrong`.**~~ ✅ **FIXED 2026-10-13**: scored `error`, and
   under `aoc` context the output is shown back to the model. Was: Generated code that catches its own exception and
   prints `An error occurred: …` then `0` is recorded as a wrong answer, understating crashes.
@@ -614,9 +640,8 @@ after `_execute_and_repair`.
 
 ### Optional, unblocked (small cleanups)
 
-See "Deferred to a later cleanup" under Milestone C: delete the dead `config/*.yaml`, prune dead
-`.env.example` vars, collapse the last duplicate types. `OllamaProvider.__init__`'s default
-`model="codellama:7b"` is also stale (inert — every call site passes `model` explicitly).
+The Milestone C deferred cleanups are done (PR #26). Still open: `OllamaProvider.__init__`'s default
+`model="codellama:7b"` is stale (inert — every call site passes `model` explicitly).
 
 ## Documentation
 
@@ -641,7 +666,7 @@ own thesis and neither of the other two. **Three steps finish every arm, then on
    targets first: its solve set is a **strict subset** of `qwen3.8:27b`'s — it solves nothing the
    generalist cannot and *fails* d9 p1, which the generalist handles 3/3. Nothing to pool, so the
    ensemble was **not run** (1h45m spent instead of ~9h). Arm 3 stays **untested for want of a
-   suitable pair**; the entry criterion is now explicit: *measure each member individually on the
+   suitable pair** *(measured 2026-11-08 on the M5 Pro: one-way, `arm3-portfolio-test.md`)*; the entry criterion is now explicit: *measure each member individually on the
    targets first, and only run an ensemble if one solves something the others reliably miss.*
 3. ~~**The economic A/B**~~ — ✅ **DONE 2026-08-23** (`economic-arm-moe-vs-generalist.md`).
    **Arm 2 splits by which cost you pay:** per verified solution the fast weak model at k=12 is
@@ -650,7 +675,7 @@ own thesis and neither of the other two. **Three steps finish every arm, then on
    APIs, and bounded by the cheap model's ceiling. Volume bought the stochastic failure (d5 p1,
    ~25%/draw parsing) and not the systematic one (d6 p2, 6/6 identical `TypeError`s).
 4. ~~**Write `RESULTS.md`**~~ — ✅ **DONE 2026-08-23.** — the consolidated, self-contained findings report: the three arms as
-   measured (including nulls), the statistics stated honestly (2024 alone is marginal at p ≈ 0.061;
+   measured (including nulls), the statistics (2024 alone is marginal at p ≈ 0.061;
    with the 2025 replication, combined p ≈ 0.005), the corrections, and the information rule. The
    28 finding docs stay as the audit trail; `RESULTS.md` is the artifact a reader actually reads,
    and the deliverable for making the repo public. Written **last**, so it is complete rather than

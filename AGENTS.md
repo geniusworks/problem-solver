@@ -26,9 +26,9 @@ measured, not asserted. Secondarily, it's an AoC solver. See `README.md` for the
   session; update it (and the roadmap) as work lands so the docs never go stale.
 - `dev/progress/*.md` — the committed findings (baselines, A/Bs, the capability frontier).
 - `dev/benchmarks/cross-machine-results.md` — solve-rate results keyed by machine.
-- `dev/benchmarks/m2max-handoff.md` — **if you are running on the M2 Max / 32 GB (or any >16 GB
-  machine), read this first.** Operational handoff: what the M1 established, the two experiments to
-  run (30B capability + the pass@k thesis test), exact setup/commands, and the gotchas.
+- `dev/benchmarks/m2max-handoff.md` — **if you are bringing up a new machine, read this first.**
+  The M2 Max bring-up guide (its experiments ran in August 2026): setup, copying `years/` and
+  `dev/experiments/`, and the gotchas. What to run now is in `checkpoint.md` and `PLAN.md`.
 - `dev/docs/architecture.md` — design overview.
 
 ## How to work here
@@ -70,7 +70,7 @@ measured, not asserted. Secondarily, it's an AoC solver. See `README.md` for the
 ## Reproducing experiments
 
 ```
-venv/bin/python experiment.py --problems 2024:4-7 --trials 1 \
+venv/bin/python experiment.py --problems 2024:4-7 --trials 3 \
   --config "name=<run>,models=<MODEL>,temperature=0.7,samples_per_model=3,enable_thinking=false"
 ```
 Add `enable_thinking=false` for reasoning models or they over-reason and never emit code.
