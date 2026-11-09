@@ -97,6 +97,11 @@ def drop_parts_without_puzzle(
     return kept, dropped
 
 
+def part_one_gated(config: SolverConfig) -> bool:
+    """Whether each trial must solve Part One before its Part Two is posed."""
+    return config.problem_context == "aoc" and config.gate_part_two
+
+
 def with_part_one_prerequisites(problems: Sequence[ProblemSpec]) -> List[ProblemSpec]:
     """Order a problem set so every Part Two follows its own Part One.
 
@@ -289,7 +294,7 @@ async def run_experiment(
 
     # Under the site's conditions a Part Two exists only for a solver who has
     # just solved Part One, and it is solved with that program to hand.
-    gated = config.problem_context == "aoc"
+    gated = part_one_gated(config)
     if gated:
         problems = with_part_one_prerequisites(problems)
 

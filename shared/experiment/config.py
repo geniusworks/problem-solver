@@ -37,6 +37,7 @@ _LEGACY_VALUES: Dict[str, Any] = {
     "problem_context": "legacy",
     "analysis_temperature": "model_default",
     "example_tests": "parser",
+    "gate_part_two": True,
 }
 
 
@@ -104,6 +105,12 @@ class SolverConfig:
     #               2026-10-14; a verified program fails 25 of 46 of these
     #               (dev/progress/example-tests-mispaired.md).
     example_tests: str = "page"
+
+    # Under problem_context=aoc, whether each trial must solve Part One before
+    # Part Two is posed (the site's conditions). False poses Part Two directly,
+    # with the recorded, verified Part One program in the context: for AoC 2026,
+    # once Part One is solved on the account and only Part Two is measured.
+    gate_part_two: bool = True
 
     # --- repair and fallback --------------------------------------------
     max_repair_iterations: int = 2

@@ -22,7 +22,7 @@ This file is internal (not referenced from the public `README.md`).
 >   machine seeded from the M1 has the first 35.
 >
 > Expected after both copies: `43 correct, 0 wrong`, and **210 passed** (the counts on
-> 2026-10-12; on 2026-11-09 they are 69 correct and 305 passed).
+> 2026-10-12; on 2026-11-09 they are 69 correct and 308 passed).
 
 ---
 

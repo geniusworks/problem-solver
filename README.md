@@ -548,12 +548,12 @@ one-way, so the ensemble was not run. Open, in priority order (`PLAN.md`, "Open"
 - **Beyond AoC:** how far the results depend on an exact checker. Every attempt records the
   worked examples' verdict beside the oracle's from 2026-11-09, so the next runs measure it; then
   a second domain (`PLAN.md`, "Beyond AoC").
-- **Does the Part 1 context inform, or cue recall?** The headline's caveat, tested by paraphrased
-  and information-stripped Part 1 text on public puzzles and by AoC 2026
+- **Does the Part 1 context inform, or cue recall?** The headline's caveat, tested on AoC 2026,
+  where nothing can be recalled: Part 2 with and without the Part 1 context
   (`dev/progress/part2-context-heldout-plan.md`).
-- **A powered sampling test under the corrected harness:** 2025 d9 p2 is the one problem measured
-  at a mid-range draft rate; about 20 trials each way at one and three drafts would test sampling
-  there.
+- **A powered sampling test under the corrected harness, running:** 2025 d9 p2 is the one problem
+  measured at a mid-range draft rate; 20 trials each way at one and three drafts, registered in
+  `dev/progress/m5pro-d9p2-power-aoc.md`.
 - **What decorrelates draws?** Temperature and reworded feedback moved nothing, and mixing models
   was one-way on the problems measured. Prompt variants remain untested.
 
