@@ -13,7 +13,9 @@ type, arm 3 one-way. Ledger 68 verified, 0 wrong; tests 257 passing. A reconcili
 2026-11-08 checked every published claim against the result files and added dated correction
 notes where later runs had overturned earlier write-ups. Open, both awaiting the maintainer: a
 powered arm-1 test on 2025 d9 p2 (`PLAN.md`, "Open as of 2026-11-08"); AoC 2026 in December,
-which needs the submitter decision first. The sections below are the dated record, newest first.
+which needs the submitter decision first. Next on the project's larger objective, generality: wire
+the per-attempt example verdict and measure how far the results depend on an exact checker
+(`PLAN.md`, "Beyond AoC"). The sections below are the dated record, newest first.
 
 ### Instrument fixed: the model now sees what a solver on the site sees (2026-10-13)
 

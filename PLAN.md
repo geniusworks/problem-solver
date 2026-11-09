@@ -275,6 +275,31 @@ both optional and both awaiting the maintainer:
 2. **AoC 2026** (§4b), opening 2026-12-01: the clean contamination test. Needs the submitter
    decision and wiring (§5) before then.
 
+### Beyond AoC — the larger objective
+
+The project's aim is general problem-solving through orchestration (`README.md`, "What it is"); AoC
+is the testbed. Every result so far rests on an exact checker, the accepted answer, which most real
+domains lack. Generalising is therefore sequenced as measurements, each gating the next, not as a
+framework built ahead of evidence: of the components a general system might make pluggable, some
+have measured value here and some do not (mixing models lost to choosing one; repair recovered
+2/145 failures on the reference model).
+
+1. **How much does the method depend on an exact checker?** Record, per attempt, the verdict of the
+   worked examples alongside the oracle's. `AttemptRecord.examples_passed`/`examples_total` exist
+   but are never filled, and candidate code is not stored, so existing runs cannot be re-scored:
+   wire the fields, then measure on a fixed set how often the examples accept a wrong answer and
+   reject a right one, and what sampling and selection achieve with the examples as the only
+   check. This stands in for the partial checkers of other domains (unit tests, static analysis).
+   Small, no new GPU work beyond that set.
+2. **Where is AoC hard-wired?** Audit the seams (verification is keyed on year/day/part,
+   `shared/verification.py`; fetch, parsing and prompts are AoC-shaped) and define a minimal
+   problem-and-checker interface, shaped by what step 1 shows a checker must provide.
+3. **Does it transfer?** Choose a second domain with a cheap checker and published problems dated
+   after the models' cutoff, and repeat the arm-1 sampling test there under the same rules
+   (registered prediction, `--trials` ≥ 3).
+
+None of this displaces AoC 2026, which has a date; step 1 can run alongside it.
+
 Everything below is the record of how the roadmap got here.
 
 **Milestones A–F status:** A–E done, codebase consolidated (C1–C3), F (submission) still deferred —
