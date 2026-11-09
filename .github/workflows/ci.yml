@@ -24,5 +24,7 @@ jobs:
         run: python -m pip install -r requirements.txt -r requirements-dev.txt
       - name: Tests
         run: PYTHONPATH=. python -m pytest -q
+      - name: Type check
+        run: python -m mypy shared learning submission experiment.py solve.py dev/export_results.py dev/recompute_results.py
       - name: Published figures match the committed results
         run: python dev/recompute_results.py --check

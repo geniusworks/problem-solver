@@ -3,10 +3,7 @@
 import json
 import logging
 import re
-try:
-    from bs4 import BeautifulSoup  # type: ignore
-except Exception:  # ImportError or others
-    BeautifulSoup = None  # Fallback to plain-text parsing when bs4 unavailable
+from bs4 import BeautifulSoup, Tag
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -264,7 +261,7 @@ def _extract_examples_from_text(text: str) -> List[TestCase]:
     return examples
 
 
-def _extract_examples(article: BeautifulSoup) -> List[TestCase]:
+def _extract_examples(article: Tag) -> List[TestCase]:
     """Extract all examples from problem text with their context.
 
     AoC problems typically have one main example per part inside a <pre><code>
@@ -272,7 +269,7 @@ def _extract_examples(article: BeautifulSoup) -> List[TestCase]:
     "a total distance of 11").
     """
     logger.debug("Starting example extraction...")
-    examples = []
+    examples: List[TestCase] = []
 
     # Find all pre blocks
     pre_blocks = article.find_all("pre")
@@ -467,7 +464,7 @@ def parse_problem_text(problem_text: str, examples_file: Optional[Path] = None) 
     # Determine if input is HTML or plain text
     is_html = "<" in problem_text and ">" in problem_text
     
-    if is_html and BeautifulSoup is not None:
+    if is_html:
         # Parse HTML
         soup = BeautifulSoup(problem_text, "html.parser")
         # Extract article content if available

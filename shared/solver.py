@@ -6,7 +6,11 @@ import os
 import json
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional, Dict, Any
+from typing import TYPE_CHECKING, List, Tuple, Optional, Dict, Any
+
+if TYPE_CHECKING:
+    from learning import LearningDatabase
+    from shared.quality.code_quality import CodeQualityAnalyzer
 from datetime import datetime
 import requests
 from requests import RequestException
@@ -177,7 +181,7 @@ class BaseSolver:
         self.learning_dir = workspace_dir / "learning"
         self.learning_dir.mkdir(parents=True, exist_ok=True)
         self.strategy_optimizer = None
-        self.db = None
+        self.db: Optional["LearningDatabase"] = None
         self.enable_collaborative_improvement = self.config.enable_collaborative_improvement
         # Per-model trace of the most recent solve, consumed by the experiment
         # harness. Reset at the start of each solve_problem call.
@@ -320,12 +324,10 @@ class BaseSolver:
         answers = cands.answers
         parsed_problem = prep.parsed_problem
         reviewer_models = prep.reviewer_models
-        quality_scores: Dict[str, float] = {}
-        analyzer = None
         # If we have answers, try to reach consensus
         consensus_answer: Optional[str] = None
         quality_scores: Dict[str, float] = {}
-        analyzer = None
+        analyzer: Optional["CodeQualityAnalyzer"] = None
         if answers:
             # Get quality metrics for all solutions
             from shared.quality.code_quality import CodeQualityAnalyzer
@@ -376,6 +378,8 @@ class BaseSolver:
 
         # If no consensus, optionally try collaborative improvement
         if len(answers) > 0 and self.enable_collaborative_improvement:
+            # answers is non-empty, so the quality pass above created the analyzer.
+            assert analyzer is not None
             # Select best solution as starting point based on quality score
             best_model = max(quality_scores.items(), key=lambda x: x[1])[0]
             best_answer = answers[best_model]
@@ -678,7 +682,7 @@ class BaseSolver:
             current_candidates: Dict[str, str] = dict(answers)
 
             for iteration in range(max_repair_iterations + 1):
-                validated_candidates: List[Tuple[str, str]] = []
+                validated_candidates: List[Tuple[str, str, Optional[str]]] = []
                 feedback_by_model: Dict[str, str] = {}
 
                 for cand_id, solution in current_candidates.items():
@@ -1344,7 +1348,7 @@ class BaseSolver:
                     attempt_data["metadata"].get("part") == part
                     and attempt_data["submission"].get("success")
                 ):
-                    return attempt_data["code"]
+                    return str(attempt_data["code"])
             except (json.JSONDecodeError, KeyError):
                 continue
 

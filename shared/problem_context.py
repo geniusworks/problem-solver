@@ -17,7 +17,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from bs4 import BeautifulSoup
 
@@ -40,7 +40,7 @@ def part_one_statement(year: int, day: int) -> Optional[str]:
     articles = soup.find_all("article", class_="day-desc")
     if not articles:
         return None
-    return articles[0].get_text()
+    return str(articles[0].get_text())
 
 
 def page_description(year: int, day: int, part: int, part_text: str) -> str:
@@ -147,10 +147,12 @@ def looks_like_error_output(output: Optional[str]) -> bool:
     Generated code often catches its own exception, prints a message and then a
     placeholder such as 0. That is a crash the program hid, not a wrong answer.
     """
-    return bool(output) and bool(_ERROR_WORDS.search(output))
+    if not output:
+        return False
+    return bool(_ERROR_WORDS.search(output))
 
 
-def _emphasised_result(article) -> Optional[str]:
+def _emphasised_result(article: Any) -> Optional[str]:
     """The last emphasised code span in an article: the worked example's result."""
     spans = [e.get_text().strip() for e in article.select("code > em, em > code")]
     return spans[-1] if spans else None
@@ -308,8 +310,8 @@ def statement_examples(
     for index, article in enumerate(articles):
         own_part = index == int(part) - 1
         blocks = [
-            pre.find("code").get_text().strip("\n")
-            for pre in article.find_all("pre") if pre.find("code") is not None
+            code.get_text().strip("\n")
+            for pre in article.find_all("pre") if (code := pre.find("code")) is not None
         ]
         lone = len(blocks) == 1 and not any(
             mark.isalnum() for mark in _extra_marks(blocks[0], puzzle_input)

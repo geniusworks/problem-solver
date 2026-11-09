@@ -4,7 +4,7 @@ import time
 import psutil
 import logging
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Iterator
 from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
@@ -49,12 +49,12 @@ class PerformanceMetrics:
 class PerformanceMonitor:
     """Monitors code performance metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the performance monitor."""
         self.process = psutil.Process()
         self._reset()
 
-    def _reset(self):
+    def _reset(self) -> None:
         """Reset monitoring state."""
         self.start_time: Optional[float] = None
         self.end_time: Optional[float] = None
@@ -62,17 +62,17 @@ class PerformanceMonitor:
         self.peak_memory: int = 0
         self.cpu_samples: list[float] = []
 
-    def _update_peak_memory(self):
+    def _update_peak_memory(self) -> None:
         """Update peak memory usage."""
         current = self.process.memory_info().rss
         self.peak_memory = max(self.peak_memory, current)
 
-    def _sample_cpu(self):
+    def _sample_cpu(self) -> None:
         """Sample current CPU usage."""
         self.cpu_samples.append(self.process.cpu_percent())
 
     @contextmanager
-    def monitor(self):
+    def monitor(self) -> Iterator[None]:
         """Context manager for monitoring code execution.
 
         Usage:
@@ -94,7 +94,8 @@ class PerformanceMonitor:
             self._update_peak_memory()
             self._sample_cpu()
 
-            # Calculate metrics
+            # Calculate metrics. Both are set before the yield; _reset cannot fail.
+            assert self.start_time is not None and self.initial_memory is not None
             execution_time = self.end_time - self.start_time
             memory_stats = MemoryStats(
                 initial_rss=self.initial_memory,

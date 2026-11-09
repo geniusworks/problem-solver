@@ -757,7 +757,7 @@ def get_strategies_for_problem(problem_text: str) -> List[str]:
     Returns:
         List of potentially applicable strategy names
     """
-    strategies = []
+    strategies: List[str] = []
 
     # Find relevant categories based on keywords (safely normalize input)
     try:
@@ -778,8 +778,8 @@ def get_strategies_for_problem(problem_text: str) -> List[str]:
         matching_categories = [ProblemCategory.PATTERN_MATCHING, ProblemCategory.MATH]
     else:
         # Get the top 2 scoring categories
-        matching_categories = sorted(category_scores.items(), key=lambda x: x[1], reverse=True)[:2]
-        matching_categories = [cat for cat, _ in matching_categories]
+        ranked = sorted(category_scores.items(), key=lambda x: x[1], reverse=True)[:2]
+        matching_categories = [cat for cat, _ in ranked]
             
     # Get strategies for each matching category.
     #

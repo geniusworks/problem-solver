@@ -12,7 +12,7 @@ import logging
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from shared.experiment.config import SolverConfig
 from shared.experiment.environment import capture_environment
@@ -24,6 +24,9 @@ from shared.experiment.results import (
 )
 from shared.ground_truth import get_known_answer, part_has_puzzle
 from shared.verification import Verdict, verify_solution_code
+
+if TYPE_CHECKING:
+    from shared.solver import BaseSolver
 
 logger = logging.getLogger(__name__)
 
@@ -157,7 +160,7 @@ def _classify(code: Optional[str], year: int, day: int, part: int) -> Tuple[Outc
 
 
 async def run_problem(
-    solver,
+    solver: "BaseSolver",
     year: int,
     day: int,
     part: int,
@@ -256,7 +259,7 @@ async def run_experiment(
     config: SolverConfig,
     workspace_dir: Path,
     debug: bool = False,
-    on_result=None,
+    on_result: Optional[Callable[[ProblemResult], Any]] = None,
     trials: int = 1,
     save_to: Optional[Path] = None,
     include_replay: bool = False,
@@ -319,7 +322,7 @@ async def run_experiment(
             result = await run_problem(solver, year, day, part, config, trial=trial)
             if gated and part == 1 and result.solved:
                 winner = next((a for a in result.attempts if a.succeeded and a.code), None)
-                if winner is not None:
+                if winner is not None and winner.code:
                     part_one_programs[(year, day)] = winner.code
             # A page first fetched by this very run can reveal that the part was
             # never a puzzle; that attempt is not a result.

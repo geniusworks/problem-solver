@@ -20,12 +20,12 @@ import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from shared.experiment import ExperimentResult, Outcome, SolverConfig  # noqa: E402
+from shared.experiment import ExperimentResult, Outcome, ProblemResult, SolverConfig  # noqa: E402
 from shared.experiment.runner import (  # noqa: E402
     compare,
     drop_parts_without_puzzle,
@@ -85,7 +85,7 @@ def parse_config(spec: str) -> SolverConfig:
     return SolverConfig.from_env(**overrides)
 
 
-def parse_args(argv=None):
+def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -112,7 +112,7 @@ def parse_args(argv=None):
     return parser.parse_args(argv)
 
 
-async def _dry_run(problems, config) -> ExperimentResult:
+async def _dry_run(problems: List[Tuple[int, int, int]], config: SolverConfig) -> ExperimentResult:
     """Score already-recorded solutions -- no model calls, no network."""
     from shared.experiment.results import AttemptRecord, ProblemResult
     from shared.experiment.runner import problem_id
@@ -166,7 +166,7 @@ def _shown(path: Path) -> Path:
         return path
 
 
-async def async_main(args) -> int:
+async def async_main(args: argparse.Namespace) -> int:
     logging.basicConfig(
         level=logging.DEBUG if args.debug else logging.WARNING,
         format="%(levelname)s %(message)s",
@@ -200,7 +200,7 @@ async def async_main(args) -> int:
             experiment = await _dry_run(problems, config)
             experiment.save(path, include_replay=args.include_replay)
         else:
-            def report(result):
+            def report(result: ProblemResult) -> None:
                 trial = f"[t{result.trial}] " if args.trials > 1 else ""
                 print(
                     f"  {trial}{SYMBOL[result.outcome]}  {result.problem_id:22} "

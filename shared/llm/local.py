@@ -6,7 +6,7 @@ import asyncio
 import os
 
 import aiohttp
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, Iterator, List, Optional
 import re
 from pathlib import Path
 from shared.strategies import get_strategies_for_problem, create_strategy_prompt, ProblemCategory, Strategy, SOLUTION_STRATEGIES
@@ -58,11 +58,11 @@ class OllamaProvider(LLMProvider):
         "qwen3-coder:30b",
     ]
 
-    def __init__(self, model: str = "codellama:7b", debug: bool = False,
+    def __init__(self, model: str, debug: bool = False,
                  temperature: Optional[float] = None,
                  num_ctx: Optional[int] = None, think: Optional[bool] = None,
                  analysis_temperature: str = "configured",
-                 **kwargs):
+                 **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.model = model
         self.debug = debug
@@ -82,7 +82,7 @@ class OllamaProvider(LLMProvider):
         # them into fast, direct coders.
         self.think = think
         self.model_info = {"name": model, "description": "Description of the model."}
-        self.last_prompt = None
+        self.last_prompt: Optional[str] = None
         # Token usage of the most recent generate_solution call (analysis + impl
         # generate() calls summed), read by the solver to fill AttemptRecord.
         # These were structurally zero in every result JSON before this.
@@ -90,7 +90,7 @@ class OllamaProvider(LLMProvider):
 
     async def generate_solution(
         self, 
-        problem,
+        problem: Any,
         year: int,
         day: int,
         strategies: Optional[List[str]] = None,
@@ -130,9 +130,7 @@ Final Question: {problem.final_question}""",
         # returns names, and the attempt record below reads .name off each
         # entry, so passing raw strings through here raised AttributeError.
         selected = strategies or get_strategies_for_problem(problem.description)
-        strategy_objects = self._convert_to_strategy_objects(
-            selected, strategy_effectiveness
-        )
+        strategy_objects = self._convert_to_strategy_objects(selected)
         
         # Phase 3: Implementation
         implementation_prompt = generate_implementation_prompt(
@@ -308,7 +306,7 @@ Final Question: {problem.final_question}""",
         return best
 
     @classmethod
-    def _parseable_blocks(cls, text: str):
+    def _parseable_blocks(cls, text: str) -> Iterator[str]:
         """Yield parseable Python regions in *text*, longest-first per start.
 
         If the whole thing parses, that is the region. Otherwise prose is likely
@@ -355,12 +353,11 @@ Final Question: {problem.final_question}""",
             for node in ast.walk(tree)
         )
 
-    def _convert_to_strategy_objects(self, strategy_names: List[str], effectiveness: Optional[Dict[str, float]] = None) -> List[Strategy]:
+    def _convert_to_strategy_objects(self, strategy_names: List[str]) -> List[Strategy]:
         """Convert strategy names to Strategy objects.
         
         Args:
             strategy_names: List of strategy names to convert
-            effectiveness: Optional dictionary mapping strategy names to their effectiveness scores
             
         Returns:
             List of Strategy objects
@@ -385,8 +382,6 @@ Final Question: {problem.final_question}""",
             if strategy is None:
                 logger.debug("Unknown strategy %r; ignoring", name)
                 continue
-            if effectiveness and name in effectiveness:
-                strategy.effectiveness = effectiveness[name]
             strategies.append(strategy)
         return strategies
 
@@ -539,12 +534,12 @@ Final Question: {problem.final_question}""",
         return True
         
     @staticmethod
-    def _supplement(problem) -> str:
+    def _supplement(problem: Any) -> str:
         """The problem's supplement as a prompt block, or an empty line."""
         text = getattr(problem, "supplement", "") or ""
         return f"\n{text}\n" if text else ""
 
-    async def improve_solution(self, solution: str, problem, feedback: Optional[str] = None) -> str:
+    async def improve_solution(self, solution: str, problem: Any, feedback: Optional[str] = None) -> str:
         """Improve an existing solution based on feedback.
 
         Args:

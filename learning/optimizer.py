@@ -119,7 +119,7 @@ class StrategyOptimizer:
 
     def analyze_failures(self) -> Dict[str, Dict[str, int]]:
         """Analyze common failure patterns and their relationships to strategies."""
-        failure_patterns = {}
+        failure_patterns: Dict[str, Dict[str, int]] = {}
         for result in self.problem_results:
             if not result.success:
                 for strategy in result.strategies_used:
@@ -139,13 +139,3 @@ class StrategyOptimizer:
         scores = self.get_strategy_effectiveness(problem_characteristics, strategy_names)
         return sorted([(name, scores[name]) for name in strategy_names], key=lambda x: x[1], reverse=True)
 
-    def update_strategy_weights(self) -> None:
-        """Update strategy weights based on their effectiveness."""
-        all_characteristics = {
-            k: v for r in self.results 
-            for k, v in r.problem_characteristics.items()
-        }
-        for strategy in SOLUTION_STRATEGIES:
-            scores = self.get_strategy_effectiveness(all_characteristics, [strategy.name])
-            if strategy.name in scores:
-                strategy.weight = scores[strategy.name]

@@ -5,7 +5,10 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Optional, List, Tuple
+from typing import TYPE_CHECKING, Dict, Optional, List, Tuple
+
+if TYPE_CHECKING:
+    from learning import LearningDatabase
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +36,7 @@ class SubmissionManager:
         self.history_file = workspace_dir / "submission_history.json"
         self.last_submission: Dict[str, datetime] = {}
         self.cooldown_periods: Dict[str, timedelta] = {}
-        self.learning_database = None
+        self.learning_database: Optional["LearningDatabase"] = None
         self.learning_dir = workspace_dir / "learning"
         self.learning_dir.mkdir(parents=True, exist_ok=True)
         self._load_history()
@@ -129,7 +132,7 @@ class SubmissionManager:
             if not self.learning_database:
                 from learning import LearningDatabase
                 self.learning_database = LearningDatabase(self.learning_dir)
-            return self.learning_database.count_strategy_attempts(problem_key)
+            return int(self.learning_database.count_strategy_attempts(problem_key))
         except Exception as e:  # pragma: no cover - counting must never block a submission
             logger.warning("Could not read attempt count for %s: %s", problem_key, e)
             return 0

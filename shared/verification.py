@@ -133,6 +133,7 @@ def verify_solution_file(
                 error=f"cannot infer year/day/part from filename: {path.name}",
             )
         year, day, part = parsed
+    assert year is not None and day is not None and part is not None
 
     output, error = run_solution_file(path, year, day, timeout=timeout)
     if error is not None:

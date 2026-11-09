@@ -7,26 +7,13 @@ from dataclasses import dataclass
 import logging
 from pathlib import Path
 
-# Optional external tools; fall back gracefully if not installed
-try:  # radon for complexity/maintainability
-    import radon.complexity as radon_cc  # type: ignore
-    import radon.metrics as radon_metrics  # type: ignore
-except Exception:  # pragma: no cover - optional dep
-    radon_cc = None  # type: ignore
-    radon_metrics = None  # type: ignore
-
-try:  # pylint for lint scoring
-    from pylint.lint import Run  # type: ignore
-    from pylint.reporters import JSONReporter  # type: ignore
-except Exception:  # pragma: no cover - optional dep
-    Run = None  # type: ignore
-    JSONReporter = None  # type: ignore
-
-try:  # black for formatting score
-    from black import FileMode, format_str  # type: ignore
-except Exception:  # pragma: no cover - optional dep
-    FileMode = None  # type: ignore
-    format_str = None  # type: ignore
+# radon, pylint and black are runtime requirements (requirements.txt), not
+# optional: each score below is part of the quality tie-break between candidates.
+import radon.complexity as radon_cc
+import radon.metrics as radon_metrics
+from black import FileMode, format_str
+from pylint.lint import Run
+from pylint.reporters import JSONReporter
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +35,7 @@ class QualityMetrics:
 class CodeQualityAnalyzer:
     """Analyzes Python code for various quality metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the analyzer."""
         self.logger = logging.getLogger(__name__)
 
@@ -132,8 +119,6 @@ class CodeQualityAnalyzer:
     def _get_complexity_score(self, code: str) -> float:
         """Calculate complexity score (0-1) based on cyclomatic complexity."""
         try:
-            if radon_cc is None:
-                return 0.0
             # Get average complexity across functions
             complexity = radon_cc.cc_visit(code)
             if not complexity:
@@ -151,7 +136,7 @@ class CodeQualityAnalyzer:
             elif avg_cc >= 15:
                 return 0.0
             else:
-                return 1 - ((avg_cc - 5) / 10)
+                return float(1 - ((avg_cc - 5) / 10))
                 
         except Exception as e:
             self.logger.error(f"Error calculating complexity score: {e}")
@@ -160,15 +145,13 @@ class CodeQualityAnalyzer:
     def _get_maintainability_score(self, code: str) -> float:
         """Calculate maintainability score (0-1) based on Halstead metrics."""
         try:
-            if radon_metrics is None:
-                return 0.0
             # Get maintainability index
             mi_score = radon_metrics.mi_visit(code, multi=True)
             if not mi_score:
                 return 1.0
                 
             # Convert 0-100 score to 0-1
-            return min(max(mi_score / 100.0, 0.0), 1.0)
+            return float(min(max(mi_score / 100.0, 0.0), 1.0))
             
         except Exception as e:
             self.logger.error(f"Error calculating maintainability score: {e}")
@@ -231,10 +214,8 @@ class CodeQualityAnalyzer:
                     # Safely derive the identifier name for different node types
                     if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
                         name = getattr(node, "name", None)
-                    elif isinstance(node, ast.Name):
-                        name = getattr(node, "id", None)
                     else:
-                        name = None
+                        name = getattr(node, "id", None)
                     if not isinstance(name, str):
                         # If name is not a string, skip checks for this node
                         # but keep it counted in total to avoid bias
@@ -291,8 +272,6 @@ class CodeQualityAnalyzer:
     def _get_lint_score(self, code: str) -> float:
         """Calculate lint score (0-1) using pylint."""
         try:
-            if Run is None or JSONReporter is None:
-                return 0.0
             # Create temporary file for pylint
             tmp_path = Path("temp_code.py")
             tmp_path.write_text(code)
@@ -318,8 +297,6 @@ class CodeQualityAnalyzer:
         try:
             # Try to format with black
             try:
-                if format_str is None or FileMode is None:
-                    return 0.0
                 formatted = format_str(code, mode=FileMode())
                 
                 # Compare original to formatted

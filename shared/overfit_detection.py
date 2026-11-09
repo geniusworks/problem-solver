@@ -196,7 +196,7 @@ def _check_example_literal_reuse(
 
     for idx, input_text in enumerate(inputs, start=1):
         if not isinstance(input_text, str):
-            continue
+            continue  # type: ignore[unreachable]  # defensive guard on file-derived input
 
         # Full example block as a literal (e.g., triple-quoted string).
         if len(input_text) >= _MIN_EXAMPLE_LITERAL_LENGTH and input_text in solution_code:
@@ -221,7 +221,7 @@ def _check_example_literal_reuse(
     return reasons
 
 
-def _check_constant_output_stub(solution_code: str, tree: ast.AST) -> List[str]:
+def _check_constant_output_stub(solution_code: str, tree: ast.Module) -> List[str]:
     """Detect trivial constant-output stubs that never read input.txt.
 
     This focuses on patterns like:
@@ -277,7 +277,7 @@ def _check_input_equality(tree: ast.AST) -> List[str]:
     reasons: List[str] = []
 
     class _Visitor(ast.NodeVisitor):
-        def visit_If(self, node: ast.If) -> None:  # type: ignore[override]
+        def visit_If(self, node: ast.If) -> None:
             test = node.test
             if isinstance(test, ast.Compare):
                 for comp in test.comparators:

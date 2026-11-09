@@ -20,7 +20,7 @@ import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RESULTS = REPO_ROOT / "dev" / "results"
@@ -34,7 +34,9 @@ def _rows(name: str) -> List[dict]:
         return list(csv.DictReader(f))
 
 
-RUNS = {r["run"]: {**r, "config": json.loads(r["config"])} for r in _rows("runs.csv")}
+RUNS: Dict[str, Dict[str, Any]] = {
+    r["run"]: {**r, "config": json.loads(r["config"])} for r in _rows("runs.csv")
+}
 TRIALS = _rows("trials.csv")
 ATTEMPTS = _rows("attempts.csv")
 
@@ -60,7 +62,7 @@ def frac(pair: Tuple[int, int]) -> str:
     return f"{pair[0]}/{pair[1]}"
 
 
-def reference_runs(context: str, samples: int = None) -> List[str]:
+def reference_runs(context: str, samples: Optional[int] = None) -> List[str]:
     """Runs of the reference model alone, by prompt context (and draft count)."""
     picked = []
     for name, run in RUNS.items():

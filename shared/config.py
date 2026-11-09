@@ -34,7 +34,8 @@ def load_yaml_config(filename: str) -> Dict[str, Any]:
     if not config_file.exists():
         return {}
     with open(config_file) as f:
-        return yaml.safe_load(f)
+        loaded: Dict[str, Any] = yaml.safe_load(f) or {}
+        return loaded
 
 # Load YAML configuration. Only resources.yaml is live (execution/request limits +
 # the submission toggle). The former models.yaml / hardware.yaml / cache.yaml were

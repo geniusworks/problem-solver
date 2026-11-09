@@ -38,7 +38,7 @@ class ExamplePurpose(Enum):
 class ProblemAnalyzer:
     """Analyzes problem descriptions to determine type and requirements."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the problem analyzer."""
         # Keywords associated with different problem categories
         self.category_indicators: Dict[ProblemCategory, List[str]] = {
@@ -134,7 +134,7 @@ class ProblemAnalyzer:
 
     def _analyze_examples(self, problem: ParsedProblem) -> None:
         """Analyze examples to determine their purposes and relationships."""
-        prev_example = None
+        prev_example: Optional[TestCase] = None
         for example in problem.examples:
             # Determine example purpose
             purpose = self._determine_example_purpose(
