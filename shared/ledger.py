@@ -142,6 +142,15 @@ def record_solution(year: int, day: int, part: int, model_name: str, solution_co
         if header_added:
             solutions_file.write_text(content)
         return
+    if result.verdict is Verdict.OVERFIT:
+        logger.warning(
+            "Refusing to record solution for year %d day %02d part %d: produces the "
+            "accepted answer by hardcoding it (%s)",
+            year, day, part, "; ".join(result.overfit_reasons or []),
+        )
+        if header_added:
+            solutions_file.write_text(content)
+        return
     if result.verdict is Verdict.ERROR:
         logger.warning(
             "Refusing to record solution for year %d day %02d part %d: failed to run (%s)",
