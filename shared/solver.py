@@ -43,6 +43,11 @@ class CandidateVerdict:
     answer: Optional[str] = None
     feedback: Optional[str] = None
     example_results: List[Any] = field(default_factory=list)
+    # The worked examples' verdict, recorded beside the oracle's: how many of the
+    # examples with a known result this candidate passed. 0 of 0 means the
+    # problem had no usable example; validation failing first counts 0 passed.
+    examples_passed: int = 0
+    examples_total: int = 0
 
 
 @dataclass
@@ -357,6 +362,7 @@ class BaseSolver:
                 self._record_attempt(
                     "consensus", year, day, part, consensus_verdict.outcome,
                     stage="consensus",
+                    verdict=consensus_verdict,
                     answer=consensus_verdict.answer,
                     code=consensus_answer,
                     error=None if consensus_verdict.accepted else consensus_verdict.feedback,
@@ -698,6 +704,7 @@ class BaseSolver:
                         self._record_attempt(
                             model_name, year, day, part, verdict.outcome,
                             stage="repair" if iteration else "generate",
+                            verdict=verdict,
                             answer=verdict.answer,
                             expected=known_answer,
                             repair_iteration=iteration,
@@ -861,6 +868,7 @@ class BaseSolver:
                     self._record_attempt(
                         model_name, year, day, part, verdict.outcome,
                         stage="fallback",
+                        verdict=verdict,
                         answer=verdict.answer,
                         expected=known_answer,
                         code=solution,
@@ -1001,6 +1009,7 @@ class BaseSolver:
         code: Optional[str] = None,
         input_tokens: int = 0,
         output_tokens: int = 0,
+        verdict: Optional["CandidateVerdict"] = None,
     ) -> AttemptRecord:
         """Append one model attempt to the current solve's trace.
 
@@ -1024,6 +1033,8 @@ class BaseSolver:
             code=code,
             input_tokens=input_tokens,
             output_tokens=output_tokens,
+            examples_passed=verdict.examples_passed if verdict else None,
+            examples_total=verdict.examples_total if verdict else None,
         )
         self.attempts.append(record)
         return record
@@ -1076,6 +1087,12 @@ class BaseSolver:
             )
         )
 
+        examples_total = len(test_cases)
+        examples_passed = (
+            sum(1 for r in example_results if r.error is None)
+            if len(example_results) == examples_total else 0
+        )
+
         def _reject(outcome: Outcome) -> "CandidateVerdict":
             return CandidateVerdict(
                 accepted=False,
@@ -1089,6 +1106,8 @@ class BaseSolver:
                     ),
                 ),
                 example_results=example_results,
+                examples_passed=examples_passed,
+                examples_total=examples_total,
             )
 
         examples_failed = bool(example_results) and any(
@@ -1123,6 +1142,8 @@ class BaseSolver:
             answer=full_answer,
             feedback=None,
             example_results=example_results,
+            examples_passed=examples_passed,
+            examples_total=examples_total,
         )
 
     def _build_execution_feedback(

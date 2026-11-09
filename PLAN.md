@@ -15,20 +15,21 @@ on:
    with a deadline. *Waits on a maintainer decision:* submit automatically or by hand, and the
    rate limit. Then the submitter is wired into the solve loop (§5; it is tested, about half a
    day of code). Decide by about 2026-11-25 to leave time.
-2. **Example verdicts beside the oracle's** ("Beyond AoC", step 1). *Waits on code only*, no
-   GPU: fill `AttemptRecord.examples_passed`/`examples_total`. Every later run then measures how
-   far the results depend on an exact checker. The cheapest item, and every run after it
-   gains the measurement, so it goes before the runs of items 1, 3 and 4.
-3. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered
+2. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered
    design in `part2-context-heldout-plan.md`. *Waits on code:* a small harness change and ten
    paraphrased plus ten cue-only Part 1 texts, checked by hand; then about 7 GPU-hours. Its
-   AoC 2026 arm (cold against verbatim) runs with item 1.
-4. **A powered arm-1 test under the corrected prompts** on 2025 d9 p2, the one cell measured at a
-   mid-range draft rate: k1 against k3, about 20 trials each for about 80% power, about
-   13 GPU-hours in chunks. *Waits on GPU time*; design and prediction registered first. It needs
-   neither the AoC 2026 decision nor new code, so it can run whenever the GPU is free, ideally
-   after item 2 so the run records example verdicts. A lift triggers the conditional second
-   reference model below.
+   AoC 2026 arm (cold against verbatim) runs with the AoC 2026 item.
+3. **A powered arm-1 test under the corrected prompts** on 2025 d9 p2, the one cell measured at a
+   mid-range draft rate: k1 against k3, about 20 trials each for about 80% power. About
+   14 GPU-hours in chunks (per trial on this problem, Part 1 then Part 2: k1 about 850 s, k3
+   about 1,640 s, so about 4.7 h and 9.1 h; roughly 12 to 16 h depending on timeouts).
+   *Waits on GPU time*; design and prediction registered first. It needs neither the AoC 2026
+   decision nor new code, so it can run whenever the GPU is free. A lift triggers the
+   conditional second reference model below.
+
+Done 2026-11-09: every verified attempt now records the worked examples' verdict beside the
+oracle's (`examples_passed`/`examples_total`; "Beyond AoC", step 1), so each of these runs
+also measures how far the results depend on an exact checker.
 
 ## Beyond AoC — the larger objective
 
@@ -40,9 +41,10 @@ have measured value here and some do not (mixing models lost to choosing one; re
 2/145 failures on the reference model).
 
 1. **How much does the method depend on an exact checker?** Record, per attempt, the verdict of the
-   worked examples alongside the oracle's. `AttemptRecord.examples_passed`/`examples_total` exist
-   but are never filled, and candidate code is not stored, so existing runs cannot be re-scored:
-   wire the fields, then measure on a fixed set how often the examples accept a wrong answer and
+   worked examples alongside the oracle's. **Wired 2026-11-09:** every verified attempt records
+   `examples_passed`/`examples_total` (0 of 0 when the problem has no usable example; `None` in
+   runs before then, which cannot be re-scored because candidate code is not stored). What
+   remains: from the runs that carry it, measure how often the examples accept a wrong answer and
    reject a right one, and what sampling and selection achieve with the examples as the only
    check. This stands in for the partial checkers of other domains (unit tests, static analysis).
    Small, no new GPU work beyond that set.
@@ -62,13 +64,13 @@ worked example passed (27 of 51 failed attempts on 2024 d24 p2 and 2025 d10 p2).
 already carries repair guidance for exactly that case (`_efficiency_guidance` in
 `shared/solver.py`, behind `targeted_feedback`), but it was only measured under the original
 harness with mispaired example tests (`targeted-feedback-negative.md`), so it is untested where it
-would matter. **If** item 2's example verdicts confirm the passed-example-then-timeout pattern on
+would matter. **If** the recorded example verdicts confirm the passed-example-then-timeout pattern on
 those cells, A/B `targeted_feedback` on them under the corrected harness. Registered design first.
 
 ## Conditional: a second reference model
 
 The orchestration findings rest almost entirely on `qwen3.8:27b`. **If** the powered arm-1 test
-(Open, item 1) shows a lift, repeat its design on one more model of a different family before the
+(under "Open") shows a lift, repeat its design on one more model of a different family before the
 result is generalised, sized the same way (about 20 trials per arm). If it shows none, a second
 model adds little and this stays parked. Either way it is GPU time the maintainer decides on.
 
