@@ -537,20 +537,21 @@ execute/verify → repair → fallback), the experiment harness with repeat tria
 configs, the correctness oracle and overfit gate, self-consistency and answer-based consensus, and
 **69 verified solutions** across two AoC years (`dev/verify_solutions.py` clean).
 
-**All three thesis arms are measured** ([What we learned](#what-we-learned)). Open, in priority order:
-- **A powered sampling test under the corrected harness:** 2025 d9 p2 is the one problem measured
-  at a mid-range draft rate; about 20 trials each way at one and three drafts would test sampling
-  there.
+**All three thesis arms are measured** ([What we learned](#what-we-learned)). Open, in priority
+order (`PLAN.md`, "Open"):
 - **A clean contamination test:** AoC 2026, in December, is the first set of problems published
   after the models' training cutoff. It needs the answer submitter wired first: without it an
   unseen year cannot reach Part 2.
+- **Beyond AoC:** how far the results depend on an exact checker, measured with the worked
+  examples as the only check; then a second domain (`PLAN.md`, "Beyond AoC").
 - **Does the Part 1 context inform, or cue recall?** The headline's caveat, tested by paraphrased
   and information-stripped Part 1 text on public puzzles and by AoC 2026
   (`dev/progress/part2-context-heldout-plan.md`).
+- **A powered sampling test under the corrected harness:** 2025 d9 p2 is the one problem measured
+  at a mid-range draft rate; about 20 trials each way at one and three drafts would test sampling
+  there.
 - **What decorrelates draws?** Temperature and reworded feedback moved nothing, and mixing models
   was one-way on the problems measured. Prompt variants remain untested.
-- **Beyond AoC:** how far the results depend on an exact checker, measured with the worked
-  examples as the only check; then a second domain (`PLAN.md`, "Beyond AoC").
 
 <details>
 <summary>Reproducing older runs, and the deliberately unwired submitter</summary>

@@ -5,17 +5,25 @@ roadmap got here.
 
 ## Open (as of 2026-11-09)
 
-All three thesis arms are measured (`RESULTS.md`). Three items remain, all awaiting the
-maintainer:
-1. **A powered arm-1 test under the corrected prompts** on 2025 d9 p2, the one cell measured at a
-   mid-range draft rate: k1 against k3, about 20 trials each for about 80% power. Design and
-   prediction to be registered first.
-2. **AoC 2026** (§4b), opening 2026-12-01: the clean contamination test. Needs the submitter
-   decision and wiring (§5) before then.
-3. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered design
-   in `part2-context-heldout-plan.md`: four arms on ten public Part 2s (about 7 GPU-hours, after
-   a small harness change and hand-checked text variants), and cold against verbatim on AoC
-   2026, which can share item 2's runs.
+All three thesis arms are measured (`RESULTS.md`). In priority order; nothing starts without the
+maintainer's go, and each item says what it waits on:
+
+1. **AoC 2026** (§4b), opening **2026-12-01**: the clean contamination test, and the only item
+   with a deadline. *Waits on a maintainer decision:* submit automatically or by hand, and the
+   rate limit. Then the submitter is wired into the solve loop (§5; it is tested, about half a
+   day of code). Decide by about 2026-11-25 to leave time.
+2. **Example verdicts beside the oracle's** ("Beyond AoC", step 1). *Waits on code only*, no
+   GPU: fill `AttemptRecord.examples_passed`/`examples_total`. Every later run then measures how
+   far the results depend on an exact checker. The cheapest item, and every run after it
+   gains the measurement, so it goes before the runs of items 1, 3 and 4.
+3. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered
+   design in `part2-context-heldout-plan.md`. *Waits on code:* a small harness change and ten
+   paraphrased plus ten cue-only Part 1 texts, checked by hand; then about 7 GPU-hours. Its
+   AoC 2026 arm (cold against verbatim) runs with item 1.
+4. **A powered arm-1 test under the corrected prompts** on 2025 d9 p2, the one cell measured at a
+   mid-range draft rate: k1 against k3, about 20 trials each for about 80% power, about
+   13 GPU-hours in chunks. *Waits on GPU time*; design and prediction registered first. A lift
+   triggers the conditional second reference model below.
 
 ## Beyond AoC — the larger objective
 

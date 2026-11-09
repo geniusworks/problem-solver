@@ -15,12 +15,12 @@ plumbing check, 12/12 at k1, `1ac712678732`); tests 297 passing, and CI runs the
 (`shared/sandbox.py`), and each result file records Ollama, model digests and machine. A
 reconciliation pass on 2026-11-08 checked every published claim against the result files and added
 dated correction notes where later runs had overturned earlier write-ups; on 2026-11-09 the headline
-was restated on matched trials (2/53 → 29/37) with its contamination caveat. Open, all awaiting the
-maintainer (`PLAN.md`, "Open"): a powered arm-1 test on 2025 d9 p2; AoC 2026 in December, which
-needs the submitter decision first; and the held-out test of whether the Part 1 context informs or
-cues recall (`part2-context-heldout-plan.md`). Next on the project's larger objective, generality:
-wire the per-attempt example verdict and measure how far the results depend on an exact checker
-(`PLAN.md`, "Beyond AoC"). The sections below are the dated record, newest first.
+was restated on matched trials (2/53 → 29/37) with its contamination caveat. What is next, in
+priority order, is `PLAN.md`, "Open": AoC 2026 (needs the submitter decision by about 2026-11-25);
+the per-attempt example verdict (code only, no GPU, before the next run); the held-out test of
+whether the Part 1 context informs or cues recall (`part2-context-heldout-plan.md`); and the powered
+arm-1 test on 2025 d9 p2. Nothing starts without the maintainer's go. The sections below are the
+dated record, newest first.
 
 ### Instrument fixed: the model now sees what a solver on the site sees (2026-10-13)
 
