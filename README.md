@@ -472,6 +472,17 @@ where a candidate can be **checked automatically and cheaply**:
   implementation is too slow for the real input — the hard AoC Part 2s. There the limit is algorithm
   efficiency, which orchestration can't manufacture.
 
+**What carries over, and what doesn't.** Measured here, untested elsewhere:
+
+- *Likely to carry over:* whether sampling pays depends on how often a single draft succeeds; on
+  the problem tested, drafts failed independently, so the gain was predictable from the first-draft
+  rate; choosing the right model beat mixing models; many cheap draws saved time but cost more
+  tokens; repair rarely rescued a wrong draft.
+- *AoC-specific:* the solve rates, which models solve which days, and the Part 2 harness defect
+  (though the lesson, that a prompt missing context looks like a capability limit, is general).
+- *Unmeasured:* every result above used an exact checker. How they hold when the only check is
+  partial, as with unit tests, is the next question (`PLAN.md`, "Beyond AoC").
+
 **The harness turns model capability into verified solutions wherever there's a cheap
 checker; it can't invent capability the model lacks, nor a faster algorithm than the model writes.**
 
@@ -518,6 +529,8 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
   unseen year cannot reach Part 2.
 - **What decorrelates draws?** Temperature and reworded feedback moved nothing, and mixing models
   was one-way on the problems measured. Prompt variants remain untested.
+- **Beyond AoC:** how far the results depend on an exact checker, measured with the worked
+  examples as the only check; then a second domain (`PLAN.md`, "Beyond AoC").
 
 <details>
 <summary>Reproducing older runs, and the deliberately unwired submitter</summary>
