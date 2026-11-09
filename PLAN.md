@@ -583,6 +583,13 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
 
 ### 4. Instrument gaps — logged, unfixed, each one small
 
+- **A hardcoded answer of 1–3 characters is not caught.** The literal-answer check exempts
+  answers shorter than 4 characters (they collide with ordinary constants), and the constant-output
+  check inspects only a `solve()` function, so a bare `print(42)` script producing a short
+  accepted answer would score CORRECT. Every recorded solution reads `input.txt`, so none does
+  this. Left unfixed because the check also runs in experiment scoring, so changing it changes the
+  instrument.
+
 - ~~**A stopped run lost every result**~~ — ✅ **FIXED 2026-10-26.** The result JSON was
   written only at the end, so run 3 of the M5 Pro queue, stopped during its last cell, left 11
   finished cells in its log and none in a result file. It is now rewritten after every result.
@@ -665,11 +672,14 @@ unsolved answer to submit.
 
 ### 5. Submission phase (Milestone F) — still deferred
 
-`submission/` is real (it posts the answer and parses AoC's response) but has no tests and is
-unwired, and both 2024 and 2025 are solved on the maintainer's account, so there is no unseen answer
-to submit. Revisit for a live contest or a fresh account. Wiring is small: gate a
-`submission.validate_solution(...)` call on `SUBMIT_SOLUTIONS=true` after `_execute_and_repair`,
-with tests for the response parsing and the rate-limit wait first.
+`submission/` is real (it posts the answer and parses AoC's response) and tested
+(`tests/unit/test_submission.py`: response classification, the wait, its persistence across
+restarts, no post while disabled), but unwired, and both 2024 and 2025 are solved on the
+maintainer's account, so there is no unseen answer to submit. Revisit for a live contest or a fresh
+account. Wiring is small: gate a `submission.validate_solution(...)` call on `SUBMIT_SOLUTIONS=true`
+after `_execute_and_repair`. One known simplification: a wrong answer sets a fixed 60 s wait, while
+AoC lengthens the wait after repeated wrong answers; a resubmission inside AoC's longer wait gets
+its "too recently" page, which is parsed and sets the real wait.
 
 ### Optional, unblocked (small cleanups)
 

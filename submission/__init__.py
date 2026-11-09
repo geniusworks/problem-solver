@@ -1,4 +1,4 @@
-"""AoC answer submission -- real, tested-in-isolation, and deliberately UNWIRED.
+"""AoC answer submission -- real, tested (tests/unit/test_submission.py), and deliberately UNWIRED.
 
 Nothing in the solve loop calls into this package. It is the genuine
 Advent-of-Code submitter (posts to /answer, parses the response, respects the

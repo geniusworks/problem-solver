@@ -210,6 +210,8 @@ class SolutionValidator:
                     
                     return result
 
+        except (SessionError, SubmissionError):
+            raise
         except aiohttp.ClientError as e:
             raise SubmissionError(f"Network error submitting solution: {str(e)}")
         except Exception as e:
