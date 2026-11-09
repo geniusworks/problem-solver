@@ -9,8 +9,10 @@ can be A/B'd for a real delta over repeat trials.
 
 - **The biggest effect was the harness.** Until 2026-10-13 every Part 2 was posed without its
   Part 1 statement, and the model appeared to fall off a cliff between the two parts. With the
-  statement in the prompt, the reference model solves 32 of 40 trials of the Part 2s it had
-  failed, against 13 of 71 before. What looked like a capability limit was a measurement defect.
+  statement in the prompt, single drafts on 13 Part 2s the reference had failed went from 2 of 53
+  trials solved to 29 of 37; in the controlled test, 2024 d19 p2, from 6/20 to 19/19. What looked
+  like a capability limit was mostly missing information. The puzzles are public, so the added
+  text may also cue recall; that is not yet separated (see contamination).
 - **Sampling helps where a single draft succeeds part of the time, and the draws behave as
   independent.** Under the original harness, three attempts with repair took the model's
   "sometimes" problems from 42% to 75%, replicated on a second year (combined p ≈ 0.005). Under the
@@ -22,7 +24,7 @@ can be A/B'd for a real delta over repeat trials.
   mix had nothing to add. Repair also depends on the model: 2 of the reference's 145 solves came
   from repair, against 14 of 131 for that candidate.
 - **Cheap draws win on time and lose on tokens.** A fast weak model taking four times the draws
-  costs 0.64× the wall-clock per solution and at least 3.10× the tokens, and does not reach the
+  costs 0.64× the wall-clock per solution and at least 3.09× the tokens, and does not reach the
   strong model's ceiling.
 - **What still fails is mostly speed.** On the hardest problems the commonest failure is a
   program that runs past the 60 s timeout on the full input, often after passing the example.
@@ -70,10 +72,17 @@ input. Re-run under it:
 
 | | original harness | corrected harness |
 |---|---|---|
-| 2024 d19 p2 | 6/20 | **19/19** (Fisher p = 2.6e-6) |
+| 2024 d19 p2, one draft, only the context changed | 6/20 | **19/19** (one-sided Fisher p = 2.6e-6) |
 | 2024 d16 p2 | 0/7 | **3/3** |
-| 2025 d9 p2 | 0/22, three models | **3/5** at three drafts |
-| the reference's 15 other failing Part 2s | 13/71 | **32/40** reached, against 40/45 for their Part 1s |
+| 2025 d9 p2 | 0/22, three models (the reference 0/16) | **3/5** at three drafts |
+| 13 other Part 2s the reference had failed, one draft | 2/53 | **29/37** |
+
+The d19 row is the controlled A/B: same machine, a day apart, 20 trials each, the context the
+only setting changed, prediction registered. The 13-problem row is broader and less controlled:
+its "before" trials ran on two machines between August and October, its "after" run also changed
+the example source and the analysis temperature, and it counts only trials whose Part 1 was
+solved (5 were not). Counting every trial at any number of drafts, those Part 2s were 13/71 on
+record and 32/40 after; 11 of the 13 earlier solves came from three-draft trials.
 
 Ten Part 2s the reference had never solved were solved, and the ledger went from 56 to 66. The
 Part 1/Part 2 cliff seen in both years' scans is not established; the "walls" that had become
@@ -136,11 +145,11 @@ At a matched wall-clock budget, a fast weak model taking many draws vs a slow st
 | config | solved | **s / verified solution** | **tokens / verified solution** |
 |---|---|---|---|
 | `qwen3.8:27b` k=3 (slow, strong) | **8/8** | 1,389 s | **38,460** |
-| `qwen3-coder:30b` k=12 (fast, weak) | 7/8 | **891 s** (0.64×) | ≥119,068 (≥3.10×) |
+| `qwen3-coder:30b` k=12 (fast, weak) | 7/8 | **891 s** (0.64×) | ≥119,068 (≥3.09×) |
 
 **The answer depends on which cost you actually pay.** For local GPU inference, where cost is
 *time*, many cheap draws win by 36% per verified solution. For a token-metered API they lose by
-at least 3.10× (a lower bound: the five repair records' own cost was not recorded, see the defect
+at least 3.09× (a lower bound: the five repair records' own cost was not recorded, see the defect
 table). And volume does not close the capability gap — 7/8 vs 8/8.
 
 **The useful form of the claim:** *cheap draws beat one expensive pass when the binding cost is time,
@@ -263,7 +272,7 @@ Twelve instrument defects, each of which made results *look better or worse than
 | Repair ignored the configured temperature | a temperature experiment reached only ~1/3 of generations |
 | `success_rate` recorded at generation time, `success=True` for anything that parsed | **the sole signal model ranking used measured "returned code", not "solved the problem"** |
 | `StrategyOptimizer` read a second, dead database (0 rows) | strategy effectiveness computed over no data at all |
-| That token fix stopped at the provider; the solver kept copying the draft's tokens and time onto every repair record *(found 2026-10-12)* | **642 of 642 repair records wrong, in runs after the "fix" too**; arm 2's 3.35× is really "at least 3.10×" |
+| That token fix stopped at the provider; the solver kept copying the draft's tokens and time onto every repair record *(found 2026-10-12)* | **642 of 642 repair records wrong, in runs after the "fix" too**; arm 2's 3.35× is really "at least 3.09×" |
 | Part 2 prompts carried only the "Part Two" article: no rules, no input format *(found 2026-10-13)* | **on 2024 d19 p2 a draft was right only if it guessed the format (16 of 26 that did, 0 of 54 that did not)**; re-run with the statement, the Part 1/Part 2 cliff and most Part 2 walls dissolved (above) |
 | Example tests paired with an illustration instead of the example input *(found 2026-10-13, fixed 2026-10-14)* | a verified program failed its own example test on 25 of 46 audited problems (3 after the fix); solves are unaffected (the oracle decides), **every repair prompt on those problems carried a false failure** |
 | A last day's "Part Two" with no puzzle was attempted and scored as a miss *(found 2026-10-12)* | denominators off by one in two scans (16/24, 9/20), and **a nonexistent problem written up as "the first genuinely unseen problem"** |
@@ -295,13 +304,26 @@ seen more of this benchmark". A newer model is both stronger *and* more likely t
 2024/2025 corpus, and those two explanations are entangled here. **Treat the capability numbers as
 descriptive of this testbed, not as a capability measurement.**
 
-**Largely robust to contamination — the orchestration comparisons.**
-Arm 1 compares *configurations of the same model on the same problems*. Whatever the model
-memorized, it memorized identically in both arms, so contamination cannot explain a difference
-between k=1 and k=3. Arm 2 compares two models, so its 7/8 against 8/8 shares the capability
-caveat; its time-against-tokens split is a cost ratio per solution and less exposed. The mechanism
-findings — that sampling converts "sometimes" into "solved", that volume buys stochastic but not
-systematic failures — do not depend on the problems being unseen.
+**Largely robust to contamination — comparisons that change only the strategy.**
+Arm 1 compares *configurations of the same model on the same problems with the same prompt*.
+Whatever the model memorized, it memorized identically in both arms, so contamination cannot
+explain a difference between k=1 and k=3. Arm 2 compares two models, so its 7/8 against 8/8 shares
+the capability caveat; its time-against-tokens split is a cost ratio per solution and less
+exposed. The mechanism findings — that sampling converts "sometimes" into "solved", that volume
+buys stochastic but not systematic failures — do not depend on the problems being unseen.
+
+**Not covered by that argument — comparisons that change the prompt or the model.**
+- *The Part 2 prompt fix.* Adding the Part 1 statement changes the input, not just the strategy.
+  The added text carries the rules and input format the model lacked, and it is also the puzzle's
+  published wording, which can cue recall of solutions seen in training. The before/after rates
+  show the fix works on these puzzles; they cannot show how much is information and how much is
+  recall. The saved drafts do show why the old prompt failed: on 2024 d19 p2 none of the 54 first
+  drafts that guessed the input format wrong was correct, which is missing information, not
+  missing capability. A test that separates information from recall is designed in
+  `dev/progress/part2-context-heldout-plan.md`.
+- *Model choice (arm 3).* `muse-glimmer:30b` solved 2024 d14 p2 10 of 10 times against the
+  reference's 1 of 10. Two models trained on different data may have memorized different puzzles,
+  so this compares capability and shares the caveat above.
 
 **A partial argument against pure memorization, offered as weak evidence only.**
 Under the original harness the frontier band consisted of problems the model solved *sometimes* —

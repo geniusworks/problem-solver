@@ -3,7 +3,7 @@
 > **Correction, 2026-10-12.** The MoE arm's token total includes 67,635 tokens copied from drafts
 > onto 5 repair records (`repair-accounting-unwired.md`). On drafts alone it is 833,476, or
 > 119,068 per verified solution, against the generalist's 38,460 (no repairs, sound). **Read
-> "3.35×" below as "at least 3.10×".** Solve counts and wall-clock are unaffected.
+> "3.35×" below as "at least 3.09×".** Solve counts and wall-clock are unaffected.
 
 **At a matched wall-clock budget, a fast weak model taking many draws beats a slow strong model
 taking few — per unit time. On tokens it loses by 3.35×. And it does not reach the same ceiling.**

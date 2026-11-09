@@ -16,8 +16,11 @@ and, more to the point, whether that could be *measured* rather than asserted.
 >   judge (an *oracle*) runs each one against the real input and checks it against the known-correct
 >   answer, so every claim about orchestration is an A/B over repeat trials.
 > - **The biggest effect was the harness, not the strategy.** Part 2 prompts were missing the Part 1
->   statement. Fixed, the reference model solves 32 of 40 trials of the Part 2s it had failed
->   (13 of 71 before): an apparent capability cliff was a measurement defect.
+>   statement, so drafts had to guess the rules and input format. On 13 Part 2s the reference
+>   model had failed, single drafts went from 2 of 53 trials solved to 29 of 37 once the prompt
+>   included Part 1: an apparent capability cliff was mostly missing information. *Caveat:* the
+>   puzzles are public, and the added Part 1 text is also their published wording, which may cue
+>   recall; a test that separates the two is planned.
 > - **Sampling helps where a single draft succeeds part of the time**, because draws behave as
 >   independent. It took the model's "sometimes" problems from **42% to 75%** under the original
 >   harness, replicated on a second year; under the corrected harness few problems sit in that
@@ -26,8 +29,9 @@ and, more to the point, whether that could be *measured* rather than asserted.
 >   the reference solved 1 of 10, with nothing found the other way. Cheap draws win on time and lose
 >   on tokens.
 > - **The caveat** — the puzzles are public and pre-date the models, so a model may have trained on
->   solutions. That softens the *"how capable is the model?"* numbers, not the comparisons of one
->   strategy against another on the same problems.
+>   solutions. That softens the *"how capable is the model?"* numbers and any comparison that
+>   changes the prompt or the model, not comparisons of one strategy against another with the same
+>   model, prompt and problems.
 > - **Where to go next** — [RESULTS.md](RESULTS.md) for the full science · [How it works](#how-it-works)
 >   for the pipeline · [Getting started](#getting-started) to run it yourself.
 
@@ -53,8 +57,8 @@ and, more to the point, whether that could be *measured* rather than asserted.
 - **Self-repair** — show the model its own execution error (the traceback) and let it try again. Adds
   real information, not just another roll of the dice.
 - **Contamination** — the puzzles are public and predate the models, so a model may have trained on
-  solutions to them. It muddies *"how capable is the model"* but not *"does coordinating attempts
-  help."*
+  solutions to them. It muddies *"how capable is the model"*, and any comparison that changes the
+  prompt or the model, but not a comparison of strategies with the same model, prompt and problems.
 
 </details>
 
@@ -102,9 +106,15 @@ statement, answer and program in the prompt:
 
 | | before | after |
 |---|---|---|
-| 2024 d19 p2 | 6/20 | **19/19** |
-| 2025 d9 p2 (three models) | 0/22 | **3/5** |
-| the reference's 15 other failing Part 2s | 13/71 | **32/40** |
+| 2024 d19 p2, one draft, only the context changed | 6/20 | **19/19** |
+| 13 other Part 2s the reference had failed, one draft | 2/53 | **29/37** |
+| 2025 d9 p2, three drafts | 0/22 (three models) | **3/5** |
+
+The 13-problem row compares single-draft trials only; its "before" trials ran on two machines
+over two months, and its "after" changed two smaller settings alongside the context. The d19 row
+is the controlled test. The puzzles are public, so the added Part 1 text is information and also
+possibly a memory cue ([contamination](RESULTS.md#training-data-contamination-the-largest-threat-to-validity));
+`dev/progress/part2-context-heldout-plan.md` designs the test that separates them.
 
 The "Part 1/Part 2 cliff" seen in two years of scans, and the "walls" that had become the project's
 most reproducible results, were mostly this defect. One Part 2, 2024 d24 p2, is still unsolved by
@@ -164,10 +174,10 @@ At a matched wall-clock budget, a fast weak model taking many draws vs a slow st
 | | solved | **s / verified solution** | **tokens / verified solution** |
 |---|---|---|---|
 | `qwen3.8:27b` k=3 (slow, strong) | **8/8** | 1,389 s | **38,460** |
-| `qwen3-coder:30b` k=12 (fast, weak) | 7/8 | **891 s** (0.64×) | ≥119,068 (≥3.10×) |
+| `qwen3-coder:30b` k=12 (fast, weak) | 7/8 | **891 s** (0.64×) | ≥119,068 (≥3.09×) |
 
 For local GPU inference, where cost is *time*, many cheap draws win by 36% per verified solution.
-For a token-metered API they lose by at least 3.1×. And volume does not close the capability gap —
+For a token-metered API they lose by at least 3.09×. And volume does not close the capability gap —
 7/8 vs 8/8. (`economic-arm-moe-vs-generalist.md`)
 
 **6. Model *generation* beats model *size*.**
@@ -332,7 +342,7 @@ corrected harness the draft rates are mostly near 0% or 100%, three drafts gave 
 and the arm awaits a powered test on 2025 d9 p2 (finding 2).
 
 **Arm 2 — economics, and it splits.** *Many cheap draws beat one expensive pass* is **true on
-wall-clock** (0.64× per verified solution) and **false on tokens** (at least 3.1×), and volume does not reach
+wall-clock** (0.64× per verified solution) and **false on tokens** (at least 3.09×), and volume does not reach
 the stronger model's ceiling (7/8 vs 8/8). The useful form of the claim: *cheap draws win when the
 binding cost is time, not tokens, and only up to the cheap model's ceiling.*
 (`economic-arm-moe-vs-generalist.md`)
