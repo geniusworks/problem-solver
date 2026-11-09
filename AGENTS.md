@@ -9,6 +9,12 @@ A research **platform for measuring LLM orchestration**, using Advent of Code as
 runs local models (Ollama) against a correctness **oracle** with repeat trials, so every claim is
 measured, not asserted. Secondarily, it's an AoC solver. See `README.md` for the full picture.
 
+The larger objective is general problem-solving through orchestration; AoC is the testbed, not the
+point. The path beyond it is sequenced as measurements in `PLAN.md`, "Beyond AoC". Until that
+section's seam audit defines a problem-and-checker interface, keep AoC specifics (year/day/part,
+fetch, the accepted-answer oracle) where they already live rather than spreading them into new
+general code.
+
 ## Environment (important)
 
 - **Always use the project venv.** Run Python as `venv/bin/python ...` (or activate the venv first).
