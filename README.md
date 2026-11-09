@@ -393,9 +393,12 @@ venv/bin/python solve.py --year 2024 --day 1 --part 1   # --force to re-solve, -
    ```
    Or by hand — always into the project venv, never a bare `pip` (see `AGENTS.md`):
    ```bash
-   python3 -m venv venv
-   venv/bin/python -m pip install -r requirements.txt -r requirements-dev.txt
+   python3.11 -m venv venv
+   venv/bin/python -m pip install -r requirements.lock
    ```
+   `requirements.lock` pins the exact versions the results were measured with (Python 3.11).
+   On another Python, install `-r requirements.txt -r requirements-dev.txt` instead; the
+   packages that parse puzzles and score candidates will then be newer than those measured.
 2. Install [Ollama](https://ollama.ai) and pull at least one coding model (the solver checks which
    configured models are actually installed and errors clearly if none are):
    ```bash

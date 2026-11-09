@@ -24,6 +24,10 @@ general code.
   otherwise shadow a tool (e.g. `gh`).
 - Models run via **local Ollama** (`http://localhost:11434`); on Apple Silicon, use a native
   **arm64** Python.
+- **Python 3.11, installed from `requirements.lock`** — the exact package versions the results
+  were measured with. Changing `requirements*.txt` means regenerating the lock (its header says
+  how); a changed version on the measurement path (beautifulsoup4, autopep8, black, pylint,
+  radon) is an instrument change, so note it in `dev/benchmarks/cross-machine-results.md`.
 
 ## Where things live
 

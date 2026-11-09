@@ -79,8 +79,9 @@ Prompt guidance must empower LLM problem-solving intuition without constraining 
 - Ensure existing tests pass: `PYTHONPATH=. venv/bin/pytest -q`
 - Add integration tests for new features
 - Include test cases for error conditions
-- CI (`.github/workflows/ci.yml`) runs the tests, `mypy` (`mypy.ini`; the command is in the
-  workflow) and `dev/recompute_results.py --check` on every pull request; all must pass. Tests that need cached AoC data (`years/`, gitignored) skip there.
+- CI (`.github/workflows/ci.yml`) installs `requirements.lock`, checks it still satisfies
+  `requirements*.txt`, and runs the tests, `mypy` (`mypy.ini`; the command is in the workflow) and
+  `dev/recompute_results.py --check` on every pull request; all must pass. Tests that need cached AoC data (`years/`, gitignored) skip there.
 - After a measured run, export it (`venv/bin/python dev/export_results.py`) and commit
   `dev/results/` with its write-up; if a published figure changed, update its claim in
   `dev/recompute_results.py` in the same PR.
