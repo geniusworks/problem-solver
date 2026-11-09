@@ -52,7 +52,7 @@ generations in that experiment ran at the model default, not at 1.0.**
 
 The comparison itself stays valid — repair ran at the default in *both* arms, so the treatment
 difference is real. But the treatment was **much weaker than intended**: it reached about a third of
-the generations on precisely the problems it was aimed at. The honest restatement:
+the generations on precisely the problems it was aimed at:
 
 > **Raising the temperature of the *initial draws only*, from 0.7 to 1.0, produced no benefit.** A
 > full-pipeline temperature manipulation has not been tested.

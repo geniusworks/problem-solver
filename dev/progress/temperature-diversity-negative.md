@@ -22,13 +22,13 @@ This tests — and falsifies — a specific hypothesis this project derived from
 | **2024 d15 p2** | ~12% problem† | 0/3 | **0/3** | unmoved |
 | 2025 d9 p1 | sometimes | 3/3 (100%) | **3/3 (100%)** | unchanged |
 | **2025 d9 p2** | **wall (0/10)** | 0/3 | **0/3** | unmoved |
+| **total** | | **6/12** | **5/12** | **no gain** |
 
 † **Corrected 2026-08-20:** d15 p2 was called a wall here. It is not — it has solved **2 of 16**
 problem-trials (~12%). Missing a 12% problem in three trials has probability ≈ 0.68, so **its 0/3
 is weak evidence**; only 2025 d9 p2's 0/3 speaks to a genuine wall. The headline (6/12 → 5/12, no
 gain, one working problem slightly worse) is unaffected.
 `CORRECTION-d15p2-is-not-a-wall.md`
-| **total** | | **6/12** | **5/12** | **no gain** |
 
 ## Correction (2026-08-22): the manipulation reached only ~1/3 of generations
 
@@ -38,10 +38,14 @@ value (`token-accounting-fix.md`). At k3 with `max_repair_iterations=2` a failin
 to 9 generations — 3 initial plus up to 6 repair — and **only the 3 initial draws ran at 1.0**.
 
 The comparison stays valid (repair ran at the default in *both* arms, so the treatment difference is
-real), but the treatment was **much weaker than intended**. The honest restatement of this finding:
+real), but the treatment was **much weaker than intended**:
 
 > **Raising the temperature of the initial draws only, from 0.7 to 1.0, produced no benefit.** A
 > full-pipeline temperature manipulation has not been tested.
+
+*Corrected 2026-10-13: narrower still. Each initial draw is two calls, and the analysis call ran at
+the model's default, 1.0, in both arms; only the implementation call went from 0.7 to 1.0
+(`part2-prompt-omits-part1.md`, "Second gap").*
 
 This does not resurrect temperature as a promising lever — it still adds variance without
 information, which the five-null rule predicts will fail — but the null is weaker evidence than
@@ -72,6 +76,9 @@ The distinction now worth carrying:
 `max_repair_iterations` ∈ {0,2}, and `temperature` ∈ {0.7,1.0} — one problem per year, never solved
 once. These are not noisy failures; they are stable properties of this model on these problems, and
 they remain the sharpest available benchmark for any future claim to have decorrelated draws.
+
+*Corrected 2026-10-31: 2025 d9 p2 is not a wall. Every attempt above posed Part 2 without the Part 1
+statement; with it, the reference solved d9 p2 in 3 of 5 trials at k3 (`part2-prompt-omits-part1.md`).*
 
 ## On being wrong four times
 

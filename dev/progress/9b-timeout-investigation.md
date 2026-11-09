@@ -38,6 +38,11 @@ p2) are a genuine algorithmic-capability limit of qwen3.5:9b** — right idea, w
 and at least d6 p2 is Python-speed-bound even with the correct brute force, so it needs a *smarter*
 algorithm, not more time.
 
+*Corrected 2026-08-16: d6 p2 fell to a plain brute force, every `.` cell tried as an obstacle with a
+visited-set loop check, once `qwen3.8:27b` on the M2 Max emitted a correct one that ran inside the
+timeout (`m2max-qwen38-27b-d4-7.md`). It needed a correct brute force and a faster machine, not a
+smarter algorithm.*
+
 The levers that could still move these, in rough order of expected value:
 
 1. **A stronger model** (bigger machine / remote endpoint) — the direct fix; the 9b has found its

@@ -51,6 +51,9 @@ first drafts per problem.
   one, answered `682` against an accepted `568`. Thirteen independent drafts agreeing on one wrong
   number is a shared misreading of the problem, not sampling noise, and no value of k addresses
   it. This is the best-characterised wall in the project.
+  *(Corrected 2026-10-13: it was a missing reading. With the Part 1 statement in the prompt, which
+  gives the move and turn costs, d16 p2 was solved 3/3, each by a first draft
+  (`part2-prompt-omits-part1.md`).)*
 - **d20 p1's one k1 miss looks like the outlier.** 12 of 13 first drafts are correct.
 
 ## Reading it

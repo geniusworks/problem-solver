@@ -16,12 +16,14 @@ and, more to the point, whether that could be *measured* rather than asserted.
 >   judge (an *oracle*) runs each one against the real input and checks it against the known-correct
 >   answer.
 > - **The finding** — letting the model take several attempts and fix its own errors **nearly
->   doubled** the solve rate on the problems it finds hardest: **42% → 75%.** Under corrected
->   prompts (2026-11-01) that gain is confined to problems a single draft solves part of the time,
->   and mixing models from different makers did not beat choosing the better one (2026-11-08).
+>   doubled** the solve rate on the problems it finds hardest: **42% → 75%.** That was measured
+>   with Part 2 posed without its Part 1 statement; under the corrected prompts (2026-11-01) three
+>   drafts gave no measurable lift over one, and independent draws predict a gain only where a
+>   single draft solves part of the time, not yet tested at power. No cell was found where a mix of
+>   two models could beat choosing the better one, so no mix was run (2026-11-08).
 > - **The discipline** — every number here is an A/B you can re-run, recomputed from the run
 >   artifacts rather than quoted from memory.
-> - **The honest caveat** — the puzzles are public and pre-date the models, so a model may have
+> - **The caveat** — the puzzles are public and pre-date the models, so a model may have
 >   trained on solutions. That softens the *"how capable is the model?"* numbers. It leaves the main
 >   result — *does coordinating attempts help?* — intact, because those comparisons run the same model
 >   against itself: whatever it memorized, it memorized in both runs.
@@ -89,7 +91,7 @@ That objective is pursued through two pieces, in order of importance:
 Six findings and their numbers. Every figure links to a committed write-up in
 [`dev/progress/`](dev/progress/); the full statistics live in [RESULTS.md](RESULTS.md).
 
-**1. Coordinating attempts nearly doubles the solve rate — and *why* it works is now measured.**
+**1. Coordinating attempts nearly doubled the solve rate under the original prompts; under the corrected ones the lift is unestablished.**
 
 On the problems the strongest model solves only *sometimes* (its own frontier, identified beforehand
 by an independent classification), taking several attempts and letting each one fix its own errors
@@ -101,17 +103,20 @@ roughly doubles how many get solved:
 | 3 independent attempts, no feedback | **58%** |
 | **3 attempts, each with execution feedback** | **75%** |
 
-Sampling helps, repair helps, and **together they help more than the sum of their parts.** The
-sharpest single case: a problem solved by **1 of 6** single attempts was solved by **3 of 3** runs
+Each partial configuration beat one attempt with repair, and **the combination beat both.** (The
+corner with one draft and no repair was not run, so the two levers cannot be separated.)
+The sharpest single case: a problem solved by **1 of 6** single attempts was solved by **3 of 3** runs
 that combined both. Repeated out of sample on **AoC 2025** — a year never previously measured — it
 rescued exactly the uncertain problems and nothing else, which is the signature of a mechanism rather
 than a rate artifact. (`passk-ab-d13-d15.md`, `passk-replication-2025.md`)
 
 *Narrowed 2026-11-01:* both bands were measured with Part 2 posed without its Part 1 statement.
 Under the corrected prompts the reference's "sometimes" cells gave 9/19 at one draft and 11/21 at
-three: at the draft level they are solved by nearly every draft or nearly none, and sampling
-lifts only the cells in between (`m5pro-band-k1-vs-k3-aoc.md`;
-[RESULTS.md](RESULTS.md#arm-1--sampling-works-at-the-frontier-and-why-it-works-is-measured)).
+three, no measurable lift. At the draft level they are solved by nearly every draft or nearly
+none; independent draws predict a lift only for cells in between, and the one such cell, 2025 d9
+p2, has no one-draft comparison yet. The 1-of-6 problem above, 2024 d13 p2, is solved 3 of 3 at
+one draft under the corrected prompts (`m5pro-band-k1-vs-k3-aoc.md`, `m5pro-rescan-part2-aoc.md`;
+[RESULTS.md](RESULTS.md#arm-1--sampling-at-the-frontier-measured-under-the-original-prompts-narrowed-under-the-corrected-ones)).
 
 <details>
 <summary>The statistics</summary>
@@ -142,25 +147,27 @@ smallest and is not a coding model at all. (`m2max-qwen38-27b-d4-7.md` and sibli
 ⚠️ **Discount this for contamination.** AoC 2024/2025 solutions are public and predate these models,
 so a newer model is both plausibly stronger *and* more likely to have trained on the benchmark — the
 two explanations are entangled and this work does not separate them. This is why the quick version
-flags the capability numbers as descriptive. The *orchestration* findings (1 and 5) hold the model and
-problems fixed and are largely unaffected. See
+flags the capability numbers as descriptive. Finding 1 compares the same model with itself on the same
+problems and is largely unaffected; finding 5 compares two models, so its solve counts share the
+caveat. See
 [RESULTS.md](RESULTS.md#training-data-contamination-the-largest-threat-to-validity).
 
 **3. A hard limit, not fixed by more attempts — withdrawn 2026-10-31: it was a prompt defect.**
 
-One problem (2025 d9 p2) has resisted **every** configuration — **0 of 13** problem-trials across one
-attempt, three attempts, with and without feedback, at two temperatures. The model repeats *the same
-failing approach* each time. **Sampling multiplies draws, not diversity:** where failure is systematic
-rather than random, extra attempts re-roll the same die. The obvious fixes were tested — raising
-temperature and rewording the repair feedback — and both moved nothing. What *has* worked adds real
-information (a fresh draw, an actual traceback); what fails adds none. This is now the standing
-benchmark any "the walls can be cracked" claim has to move.
+Under the defective Part 2 prompt, one problem (2025 d9 p2) had resisted **every** configuration — **0 of 13**
+problem-trials of the reference (0 of 22 across three models) at one attempt, three attempts, with
+and without feedback, at two temperatures. The model repeated *the same failing approach* each
+time, and the claim was that **sampling multiplies draws, not diversity:** where failure is
+systematic, extra attempts re-roll the same die. Raising temperature and rewording the repair
+feedback moved nothing.
 (`temperature-diversity-negative.md`, `targeted-feedback-negative.md`)
 
 > **Corrected 2026-10-31.** Those 13 trials posed Part Two without the Part One statement. With
 > it, the reference solves 2025 d9 p2 in 3 of 5 trials at three drafts
 > (`dev/progress/part2-prompt-omits-part1.md`). The problem is a "sometimes", so this section's
-> limit has no confirmed example under the site's conditions until a rescan finds one.
+> limit has no confirmed example under the site's conditions. 2024 d24 p2 is the one Part 2 no
+> model has solved (0 of 3 at three drafts for the reference, muse and `gemma4:31b`); most of its
+> failures are timeouts, which is a different limit (`m5pro-band-k1-vs-k3-aoc.md`).
 
 **4. Measurement bugs flatter no one, and finding them is half the work.**
 
@@ -179,7 +186,7 @@ At a matched wall-clock budget, a fast weak model taking many draws vs a slow st
 | | solved | **s / verified solution** | **tokens / verified solution** |
 |---|---|---|---|
 | `qwen3.8:27b` k=3 (slow, strong) | **8/8** | 1,389 s | **38,460** |
-| `qwen3-coder:30b` k=12 (fast, weak) | 7/8 | **891 s** (0.64×) | 128,730 (3.35×) |
+| `qwen3-coder:30b` k=12 (fast, weak) | 7/8 | **891 s** (0.64×) | ≥119,068 (≥3.10×) |
 
 **The answer depends on which cost you actually pay:** for local GPU inference, where cost is *time*,
 many cheap draws win by 36% per verified solution. For a token-metered API they lose by at least 3.1×
@@ -261,18 +268,18 @@ Every one of these is a committed A/B or analysis in `dev/progress/`, not an ass
   one speed wall, described for months as a single phenomenon. Both are now solved and in the
   ledger. (`dev/progress/m2max-qwen38-27b-d4-7.md`, `m2max-qwen3coder30b-d4-7.md`)
 
-The honest headline: **on this fixed problem set, the binding constraint was model capability, not
+The headline: **on this fixed problem set, the binding constraint was model capability, not
 orchestration** — and on 32 GB that constraint dissolved once a *newer-generation* model was
 available: `qwen3.8:27b` solved **all 8**, while a bigger *older* model did worse than
 16 GB managed. The set is now exhausted as a capability measure. Full numbers:
 `dev/benchmarks/cross-machine-results.md`. But that describes *a fixed band of problems*, not
 orchestration in general — which raises the project's central open question.
 
-### Does orchestrated voting scale? (measured: yes at k=3 where a draft succeeds part of the time; mixing makers did not add)
+### Does orchestrated voting scale? (measured: yes at k=3 under the original prompts, unestablished under the corrected ones; the one model pair was one-way)
 
 Frontier models are trained to be the best solver *on their own*, and hardware keeps growing — so why
-orchestrate several votes at all? This is the question that carries the work beyond AoC, so it earns
-an answer separate from the solve rates, honest about what is argued versus proven.
+orchestrate several votes at all? This is the question that carries the work beyond AoC, so it gets
+an answer separate from the solve rates, marking what is argued and what is measured.
 
 **Why voting should keep its value as models strengthen:**
 
@@ -288,10 +295,10 @@ an answer separate from the solve rates, honest about what is argued versus prov
 3. **Diverse portfolios decorrelate error.** Even a frontier model has systematic blind spots; an
    ensemble of *different* models wins where their mistakes are uncorrelated.
 
-**Arm 1 — confirmed.** The decisive test ran on `qwen3.8:27b` at its *own* measured frontier: **pass@1
+**Arm 1 — confirmed under the original prompts; narrowed 2026-11-01.** The decisive test ran on `qwen3.8:27b` at its *own* measured frontier: **pass@1
 42% → pass@3 75%** (`dev/progress/passk-ab-d13-d15.md`). The band was selected beforehand by an
 independent 3-trial classification, and the theoretical curve was registered in writing before the k3
-arm ran. (Precisely: *1 sample vs 3 samples with the repair loop held constant at 2 iterations in both
+arm ran. (The comparison is *1 sample vs 3 samples with the repair loop held constant at 2 iterations in both
 arms* — so this is "k samples + repair", not textbook pass@k over independent draws.) The clearest
 case: a problem solved by **1 of 6** single draws was solved by **3 of 3** k3 trials — a problem
 twice called an "insight wall", so **sampling reaches insight problems, not only fiddly ones.**
@@ -301,6 +308,9 @@ full record puts d15 p2 at **2 of 16 (~12%)**, a very-low-rate "sometimes" rathe
 0 of 3 is unremarkable at that rate (`dev/progress/CORRECTION-d15p2-is-not-a-wall.md`). The genuine
 case for *extra draws re-roll the same die* was **2025 d9 p2, 0 of 13** across every configuration,
 all under the defective Part 2 prompt; with the Part 1 statement it is 3 of 5 (corrected 2026-10-31).
+Under the corrected prompts the "sometimes" cells gave 9/19 at one draft and 11/21 at three, no
+measurable lift, and the 1-of-6 problem is solved 3 of 3 at one draft
+(`m5pro-band-k1-vs-k3-aoc.md`, `m5pro-rescan-part2-aoc.md`).
 
 **Arm 2 — measured, and it splits.** *Many cheap draws beat one expensive pass* is **true on
 wall-clock** (0.64× per verified solution) and **false on tokens** (at least 3.1×), and volume does not reach
@@ -315,9 +325,10 @@ test then looked for cells where the reference beats muse, which a mix needs to 
 equal draws; none held, so the ensemble was not run. On these cells choosing muse gives the gain a
 mix could (`arm3-precheck-muse-glimmer-30b.md`, `arm3-portfolio-test.md`).
 
-**In short:** the mechanism adds correctness at a strong model's frontier, measured rather than
-argued, on the cells where a single draft succeeds part of the time. Under the corrected prompts
-those cells are few, and the one cross-maker pair with a measured difference was one-way.
+**Where this leaves the three arms:** sampling added correctness at a strong model's frontier under
+the original prompts; under the corrected prompts the cells where a single draft succeeds part of
+the time are few, and a powered test on one of them is still open. Cheap draws win on time and
+lose on tokens. The one model pair with a measured difference was one-way.
 Practical recommendations: [RESULTS.md](RESULTS.md#practical-recommendations).
 
 </details>
@@ -347,7 +358,7 @@ different experiments. Verify the recorded solutions at any time with `dev/verif
 **Solving a single problem:**
 
 ```bash
-python solve.py --year 2024 --day 1 --part 1   # --force to re-solve, --debug for logs
+venv/bin/python solve.py --year 2024 --day 1 --part 1   # --force to re-solve, --debug for logs
 ```
 
 ## Getting started
@@ -447,7 +458,7 @@ where a candidate can be **checked automatically and cheaply**:
   implementation is too slow for the real input — the hard AoC Part 2s. There the limit is algorithm
   efficiency, which orchestration can't manufacture.
 
-In short: **the harness turns model capability into verified solutions wherever there's a cheap
+**The harness turns model capability into verified solutions wherever there's a cheap
 checker; it can't invent capability the model lacks, nor a faster algorithm than the model writes.**
 
 ## How the code is organized
@@ -488,15 +499,16 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
 <summary>Established findings, and what's still open (in priority order)</summary>
 
 **Established** — see *Headline results* above and the write-ups in `dev/progress/`:
-- Coordinated attempts beat single attempts at a strong model's own frontier (**42% → 75%**), with
-  sampling and repair contributing separately and superadditively. Under the corrected prompts the
-  lift is confined to cells a single draft solves part of the time, and the reference's repairs
-  rarely rescue (2 of its 145 solves; [RESULTS.md](RESULTS.md#arm-1--sampling-works-at-the-frontier-and-why-it-works-is-measured)).
+- Under the original prompts, coordinated attempts beat single attempts at a strong model's own
+  frontier (**42% → 75%**), replicated on 2025. Under the corrected prompts three drafts gave no
+  measurable lift over one (11/21 against 9/19), and the reference's repairs rarely rescue (2 of
+  its 145 solves; [RESULTS.md](RESULTS.md#arm-1--sampling-at-the-frontier-measured-under-the-original-prompts-narrowed-under-the-corrected-ones)).
 - **Arm 3, measured one-way** (2026-11-08): `muse-glimmer:30b` reliably solves 2024 d14 p2, which
   the reference misses, and no cell was found the other way, so no mix ran
   (`dev/progress/arm3-portfolio-test.md`).
-- **On the hardest cells the limit is often speed:** programs that pass the example and run out
-  the 60 s timeout, 27 of 51 failures on two of them (`m5pro-band-k1-vs-k3-aoc.md`).
+- **On the hardest cells the limit is often speed:** runs past the 60 s timeout on the full input,
+  27 of 51 failures on two of them, 11 of those after passing the example
+  (`m5pro-band-k1-vs-k3-aoc.md`).
 - **Generation beats size**: a 17 GB 2026 generalist swept a set where a 19 GB 2024 specialist
   managed half, scoring below what 12B models achieved on half the RAM.
 - **A named limit, withdrawn 2026-10-31**: 2025 d9 p2 was 0/22 across every configuration and
@@ -513,17 +525,17 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
   mid-range draft rate; about 10 trials each way at k1 and k3 would test sampling there.
 - **A clean contamination test:** evaluating on problems published *after* the model's training cutoff
   (AoC 2026, in December) is the cheapest genuinely-unseen test available.
-- **Every Part 2 result above was measured without the Part 1 statement in the prompt** (found
-  and fixed 2026-10-13): the model was shown only the "Part Two" text. The Part 1/Part 2 cliff
+- **Every Part 2 result recorded before 2026-10-13 was measured without the Part 1 statement in
+  the prompt** (found and fixed 2026-10-13): the model was shown only the "Part Two" text. The Part 1/Part 2 cliff
   and the Part 2 walls are not established as capability findings until re-run under the site's
   conditions (Part 1 solved first in the same trial, its statement, answer and program carried
   into Part 2); earlier runs reproduce with `problem_context=legacy,analysis_temperature=model_default,example_tests=parser`
   (`dev/progress/part2-prompt-omits-part1.md`). The first re-run: 2024 d19 p2, 6/20 under the old
   prompt, 19/19 under the site's conditions; then 2024 d16 p2, 0/7 to 3/3, and 2025 d9 p2, 0/22
   to 3/5 at three drafts. A rescan of the reference's 15 other failing Part 2s (2026-11-01):
-  13/71 on record, 32/40 now, ledger 56 → 66 (`dev/progress/m5pro-rescan-part2-aoc.md`). None of
-  the re-run Part 2 walls has held; the one wall left in that set is a Part 1, 2024 d21, which `muse-glimmer:30b` solved in 1 of 3
-  trials (2026-11-06). Three
+  13/71 on record, 32/40 now, ledger 56 → 66 (`dev/progress/m5pro-rescan-part2-aoc.md`). Of the
+  re-run Part 2s, only 2024 d24 p2 is still unsolved by any model (mostly timeouts); 2024 d21 p1,
+  the reference's Part 1 wall, was solved by `muse-glimmer:30b` in 1 of 3 trials (2026-11-06). Three
   drafts against one on the cells left in between: 11/21 against 9/19, no measurable lift; at the
   draft level those cells are solved by nearly every draft or nearly none
   (`dev/progress/m5pro-band-k1-vs-k3-aoc.md`).
@@ -534,11 +546,11 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
   (unwired) answer submitter. Fixed 2026-10-13: solver crashes now score as `harness_error`, not
   as model failures, and code that prints its own error message scores `error`, not `wrong`.
 - **Hardware headroom:** a third machine (M5 Pro / 64 GB, 2026-10-12) reproduced the reference
-  result about 2.3× faster and added the 2024 d16–25 band, but no current model larger than the
-  reference fits in 64 GB, so whether a bigger model moves the walls is still open. Faster hardware would refine the
-  capability and economic numbers (larger models fit; execution-timeout "speed walls" move) and
-  unblock the tests above, but is not expected to change the orchestration mechanism, which holds the
-  model and machine fixed.
+  result about 2.3× faster and added the 2024 d16–25 band. Larger models ran on it in arm 3:
+  `gemma4:31b` and `ornith-1.5:35b` solved neither 2024 d24 p2 nor 2025 d10 p2 (0 of 3 each),
+  and `qwen3.6:35b-a3b` was measured on 2024 d15 and 2025 d9 only. Faster hardware would refine the capability and economic numbers
+  (execution-timeout "speed walls" move) but is not expected to change the orchestration
+  mechanism, which holds the model and machine fixed.
 
 **Deliberately unwired:** the AoC answer submitter (`submission/`) is real and tested in isolation but
 kept out of the solve loop by design — the evaluation set is *past* AoC years, already solved on the

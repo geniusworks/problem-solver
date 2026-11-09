@@ -5,7 +5,15 @@ The **live status snapshot** — where the project actually stands right now. Th
 `dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
 file current as work lands so it never goes stale.
 
-## Current status (2026-11-06)
+## Current status (2026-11-08)
+
+**Now:** nothing is running. All three thesis arms are measured (`RESULTS.md`): arm 1 confirmed
+under the original prompts and not re-established under the corrected ones, arm 2 splits by cost
+type, arm 3 one-way. Ledger 68 verified, 0 wrong; tests 257 passing. A reconciliation pass on
+2026-11-08 checked every published claim against the result files and added dated correction
+notes where later runs had overturned earlier write-ups. Open, both awaiting the maintainer: a
+powered arm-1 test on 2025 d9 p2 (`PLAN.md`, "Open as of 2026-11-08"); AoC 2026 in December,
+which needs the submitter decision first. The sections below are the dated record, newest first.
 
 ### Instrument fixed: the model now sees what a solver on the site sees (2026-10-13)
 
@@ -82,8 +90,8 @@ venv/bin/python experiment.py --problems 2025:9 --trials 3 \
 
 Fingerprints: `5d259bb8f103` for 1 and 2 (add `example_tests=parser` to reproduce them),
 `839b40f0bfa8` for 3 and 3b, `1ac712678732` for the rescan. Next, per `PLAN.md` step 4:
-~~(d) rescan~~ (done), ~~(e) k1-vs-k3~~ (done), (f) the arm-3 entry check on the cells above, then the three candidates (`gemma4:31b`,
-`ornith-1.5:35b`, `muse-glimmer:30b`).
+~~(d) rescan~~ (done), ~~(e) k1-vs-k3~~ (done), ~~(f) the arm-3 entry check on the cells above, then the three candidates (`gemma4:31b`,
+`ornith-1.5:35b`, `muse-glimmer:30b`)~~ (done 2026-11-08).
 
 **Arm-3 candidates, 2026-11-01:** `gemma4:31b` and `muse-glimmer:30b` had been removed since
 2026-10-12 and were pulled again. All three passed the plumbing check, 6/6 each on 2024 d1 with
@@ -131,8 +139,8 @@ and a practical-recommendations section (`RESULTS.md`). Open: a powered arm-1 te
 AoC 2026 as the contamination check in December. **Nothing is running.**
 
 **Order from here** (`PLAN.md`, M5 Pro step 4): ~~fix the example pairing~~ (done) → ~~run 3~~ (done) → ~~rescan the
-Part 2s recorded as failing or "sometimes"~~ (done) → ~~k1-vs-k3 on whatever band survives~~ (done) → re-choose the
-arm-3 entry cells → the three candidates.
+Part 2s recorded as failing or "sometimes"~~ (done) → ~~k1-vs-k3 on whatever band survives~~ (done) → ~~re-choose the
+arm-3 entry cells → the three candidates~~ (done 2026-11-08).
 
 ### Machine: work has moved to the M5 Pro / 64 GB (2026-10-12)
 
@@ -195,7 +203,7 @@ as "the first genuinely unseen problem" and a target for the submission path, is
 
 **Next, in order (PLAN.md "The M5 Pro / 64 GB"):** ~~calibration~~ → ~~arm-3 pre-check~~ →
 ~~d16–25 scan~~ → ~~classify the band~~ → ~~k1 vs k3 on it~~ → ~~20 trials per arm on d19 p2~~ → three arm-3
-candidates from other makers (plumbing-checked 2026-11-01; Ornith's lead failed its decider, gemma did not meet the criterion, muse met it on 2024 d14 p2 and its decider held, 10/10 against 1/10; the ensemble is next; PLAN.md step 4). k=5 is deferred: the
+candidates from other makers (plumbing-checked 2026-11-01; Ornith's lead failed its decider, gemma did not meet the criterion, muse met it on 2024 d14 p2 and its decider held, 10/10 against 1/10; the portfolio test then found no cell favouring the reference, so no ensemble ran and arm 3 is one-way, 2026-11-08; PLAN.md step 4). k=5 is deferred: the
 independence curve is measured on d19 p2 and predicts it (67%).
 
 **Band classified: 2 "sometimes", 8 walls** (`m5pro-band-2024-d16-25.md`; 3 trials pooled with the
@@ -235,8 +243,8 @@ record repair cost properly.
 
 ### 🏁 ENDGAME COMPLETE: `RESULTS.md` written (2026-08-23)
 
-The consolidated findings report is at the repo root. All four endgame steps are done and **all three
-thesis arms are measured**. Every figure in it was **recomputed from the run artifacts**, not carried
+The consolidated findings report is at the repo root. All four endgame steps are done: **arms 1 and 2
+are measured**, and arm 3 is untested for want of a pair. Every figure in it was **recomputed from the run artifacts**, not carried
 forward from prose — the discipline the d15 p2 tally error taught.
 
 Corpus it summarises: **57 runs · 1,475 attempts · ~121 GPU-hours · 16.3M tokens · 43 verified
@@ -251,7 +259,7 @@ should and should not generalise.
 replication, find a model pair with measured complementary failures (arm 3), or close the two logged
 scoring gaps (`HARNESS_ERROR`, error-shaped answers).
 
-### ✅ ENDGAME STEP 3 DONE — arm 2 measured; ALL THREE THESIS ARMS COMPLETE (2026-08-23)
+### ✅ ENDGAME STEP 3 DONE — arm 2 measured; arms 1 and 2 complete (2026-08-23)
 
 Economic A/B at matched wall-clock (`dev/progress/economic-arm-moe-vs-generalist.md`; both arms run
 fresh post-token-fix, 0 wrong/unverified/overfit).
@@ -708,7 +716,7 @@ fabricated `dummy-model` at 79/79, a perfect record for a model that never ran, 
 of a research artifact). An autouse conftest guard now redirects any `LearningDatabase` aimed at the
 real directory to a temp dir, and the dummy rows are scrubbed.
 
-### Where the project is
+### Where the project was (M1 era, before 2026-08-15)
 - **PR #1 (merged):** added a correctness oracle (`shared/verification.py`, `shared/ground_truth.py`,
   `shared/overfit_detection.py`), the experiment harness (`shared/experiment/`, `experiment.py`),
   and independent verification. Fixed the harness bugs that had made every prior measurement
@@ -744,7 +752,7 @@ real directory to a temp dir, and the dummy rows are scrubbed.
   evidence (see below). Folded in a prompt-hardening tweak (effect unmeasured). C3 (decompose
   `solve_problem`) remains a follow-up.
 
-### Verified reality (not claims — measured)
+### Verified reality, M1 era (not claims — measured)
 - Recorded solutions: **12 verified correct** (2024 d1 p1/p2, d2 p1, d3 p1, d4 p1, d4 p2, d5 p1,
   d6 p1, d7 p1, d7 p2, d10 p1, d11 p1). See `solutions/README.md`. The earlier "6/10" figure was
   never true; three recorded solutions were wrong and are quarantined in `solutions/rejected/`.
@@ -789,7 +797,7 @@ real directory to a temp dir, and the dummy rows are scrubbed.
   capability. Zero wrong/overfit recorded across all of d1–12 — the oracle held. Broader coverage
   needs a stronger model (hardware-blocked here), not more orchestration.
 
-### Next (per PLAN.md)
+### Next, as planned in the M1 era (per PLAN.md then)
 
 Milestones A–E are done and the codebase is consolidated (C1–C3). The platform is complete; on
 **M1 16 GB** the leading models are `gemma4:12b` and `qwen3.5:9b` (both 5/8 on the hard d4–7 vs the

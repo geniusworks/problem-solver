@@ -43,6 +43,10 @@ Part 2s**. This is the 2024 shape reproduced on unrelated puzzles, and it is the
 structural finding the project has: difficulty is concentrated in the *second half* of a problem,
 where the naive approach from Part 1 stops working.
 
+*Corrected 2026-11-01: the cliff is not established. These Part 2s were posed without the Part 1
+statement (`part2-prompt-omits-part1.md`); with it, the reference solved 32 of 40 of its hardest
+Part 2s against 40 of 45 of their Part 1s (`m5pro-rescan-part2-aoc.md`, "What this changes").*
+
 **3. Day 9 fell in both years, both parts.** The day number is coincidence — the puzzles are
 unrelated — but 2024 d9 and 2025 d9 both failed completely, and both by producing **wrong answers
 rather than crashes** (2025: 4 wrong across p1/p2). Fiddly-bookkeeping problems where code runs

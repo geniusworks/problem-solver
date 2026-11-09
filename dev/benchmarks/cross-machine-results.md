@@ -49,25 +49,32 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | m1-16 | qwen2.5-coder:7b | default samp1 | d1–3 | 5 | 12/30 | 40% | `baseline-2024-d1-3.md` |
 | m1-16 | qwen2.5-coder:7b | samp1 | d1–3 | 3 | 7/18 | 39% | `milestone-e-self-consistency.md` |
 | m1-16 | qwen2.5-coder:7b | **samp3** | d1–3 | 3 | 11/18 | **61%** | `milestone-e-self-consistency.md` |
-| m1-16 | qwen2.5-coder:7b | samp3 | d4–7 | 1 | 1/8 | 12% | `scale-2024-d4-7.md` |
+| m1-16 | qwen2.5-coder:7b | samp1, robust extraction | d1–3 | 5 | 13/30 | 43% | `milestone-d-extraction.md` |
+| m1-16 | qwen2.5-coder:7b | samp1, error diagnostics | d1–3 | 2 | 6/12 | 50% | `milestone-d-error-categories.md` |
+| m1-16 | qwen2.5-coder:7b | tk-off samp1 (comparison arm for the 9b row) | d1–7 | 1 | 2/14 | 14% | `reasoning-model-9b.md` |
+| m1-16 | qwen3.5:9b | tk-off samp3, 300 s execution timeout | d4, d5, d6 p2 | 1 | 0/3 | 0% | `9b-timeout-investigation.md` |
+| m1-16 | qwen2.5-coder:7b | samp3 | d4–7 | 1 | 1/8 | 13% | `scale-2024-d4-7.md` |
 | m1-16 | qwen2.5-coder:7b | samp3 | d8–12 | 1 | 2/10 | 20% | `benchmark-2024-d1-12.md` |
 | m1-16 | qwen3.5:9b | tk-off samp1 | d1–7 | 1 | 6/14 | 43% | `reasoning-model-9b.md` |
 | m1-16 | qwen3.5:9b | tk-off samp1 | d4–7 | 1 | 2/8 | 25% | `model-bakeoff-gemma4-vs-9b.md` |
-| m1-16 | qwen3.5:9b | **tk-off samp3** | d4–7 | 1 | 5/8 | **62%** | `9b-confirmation-d4-7.md` |
-| m1-16 | gemma4:12b | tk-off samp1 | d4–7 | 1 | 5/8 | 62% | `model-bakeoff-gemma4-vs-9b.md` |
-| m1-16 | gemma4:12b | **tk-off samp3** | d4–7 | 1 | 5/8 | **62%** | `gemma4-samp3-confirmation.md` |
-| m1-16 | gemma4:12b + qwen3.5:9b | tk-off samp3 **ensemble** | d4–7 | 1 | 5/8 | 62% | `ensemble-samp3-d4-7.md` |
+| m1-16 | qwen3.5:9b | **tk-off samp3** | d4–7 | 1 | 5/8 | **63%** | `9b-confirmation-d4-7.md` |
+| m1-16 | gemma4:12b | tk-off samp1 | d4–7 | 1 | 5/8 | 63% | `model-bakeoff-gemma4-vs-9b.md` |
+| m1-16 | gemma4:12b | **tk-off samp3** | d4–7 | 1 | 5/8 | **63%** | `gemma4-samp3-confirmation.md` |
+| m1-16 | gemma4:12b + qwen3.5:9b | tk-off samp3 **ensemble** | d4–7 | 1 | 5/8 | 63% | `ensemble-samp3-d4-7.md` |
 | **m2max-32** | **qwen2.5-coder:32b** | **tk-off samp3** | d4–7 | 1 | **4/8** | **50%** | `m2max-qwen25coder32b-d4-7.md` |
 | **m2max-32** | **qwen3-coder:30b** (MoE) | **tk-off samp3** | d4–7 | 1 | **6/8** | **75%** | `m2max-qwen3coder30b-d4-7.md` |
 | **m2max-32** | **qwen3.8:27b** (generalist)† | **tk-off samp3** | d4–7 | 1 | **8/8** | **100%** | `m2max-qwen38-27b-d4-7.md` |
+| **m2max-32** | **qwen3.8:27b** | tk-off **samp1** | 2024 d8–15 | 1 | 9/16 | 56% | `m2max-qwen38-frontier-scan-d8-15.md` |
+| **m2max-32** | qwen3.8:27b | tk-off samp1 | 2024 band d9/11/13/15 | 3 | 9/24 | 38% | `m2max-qwen38-frontier-scan-d8-15.md` |
 | **m2max-32** | **qwen3.8:27b** | tk-off **samp1** | **2025** d1–12 | 1 | **16/23** | **70%** | `generality-2025-scan.md` |
-| **m2max-32** | qwen3.8:27b | tk-off **samp1 + repair2** (k1) | 2024 d13+d15 band | 3 | **10/24** | **42%** | `passk-ab-d13-d15.md` |
+| **m2max-32** | qwen3.8:27b | tk-off **samp1 + repair2** (k1) | 2024 d13+d15 band | 3+3 pooled (the k1 run and the band-classify row's d13/d15 cells, same fingerprint) | **10/24** | **42%** | `passk-ab-d13-d15.md` |
 | **m2max-32** | qwen3.8:27b | tk-off **samp3, repair0** (parallel3) | 2024 d13+d15 band | 3 | **7/12** | **58%** | `topology-parallel3.md` |
 | **m2max-32** | qwen3.8:27b | tk-off **samp3 + repair2** (k3) | 2024 d13+d15 band | 3 | **9/12** | **75%** | `passk-ab-d13-d15.md` |
 | **m2max-32** | **qwen3.8:27b** | tk-off **samp1** | **2025** band d2/4/9/10/11 | 3 | 14/30 | 47% | `band-2025-classification.md` |
 | **m2max-32** | **qwen3.8:27b** | tk-off **samp3** | **2025** d9/d11 | 3 | **9/12** | **75%** | `passk-replication-2025.md` |
 | **m2max-32** | **qwen3.8:27b** | tk-off samp3 **temp 1.0** | 2024 d15 + 2025 d9 | 3 | 5/12 | 42% | `temperature-diversity-negative.md` |
 | **m2max-32** | qwen3-coder:30b | tk-off samp3 | 2024 d15 + 2025 d9 | 3 | 3/12 | 25% | `ensemble-precheck-negative.md` |
+| **m2max-32** | qwen3.8:27b | tk-off samp3, **targeted feedback** | 2024 d15 + 2025 d9 | 3 | 5/12 | 42% | `targeted-feedback-negative.md` |
 | **m2max-32** | qwen3.8:27b | tk-off samp3 **(econ)** | d4–7 | 1 | **8/8** | 100% | `economic-arm-moe-vs-generalist.md` |
 | **m2max-32** | qwen3-coder:30b | tk-off **samp12 (econ)** | d4–7 | 1 | **7/8** | 88% | `economic-arm-moe-vs-generalist.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp3, fallback off **(calibration)**‡ | d4–7 | 3 | **23/24** | 96% | `m5pro-calibration-qwen38-d4-7.md` |
@@ -94,7 +101,7 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m5pro-64** | gemma4:31b | tk-off **samp3**, fallback off, **ctx=aoc, example_tests=page** | arm-3 entry cells: 2024 d14, d17, d21, d24; 2025 d10 | 3 | 13/27 (d14 p2 1/3; d17 p2, d24 p2, 2025 d10 p2 0/3; d21 p1 0/3; Part 1s 12/12; 3 not reached) | 48% | `arm3-precheck-gemma4-31b.md` |
 | **m5pro-64** | muse-glimmer:30b | tk-off **samp3**, fallback off, **ctx=aoc, example_tests=page** | arm-3 entry cells: 2024 d14, d17, d21, d24; 2025 d10 | 3 | 18/28 (d14 p2 3/3; d17 p2 1/3; d21 p1 1/3, p2 1/1; d24 p2, 2025 d10 p2 0/3; 2 not reached) | 64% | `arm3-precheck-muse-glimmer-30b.md` |
 | **m5pro-64** | muse-glimmer:30b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d14 p1 then p2 (decider) | 10 | 20/20 (p1 10/10, p2 10/10) | 100% | `arm3-precheck-muse-glimmer-30b.md` |
-| **m5pro-64** | muse-glimmer:30b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | portfolio stage A: 14 Part 2s the reference solves (2024 d6, 9, 11, 13, 15, 16, 18, 19, 20, 22; 2025 d2, 4, 9, 11) and their Part 1s, three batches | 3 | 74/82 (Part 2 34/42, Part 1 40/42; 2 not reached) | 90% | `arm3-portfolio-test.md` |
+| **m5pro-64** | muse-glimmer:30b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | portfolio stage A: 14 Part 2s the reference solves (2024 d6, 9, 11, 13, 15, 16, 18, 19, 20, 22; 2025 d2, 4, 9, 11) and their Part 1s, three batches | 3 | 74/82 (Part 2 34/40 reached, 34/42 counting the 2 not reached as failures; Part 1 40/42) | 90% | `arm3-portfolio-test.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d15 p1 then p2 (decider) | 10 | 7/17 (p1 7/10, p2 0/7; 3 not reached) | 41% | `arm3-portfolio-test.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d20 p1 then p2 (decider) | 10 | 18/19 (p1 9/10, p2 9/9; 1 not reached) | 95% | `arm3-portfolio-test.md` |
 | **m5pro-64** | muse-glimmer:30b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d20 p1 then p2 (decider) | 10 | 13/17 (p1 7/10, p2 6/7; 3 not reached) | 76% | `arm3-portfolio-test.md` |
@@ -172,24 +179,34 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
   (never measured) scored **16/23 (70%)**, adding **16 verified solutions → ledger 41**
   (`generality-2025-scan.md`). A real frontier exists out of sample; the **Part 1/Part 2 cliff
   recurs** (83% vs 55%, six of seven misses are Part 2s); and **day 9 fell in both years**, both
-  times by computing wrong answers rather than crashing.
+  times by computing wrong answers rather than crashing. *(2026-11-08: the cliff and the day-9
+  failures were measured with Part 2 posed without its Part 1 statement; under the corrected
+  prompts the cliff is not established, `dev/progress/m5pro-rescan-part2-aoc.md`.)*
 - **THE CENTRAL CLAIM REPLICATES OUT OF SAMPLE.** k1→k3 on the 2025 band: **d9 p1 25%→100%** and
-  **d11 p2 33%→100%**, while the wall (d9 p2) held at 0 and the control (d11 p1) stayed 100%
+  **d11 p2 25%→100%** (1 of 4 pooled with the scan, as the Fisher test counts it), while the wall (d9 p2) held at 0 and the control (d11 p1) stayed 100%
   (`passk-replication-2025.md`). Stronger than a 2024 repeat because **2025 was the unfavourable
   venue** — its frontier is bimodal (4 reliable / 2 sometimes / 4 walls vs 2024's 5-of-8
   near-misses), flagged in advance as working against sampling. It replicated anyway.
+  *(2026-11-08: measured under the defective Part 2 prompt. Under the corrected prompts three
+  drafts gave no measurable lift over one, and the 2025 "walls" were mostly solved;
+  `dev/progress/m5pro-band-k1-vs-k3-aoc.md`, `m5pro-rescan-part2-aoc.md`.)*
 - **A standing boundary with one confirmed member:** **2025 d9 p2 (0/10; 0/22 across three models by 2026-10-12)** resists every
   configuration tried — k ∈ {1,3}, repair ∈ {0,2}, temperature ∈ {0.7,1.0}. *(Corrected 2026-08-20:
   2024 d15 p2 was listed here as a second wall at "0/11". It is not — it has solved **2 of 16**
   times (~12%). Neither problem has ever timed out; both fail by wrong answers and crashes.
-  `dev/progress/CORRECTION-d15p2-is-not-a-wall.md`.)*
+  `dev/progress/CORRECTION-d15p2-is-not-a-wall.md`.)* *(Corrected 2026-10-31: with the Part 1
+  statement in the prompt the reference solves 2025 d9 p2 in 3 of 5 trials, and 9 of its 12
+  failed attempts timed out, so it is neither a wall nor free of timeouts;
+  `dev/progress/part2-prompt-omits-part1.md`.)*
 - **Temperature is NOT the lever (negative result).** 0.7 → 1.0 at k3 moved neither wall and slightly
   hurt a working problem: **6/12 → 5/12** (`temperature-diversity-negative.md`). Parameter-level
   diversity perturbs tokens within an approach; these failures appear to need **strategy-level**
   diversity (prompt for a different algorithm, or a different model) — untested.
-  **Caveat: 70% vs 2024's 56% is set composition, not a year difference** — 2025 d1–12 includes the
-  easy early days, 2024 d8–15 does not. The *structure* transfers; the rate is not comparable.
-- **12 verified solutions** recorded (`solutions/README.md`), oracle-clean throughout.
+- **Caveat on the 2025 scan: 70% vs 2024's 56% is set composition, not a year difference** —
+  2025 d1–12 includes the easy early days, 2024 d8–15 does not. The *structure* transfers; the
+  rate is not comparable.
+- **Ledger 54** by the end of the M2 Max runs (`solutions/README.md`; 68 now), oracle-clean
+  throughout.
 
 ### Headline reads (m5pro-64)
 
@@ -205,7 +222,8 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
   a third failure at the entry condition, this time by redundancy, not domination.
 - **It did so in about a third of the wall-clock** (4,590 s against 13,236 s) with no token penalty
   (221k against 230k per solve). Observed on four problems, not tested.
-- **2025 d9 p2 is now 0 of 22 problem-trials across three models.**
+- **2025 d9 p2 is now 0 of 22 problem-trials across three models.** *(Corrected 2026-10-31:
+  3 of 5 at three drafts with the Part 1 statement, `dev/progress/part2-prompt-omits-part1.md`.)*
 - **A frontier exists on 2024 d16–25 too: 9/19 (47%) on a single-sample scan**
   (`m5pro-scan-2024-d16-25.md`), +9 verified solutions → ledger **52**. **Part 1 8/10, Part 2 1/9**
   — the widest Part 1/Part 2 gap of the three scans. The harness printed 9/20 because it scored a
@@ -213,10 +231,16 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 - **The d16–25 band is bimodal: 2 "sometimes", 8 at 0/4** (`m5pro-band-2024-d16-25.md`). d20 p1
   3/4 and d19 p2 1/4, pooled with the scan. Ledger **54**. Two of the three classified bands are
   now bimodal, so 2024 d8–15 (5 of 8 "sometimes") looks like the favourable exception.
+  *(2026-11-08: measured under the defective Part 2 prompt. Under the corrected prompts the
+  reference solves d16, d18, d20 and d22 p2 3 of 3 and d17 p2 sometimes, and `muse-glimmer:30b`
+  solved d21; `m5pro-rescan-part2-aoc.md`, `part2-prompt-omits-part1.md`,
+  `arm3-precheck-muse-glimmer-30b.md`.)*
 - **k1 vs k3 on that band: all four cells as registered, on thin evidence**
   (`m5pro-passk-2024-d16-25.md`). d19 p2 1/4 → 2/3, d20 p1 3/4 → 3/3, the wall d16 p2 0/4 → 0/3,
   control 3/3. One informative problem at n=3 (Fisher p 0.37), and one of its two solves came
   through repair, not the extra draw. d16 p2 gave the same wrong answer in 13 of 13 first drafts.
+  *(Corrected 2026-10-13: with the Part 1 statement in the prompt d16 p2 went 3 of 3,
+  `part2-prompt-omits-part1.md`.)*
 - **d19 p2 at 20 trials per arm: 6/20 → 10/20** (`m5pro-d19p2-power.md`). Both registered
   predictions held; p = 0.17 alone, 0.095 pooled with the earlier draws. First drafts are correct
   20% of the time (16/80), which predicts 49% at k3 against a measured 50%: the draws behave as
@@ -224,6 +248,9 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
   draft.
 
 ## What to run on m2max-32 (the next machine)
+
+*Done 2026-08-15 to 08-23: all three ran (rows above), and `qwen3.8:27b` solved d5 p2 and d6 p2.
+Kept as the plan that was run; current open items are in `dev/progress/checkpoint.md`.*
 
 > **Running on the M2 Max? Start with `dev/benchmarks/m2max-handoff.md`** — full operational handoff
 > (setup, exact commands, the pass@k thesis-test design, and the gotchas). The summary below stands.
@@ -258,5 +285,6 @@ venv/bin/python dev/verify_solutions.py
 ```
 
 Add `enable_thinking=false` for reasoning models (qwen3.5, etc.) or they over-reason and never emit
-code. Record wall clock alongside solve rate — on a faster machine the same model should keep its
+code. Rows recorded before 2026-10-13 reproduce only with
+`problem_context=legacy,analysis_temperature=model_default,example_tests=parser` (see `AGENTS.md`). Record wall clock alongside solve rate — on a faster machine the same model should keep its
 solve rate but run quicker; a *capability* gain shows up only as more problems solved.

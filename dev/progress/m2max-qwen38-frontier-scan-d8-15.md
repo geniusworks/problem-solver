@@ -44,6 +44,8 @@ one to decide where to aim.)
   subtly wrong. p1 is the only **`no_candidate`** in the scan — 900 s and nothing extractable, which
   is unusual for this model and worth a look.
 - **d15 p2** (widened warehouse) — the longest run at 2,282 s, 3 wrong; likely part execution-bound.
+  *(Corrected 2026-08-20: no d15 p2 attempt has hit an execution timeout; the long wall-clock was
+  generation and repair, `CORRECTION-d15p2-is-not-a-wall.md`.)*
 
 **Insight-required** — Part 1's approach must be *abandoned*:
 - **d11 p2** — naive simulation explodes; needs memoised counting by stone value. 3 wrong.

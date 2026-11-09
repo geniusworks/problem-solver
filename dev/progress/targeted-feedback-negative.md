@@ -25,6 +25,11 @@ appears in **49 of 70** attempt records. This is a real null, not an inert flag.
 The shape is identical to the temperature result: targets unmoved, one working problem down a notch.
 At n=3 that slip is within noise — but it is now the **second** intervention to show it.
 
+> *2026-11-08: two later findings bear on this table. The repair prompts on 2024 d15 p1, d15 p2 and
+> 2025 d9 p1 carried an example test paired with the wrong input, which a correct program also
+> fails (`example-tests-mispaired.md`). And 2025 d9 p2 is not a wall: with the Part 1 statement in
+> the prompt the reference solved it in 3 of 5 trials at k3 (`part2-prompt-omits-part1.md`).*
+
 ## Why it plausibly failed: no new information
 
 The guidance told the model that its answer was wrong and that the cause was probably a misread
@@ -71,6 +76,7 @@ Under that filter:
 - Two target problems, 3 trials, one model. A null here is not proof of no effect anywhere.
 - One of the two targets (2024 d15 p2) is a ~12% problem, so its 0/3 is weak evidence either way
   (`CORRECTION-d15p2-is-not-a-wall.md`). Only 2025 d9 p2's 0/3 speaks to a genuine wall.
+  *(Corrected 2026-10-31: d9 p2 is 3/5 at k3 with the Part 1 statement, `part2-prompt-omits-part1.md`.)*
 - The control slip (d9 p1 3/3 → 2/3) is n=3 and should not be read as a measured cost.
 
 ## Reproduce

@@ -1,5 +1,9 @@
 # Correction: 2024 d15 p2 is a ~12% problem, not a wall — and neither "wall" ever timed out
 
+> *2026-11-08: every attempt counted here posed Part 2 without the Part 1 statement
+> (`part2-prompt-omits-part1.md`). With it, 2025 d9 p2 is 3/5 at k3 and 9 of its 12 failed attempts
+> in the rerun timed out at 60 s (same doc); 2024 d15 p2 is 0/10 at k1 (`arm3-portfolio-test.md`).*
+
 Three related errors, found 2026-08-20 while checking whether a new intervention could fire. They
 propagated into `README.md`, `PLAN.md`, `checkpoint.md`, `cross-machine-results.md`,
 `temperature-diversity-negative.md` and `passk-replication-2025.md`, and are corrected in place
@@ -28,7 +32,8 @@ ledger**, which it could only be by solving.
 
 **Correct characterisation:** a **very-low-rate "sometimes"** (~12% per problem-trial), not a wall.
 
-**2025 d9 p2 is genuinely 0/10** and remains a wall on current evidence. So the "standing boundary,
+**2025 d9 p2 is genuinely 0/10** and remains a wall on current evidence. *(Corrected 2026-10-31:
+3/5 at k3 with the Part 1 statement in the prompt, `part2-prompt-omits-part1.md`.)* So the "standing boundary,
 one member per year" framing was **half right**: there is one confirmed wall, not two.
 
 ## Error 2 — neither problem has ever timed out
@@ -81,3 +86,7 @@ cross-run records; that would make this class of error structurally hard to repe
 - **2024 d15 p2** — ~12% "sometimes" (2/16). Fails by wrong answer (42) and crash (15). Never times out.
 - **2025 d9 p2** — genuine wall, 0/10. Fails by wrong answer (38) and crash (26). Never times out.
 - **Neither is execution-bound** on the available evidence.
+
+*Corrected 2026-10-31: under the corrected prompts 2025 d9 p2 is 3/5 at k3, and 9 of its 12 failed
+attempts in the rerun timed out on the full input at 60 s, 6 after passing the example
+(`part2-prompt-omits-part1.md`). It is not a wall, and what fails there is mostly speed.*

@@ -219,6 +219,9 @@ The reference re-baseline ran after the example pairing was fixed 2026-10-14
 
 ### Result, the reference on the arm-3 entry cells: 6/12 → 15/17; no wall left
 
+*2026-11-08: the d15 p2 part of this heading overstates; see the correction under the table (0 of 7
+reached at k1, `arm3-portfolio-test.md`).*
+
 Two runs, both fingerprint `839b40f0bfa8` (`samples_per_model=3`, 3 trials):
 
 - `m5pro-aoc-ref-entry-k3`, all four cells, 2026-10-13 20:39. It stopped during its last cell,
