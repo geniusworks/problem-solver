@@ -20,6 +20,7 @@ from shared.performance import PerformanceMonitor
 from shared.quality.code_formatter import format_code
 from shared.tempfiles import TempFileManager
 from shared.config import RESOURCES_CONFIG, DEFAULT_EXECUTION_TIMEOUT
+from shared.sandbox import child_env, configured_limiter, resource_limiter
 import asyncio
 
 logger = logging.getLogger(__name__)
@@ -66,49 +67,8 @@ class ExecutionResult:
     error: Optional[str] = None
 
 
-def _build_resource_limiter(
-    max_memory_mb: int, max_processes: int, cpu_seconds: int
-) -> Optional[Any]:
-    """Build a preexec_fn that constrains generated code in the child process.
-
-    Applied limits, and what is genuinely enforced:
-
-    - RLIMIT_CPU     CPU-seconds. Backstops the wall-clock timeout against a busy
-                     loop that ignores SIGTERM.
-    - RLIMIT_FSIZE   Maximum file size the solution can write.
-    - RLIMIT_NPROC   Process count, so a runaway solution cannot fork-bomb.
-    - RLIMIT_AS      Address space. Works on Linux; **silently unavailable on
-                     macOS**, where setting it makes the interpreter fail to
-                     start. Memory is therefore not capped on darwin.
-
-    Returns None on platforms without the resource module (Windows).
-    """
-    try:
-        import resource
-    except ImportError:  # pragma: no cover - Windows
-        return None
-
-    max_memory_bytes = max(max_memory_mb, 1) * 1024 * 1024
-    max_file_bytes = 64 * 1024 * 1024
-
-    def _apply() -> None:
-        # Each limit is applied independently: an unsupported one must not
-        # prevent the others from taking effect.
-        for limit_name, value in (
-            ("RLIMIT_CPU", (cpu_seconds, cpu_seconds)),
-            ("RLIMIT_FSIZE", (max_file_bytes, max_file_bytes)),
-            ("RLIMIT_NPROC", (max_processes, max_processes)),
-            ("RLIMIT_AS", (max_memory_bytes, max_memory_bytes)),
-        ):
-            limit = getattr(resource, limit_name, None)
-            if limit is None:
-                continue
-            try:
-                resource.setrlimit(limit, value)
-            except (ValueError, OSError):
-                continue
-
-    return _apply
+# Kept under its old name: tests and callers import it from here.
+_build_resource_limiter = resource_limiter
 
 
 # The entry point appended to generated solutions.
@@ -180,6 +140,8 @@ async def execute_solution(code: str, input_data: str, timeout: int = 5) -> "Exe
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=str(module_path.parent),
+            env=child_env(),
+            preexec_fn=configured_limiter(timeout),
         )
 
         try:
@@ -357,7 +319,8 @@ class SolutionExecutor:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=str(input_path_obj.parent),  # Run in directory containing input.txt
-                preexec_fn=_build_resource_limiter(
+                env=child_env(),
+                preexec_fn=resource_limiter(
                     max_memory, max_processes, cpu_seconds=max(timeout, 1)
                 ),
             )

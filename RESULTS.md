@@ -29,10 +29,10 @@ can be A/B'd for a real delta over repeat trials.
 - **What still fails is mostly speed.** On the hardest problems the commonest failure is a
   program that runs past the 60 s timeout on the full input, often after passing the example.
 
-**Corpus (2026-11-08):** 88 recorded experiment runs · 3,086 candidate attempts · ~195 GPU-hours ·
-38.0M tokens (result files in `dev/experiments/`; runs that left only a log are not counted; the
+**Corpus (2026-11-09):** 89 recorded experiment runs · 3,098 candidate attempts · ~195 GPU-hours ·
+38.1M tokens (tables in `dev/results/`; runs that left only a log are not counted; the
 token total includes draft counts copied onto repair records before 2026-10-12, see the defect
-table) · **68 oracle-verified solutions across two AoC years, 0 wrong in the ledger.**
+table) · **69 oracle-verified solutions across two AoC years, 0 wrong in the ledger.**
 
 > **Read the contamination section before the capability numbers.** AoC 2024/2025 solutions predate
 > the models used here and are public, so the *capability* results are descriptive of this testbed
@@ -40,8 +40,9 @@ table) · **68 oracle-verified solutions across two AoC years, 0 wrong in the le
 > and vary the strategy — are largely unaffected.
 
 This document is the consolidated result. The write-ups in [`dev/progress/`](dev/progress/) are
-the audit trail, with dated notes where a later run changed a finding; every figure here was
-recomputed from the run artifacts. For the project itself — what it is, how the pipeline works,
+the audit trail, with dated notes where a later run changed a finding. The headline figures
+here are recomputed from the run tables in `dev/results/` by `dev/recompute_results.py`, which CI
+runs against this file. For the project itself — what it is, how the pipeline works,
 how to run it — see the [README](README.md).
 
 ---
@@ -298,7 +299,7 @@ paraphrases — were in the model's training data.
 It is the first objection a reader should raise, and it affects the findings unevenly:
 
 **Weakened by contamination — the capability claims.**
-The 8/8 sweep of 2024 d4–7, the "generation beats size" ladder, and the 68-solution ledger all
+The 8/8 sweep of 2024 d4–7, the "generation beats size" ladder, and the 69-solution ledger all
 measure *something*, but they cannot distinguish "this model is more capable" from "this model has
 seen more of this benchmark". A newer model is both stronger *and* more likely to have ingested the
 2024/2025 corpus, and those two explanations are entangled here. **Treat the capability numbers as

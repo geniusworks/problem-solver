@@ -9,7 +9,10 @@ file current as work lands so it never goes stale.
 
 **Now:** nothing is running. All three thesis arms are measured (`RESULTS.md`): arm 1 confirmed
 under the original prompts and not re-established under the corrected ones, arm 2 splits by cost
-type, arm 3 one-way. Ledger 68 verified, 0 wrong; tests 257 passing. A reconciliation pass on
+type, arm 3 one-way. Ledger 69 verified, 0 wrong (2024 d2 p2 added 2026-11-09 by the sandbox
+plumbing check, 12/12 at k1, `1ac712678732`); tests 297 passing, and CI runs them plus
+`dev/recompute_results.py --check` on every PR. Generated code now runs without `.env` secrets
+(`shared/sandbox.py`), and each result file records Ollama, model digests and machine. A reconciliation pass on
 2026-11-08 checked every published claim against the result files and added dated correction
 notes where later runs had overturned earlier write-ups. Open, both awaiting the maintainer: a
 powered arm-1 test on 2025 d9 p2 (`PLAN.md`, "Open"); AoC 2026 in December,

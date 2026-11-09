@@ -84,6 +84,7 @@ It exits non-zero if any recorded solution is wrong, errors, or cannot be verifi
 |2025|10|2|17576|qwen3.8:27b|2026-11-01 08:55:29 UTC|solutions/2025_day10_part2.py|
 |2024|21|1|184180|muse-glimmer:30b|2026-11-06 17:24:37 UTC|solutions/2024_day21_part1.py|
 |2024|21|2|231309103124520|muse-glimmer:30b|2026-11-06 17:44:58 UTC|solutions/2024_day21_part2.py|
+|2024|2|2|476|qwen3.8:27b|2026-11-09 15:30:24 UTC|solutions/2024_day02_part2.py|
 <!-- end verified rows -->
 
 ## Rejected — previously recorded as solved, verified wrong

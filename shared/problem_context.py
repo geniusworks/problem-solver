@@ -24,6 +24,7 @@ from bs4 import BeautifulSoup
 from shared import config
 from shared.ground_truth import get_known_answer
 from shared.paths import get_problem_dir
+from shared.sandbox import child_env, configured_limiter
 
 # Enough of the input to see its shape without paying for all of it.
 INPUT_PREVIEW_LINES = 12
@@ -163,6 +164,7 @@ def _run_on_example(code: str, example_input: str, timeout: int = 20) -> Optiona
         try:
             done = subprocess.run(
                 [sys.executable, "-I", "solution.py"], cwd=workdir,
+                env=child_env(), preexec_fn=configured_limiter(timeout),
                 capture_output=True, text=True, timeout=timeout,
             )
         except (subprocess.TimeoutExpired, OSError):

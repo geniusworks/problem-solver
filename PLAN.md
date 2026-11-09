@@ -38,6 +38,13 @@ have measured value here and some do not (mixing models lost to choosing one; re
 
 None of this displaces AoC 2026, which has a date; step 1 can run alongside it.
 
+## Conditional: a second reference model
+
+The orchestration findings rest almost entirely on `qwen3.8:27b`. **If** the powered arm-1 test
+(Open, item 1) shows a lift, repeat its design on one more model of a different family before the
+result is generalised, sized the same way (about 20 trials per arm). If it shows none, a second
+model adds little and this stays parked. Either way it is GPU time the maintainer decides on.
+
 ---
 
 # The record
@@ -684,7 +691,11 @@ its "too recently" page, which is parsed and sets the real wait.
 ### Optional, unblocked (small cleanups)
 
 The Milestone C deferred cleanups are done (PR #26). Still open: `OllamaProvider.__init__`'s default
-`model="codellama:7b"` is stale (inert — every call site passes `model` explicitly).
+`model="codellama:7b"` is stale (inert — every call site passes `model` explicitly). `mypy shared`
+reports 98 errors in 17 files, so type checking is not in CI; clear them, or gate only the clean
+modules, before adding it. Generated code runs without `.env` secrets and under resource limits
+(`shared/sandbox.py`) but with network access and the user's file permissions; a macOS sandbox
+profile that denies network is the next step if less trusted code is ever run.
 
 ## Documentation
 
