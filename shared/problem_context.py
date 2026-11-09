@@ -310,8 +310,8 @@ def statement_examples(
     for index, article in enumerate(articles):
         own_part = index == int(part) - 1
         blocks = [
-            pre.find("code").get_text().strip("\n")
-            for pre in article.find_all("pre") if pre.find("code") is not None
+            code.get_text().strip("\n")
+            for pre in article.find_all("pre") if (code := pre.find("code")) is not None
         ]
         lone = len(blocks) == 1 and not any(
             mark.isalnum() for mark in _extra_marks(blocks[0], puzzle_input)
