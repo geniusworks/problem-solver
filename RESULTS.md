@@ -199,6 +199,11 @@ hard cells (`m5pro-band-k1-vs-k3-aoc.md`); across all its runs under the correct
 its 145 solved cells were solved by repair. `muse-glimmer:30b`, in the same harness, solved 14 of
 its 131 by repair, among them 3 of its 6 solves of 2024 d20 p2 (`arm3-portfolio-test.md`).
 
+Counted per repair attempt rather than per solve, so that a model with more failed drafts does not
+simply get more chances: under the corrected harness the reference's repairs succeeded 2 times in
+128, muse's 14 times in 80. On the problems both models repaired, 1 in 118 against 8 in 67. Repair
+attempts within one trial are not independent, so these are descriptive rates, not a test.
+
 ### On the hardest cells the limit is often speed
 
 On the cells the reference fails under the corrected harness, the commonest failure is a run past
