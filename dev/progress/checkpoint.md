@@ -24,8 +24,11 @@ verified attempt records the worked examples' verdict beside the oracle's
 (`examples_passed`/`examples_total`), so each run from now on also measures how far the results
 depend on an exact checker; the power test is the first data (on 2025 d9 p2 the example passed 59
 of the 104 Part 2 attempts the oracle rejected). What is next, in priority order, is `PLAN.md`,
-"Open": AoC 2026 (needs the submitter decision by about 2026-11-25); then the test of whether the
-Part 1 context informs or cues recall, designed for AoC 2026 (`part2-context-heldout-plan.md`). Nothing starts without the maintainer's go. The sections below are the dated record, newest
+"Open": a registered replication of the d9 p2 test with Part 2 always reached
+(`m5pro-d9p2-replication.md`; 35 trials per arm, about 16 GPU-hours); AoC 2026 (needs the
+submitter decision by about 2026-11-25); then the test of whether the Part 1 context informs or
+cues recall, designed for AoC 2026 (`part2-context-heldout-plan.md`). Nothing starts without the
+maintainer's go. The sections below are the dated record, newest
 first.
 
 ### Instrument fixed: the model now sees what a solver on the site sees (2026-10-13)
