@@ -500,3 +500,69 @@ async def test_part_two_preparation_runs_under_the_site_context(monkeypatch, tmp
 
     assert result is not None and "# good" in result
     assert seen["code"] == "# this trial's part one"
+
+
+class ThreeDraftModel:
+    """Three distinct bad drafts; repair fixes only the third and hands the others back."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+        self.last_token_usage = {"input_tokens": 10, "output_tokens": 5}
+
+    async def generate_solution(  # type: ignore[override]
+        self, parsed_problem, year, day, strategies, strategy_effectiveness
+    ) -> str:
+        self.calls += 1
+        return f"def solve():\n    return {self.calls}\n  # bad{self.calls - 1}"
+
+    async def improve_solution(self, solution: str, problem, feedback=None) -> str:  # type: ignore[override]
+        if "# bad2" in solution:
+            return "def solve():\n    return 2\n  # good"
+        return solution
+
+
+@pytest.mark.asyncio
+async def test_each_attempt_records_which_draft_it_came_from(monkeypatch, tmp_path):
+    """At samples_per_model=3 the drafts are 0, 1 and 2, and a repair keeps its
+    draft's index. Every draft used to carry the trial number instead."""
+    from shared.experiment import SolverConfig
+
+    async def fake_fetch_problem_text(year, day, part=1):
+        return "Dummy problem text", None, None
+
+    async def fake_ensure_problem_files(year, day):
+        return {"problem": tmp_path / "p", "examples": tmp_path / "e", "input": tmp_path / "i"}
+
+    def fake_dirs(workspace_dir, year, day):
+        for sub in ("attempts", "examples"):
+            (tmp_path / sub).mkdir(parents=True, exist_ok=True)
+        return {"day": tmp_path, "attempts": tmp_path / "attempts", "examples": tmp_path / "examples"}
+
+    monkeypatch.setattr(solver_module, "fetch_problem_text", fake_fetch_problem_text)
+    monkeypatch.setattr(solver_module, "ensure_problem_files", fake_ensure_problem_files)
+    monkeypatch.setattr(solver_module, "ensure_problem_directory_structure", fake_dirs)
+    monkeypatch.setattr(solver_module, "parse_problem_text", lambda text: DummyParsedProblem())
+    monkeypatch.setattr(cq, "CodeQualityAnalyzer", DummyCodeQualityAnalyzer)
+    monkeypatch.setattr(learning, "LearningDatabase", DummyLearningDatabase)
+    monkeypatch.setattr(solver_module, "SolutionExecutor", RecordingExecutor)
+    monkeypatch.setattr(solver_module, "record_solution", lambda *a, **k: None)
+    monkeypatch.setattr(
+        solver_module.BaseSolver, "_get_top_models",
+        lambda self, problem_type, role, limit=3, min_success_rate=0.5: (
+            ["m"] if role == "primary" else []
+        ),
+    )
+
+    solver = solver_module.BaseSolver(tmp_path, debug=False, config=SolverConfig(samples_per_model=3))
+    solver.enable_collaborative_improvement = False
+    solver.models = {"m": ThreeDraftModel()}
+
+    result = await solver.solve_problem(2022, 1, 1, force=True)
+
+    assert result is not None and "# good" in result
+    drafts = [a.draft_index for a in solver.attempts if a.stage == "generate"]
+    repairs = {a.draft_index: a.outcome for a in solver.attempts if a.stage == "repair"}
+    assert sorted(drafts) == [0, 1, 2]
+    # Drafts 0 and 1 came back unchanged; draft 2's repair ran and was accepted.
+    assert repairs[0] is repairs[1] is Outcome.NO_CANDIDATE
+    assert repairs[2] is not Outcome.NO_CANDIDATE

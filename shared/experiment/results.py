@@ -59,7 +59,11 @@ class AttemptRecord:
     # where in the loop it came from
     stage: str = "generate"  # generate | repair | fallback | reuse | consensus
     repair_iteration: int = 0
-    sample_index: int = 0
+    # Which of the model's drafts in this solve (0-based, up to
+    # samples_per_model - 1); a repair keeps its draft's index. None where the
+    # attempt is not a model draft (consensus, the runner's own record). Result
+    # files before 2026-11-10 carry sample_index instead, which held the trial.
+    draft_index: Optional[int] = None
 
     # cost and timing
     wall_clock_seconds: float = 0.0

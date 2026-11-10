@@ -82,6 +82,12 @@ class _Candidates:
     failures: List[Any] = field(default_factory=list)
 
 
+def _draft_index(cand_id: str) -> int:
+    """The draft number in a candidate id: ``model#s2`` is draft 2, a bare model name draft 0."""
+    _, marker, index = cand_id.rpartition("#s")
+    return int(index) if marker and index.isdigit() else 0
+
+
 def _wrong_answer_guidance(produced: str) -> List[str]:
     """Repair guidance for code that runs cleanly and computes the wrong thing.
 
@@ -620,6 +626,7 @@ class BaseSolver:
                     self._record_attempt(
                         model_name, year, day, part, Outcome.NO_CANDIDATE,
                         stage="generate",
+                        draft_index=sample_idx,
                         error=f"{type(e).__name__}: {e}",
                         input_tokens=tokens.get("input_tokens", 0),
                         output_tokens=tokens.get("output_tokens", 0),
@@ -704,6 +711,7 @@ class BaseSolver:
                         self._record_attempt(
                             model_name, year, day, part, verdict.outcome,
                             stage="repair" if iteration else "generate",
+                            draft_index=_draft_index(cand_id),
                             verdict=verdict,
                             answer=verdict.answer,
                             expected=known_answer,
@@ -749,6 +757,7 @@ class BaseSolver:
                         self._record_attempt(
                             model_name, year, day, part, Outcome.HARNESS_ERROR,
                             stage="repair" if iteration else "generate",
+                            draft_index=_draft_index(cand_id),
                             expected=known_answer,
                             repair_iteration=iteration,
                             code=solution,
@@ -811,6 +820,7 @@ class BaseSolver:
                             candidate_models.get(cand_id, cand_id),
                             year, day, part, Outcome.NO_CANDIDATE,
                             stage="repair",
+                            draft_index=_draft_index(cand_id),
                             expected=known_answer,
                             repair_iteration=iteration + 1,
                             wall_clock_seconds=repair_seconds,
@@ -868,6 +878,7 @@ class BaseSolver:
                     self._record_attempt(
                         model_name, year, day, part, verdict.outcome,
                         stage="fallback",
+                        draft_index=0,
                         verdict=verdict,
                         answer=verdict.answer,
                         expected=known_answer,
@@ -1010,6 +1021,7 @@ class BaseSolver:
         input_tokens: int = 0,
         output_tokens: int = 0,
         verdict: Optional["CandidateVerdict"] = None,
+        draft_index: Optional[int] = None,
     ) -> AttemptRecord:
         """Append one model attempt to the current solve's trace.
 
@@ -1028,6 +1040,7 @@ class BaseSolver:
             expected=expected,
             error=error,
             repair_iteration=repair_iteration,
+            draft_index=draft_index,
             wall_clock_seconds=wall_clock_seconds,
             quality_score=quality_score,
             code=code,

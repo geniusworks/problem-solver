@@ -31,7 +31,7 @@ RUN_FIELDS = ["run", "config_name", "config_fingerprint", "started_at", "finishe
 TRIAL_FIELDS = ["run", "problem_id", "trial", "outcome", "winning_model", "wall_clock_seconds",
                 "attempts_to_solve", "total_tokens"]
 ATTEMPT_FIELDS = ["run", "problem_id", "trial", "model", "stage", "repair_iteration",
-                  "sample_index", "outcome", "input_tokens", "output_tokens",
+                  "draft_index", "outcome", "input_tokens", "output_tokens",
                   "wall_clock_seconds", "examples_passed", "examples_total", "overfit_flagged"]
 
 
