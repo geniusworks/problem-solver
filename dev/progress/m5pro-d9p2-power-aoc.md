@@ -1,7 +1,8 @@
-# m5pro-64: k1 against k3 on 2025 d9 p2 under the corrected harness — registered, not yet run
+# m5pro-64: k1 against k3 on 2025 d9 p2 under the corrected harness — inconclusive
 
-**Status (2026-11-09): design and prediction registered before launch.** Results will replace
-this line and fill the sections marked *pending*.
+**Result (2026-11-09): k1 5/15, k3 13/20 over trials that reached Part 2; one-sided Fisher
+p = 0.065. Inconclusive under the registered readings.** The draws behaved as independent. The
+design, prediction and readings below were committed before launch (`f5d8d4b`).
 
 ## Why this cell
 
@@ -71,4 +72,53 @@ how often the examples' verdict disagrees with the oracle's.
 
 ## Result
 
-*pending*
+Runs `20261109T174241Z_m5pro-d9p2-power-aoc-k1_1ac712678732` and
+`20261109T204015Z_m5pro-d9p2-power-aoc-k3_839b40f0bfa8`, launched at commit `f5d8d4b` (clean),
+Ollama 0.40.11, the model digest and packages recorded in each file. Pre-run check: 2024 d1,
+`--trials 3`, 6/6, example verdicts filled (`m5pro-precheck-2026-11-09`).
+
+| | Part 1 | Part 2, trials that reached it | Part 2, all trials | Part 2 solved by a first draft |
+|---|---|---|---|---|
+| k1 | 15/20 | **5/15 (33%)** | 5/20 | 3/15 |
+| k3 | 20/20 | **13/20 (65%)** | 13/20 | 13/20 |
+
+**Registered reading: inconclusive.** k3 is 32 points above k1 (95% Newcombe interval −1 to +56
+points), one-sided Fisher p = 0.065, short of 0.05 and more than 10 points apart. Arm 1 is
+neither re-established nor ruled out on this cell, and its status is not restated.
+
+Two comparisons beside the registered one, reported and not tested as readings: over all trials,
+13/20 against 5/20 (p = 0.012), which also counts k1's five Part 1 failures; and by first draft,
+13/20 against 3/15 (p = 0.010). The registered test used trials that reached Part 2, so these do
+not change the reading.
+
+**Power fell short of the design.** Part 1 failed in 5 of the k1 trials (no candidate), against
+about 2 assumed, so k1 reached Part 2 15 times instead of about 18. k3 solved Part 1 in all 20,
+consistent with three drafts lifting Part 1 too.
+
+**Independence check: consistent.** Across both arms, first drafts solved Part 2 20 times in 75
+(p̂ = 27%; k1 3 of 15, k3 17 of 60). Independent draws then predict 1 − 0.73³ = 61% at k3; the
+measured 65% (13/20) lies inside its 95% Wilson interval (43% to 82%). A k3 draft succeeded as
+often as a k1 draft, so three drafts behaved as three independent tries.
+
+**Repair** rescued 2 of the 12 k1 trials whose first draft failed. In k3, repair ran only on the 7 trials where all three drafts
+failed, and rescued none.
+
+**Time and tokens** (Part 2 only, solved trials as the denominator): k1 1,467 s and 98,510 tokens
+per solve, k3 1,771 s and 125,331. Three drafts cost about a fifth more per solve here and solved
+more trials. The run took 11.9 hours (k1 3.0, k3 9.0), against about 14 estimated.
+
+**Example verdicts** (one worked example per part):
+
+| | examples passed | examples failed |
+|---|---|---|
+| Part 1, oracle solved | 51 | 0 |
+| Part 1, oracle wrong | 0 | 39 |
+| Part 2, oracle solved | 21 | 1 |
+| Part 2, oracle wrong | 22 | 34 |
+| Part 2, timed out on the full input | 37 | 11 |
+
+On Part 1 the example agreed with the oracle on all 90 verified attempts. On Part 2 it passed 59
+of the 104 attempts the oracle rejected: 37 that then timed out on the full input (the
+passed-example-then-timeout pattern) and 22 that gave a wrong answer. It rejected one correct
+answer. Every Part 2 error was a timeout (48 of 48). Attempts without a candidate to verify (14)
+carry no verdict.

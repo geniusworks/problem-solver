@@ -15,7 +15,7 @@ result rows tagged with the machine `id`. Keep config columns identical across m
 |----|------|-----|-------|-------|--------|-------------------|-------|
 | **m1-16** | Apple M1 | 16 GB | 8 | 26.5.2 (25F84) | 0.32.0 | ~dense-14B Q4 (~10 GB); ~10–11 GB usable after macOS | all runs below unless noted |
 | **m2max-32** | Apple M2 Max | 32 GB | 12 | 26.6.1 (25G76) | **0.32.14** (was 0.32.11 until 2026-08-16) | ~dense-30B / 30B-MoE Q4 — `qwen2.5-coder:32b` (19 GB), `qwen3-coder:30b` (18 GB), `qwen3.8:27b` (17 GB), all 100% GPU | bring-up 2026-08-15 (`m2max-handoff.md` §3); Python 3.14; cold learning DB. **The 4/8 and 6/8 rows below ran on 0.32.11**; upgraded to pull `qwen3.8:27b`, which 0.32.11 refuses. Upgrade verified behaviour-neutral: 6/6 on a 3-trial control (`ollama-0.32.14-runtime-check.md`) |
-| **m5pro-64** | Apple M5 Pro | 64 GB | 18 | 27.0.1 | **0.34.4** at bring-up; **0.40.11** on 2026-11-09 (upgrade date not recorded; result files record the version from 2026-11-09). autopep8 2.0.4 → 2.3.2 on 2026-11-09, after every run listed here | resident: `qwen3.8:27b` (17 GB; 18.2 GB loaded, 100% GPU), `qwen3.6:35b-a3b` (35.5B MoE, 22.6 GB, unmeasured). The ~40 GB class fits on paper; none pulled or measured | bring-up 2026-10-12; **Python 3.11.16** (m2max-32 ran 3.14) and a newer Ollama and macOS than every row below, so the first run was a `qwen3.8:27b` calibration on d4–7 at `--trials 3`: **23/24 against the M2 Max's 16/16, about 2.3× faster** (`m5pro-calibration-qwen38-d4-7.md`) |
+| **m5pro-64** | Apple M5 Pro | 64 GB | 18 | 27.0.1 | **0.34.4** at bring-up; **0.40.11** on 2026-11-09 (upgrade date not recorded; result files record the version from 2026-11-09). autopep8 2.0.4 → 2.3.2 on 2026-11-09, before the d9 p2 power test and its pre-run check (formatter output byte-identical on all 74 recorded programs) | resident: `qwen3.8:27b` (17 GB; 18.2 GB loaded, 100% GPU), `qwen3.6:35b-a3b` (35.5B MoE, 22.6 GB, unmeasured). The ~40 GB class fits on paper; none pulled or measured | bring-up 2026-10-12; **Python 3.11.16** (m2max-32 ran 3.14) and a newer Ollama and macOS than every row below, so the first run was a `qwen3.8:27b` calibration on d4–7 at `--trials 3`: **23/24 against the M2 Max's 16/16, about 2.3× faster** (`m5pro-calibration-qwen38-d4-7.md`) |
 
 ## Which models fit each machine (measured)
 
@@ -106,6 +106,9 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d20 p1 then p2 (decider) | 10 | 18/19 (p1 9/10, p2 9/9; 1 not reached) | 95% | `arm3-portfolio-test.md` |
 | **m5pro-64** | muse-glimmer:30b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d20 p1 then p2 (decider) | 10 | 13/17 (p1 7/10, p2 6/7; 3 not reached) | 76% | `arm3-portfolio-test.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page**, child env without `.env` secrets | 2024 d1–2, both parts (plumbing check after `shared/sandbox.py`) | 3 | 12/12 | 100% | ledger 68 → 69 (first verified 2024 d2 p2); Ollama 0.40.11 |
+| **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d1 p1 then p2 (pre-run check, venv from `requirements.lock`) | 3 | 6/6 | 100% | `m5pro-d9p2-power-aoc.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2025 d9 p1 then p2 (power test, k1) | 20 | 20/35 (p1 15/20, p2 5/15; 5 not reached) | 57% | `m5pro-d9p2-power-aoc.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off **samp3**, fallback off, **ctx=aoc, example_tests=page** | 2025 d9 p1 then p2 (power test, k3) | 20 | 33/40 (p1 20/20, p2 13/20) | 82% | `m5pro-d9p2-power-aoc.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
@@ -211,6 +214,11 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 
 ### Headline reads (m5pro-64)
 
+- **2025 d9 p2 at 20 trials per arm, corrected harness: k1 5/15 → k3 13/20** over trials that
+  reached Part 2 (`m5pro-d9p2-power-aoc.md`). One-sided Fisher p = 0.065: inconclusive under the
+  registered readings. First drafts were correct 27% of the time (20/75), which predicts 61% at k3
+  against a measured 65%: the draws behave as independent, as on d19 p2. k1 lost five trials to
+  Part 1; k3 lost none.
 - **The reference model reproduces on the new runtime: `qwen3.8:27b` 23/24 on d4–7 over three
   trials**, against 16/16 on the M2 Max (`m5pro-calibration-qwen38-d4-7.md`). The one miss is d6 p2,
   the set's hardest problem, which verified only 3 of 6 draws on the M2 Max. Excluding it, 90% of

@@ -17,11 +17,11 @@ can be A/B'd for a real delta over repeat trials.
   independent.** Under the original harness, three attempts with repair took the model's
   "sometimes" problems from 42% to 75%, replicated on a second year (combined p ≈ 0.005). Under the
   corrected harness most problems are solved by nearly every draft or by nearly none, three drafts
-  gave no measurable lift (9/19 against 11/21), and a powered test on the one mid-rate problem is
-  still to run.
+  gave no measurable lift (9/19 against 11/21), and the powered test on the one mid-rate problem
+  was inconclusive (5/15 against 13/20, one-sided p = 0.065).
 - **Choosing the right model beat mixing models.** One of six candidate models solved a problem
   10 of 10 times that the reference solved 1 of 10, and no problem was found the other way, so a
-  mix had nothing to add. Repair also depends on the model: 2 of the reference's 145 solves came
+  mix had nothing to add. Repair also depends on the model: 7 of the reference's 262 solves came
   from repair, against 14 of 131 for that candidate.
 - **Cheap draws win on time and lose on tokens.** A fast weak model taking four times the draws
   costs 0.64× the wall-clock per solution and at least 3.09× the tokens, and does not reach the
@@ -29,8 +29,8 @@ can be A/B'd for a real delta over repeat trials.
 - **What still fails is mostly speed.** On the hardest problems the commonest failure is a
   program that runs past the 60 s timeout on the full input, often after passing the example.
 
-**Corpus (2026-11-09):** 89 recorded experiment runs · 3,098 candidate attempts · ~195 GPU-hours ·
-38.1M tokens (tables in `dev/results/`; runs that left only a log are not counted; the
+**Corpus (2026-11-09):** 92 recorded experiment runs · 3,334 candidate attempts · ~210 GPU-hours ·
+41.6M tokens (tables in `dev/results/`; runs that left only a log are not counted; the
 token total includes draft counts copied onto repair records before 2026-10-12, see the defect
 table) · **69 oracle-verified solutions across two AoC years, 0 wrong in the ledger.**
 
@@ -53,7 +53,7 @@ The project argued three reasons that coordinating several attempts should beat 
 
 | arm | claim | verdict |
 |---|---|---|
-| **1. pass@k** | the gap between "sometimes solves" and "solves" never closes at a model's own frontier | ⚠️ **measured and replicated under the original harness; not yet re-established under the corrected one** |
+| **1. pass@k** | the gap between "sometimes solves" and "solves" never closes at a model's own frontier | ⚠️ **measured and replicated under the original harness; not re-established under the corrected one; its powered test was inconclusive (p = 0.065)** |
 | **2. economics** | many cheap draws + a verifier beat one expensive pass at equal cost | ⚖️ **splits by which cost you pay** |
 | **3. portfolios** | diverse models decorrelate error | ➖ **not supported where measured**: the one complementary pair was one-way, so choosing the better model gave the gain |
 
@@ -130,14 +130,24 @@ solve 49% of trials, and three drafts solved 50% (`m5pro-d19p2-power.md`). The d
 independent, so sampling's gain follows from the per-draft rate.
 *(`passk-ab-d13-d15.md`, `topology-parallel3.md`, `passk-replication-2025.md`.)*
 
-**Under the corrected harness: not yet re-established.** Both bands above were Part 2s posed
+**Under the corrected harness: not re-established; the powered test was inconclusive.** Both bands above were Part 2s posed
 without Part 1, and their repair prompts carried mispaired example tests (see the defect table).
 Re-run with both fixed, the reference's "sometimes" cells gave 9/19 at one draft and 11/21 at
 three, no measurable lift (`m5pro-band-k1-vs-k3-aoc.md`). At the draft level those cells split in
 two: solved by 8–9 of 9 drafts, or by 0–1 of 9; the 1-of-6 problem above is solved 3 of 3 at one
 draft. Independence predicts exactly this: three draws lift a 10% draft rate little and a 90% one
-has no room to rise. One cell, 2025 d9 p2 (3 of 9 drafts), sits where independent draws predict a
-real gain, and it has no one-draft comparison yet. That powered test is the open item for this arm.
+has no room to rise. One cell, 2025 d9 p2 (3 of 9 drafts), sat where independent draws predict a
+real gain, so it got a registered test at 20 trials per arm (`m5pro-d9p2-power-aoc.md`):
+
+| 2025 d9 p2, trials that reached Part 2 | one draft | three drafts | one-sided Fisher exact |
+|---|---|---|---|
+| solved | 5/15 (33%) | 13/20 (65%) | **p = 0.065 — inconclusive** |
+
+The difference, 32 points (95% interval −1 to +56), misses the registered p < 0.05, so the arm is
+neither re-established nor ruled out under the corrected harness. Fewer k1 trials reached Part 2
+than planned (15, not about 18): Part 1 failed five times at one draft and never at three. The
+draws behaved as independent again: first drafts solved Part 2 20 times in 75 (27%), which
+predicts 61% at three drafts; 65% was measured.
 
 ### Arm 2 — Cheap draws win on time, lose on tokens, and stop at a ceiling
 
@@ -195,13 +205,14 @@ three trials produced, three did not survive ten.
 ### Repair depends on the model
 
 With true example feedback and too-high/too-low hints, the reference's repairs rescued none of its
-hard cells (`m5pro-band-k1-vs-k3-aoc.md`); across all its runs under the corrected harness, 2 of
-its 145 solved cells were solved by repair. `muse-glimmer:30b`, in the same harness, solved 14 of
+band cells (`m5pro-band-k1-vs-k3-aoc.md`) and 2 of 12 failed first drafts on 2025 d9 p2
+(`m5pro-d9p2-power-aoc.md`); across all its runs under the corrected harness, 7 of
+its 262 solved cells were solved by repair. `muse-glimmer:30b`, in the same harness, solved 14 of
 its 131 by repair, among them 3 of its 6 solves of 2024 d20 p2 (`arm3-portfolio-test.md`).
 
 Counted per repair attempt rather than per solve, so that a model with more failed drafts does not
-simply get more chances: under the corrected harness the reference's repairs succeeded 2 times in
-128, muse's 14 times in 80. On the problems both models repaired, 1 in 118 against 8 in 67. Repair
+simply get more chances: under the corrected harness the reference's repairs succeeded 7 times in
+203, muse's 14 times in 80. On the problems both models repaired, 6 in 193 against 8 in 67. Repair
 attempts within one trial are not independent, so these are descriptive rates, not a test.
 
 ### On the hardest cells the limit is often speed
@@ -379,11 +390,12 @@ was measured with local models of about 30B:
 
 1. **Spend extra draws where a single draft succeeds part of the time.** Independent draws predict
    that at roughly 25–75% per draft three draws lift the solve rate sharply, and near 0% or near
-   100% buy little. The lift was measured under the original harness and is not yet tested at power
-   under the corrected one. Measure the per-draft rate first.
+   100% buy little. The lift was measured under the original harness; under the corrected one the
+   powered test on a 27% problem gave 33% → 65%, short of significance (p = 0.065). Measure the
+   per-draft rate first.
 2. **Don't count on repair to rescue hard problems.** Feedback with true example results and
-   too-high/too-low hints rescued nothing for the reference on its hard cells (2 of its 145 solves
-   came from repair); another model's repairs did better (14 of 131). A fresh draft or a different
+   too-high/too-low hints rarely rescued the reference (7 of its 262 solves came from repair);
+   another model's repairs did better (14 of 131). A fresh draft or a different
    model is the more reliable second try.
 3. **Check whether failures are timeouts.** Many hard-cell failures are timeouts on the full input,
    often after passing the example. Asking for an efficient algorithm, or allowing more execution time,
