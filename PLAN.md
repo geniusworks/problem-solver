@@ -167,7 +167,9 @@ Nothing is evaluable at n=1 against the observed variance. Smallest change, unbl
 
 - Add `--trials N` to `experiment.py`; `run_experiment` runs each problem N times
   (`shared/experiment/runner.py:196`). Wire `AttemptRecord.sample_index` (`results.py:56`, already
-  exists) and set a per-trial seed/index.
+  exists) and set a per-trial seed/index. *(2026-11-10: that put the trial number in every
+  attempt, so the three drafts of a k3 trial were indistinguishable; the field is now
+  `draft_index`, the draft within the solve.)*
 - Aggregate in `ExperimentResult`: solve rate as *k/N per problem* and a stability count (how often
   each problem flips). Add a `solved_at_least_once` / `solved_every_time` split — the way to
   report a variable pipeline.

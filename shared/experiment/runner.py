@@ -235,8 +235,6 @@ async def run_problem(
                     attempt.outcome = outcome
                     attempt.error = (attempt.error or "") + " [claim not verified]"
 
-        for attempt in trace:
-            attempt.sample_index = trial
         result.attempts.extend(trace)
         winner = next((a for a in trace if a.succeeded), None)
         result.winning_model = winner.model if winner else None
@@ -251,7 +249,6 @@ async def run_problem(
                 expected=expected,
                 error=error,
                 wall_clock_seconds=elapsed,
-                sample_index=trial,
                 code=code,
             )
         )

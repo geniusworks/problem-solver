@@ -226,7 +226,9 @@ class TestTrialStamping:
         result = await run_problem(_StubSolver(result=None), 2024, 1, 1, SolverConfig(), trial=3)
 
         assert result.trial == 3
-        assert result.attempts[0].sample_index == 3
+        # The trial lives on the result; an attempt's draft_index is not a copy
+        # of it (it once was, as sample_index, and every k3 draft read the same).
+        assert result.attempts[0].draft_index is None
 
 
 class _CountingSolver:
