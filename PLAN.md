@@ -6,7 +6,8 @@ roadmap got here.
 ## Open (as of 2026-11-09)
 
 Each thesis arm has a verdict (`RESULTS.md`): sampling measured and replicated under the original
-harness, not yet re-established under the corrected one; economics splits by whether time or tokens
+harness, not re-established under the corrected one (the powered test on 2025 d9 p2 was
+inconclusive, `m5pro-d9p2-power-aoc.md`); economics splits by whether time or tokens
 is the binding cost; portfolios: the one complementary pair was one-way, so the ensemble was not
 run. In priority order; nothing starts without the maintainer's go, and each item says what it waits
 on:
@@ -21,16 +22,14 @@ on:
    (its decision, and the accepted answers to score against); the harness option it needs,
    `gate_part_two=false`, is built. Arms that rewrote Part 1 on public puzzles were dropped:
    Part 2's text depends on Part 1's, so the edits cannot separate information from recall.
-3. **Running since 2026-11-09:** a powered arm-1 test under the corrected prompts on 2025 d9 p2, the one cell measured at a
-   mid-range draft rate: k1 against k3, about 20 trials each for about 80% power. About
-   14 GPU-hours in chunks (per trial on this problem, Part 1 then Part 2: k1 about 850 s, k3
-   about 1,640 s, so about 4.7 h and 9.1 h; roughly 12 to 16 h depending on timeouts).
-   Registered in `m5pro-d9p2-power-aoc.md` before launch. A lift triggers the conditional second
-   reference model below.
 
-Done 2026-11-09: every verified attempt now records the worked examples' verdict beside the
-oracle's (`examples_passed`/`examples_total`; "Beyond AoC", step 1), so each of these runs
-also measures how far the results depend on an exact checker.
+Done 2026-11-09:
+- **The powered arm-1 test on 2025 d9 p2: inconclusive** (`m5pro-d9p2-power-aoc.md`). k1 5/15,
+  k3 13/20 over trials that reached Part 2, one-sided Fisher p = 0.065 against the registered
+  0.05; the draws behaved as independent (27% per draft predicts 61% at k3; 65% measured).
+  11.9 GPU-hours.
+- Every verified attempt records the worked examples' verdict beside the oracle's
+  (`examples_passed`/`examples_total`; "Beyond AoC", step 1). The power test is its first data.
 
 ## Beyond AoC — the larger objective
 
@@ -38,16 +37,18 @@ The project's aim is general problem-solving through orchestration (`README.md`,
 is the testbed. Every result so far rests on an exact checker, the accepted answer, which most real
 domains lack. Generalising is therefore sequenced as measurements, each gating the next, not as a
 framework built ahead of evidence: of the components a general system might make pluggable, some
-have measured value here and some do not (mixing models lost to choosing one; repair recovered
-2/145 failures on the reference model).
+have measured value here and some do not (mixing models lost to choosing one; repair produced 7
+of the reference model's 262 solves).
 
 1. **How much does the method depend on an exact checker?** Record, per attempt, the verdict of the
    worked examples alongside the oracle's. **Wired 2026-11-09:** every verified attempt records
    `examples_passed`/`examples_total` (0 of 0 when the problem has no usable example; `None` in
-   runs before then, which cannot be re-scored because candidate code is not stored). What
-   remains: from the runs that carry it, measure how often the examples accept a wrong answer and
-   reject a right one, and what sampling and selection achieve with the examples as the only
-   check. This stands in for the partial checkers of other domains (unit tests, static analysis).
+   runs before then, which cannot be re-scored because candidate code is not stored). **First
+   data 2026-11-09** (`m5pro-d9p2-power-aoc.md`, 2025 d9, one example per part): on Part 1 the
+   example agreed with the oracle on all 90 attempts; on Part 2 it passed 59 of the 104 the oracle
+   rejected (37 then timed out, 22 answered wrong) and rejected 1 of 22 correct ones. What
+   remains: the same on more problems, and what sampling and selection achieve with the examples
+   as the only check. This stands in for the partial checkers of other domains (unit tests, static analysis).
    Small, no new GPU work beyond that set.
 2. **Where is AoC hard-wired?** Audit the seams (verification is keyed on year/day/part,
    `shared/verification.py`; fetch, parsing and prompts are AoC-shaped) and define a minimal
@@ -67,13 +68,16 @@ already carries repair guidance for exactly that case (`_efficiency_guidance` in
 harness with mispaired example tests (`targeted-feedback-negative.md`), so it is untested where it
 would matter. **If** the recorded example verdicts confirm the passed-example-then-timeout pattern on
 those cells, A/B `targeted_feedback` on them under the corrected harness. Registered design first.
+The pattern is now recorded on a third hard cell: on 2025 d9 p2, 37 of 48 timeouts had passed the
+worked example (`m5pro-d9p2-power-aoc.md`); the two cells named above have no verdicts yet.
 
 ## Conditional: a second reference model
 
 The orchestration findings rest almost entirely on `qwen3.8:27b`. **If** the powered arm-1 test
-(under "Open") shows a lift, repeat its design on one more model of a different family before the
-result is generalised, sized the same way (about 20 trials per arm). If it shows none, a second
-model adds little and this stays parked. Either way it is GPU time the maintainer decides on.
+on 2025 d9 p2 showed a lift, repeat its design on one more model of a different family before the
+result is generalised, sized the same way (about 20 trials per arm). It was inconclusive
+(p = 0.065, `m5pro-d9p2-power-aoc.md`), so the trigger is not met and this stays parked. Either
+way it is GPU time the maintainer decides on.
 
 ---
 

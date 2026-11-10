@@ -173,6 +173,14 @@ def arm1_corrected() -> str:
     return f"{frac(k1)} -> {frac(k3)}"
 
 
+def arm1_power() -> str:
+    """2025 d9 p2, k1 against k3, trials that reached Part 2 (registered test)."""
+    cell = ["2025_day09_part2"]
+    k1 = solved(outcomes([run_named("20261109T174241Z_m5pro-d9p2-power-aoc-k1")], cell, True))
+    k3 = solved(outcomes([run_named("20261109T204015Z_m5pro-d9p2-power-aoc-k3")], cell, True))
+    return f"{frac(k1)} -> {frac(k3)}, p {fisher_greater(*k1, *k3):.3f}"
+
+
 def arm2() -> str:
     def per_solution(run: str) -> Tuple[float, float]:
         trials = [t for t in TRIALS if t["run"] == run]
@@ -216,6 +224,25 @@ def repair_by_model() -> str:
             f"{rate([a for a in muse if a['problem_id'] in shared])}")
 
 
+def repair_share_of_solves() -> str:
+    """Solved trials whose winning attempt was a repair, per model, corrected harness."""
+    corrected = {name for name, run in RUNS.items()
+                 if run["config"].get("problem_context", "legacy") == "aoc"}
+    winners: Dict[Tuple[str, str, str], dict] = {}
+    for attempt in ATTEMPTS:
+        key = (attempt["run"], attempt["problem_id"], attempt["trial"])
+        if attempt["run"] in corrected and attempt["outcome"] == "solved" and key not in winners:
+            winners[key] = attempt
+    counts: Dict[str, List[int]] = defaultdict(lambda: [0, 0])
+    for trial in TRIALS:
+        winner = winners.get((trial["run"], trial["problem_id"], trial["trial"]))
+        if trial["outcome"] == "solved" and winner:
+            counts[winner["model"]][0] += int(winner["repair_iteration"] or 0) > 0
+            counts[winner["model"]][1] += 1
+    ref, muse = counts[REFERENCE], counts["muse-glimmer:30b"]
+    return f"{ref[0]} of {ref[1]} vs {muse[0]} of {muse[1]}"
+
+
 @dataclass
 class Claim:
     name: str
@@ -225,12 +252,12 @@ class Claim:
 
 
 CLAIMS = [
-    Claim("corpus runs", corpus_runs, "89 recorded experiment runs",
-          {"RESULTS.md": ["89 recorded experiment runs"]}),
-    Claim("corpus attempts", corpus_attempts, "3,098 candidate attempts",
-          {"RESULTS.md": ["3,098 candidate attempts"]}),
-    Claim("corpus GPU-hours", corpus_hours, "~195 GPU-hours", {"RESULTS.md": ["~195 GPU-hours"]}),
-    Claim("corpus tokens", corpus_tokens, "38.1M tokens", {"RESULTS.md": ["38.1M tokens"]}),
+    Claim("corpus runs", corpus_runs, "92 recorded experiment runs",
+          {"RESULTS.md": ["92 recorded experiment runs"]}),
+    Claim("corpus attempts", corpus_attempts, "3,334 candidate attempts",
+          {"RESULTS.md": ["3,334 candidate attempts"]}),
+    Claim("corpus GPU-hours", corpus_hours, "~210 GPU-hours", {"RESULTS.md": ["~210 GPU-hours"]}),
+    Claim("corpus tokens", corpus_tokens, "41.6M tokens", {"RESULTS.md": ["41.6M tokens"]}),
     Claim("ledger", ledger_size, "69 verified solutions",
           {"README.md": ["**69 verified solutions**"], "RESULTS.md": ["69 oracle-verified solutions"],
            "assets/social-preview.html": ["69 verified solutions"]}),
@@ -250,13 +277,20 @@ CLAIMS = [
                           "**p ≈ 0.005**"]}),
     Claim("arm 1, corrected harness", arm1_corrected, "9/19 -> 11/21",
           {"RESULTS.md": ["9/19 at one draft and 11/21 at\nthree"]}),
+    Claim("arm 1, powered test on 2025 d9 p2", arm1_power, "5/15 -> 13/20, p 0.065",
+          {"RESULTS.md": ["| solved | 5/15 (33%) | 13/20 (65%) | **p = 0.065 — inconclusive** |"],
+           "README.md": ["5/15 at one draft, 13/20 at\n>   three, one-sided p = 0.065"]}),
     Claim("arm 2", arm2,
           "1,389 s vs 891 s (0.64x); 38,460 vs >=119,068 tokens (>=3.09x)",
           {"RESULTS.md": ["| 7/8 | **891 s** (0.64×) | ≥119,068 (≥3.09×) |", "1,389 s"],
            "README.md": ["| 7/8 | **891 s** (0.64×) | ≥119,068 (≥3.09×) |"]}),
-    Claim("repair by model", repair_by_model, "2/128 vs 14/80; same problems 1/118 vs 8/67",
-          {"RESULTS.md": ["muse's 14 times in 80. On the problems both models repaired, 1 in 118 against 8 in 67"],
-           "README.md": ["succeeded 2 times in 128 attempts, muse's 14 in 80", "both repaired, 1 in 118 against 8 in 67"]}),
+    Claim("repair by model", repair_by_model, "7/203 vs 14/80; same problems 6/193 vs 8/67",
+          {"RESULTS.md": ["muse's 14 times in 80. On the problems both models repaired, 6 in 193 against 8 in 67"],
+           "README.md": ["succeeded 7 times in 203 attempts, muse's 14 in 80", "both repaired, 6 in 193 against 8 in 67"]}),
+    Claim("repair share of solves", repair_share_of_solves, "7 of 262 vs 14 of 131",
+          {"RESULTS.md": ["7 of the reference's 262 solves came\n  from repair, against 14 of 131",
+                          "7 of\nits 262 solved cells were solved by repair", "solved 14 of\nits 131 by repair"],
+           "PLAN.md": ["repair produced 7\nof the reference model's 262 solves"]}),
     Claim("arm 3 decider", arm3, "10/10 vs 1/10, p 0.0001",
           {"RESULTS.md": ["10/10 against the reference's 1/10 in the decider, p = 0.0001"]}),
 ]

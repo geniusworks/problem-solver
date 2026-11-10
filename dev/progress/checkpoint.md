@@ -7,10 +7,12 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-11-09)
 
-**Now:** the registered k1-vs-k3 power test on 2025 d9 p2 is running (`m5pro-d9p2-power-aoc.md`; 20
-trials per arm, started 2026-11-09 09:43, about 14 GPU-hours). Each thesis arm has a verdict
-(`RESULTS.md`): arm 1 confirmed under the original prompts and not re-established under the
-corrected ones; arm 2 splits by cost type; arm 3's one complementary pair was one-way, so the
+**Now:** no run in progress. The registered k1-vs-k3 power test on 2025 d9 p2 finished
+2026-11-09 and was **inconclusive** (`m5pro-d9p2-power-aoc.md`): k1 5/15, k3 13/20 over trials
+that reached Part 2, one-sided Fisher p = 0.065 against the registered 0.05; the draws behaved as
+independent (27% per draft predicts 61% at k3, 65% measured); 11.9 GPU-hours. Each thesis arm has
+a verdict (`RESULTS.md`): arm 1 confirmed under the original prompts and not re-established under
+the corrected ones; arm 2 splits by cost type; arm 3's one complementary pair was one-way, so the
 ensemble was not run. Ledger 69 verified, 0 wrong (2024 d2 p2 added 2026-11-09 by the sandbox
 plumbing check, 12/12 at k1, `1ac712678732`); tests 308 passing, and CI runs them, `mypy` and
 `dev/recompute_results.py --check` on every PR. Generated code now runs without `.env` secrets
@@ -20,10 +22,10 @@ dated correction notes where later runs had overturned earlier write-ups; on 202
 was restated on matched trials (2/53 → 29/37) with its contamination caveat. Since 2026-11-09 every
 verified attempt records the worked examples' verdict beside the oracle's
 (`examples_passed`/`examples_total`), so each run from now on also measures how far the results
-depend on an exact checker. What is next, in priority order, is `PLAN.md`, "Open": AoC 2026 (needs
-the submitter decision by about 2026-11-25); the test of whether the Part 1 context informs or cues
-recall, now designed for AoC 2026 (`part2-context-heldout-plan.md`); and the powered arm-1 test,
-running. Nothing starts without the maintainer's go. The sections below are the dated record, newest
+depend on an exact checker; the power test is the first data (on 2025 d9 p2 the example passed 59
+of the 104 Part 2 attempts the oracle rejected). What is next, in priority order, is `PLAN.md`,
+"Open": AoC 2026 (needs the submitter decision by about 2026-11-25); then the test of whether the
+Part 1 context informs or cues recall, designed for AoC 2026 (`part2-context-heldout-plan.md`). Nothing starts without the maintainer's go. The sections below are the dated record, newest
 first.
 
 ### Instrument fixed: the model now sees what a solver on the site sees (2026-10-13)
