@@ -6,7 +6,7 @@ roadmap got here.
 ## Open (as of 2026-11-10)
 
 Each thesis arm has a verdict (`RESULTS.md`): sampling measured and replicated under the original
-harness, not re-established under the corrected one (the powered test on 2025 d9 p2 was
+harness, open under the corrected one (the powered test on 2025 d9 p2 was
 inconclusive, `m5pro-d9p2-power-aoc.md`); economics splits by whether time or tokens
 is the binding cost; portfolios: the one complementary pair was one-way, so the ensemble was not
 run. In priority order; nothing starts without the maintainer's go, and each item says what it waits
@@ -16,7 +16,7 @@ on:
    `m5pro-d9p2-replication.md`: k1 against k3, 35 trials each, `gate_part_two=false` so no trial
    is lost to Part 1, arms alternating in blocks of five, read on its own at one-sided p < 0.05
    (about 87% power at the predicted 27% against 61%). About 16 GPU-hours, before AoC 2026.
-   *Waits on* #57 (`draft_index`) and the maintainer's go after a plumbing check.
+   *Running* since 2026-11-10 (plumbing check passed); *waits on* GPU time, then the write-up.
 2. **AoC 2026** (§4b), opening **2026-12-01**: the clean contamination test, and the only item
    with a deadline. *Waits on a maintainer decision:* submit automatically or by hand, and the
    rate limit. Then the submitter is wired into the solve loop (§5; it is tested, about half a

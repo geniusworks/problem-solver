@@ -5,14 +5,16 @@ The **live status snapshot** — where the project actually stands right now. Th
 `dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
 file current as work lands so it never goes stale.
 
-## Current status (2026-11-09)
+## Current status (2026-11-10)
 
-**Now:** no run in progress. The registered k1-vs-k3 power test on 2025 d9 p2 finished
+**Now: the registered replication of the d9 p2 test is running** (`m5pro-d9p2-replication.md`),
+launched 2026-11-10 and expected to finish around 20:00 PST; that file says how to check on it and
+how to resume it if it stopped. Do not launch it again. The registered k1-vs-k3 power test on 2025 d9 p2 finished
 2026-11-09 and was **inconclusive** (`m5pro-d9p2-power-aoc.md`): k1 5/15, k3 13/20 over trials
 that reached Part 2, one-sided Fisher p = 0.065 against the registered 0.05; the draws behaved as
 independent (27% per draft predicts 61% at k3, 65% measured); 11.9 GPU-hours. Each thesis arm has
-a verdict (`RESULTS.md`): arm 1 confirmed under the original prompts and not re-established under
-the corrected ones; arm 2 splits by cost type; arm 3's one complementary pair was one-way, so the
+a verdict (`RESULTS.md`): arm 1 confirmed under the original prompts and open under the corrected
+ones (the powered test was inconclusive); arm 2 splits by cost type; arm 3's one complementary pair was one-way, so the
 ensemble was not run. Ledger 69 verified, 0 wrong (2024 d2 p2 added 2026-11-09 by the sandbox
 plumbing check, 12/12 at k1, `1ac712678732`); tests 309 passing, and CI runs them, `mypy` and
 `dev/recompute_results.py --check` on every PR. Generated code now runs without `.env` secrets
@@ -24,8 +26,8 @@ verified attempt records the worked examples' verdict beside the oracle's
 (`examples_passed`/`examples_total`), so each run from now on also measures how far the results
 depend on an exact checker; the power test is the first data (on 2025 d9 p2 the example passed 59
 of the 104 Part 2 attempts the oracle rejected). What is next, in priority order, is `PLAN.md`,
-"Open": a registered replication of the d9 p2 test with Part 2 always reached
-(`m5pro-d9p2-replication.md`; 35 trials per arm, about 16 GPU-hours); AoC 2026 (needs the
+"Open": the running replication's write-up (`m5pro-d9p2-replication.md`; 35 trials per arm,
+about 16 GPU-hours); AoC 2026 (needs the
 submitter decision by about 2026-11-25); then the test of whether the Part 1 context informs or
 cues recall, designed for AoC 2026 (`part2-context-heldout-plan.md`). Nothing starts without the
 maintainer's go. The sections below are the dated record, newest

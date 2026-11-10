@@ -1,7 +1,16 @@
-# m5pro-64: k1 against k3 on 2025 d9 p2, replication with Part 2 always reached — registered, not yet run
+# m5pro-64: k1 against k3 on 2025 d9 p2, replication with Part 2 always reached — running
 
-**Status (2026-11-10): design, prediction and readings registered before launch.** Results will
+**Status (2026-11-10): running.** Design, prediction and readings were registered before launch
+(#58); the plumbing check passed; the 14 blocks were launched on 2026-11-10 from the `main` commit
+that records this status, detached (`nohup`), expected to finish around 20:00 PST. Results will
 replace this line and fill the section marked *pending*.
+
+**Checking on it, and resuming.** `pgrep -f m5pro-d9p2-rep` shows whether a block is running;
+the launcher logs to `dev/experiments/m5pro-d9p2-rep.log`. Each finished block leaves
+`dev/experiments/<timestamp>_m5pro-d9p2-rep-kK-bB_<fingerprint>.json` (fingerprints
+`80b37d599dd8` at k1, `96c4abf665d6` at k3). If the run stopped with nothing running, a block with
+a result file holding 5 trials is done; every other block is rerun whole, in the order below, with
+the maintainer's go. A partial result file from a stopped block is not used.
 
 ## Why a second test
 
@@ -36,8 +45,13 @@ its trials are not pooled with that run's, and its reading does not depend on th
 - **Machine:** `m5pro-64`, Ollama 0.40.11, packages from `requirements.lock`; each result file
   records its environment.
 - **Before launch:** `draft_index` recorded on every attempt (#57 merged), and a `--trials 3`
-  plumbing check of `gate_part_two=false` on 2024 d1 p2, a problem outside this test, confirming
-  that Part 2 runs without Part 1 and that `draft_index` and the example verdicts are filled.
+  plumbing check of `gate_part_two=false` on 2024 d1 p2, a problem outside this test. **Done
+  2026-11-10:** 3/3 at k1 (`m5pro-precheck-gate-false`, fingerprint `80b37d599dd8`, commit
+  `3612768`, Ollama 0.40.11, the same `qwen3.8:27b` digest as the first test); each trial made one
+  Part 2 attempt and none on Part 1, and every attempt recorded `draft_index` and the example
+  verdict.
+- **Drafts are saved** (`--include-replay`): each attempt's prompt, response and code go into the
+  result file. The flag changes what is recorded, not the configuration or its fingerprint.
 - **Expected time:** about 16 GPU-hours, from the first test's Part 2 times (about 490 s per k1
   trial and 1,150 s per k3 trial).
 
@@ -45,7 +59,7 @@ Each block, with `K` the draft count (1 or 3) and `B` the block number (1 to 7),
 above:
 
 ```
-venv/bin/python experiment.py --problems 2025:9.2 --trials 5 \
+venv/bin/python experiment.py --problems 2025:9.2 --trials 5 --include-replay \
   --config "name=m5pro-d9p2-rep-kK-bB,samples_per_model=K,models=qwen3.8:27b,temperature=0.7,enable_thinking=false,enable_fallback_models=false,gate_part_two=false"
 ```
 
@@ -86,6 +100,10 @@ Rates are over all 35 trials per arm, which here are all trials that reached Par
 - **Example verdicts:** how often a failed draft passed the worked example, and how often the
   example's verdict disagrees with the oracle's.
 - Time and tokens per solve in each arm.
+- **Timeouts:** the share of failed drafts that hit the 60 s execution limit (19 of the first
+  test's 75 first drafts, 25%), and, after the run, the saved timed-out drafts re-executed on the
+  full input with a 600 s limit: how many were correct but slow. The limit stays at 60 s for the
+  test itself; the re-execution says whether a longer one would have changed the draft rate.
 
 ## Result
 
