@@ -3,7 +3,7 @@
 What is open now, then the path beyond AoC. The sections after those are the record of how the
 roadmap got here.
 
-## Open (as of 2026-11-09)
+## Open (as of 2026-11-10)
 
 Each thesis arm has a verdict (`RESULTS.md`): sampling measured and replicated under the original
 harness, not re-established under the corrected one (the powered test on 2025 d9 p2 was
@@ -12,11 +12,16 @@ is the binding cost; portfolios: the one complementary pair was one-way, so the 
 run. In priority order; nothing starts without the maintainer's go, and each item says what it waits
 on:
 
-1. **AoC 2026** (§4b), opening **2026-12-01**: the clean contamination test, and the only item
+1. **A replication of the arm-1 test on 2025 d9 p2, with Part 2 always reached.** Registered in
+   `m5pro-d9p2-replication.md`: k1 against k3, 35 trials each, `gate_part_two=false` so no trial
+   is lost to Part 1, arms alternating in blocks of five, read on its own at one-sided p < 0.05
+   (about 87% power at the predicted 27% against 61%). About 16 GPU-hours, before AoC 2026.
+   *Waits on* #57 (`draft_index`) and the maintainer's go after a plumbing check.
+2. **AoC 2026** (§4b), opening **2026-12-01**: the clean contamination test, and the only item
    with a deadline. *Waits on a maintainer decision:* submit automatically or by hand, and the
    rate limit. Then the submitter is wired into the solve loop (§5; it is tested, about half a
    day of code). Decide by about 2026-11-25 to leave time.
-2. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered
+3. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered
    design in `part2-context-heldout-plan.md`: Part 2 cold against Part 2 with the Part 1 context,
    on the AoC 2026 Part 2s, about 4.6 GPU-hours over the event. *Waits on the AoC 2026 item*
    (its decision, and the accepted answers to score against); the harness option it needs,
@@ -76,8 +81,9 @@ worked example (`m5pro-d9p2-power-aoc.md`); the two cells named above have no ve
 The orchestration findings rest almost entirely on `qwen3.8:27b`. **If** the powered arm-1 test
 on 2025 d9 p2 showed a lift, repeat its design on one more model of a different family before the
 result is generalised, sized the same way (about 20 trials per arm). It was inconclusive
-(p = 0.065, `m5pro-d9p2-power-aoc.md`), so the trigger is not met and this stays parked. Either
-way it is GPU time the maintainer decides on.
+(p = 0.065, `m5pro-d9p2-power-aoc.md`), so the trigger is not met and this stays parked unless
+the registered replication (`m5pro-d9p2-replication.md`, "Open" item 1) re-establishes the arm.
+Either way it is GPU time the maintainer decides on.
 
 ---
 
