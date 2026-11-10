@@ -53,7 +53,7 @@ The project argued three reasons that coordinating several attempts should beat 
 
 | arm | claim | verdict |
 |---|---|---|
-| **1. pass@k** | the gap between "sometimes solves" and "solves" never closes at a model's own frontier | ⚠️ **measured and replicated under the original harness; not re-established under the corrected one; its powered test was inconclusive (p = 0.065)** |
+| **1. pass@k** | the gap between "sometimes solves" and "solves" never closes at a model's own frontier | ⚠️ **measured and replicated under the original harness; open under the corrected one, its powered test inconclusive (p = 0.065)** |
 | **2. economics** | many cheap draws + a verifier beat one expensive pass at equal cost | ⚖️ **splits by which cost you pay** |
 | **3. portfolios** | diverse models decorrelate error | ➖ **not supported where measured**: the one complementary pair was one-way, so choosing the better model gave the gain |
 
@@ -130,7 +130,7 @@ solve 49% of trials, and three drafts solved 50% (`m5pro-d19p2-power.md`). The d
 independent, so sampling's gain follows from the per-draft rate.
 *(`passk-ab-d13-d15.md`, `topology-parallel3.md`, `passk-replication-2025.md`.)*
 
-**Under the corrected harness: not re-established; the powered test was inconclusive.** Both bands above were Part 2s posed
+**Under the corrected harness: open; the powered test was inconclusive.** Both bands above were Part 2s posed
 without Part 1, and their repair prompts carried mispaired example tests (see the defect table).
 Re-run with both fixed, the reference's "sometimes" cells gave 9/19 at one draft and 11/21 at
 three, no measurable lift (`m5pro-band-k1-vs-k3-aoc.md`). At the draft level those cells split in
