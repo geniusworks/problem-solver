@@ -1,11 +1,12 @@
-# m5pro-64: k1 against k3 on 2025 d9 p2, replication with Part 2 always reached — running
+# m5pro-64: k1 against k3 on 2025 d9 p2, replication with Part 2 always reached — ready, launch held
 
-**Status (2026-11-10): running.** Design, prediction and readings were registered before launch
-(#58); the plumbing check passed; the 14 blocks were launched on 2026-11-10 from the `main` commit
-that records this status, detached (`nohup`), expected to finish around 20:00 PST. Results will
-replace this line and fill the section marked *pending*.
+**Status (2026-11-10): ready, not started; the maintainer is holding the launch to a time still to
+be set.** Design, prediction and readings were registered (#58) and the plumbing check passed.
+The launch is the 14 blocks below, detached (`nohup`), about 16 hours; it needs the maintainer's
+go, and the launch updates this line. Results will replace this line and fill the section marked
+*pending*.
 
-**Checking on it, and resuming.** `pgrep -f m5pro-d9p2-rep` shows whether a block is running;
+**Checking on it, and resuming, once launched.** `pgrep -f m5pro-d9p2-rep` shows whether a block is running;
 the launcher logs to `dev/experiments/m5pro-d9p2-rep.log`. Each finished block leaves
 `dev/experiments/<timestamp>_m5pro-d9p2-rep-kK-bB_<fingerprint>.json` (fingerprints
 `80b37d599dd8` at k1, `96c4abf665d6` at k3). If the run stopped with nothing running, a block with
