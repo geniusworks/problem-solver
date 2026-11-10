@@ -1,7 +1,7 @@
 # Development-only tooling. Install alongside requirements.txt:
 #   pip install -r requirements.txt -r requirements-dev.txt
-pytest==8.3.4
-pytest-asyncio==0.21.1
+pytest==9.2.0
+pytest-asyncio==1.4.1.post1
 pytest-cov==6.2.1
 pytest-xdist==3.8.0  # For parallel test execution
 
