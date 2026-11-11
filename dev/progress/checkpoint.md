@@ -8,7 +8,7 @@ file current as work lands so it never goes stale.
 ## Current status (2026-11-10)
 
 **Now: the registered replication of the d9 p2 test is running** (`m5pro-d9p2-replication.md`),
-launched 22:42 PST on 2026-11-10, expected to finish around 15:45 PST on 2026-11-11; that file says
+launched 22:42 PST on 2026-11-10; that file says
 how to check on it and how to resume it if it stopped. Do not launch it again. The registered k1-vs-k3 power test on 2025 d9 p2 finished
 2026-11-09 and was **inconclusive** (`m5pro-d9p2-power-aoc.md`): k1 5/15, k3 13/20 over trials
 that reached Part 2, one-sided Fisher p = 0.065 against the registered 0.05; the draws behaved as
