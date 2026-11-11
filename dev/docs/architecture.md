@@ -80,8 +80,10 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
      many worked examples it passed (`examples_passed`/`examples_total`), beside the oracle's
      verdict.
    - Generated code always runs in a child process started by `shared/sandbox.py`: an
-     environment without `.env` secrets, and CPU, file-size and process limits (memory too on
-     Linux). It keeps network access and the user's file permissions.
+     environment without `.env` secrets, CPU, file-size and process limits, and a memory cap
+     (8 GB per process, `config/resources.yaml`). The cap is an address-space limit on Linux;
+     macOS ignores that, so the runners also poll the child's resident memory and kill it above
+     the cap. It keeps network access and the user's file permissions.
    - A correctness **oracle**: candidates are judged against cached accepted AoC
      answers (`shared/ground_truth.py`) and worked examples, with an overfit gate
      (`shared/overfit_detection.py`). Claimed vs. verified is tracked separately;
