@@ -105,6 +105,17 @@ Rates are over all 35 trials per arm, which here are all trials that reached Par
   full input with a 600 s limit: how many were correct but slow. The limit stays at 60 s for the
   test itself; the re-execution says whether a longer one would have changed the draft rate.
 
+**Added after launch (2026-11-11), not registered:** an outside review prompted two additions to
+the write-up. Neither changes the run or the reading.
+- **Selection without the oracle.** In each k3 trial, a selector that sees only the worked example
+  takes a draft that passes it and produces an answer (a draft that times out gives none). Against
+  the oracle: how often it takes a wrong draft, how often it passes over a correct one, and the
+  solve rate it reaches beside the oracle's. Computed from the recorded example verdicts and
+  `draft_index`; no GPU time (`PLAN.md`, "Beyond AoC", step 1).
+- **Scope.** The headline is stated for this problem. Thirty-five trials measure the rates on
+  2025 d9 p2, not across problems; wherever README or RESULTS state arm 1 generally, they name the
+  problems it rests on.
+
 ## Result
 
 *pending*
