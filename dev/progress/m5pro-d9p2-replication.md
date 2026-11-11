@@ -2,7 +2,7 @@
 
 **Status (2026-11-10): running.** Design, prediction and readings were registered (#58) and the
 plumbing check passed. The 14 blocks below were launched at 22:42 PST on 2026-11-10 from commit
-`e73722e` (clean), detached (`nohup`), expected to finish around 14:45 PST on 2026-11-11.
+`e73722e` (clean), detached (`nohup`), expected to finish around 15:45 PST on 2026-11-11.
 Results will replace this line and fill the section marked *pending*.
 
 **Checking on it, and resuming.** `pgrep -f m5pro-d9p2-rep` shows whether a block is running;
