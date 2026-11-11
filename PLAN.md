@@ -16,8 +16,7 @@ on:
    `m5pro-d9p2-replication.md`: k1 against k3, 35 trials each, `gate_part_two=false` so no trial
    is lost to Part 1, arms alternating in blocks of five, read on its own at one-sided p < 0.05
    (about 87% power at the predicted 27% against 61%). About 16 GPU-hours, before AoC 2026.
-   Ready, plumbing check passed (2026-11-10); *waits on* the maintainer's go, held to a time still
-   to be set.
+   *Running* since 22:42 PST on 2026-11-10; *waits on* GPU time (about 16 hours), then the write-up.
 2. **AoC 2026** (§4b), opening **2026-12-01**: the clean contamination test, and the only item
    with a deadline. *Waits on a maintainer decision:* submit automatically or by hand, and the
    rate limit. Then the submitter is wired into the solve loop (§5; it is tested, about half a
