@@ -7,9 +7,9 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-11-10)
 
-**Now: no run in progress.** The registered replication of the d9 p2 test is ready, plumbing check
-passed, and the maintainer is holding its launch to a time still to be set
-(`m5pro-d9p2-replication.md`, which also says how to check on and resume it once launched). The registered k1-vs-k3 power test on 2025 d9 p2 finished
+**Now: the registered replication of the d9 p2 test is running** (`m5pro-d9p2-replication.md`),
+launched 22:42 PST on 2026-11-10, expected to finish around 14:45 PST on 2026-11-11; that file says
+how to check on it and how to resume it if it stopped. Do not launch it again. The registered k1-vs-k3 power test on 2025 d9 p2 finished
 2026-11-09 and was **inconclusive** (`m5pro-d9p2-power-aoc.md`): k1 5/15, k3 13/20 over trials
 that reached Part 2, one-sided Fisher p = 0.065 against the registered 0.05; the draws behaved as
 independent (27% per draft predicts 61% at k3, 65% measured); 11.9 GPU-hours. Each thesis arm has
@@ -26,7 +26,7 @@ verified attempt records the worked examples' verdict beside the oracle's
 (`examples_passed`/`examples_total`), so each run from now on also measures how far the results
 depend on an exact checker; the power test is the first data (on 2025 d9 p2 the example passed 59
 of the 104 Part 2 attempts the oracle rejected). What is next, in priority order, is `PLAN.md`,
-"Open": the replication of the d9 p2 test, ready and held for the maintainer's go (`m5pro-d9p2-replication.md`; 35 trials per arm,
+"Open": the running replication's write-up (`m5pro-d9p2-replication.md`; 35 trials per arm,
 about 16 GPU-hours); AoC 2026 (needs the
 submitter decision by about 2026-11-25); then the test of whether the Part 1 context informs or
 cues recall, designed for AoC 2026 (`part2-context-heldout-plan.md`). Nothing starts without the

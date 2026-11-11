@@ -241,7 +241,7 @@ mostly all-or-nothing, and the powered test on the one mid-rate problem came out
 with an entry criterion, a selection-bias guard and ten-trial deciders; the complementarity ran one
 way.
 
-**What is open:** a registered replication of the sampling test, ready to run, built so no trial is lost to
+**What is open:** a registered replication of the sampling test, now running, built so no trial is lost to
 Part 1; AoC 2026 in December, the first problems the models cannot have seen
 ([Status](#status)), and with it whether the Part 1 context informs or cues recall.
 
@@ -549,7 +549,7 @@ inconclusive); economics
 splits by whether time or tokens is the binding cost; portfolios: the one complementary pair was
 one-way, so the ensemble was not run. Open, in priority order (`PLAN.md`, "Open"):
 - **A decisive sampling test under the corrected harness:** the first, on 2025 d9 p2, was
-  inconclusive; a replication with every trial reaching Part 2 and 35 trials per arm is ready to run
+  inconclusive; a replication with every trial reaching Part 2 and 35 trials per arm is running
   (`dev/progress/m5pro-d9p2-replication.md`).
 - **A clean contamination test:** AoC 2026, in December, is the first set of problems published
   after the models' training cutoff. It needs the answer submitter wired first: without it an
