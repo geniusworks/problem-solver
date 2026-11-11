@@ -20,7 +20,10 @@ on:
 2. **AoC 2026** (§4b), opening **2026-12-01**: the clean contamination test, and the only item
    with a deadline. *Waits on a maintainer decision:* submit automatically or by hand, and the
    rate limit. Then the submitter is wired into the solve loop (§5; it is tested, about half a
-   day of code). Decide by about 2026-11-25 to leave time.
+   day of code). Decide by about 2026-11-25 to leave time. **Frozen before 2026-12-01**, each
+   item recorded in an AoC 2026 registration written before the event: the models by digest;
+   prompts, configuration and fingerprints; each model's release date and stated training cutoff;
+   no setting tuned on a 2026 problem; results published per problem as well as in aggregate.
 3. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered
    design in `part2-context-heldout-plan.md`: Part 2 cold against Part 2 with the Part 1 context,
    on the AoC 2026 Part 2s, about 4.6 GPU-hours over the event. *Waits on the AoC 2026 item*
@@ -53,7 +56,9 @@ of the reference model's 262 solves).
    example agreed with the oracle on all 90 attempts; on Part 2 it passed 59 of the 104 the oracle
    rejected (37 then timed out, 22 answered wrong) and rejected 1 of 22 correct ones. What
    remains: the same on more problems, and what sampling and selection achieve with the examples
-   as the only check. This stands in for the partial checkers of other domains (unit tests, static analysis).
+   as the only check. The second is computed, without GPU time, from the d9 p2 replication's
+   k3 trials (`m5pro-d9p2-replication.md`): a selector that sees only the example, against the
+   oracle, with its false acceptances, false rejections and solve rate. This stands in for the partial checkers of other domains (unit tests, static analysis).
    Small, no new GPU work beyond that set.
 2. **Where is AoC hard-wired?** Audit the seams (verification is keyed on year/day/part,
    `shared/verification.py`; fetch, parsing and prompts are AoC-shaped) and define a minimal
