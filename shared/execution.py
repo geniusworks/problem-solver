@@ -3,8 +3,10 @@
 import ast
 import logging
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import builtins as _bi
 from dataclasses import dataclass
@@ -300,32 +302,38 @@ class SolutionExecutor:
             max_memory = RESOURCES_CONFIG.get("execution", {}).get("max_memory_mb", 512)
             max_processes = RESOURCES_CONFIG.get("execution", {}).get("max_processes", 1)
 
-            # Resolve input path once so we can run in the same directory as the input file
-            input_path_obj = Path(input_path).resolve()
+            # Run in a fresh, empty directory holding only a copy of the input. The
+            # input's own directory (years/<year>/day<NN>/) also holds the accepted
+            # answers and the ledger's verified solutions, which a candidate opening
+            # a relative path there could read; none of the saved drafts ever did, but
+            # the result must not depend on that.
+            with tempfile.TemporaryDirectory(prefix="problem-solver-run-") as workdir:
+                run_input = Path(workdir) / "input.txt"
+                shutil.copyfile(Path(input_path).resolve(), run_input)
 
-            # Run the module file directly and pass paths as argv.
-            #
-            # This previously interpolated module_path and input_path into a Python
-            # source string ("exec(open('...').read())"), so any path containing a
-            # quote broke out of the literal into executable code. It also passed
-            # limit=, which is asyncio's StreamReader buffer size, not a memory cap:
-            # generated code ran with no resource limits at all.
-            process = await asyncio.create_subprocess_exec(
-                sys.executable,
-                str(Path(module_path).resolve()),
-                str(input_path_obj),
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=str(input_path_obj.parent),  # Run in directory containing input.txt
-                env=child_env(),
-                preexec_fn=resource_limiter(
-                    max_memory, max_processes, cpu_seconds=max(timeout, 1)
-                ),
-            )
-            
-            stopped, stdout, stderr = await communicate_capped(
-                process, timeout, max_memory * 1024 * 1024
-            )
+                # Run the module file directly and pass paths as argv.
+                #
+                # This previously interpolated module_path and input_path into a Python
+                # source string ("exec(open('...').read())"), so any path containing a
+                # quote broke out of the literal into executable code. It also passed
+                # limit=, which is asyncio's StreamReader buffer size, not a memory cap:
+                # generated code ran with no resource limits at all.
+                process = await asyncio.create_subprocess_exec(
+                    sys.executable,
+                    str(Path(module_path).resolve()),
+                    str(run_input),
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    cwd=workdir,
+                    env=child_env(),
+                    preexec_fn=resource_limiter(
+                        max_memory, max_processes, cpu_seconds=max(timeout, 1)
+                    ),
+                )
+
+                stopped, stdout, stderr = await communicate_capped(
+                    process, timeout, max_memory * 1024 * 1024
+                )
             if stopped == OVER_MEMORY:
                 return ExecutionResult("", error=_over_memory_error(max_memory * 1024 * 1024))
             if stopped:
