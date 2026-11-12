@@ -1,7 +1,21 @@
-# m5pro-64: speed-directed repair on 2025 d9 p2 — registered, not yet run
+# m5pro-64: speed-directed repair on 2025 d9 p2 — running
 
-**Status (2026-11-11): design, prediction and readings registered before launch.** Results will
-replace this line and fill the section marked *pending*.
+**Status (2026-11-11): running.** Design, prediction and readings were registered before launch
+(#72). The 14 blocks were launched at 21:32 PST on 2026-11-11 from commit `e613910` (clean),
+detached. Results will replace this line and fill the section marked *pending*.
+
+A first launch at 21:28 was stopped within a minute, before any result was written: its "off"
+block reported fingerprint `619ec3965b58` instead of `80b37d599dd8`, because the `--config`
+parser read `targeted_feedback=false` as the truthy string "false". Fixed in #76 before the
+relaunch, which reports the registered fingerprints.
+
+**Checking on it, and resuming.** `pgrep -f m5pro-d9p2-speed` shows whether a block is running;
+the launcher (`dev/experiments/m5pro-d9p2-speed.sh`, local) logs to
+`dev/experiments/m5pro-d9p2-speed.log`. Each finished block leaves
+`dev/experiments/<timestamp>_m5pro-d9p2-speed-A-bB_<fingerprint>.json`. If the run stopped with
+nothing running, a block with a result file holding 5 trials is done; every other block is rerun
+whole, in the order below, with the maintainer's go (rerunning the launcher does this). A partial
+result file from a stopped block is not used.
 
 ## Why this test
 

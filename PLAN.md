@@ -26,7 +26,7 @@ on:
 2. **Speed-directed repair on 2025 d9 p2.** Registered in `m5pro-d9p2-speed-repair.md`:
    `targeted_feedback` off against on, one draft, 35 trials each in alternating blocks. Its result
    decides whether the guidance is switched on for AoC 2026, so it runs before the freeze. About
-   8–9 GPU-hours; powered for a large effect only. *Waits on* the maintainer's go.
+   8–9 GPU-hours; powered for a large effect only. *Running* since 21:32 PST on 2026-11-11.
 3. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered
    design in `part2-context-heldout-plan.md`: Part 2 cold against Part 2 with the Part 1 context,
    on the AoC 2026 Part 2s, about 4.6 GPU-hours over the event. *Waits on the AoC 2026 item*
@@ -55,7 +55,7 @@ is the testbed. Every result so far rests on an exact checker, the accepted answ
 domains lack. Generalising is therefore sequenced as measurements, each gating the next, not as a
 framework built ahead of evidence: of the components a general system might make pluggable, some
 have measured value here and some do not (mixing models lost to choosing one; repair produced 13
-of the reference model's 300 solves).
+of the reference model's 306 solves).
 
 1. **How much does the method depend on an exact checker?** Record, per attempt, the verdict of the
    worked examples alongside the oracle's. **Wired 2026-11-09:** every verified attempt records
