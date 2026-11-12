@@ -133,3 +133,42 @@ class TestResourceLimiter:
 
         assert result.error is None
         assert result.output.strip() == "6"
+
+
+class TestRunsAwayFromTheAnswers:
+    """A candidate runs in an empty directory with only a copy of its input.
+
+    The input's own directory holds the accepted answers and the ledger's verified solutions;
+    a candidate run there could read them by relative path.
+    """
+
+    async def test_a_candidate_cannot_see_the_files_beside_its_input(self, executor, tmp_path):
+        (tmp_path / "input.txt").write_text("1 2 3\n")
+        (tmp_path / "answers.json").write_text('{"1": "6"}')
+        module = tmp_path / "peek.py"
+        module.write_text(
+            "import os\n"
+            "print(sorted(os.listdir('.')))\n"
+            "print(os.path.exists('answers.json'))\n"
+        )
+
+        result = await executor.execute_solution(module, str(tmp_path / "input.txt"))
+
+        assert result.error is None
+        listing, can_see_answers = result.output.strip().splitlines()
+        assert listing == "['input.txt']"
+        assert can_see_answers == "False"
+
+    async def test_the_input_is_still_readable_both_ways(self, executor, tmp_path):
+        (tmp_path / "input.txt").write_text("1 2 3\n")
+        module = tmp_path / "sol.py"
+        module.write_text(
+            "import sys\n"
+            "a = open('input.txt').read()\n"
+            "b = open(sys.argv[1]).read()\n"
+            "print(sum(int(x) for x in a.split()) if a == b else 'differ')\n"
+        )
+
+        result = await executor.execute_solution(module, str(tmp_path / "input.txt"))
+
+        assert (result.error, result.output.strip()) == (None, "6")
