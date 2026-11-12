@@ -250,9 +250,11 @@ def replication_timeouts() -> str:
     timeouts = [a for a in rejected if a["error_kind"] == "timeout"]
     passed = [a for a in timeouts if a["examples_total"] not in ("", "0")
               and a["examples_passed"] == a["examples_total"]]
+    passed_any = [a for a in rejected if a["examples_total"] not in ("", "0")
+                  and a["examples_passed"] == a["examples_total"]]
     drafts_out = sum(a["error_kind"] == "timeout" for a in drafts)
     return (f"{drafts_out} of {len(drafts)} drafts; {len(timeouts)} of {len(rejected)} rejected; "
-            f"{len(passed)} passed the example")
+            f"{len(passed)} passed the example; example passed {len(passed_any)} of {len(rejected)}")
 
 
 def independence_checks() -> str:
@@ -435,8 +437,9 @@ CLAIMS = [
           {"README.md": ["solved 12 of 35 three-draft trials and\n  took a wrong answer in 15, where the oracle solved 14"],
            "RESULTS.md": ["solved 12 of 35 three-draft trials and took a wrong answer in 15"]}),
     Claim("2025 d9 p2 replication timeouts", replication_timeouts,
-          "45 of 140 drafts; 138 of 249 rejected; 94 passed the example",
-          {"RESULTS.md": ["138 of 249 on 2025 d9 p2", "and 94 of the 138"]}),
+          "45 of 140 drafts; 138 of 249 rejected; 94 passed the example; example passed 137 of 249",
+          {"RESULTS.md": ["138 of 249 on 2025 d9 p2", "and 94 of the 138"],
+           "README.md": ["the example passed 137 of the 249 attempts the\n  oracle rejected"]}),
     Claim("independence check, three registered tests", independence_checks,
           "49% vs 10/20; 61% vs 13/20; 49% vs 14/35; pooled 52% vs 49% of 75",
           {"RESULTS.md": ["| 16/80 (20%) | 49% | 50% (10/20) |", "| 20/75 (27%) | 61% | 65% (13/20) |",

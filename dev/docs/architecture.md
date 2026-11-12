@@ -48,7 +48,7 @@ components.
      tried; every attempt records its *verified* outcome to the learning DB.
 
 3. **Solution Execution** (`shared/execution.py`)
-   - Safe code execution environment
+   - Resource-limited execution environment (no `.env` secrets; not a security boundary)
    - Resource monitoring and limits
    - Performance metrics collection
    - Execution-based candidate selection and iterative repair loop after consensus using
