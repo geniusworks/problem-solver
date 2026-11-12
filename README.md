@@ -579,7 +579,11 @@ one-way, so the ensemble was not run. Open, in priority order (`PLAN.md`, "Open"
    automatically or by hand, and at what rate; then the submitter is wired in (without it an
    unseen year cannot reach Part 2), and the models, prompts and configuration are frozen before
    2026-12-01.
-2. **Does the Part 1 context inform, or cue recall?** The headline's caveat, tested on AoC 2026,
+2. **Speed-directed repair.** On the hardest problems drafts pass the example and then run out of
+   time, and repair rescues none of them. A registered test switches on guidance to find a faster
+   algorithm (`dev/progress/m5pro-d9p2-speed-repair.md`), before the AoC 2026 freeze so its
+   result can decide the setting there. *Waits on* the maintainer's go.
+3. **Does the Part 1 context inform, or cue recall?** The headline's caveat, tested on AoC 2026,
    where nothing can be recalled: Part 2 with and without the Part 1 context
    (`dev/progress/part2-context-heldout-plan.md`). *Waits on* item 1.
 
