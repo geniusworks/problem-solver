@@ -123,8 +123,8 @@ it. In order of how much they changed the project:
    → [Arm 1](RESULTS.md#arm-1--sampling-at-the-frontier)
 3. **A second model helped by being chosen, not mixed.** → [Arm 3](RESULTS.md#arm-3--choose-the-better-model-a-mix-had-nothing-to-add)
 4. **Cheap draws win on time and lose on tokens** (one trial). → [Arm 2](RESULTS.md#arm-2--cheap-draws-win-on-time-and-lose-on-tokens)
-5. **Repair rarely rescued the reference model, and the hardest failures are speed**, which
-   neither more time nor a repair told to find a faster algorithm fixed. → [Findings the thesis did not predict](RESULTS.md#findings-the-thesis-did-not-predict)
+5. **Repair rarely rescued the reference model, and the hardest failures are speed**, which, on
+   the problem tested, neither more time nor a repair told to find a faster algorithm fixed. → [Findings the thesis did not predict](RESULTS.md#findings-the-thesis-did-not-predict)
 6. **Measurement is most of the work:** twelve instrument defects, each of which moved results.
    → [What the measurements cost](RESULTS.md#what-the-measurements-cost-in-credibility-and-why-that-matters)
 
