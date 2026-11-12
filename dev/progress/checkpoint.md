@@ -844,7 +844,7 @@ consolidated in `dev/benchmarks/cross-machine-results.md`.** Where that leaves t
    swamps 16 GB (`qwen2.5-coder:32b`, `Qwen3-Coder-30B-A3B`). Run those at samples=3 on d4–7 and add
    the rows to `dev/benchmarks/cross-machine-results.md` under a new `m2max-32` machine id. Two
    decisive questions, not one: (a) does a bigger model crack **d5 p2 / d6 p2**, which no 16 GB model
-   has? and (b) the project's **central open thesis** (see README "Does orchestrated voting scale?"):
+   has? and (b) the project's **central open thesis** (see `RESULTS.md`, "The thesis, and what happened to each arm"):
    does sampling + voting still add correctness at a *strong* model's own frontier — i.e. **pass@k >
    pass@1** on problems it solves only sometimes? That means running the strong model at samples=1 vs
    samples=N on problems at *its* edge, not just counting total solves. (A remote/cloud `OLLAMA_HOST`
