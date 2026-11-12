@@ -23,7 +23,7 @@ from shared.ledger import record_solution
 from shared.strategy_recommender import StrategyRecommender
 from learning.database import LearningDatabase
 from shared.solving.candidates import CandidateMixin, CandidateVerdict
-from shared.solving.feedback import _is_timeout_error  # noqa: F401 -- tests import it from here
+from shared.solving.feedback import _is_timeout_error  # noqa: F401  # pylint: disable=unused-import  (tests import it from here)
 from shared.experiment import AttemptRecord, Outcome, SolverConfig
 
 logger = logging.getLogger(__name__)
