@@ -300,8 +300,10 @@ The testbed is AoC, but the *shape* of problem the pipeline handles well general
 where a candidate can be **checked automatically and cheaply**:
 
 - **Well-suited:** self-contained algorithmic problems with a deterministic answer and a fast check —
-  parsing, simulation, small graph/grid work, arithmetic-heavy puzzles. The oracle (or example cases)
-  gives an unambiguous pass/fail, so self-consistency and the repair loop have a signal to climb.
+  parsing, simulation, small graph/grid work, arithmetic-heavy puzzles. The oracle gives an exact
+  pass/fail, so self-consistency and the repair loop have a signal to climb. Worked examples give a
+  deterministic but incomplete one: on 2025 d9 p2 the example passed 137 of the 249 attempts the
+  oracle rejected (`dev/progress/m5pro-d9p2-replication.md`).
 - **Less-suited:** problems whose answer is subjective or expensive to verify (no oracle → the whole
   measured-not-asserted premise weakens), and problems where the *idea* is easy but the naive
   implementation is too slow for the real input — the hard AoC Part 2s. There the limit is algorithm
