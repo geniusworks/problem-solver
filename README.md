@@ -366,7 +366,7 @@ one-way, so the ensemble was not run. Open, in priority order (`PLAN.md`, "Open"
 2. **Speed-directed repair.** On the hardest problems drafts pass the example and then run out of
    time, and repair rescues none of them. A registered test switches on guidance to find a faster
    algorithm (`dev/progress/m5pro-d9p2-speed-repair.md`), before the AoC 2026 freeze so its
-   result can decide the setting there. *Waits on* the maintainer's go.
+   result can decide the setting there. *Running* since 2026-11-11.
 3. **Does the Part 1 context inform, or cue recall?** The headline's caveat, tested on AoC 2026,
    where nothing can be recalled: Part 2 with and without the Part 1 context
    (`dev/progress/part2-context-heldout-plan.md`). *Waits on* item 1.
