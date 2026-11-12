@@ -457,7 +457,11 @@ in the verified ledger, which it could only be by solving.
 The rule adopted: **a tally maintained by addition in prose is not a measurement.** Recompute from
 the artifacts.
 
-Two further instrument gaps, found in November 2026, changed no reported solve rate. Each attempt
+Three further instrument gaps, found in November 2026, changed no reported solve rate. The
+`--config` parser read `targeted_feedback=false` as the string "false", which is truthy, so the
+flag could not be switched off from the command line; the one recorded run that set it asked for
+it on (`targeted-feedback-negative.md`), and it was caught by a fingerprint mismatch before the
+speed-repair test produced any data. Each attempt
 record's draft number had held the trial number instead, so drafts within a trial could not be
 told apart; it is recorded correctly from 2026-11-10 (`draft_index`). And generated code had no
 memory cap on macOS: a runaway draft could slow the machine for up to its 60 s limit, which can

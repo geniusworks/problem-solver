@@ -11,6 +11,10 @@ appears in **49 of 70** attempt records. This is a real null, not an inert flag.
 - **Baseline:** the existing k3 arms (behaviourally `targeted_feedback=False`).
 - **Cost:** 32,555 s (9h). **0 wrong / 0 unverified / 0 overfit.**
 - **Run:** `dev/experiments/20260821T223817Z_targetedfb-k3_81a0271ba1a6.json` (gitignored).
+  *(2026-11-11: the `--config` parser then read booleans it did not list as strings, and this run
+  recorded `targeted_feedback` as `"true"`. A non-empty string is truthy, so the guidance ran as
+  intended and the result stands; the fingerprint `81a0271ba1a6` was computed over the string,
+  so the same command now hashes differently.)*
 
 ## Result
 

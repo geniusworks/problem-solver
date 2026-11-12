@@ -15,6 +15,8 @@ Examples:
 """
 
 import argparse
+import dataclasses
+import typing
 import asyncio
 import logging
 import sys
@@ -46,18 +48,21 @@ SYMBOL = {
     Outcome.NOT_REACHED: "skip ",
 }
 
-# Fields that are ints/floats/bools rather than strings, for --config parsing.
-_INT_FIELDS = {
-    "num_ctx",
-    "max_primary_models", "max_repair_iterations",
-    "min_consensus_models", "execution_timeout",
-    "samples_per_model",
-}
-_FLOAT_FIELDS = {"consensus_threshold", "temperature"}
-_BOOL_FIELDS = {
-    "enable_fallback_models", "enable_collaborative_improvement",
-    "require_oracle", "enable_thinking", "gate_part_two",
-}
+def _fields_of_type(*types: Any) -> frozenset:
+    """SolverConfig fields declared with one of `types` (or Optional of one), for --config parsing.
+
+    Read from the dataclass so a new field is parsed by its declared type. A hand-kept list
+    once missed `targeted_feedback`, so `targeted_feedback=false` became the string "false",
+    which is truthy: the guidance was on whatever the flag said."""
+    hints = typing.get_type_hints(SolverConfig)
+    wanted = set(types) | {Optional[t] for t in types}
+    return frozenset(f.name for f in dataclasses.fields(SolverConfig) if hints[f.name] in wanted)
+
+
+_INT_FIELDS = _fields_of_type(int)
+_FLOAT_FIELDS = _fields_of_type(float)
+_BOOL_FIELDS = _fields_of_type(bool)
+_TRUE, _FALSE = {"1", "true", "yes", "on"}, {"0", "false", "no", "off"}
 
 
 def parse_config(spec: str) -> SolverConfig:
@@ -78,7 +83,9 @@ def parse_config(spec: str) -> SolverConfig:
         elif key in _FLOAT_FIELDS:
             overrides[key] = float(value)
         elif key in _BOOL_FIELDS:
-            overrides[key] = value.lower() in {"1", "true", "yes", "on"}
+            if value.lower() not in _TRUE | _FALSE:
+                raise ValueError(f"{key}={value!r} is not a boolean; use true or false")
+            overrides[key] = value.lower() in _TRUE
         else:
             overrides[key] = value
 
