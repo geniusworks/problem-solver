@@ -27,7 +27,7 @@ can be A/B'd for a real delta over repeat trials.
 - **A second model helped by being chosen, not mixed.** One of six candidate models solved a
   problem 10 of 10 times that the reference solved 1 of 10, and no problem was found where the
   reference's lead held at ten trials, so a mix had nothing to add on the problems measured and
-  was not run. Repair also depends on the model: 13 of the reference's 294 solves came
+  was not run. Repair also depends on the model: 13 of the reference's 300 solves came
   from repair, against 14 of 131 for that candidate.
 - **Cheap draws win on time and lose on tokens.** A fast weak model taking four times the draws
   costs 0.64× the wall-clock per solution and at least 3.09× the tokens, and solved 7 of 8
@@ -39,7 +39,7 @@ can be A/B'd for a real delta over repeat trials.
   matches the accepted answer, so these are the rates of a perfect verifier. Choosing by the worked
   example alone, on 2025 d9 p2, solved 12 of 35 three-draft trials and took a wrong answer in 15.
 
-**Corpus (2026-11-11):** 107 recorded experiment runs · 3,642 candidate attempts · ~225 GPU-hours ·
+**Corpus (2026-11-11):** 108 recorded experiment runs · 3,648 candidate attempts · ~225 GPU-hours ·
 45.7M tokens (tables in `dev/results/`; runs that left only a log are not counted; the
 token total includes draft counts copied onto repair records before 2026-10-12, see the defect
 table) · **69 oracle-verified solutions across two AoC years, 0 wrong in the ledger.**
@@ -250,7 +250,7 @@ With true example feedback and too-high/too-low hints, the reference's repairs r
 band cells (`m5pro-band-k1-vs-k3-aoc.md`), 2 of 12 failed first drafts on 2025 d9 p2
 (`m5pro-d9p2-power-aoc.md`) and 4 of 26 in that test's replication (`m5pro-d9p2-replication.md`);
 across all its runs under the corrected harness, 13 of
-its 294 solved cells were solved by repair. `muse-glimmer:30b`, in the same harness, solved 14 of
+its 300 solved cells were solved by repair. `muse-glimmer:30b`, in the same harness, solved 14 of
 its 131 by repair, among them 3 of its 6 solves of 2024 d20 p2 (`arm3-portfolio-test.md`).
 
 Counted per repair attempt rather than per solve, so that a model with more failed drafts does not
@@ -456,7 +456,7 @@ was measured with local models of about 30B:
    repair already lifted the single draft there. Measure the per-draft rate first, and compare
    against one draft with repair, not one draft alone.
 2. **Don't count on repair to rescue hard problems.** Feedback with true example results and
-   too-high/too-low hints rarely rescued the reference (13 of its 294 solves came from repair);
+   too-high/too-low hints rarely rescued the reference (13 of its 300 solves came from repair);
    another model's repairs did better (14 of 131). A fresh draft or a different
    model is the more reliable second try.
 3. **Check whether failures are timeouts.** Many hard-cell failures are timeouts on the full input,

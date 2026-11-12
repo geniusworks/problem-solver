@@ -48,7 +48,7 @@ is the testbed. Every result so far rests on an exact checker, the accepted answ
 domains lack. Generalising is therefore sequenced as measurements, each gating the next, not as a
 framework built ahead of evidence: of the components a general system might make pluggable, some
 have measured value here and some do not (mixing models lost to choosing one; repair produced 13
-of the reference model's 294 solves).
+of the reference model's 300 solves).
 
 1. **How much does the method depend on an exact checker?** Record, per attempt, the verdict of the
    worked examples alongside the oracle's. **Wired 2026-11-09:** every verified attempt records
