@@ -172,3 +172,43 @@ class TestRunsAwayFromTheAnswers:
         result = await executor.execute_solution(module, str(tmp_path / "input.txt"))
 
         assert (result.error, result.output.strip()) == (None, "6")
+
+
+class TestTheOracleRunsAwayFromTheAnswers:
+    """The oracle's own runner (the ledger gate and the experiment runner's final score) gets the
+    same empty directory as the solve loop. It ran in the problem directory until 2026-11-12,
+    where a program could read the accepted answer and pass both the oracle and the overfit gate,
+    which looks only for the answer as a literal in the source."""
+
+    def test_a_program_that_reads_the_answer_file_is_not_accepted(self, tmp_path, monkeypatch):
+        import json
+
+        from shared import config
+        from shared.verification import Verdict, verify_solution_code
+
+        monkeypatch.setattr(config, "BASE_DIR", tmp_path)
+        problem_dir = tmp_path / "years" / "2099" / "day01"
+        problem_dir.mkdir(parents=True)
+        (problem_dir / config.INPUT_FILE).write_text("1 2 3\n")
+        (problem_dir / config.ANSWERS_FILE).write_text(json.dumps({"1": "424242"}))
+        reads_answer = "import json\nprint(json.load(open('answers.json'))['1'])\n"
+
+        result = verify_solution_code(reads_answer, 2099, 1, 1)
+
+        assert result.verdict is not Verdict.CORRECT
+        assert result.actual != "424242"
+
+    def test_a_program_that_reads_input_txt_still_passes(self, tmp_path, monkeypatch):
+        import json
+
+        from shared import config
+        from shared.verification import Verdict, verify_solution_code
+
+        monkeypatch.setattr(config, "BASE_DIR", tmp_path)
+        problem_dir = tmp_path / "years" / "2099" / "day01"
+        problem_dir.mkdir(parents=True)
+        (problem_dir / config.INPUT_FILE).write_text("1 2 3\n")
+        (problem_dir / config.ANSWERS_FILE).write_text(json.dumps({"1": "6"}))
+        sums = "print(sum(int(x) for x in open('input.txt').read().split()))\n"
+
+        assert verify_solution_code(sums, 2099, 1, 1).verdict is Verdict.CORRECT

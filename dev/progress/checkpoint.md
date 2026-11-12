@@ -24,16 +24,18 @@ macOS, and six such drafts at once froze the machine (2026-11-11). Since 2026-11
 that runs generated code stops a process past 8 GB of physical footprint; all 69 ledger
 solutions verify under the cap, and the pre-run check gave 6/6. Before the cap, a runaway draft
 ran alone for at most its 60 s limit (candidates are verified one at a time): enough to slow
-the machine and so the recorded wall-clock times, not to change a verdict. Also since 2026-11-11, each full-input run happens in a fresh directory holding only a copy of
-its input, not beside the accepted answers; none of the 929 drafts saved with their code had
-opened another file, and all 69 ledger solutions give their answers through the change. The registered k1-vs-k3 power test on 2025 d9 p2 finished
+the machine and so the recorded wall-clock times, not to change a verdict. Also since 2026-11-11, each full-input run in the solve loop happens in a fresh directory
+holding only a copy of its input, not beside the accepted answers, and since 2026-11-12 so does
+the oracle's own runner (the ledger gate and the experiment runner's final score); none of the
+1,091 programs saved with their code reads another file, and all 69 ledger solutions verify
+through both changes. The registered k1-vs-k3 power test on 2025 d9 p2 finished
 2026-11-09 and was **inconclusive** (`m5pro-d9p2-power-aoc.md`): k1 5/15, k3 13/20 over trials
 that reached Part 2, one-sided Fisher p = 0.065 against the registered 0.05; the draws behaved as
 independent (27% per draft predicts 61% at k3, 65% measured); 11.9 GPU-hours. Each thesis arm has
 a verdict (`RESULTS.md`): arm 1 measured and replicated under the original prompts and not
 re-established under the corrected ones; arm 2 splits by cost type; arm 3's one complementary pair was one-way, so the
 ensemble was not run. Ledger 69 verified, 0 wrong (2024 d2 p2 added 2026-11-09 by the sandbox
-plumbing check, 12/12 at k1, `1ac712678732`); tests 338 passing, and CI runs them, `mypy` and
+plumbing check, 12/12 at k1, `1ac712678732`); tests 341 passing, and CI runs them, `mypy` and
 `dev/recompute_results.py --check` on every PR. Generated code now runs without `.env` secrets
 (`shared/sandbox.py`), and each result file records Ollama, model digests and machine. A
 reconciliation pass on 2026-11-08 checked every published claim against the result files and added
