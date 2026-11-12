@@ -1,9 +1,8 @@
 <!doctype html>
-<!-- Source for social-preview.png (1280x640). Render:
-     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --hide-scrollbars \
-       --window-size=1280,640 --virtual-time-budget=5000 \
-       --screenshot=assets/social-preview.png assets/social-preview.html
-     Every figure on the card must match RESULTS.md. -->
+<!-- Source for social-preview.png (1280x640). After any change, render it again:
+     venv/bin/python dev/render_social_preview.py
+     Every figure on the card must match RESULTS.md; dev/recompute_results.py --check fails
+     when a figure drifts or the PNG was not rendered from this file. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
