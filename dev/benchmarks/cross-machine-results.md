@@ -109,6 +109,9 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2024 d1 p1 then p2 (pre-run check, venv from `requirements.lock`) | 3 | 6/6 | 100% | `m5pro-d9p2-power-aoc.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page** | 2025 d9 p1 then p2 (power test, k1) | 20 | 20/35 (p1 15/20, p2 5/15; 5 not reached) | 57% | `m5pro-d9p2-power-aoc.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off **samp3**, fallback off, **ctx=aoc, example_tests=page** | 2025 d9 p1 then p2 (power test, k3) | 20 | 33/40 (p1 20/20, p2 13/20) | 82% | `m5pro-d9p2-power-aoc.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page, gate_part_two=false** | 2024 d1 p2 only (plumbing check) | 3 | 3/3 | 100% | `m5pro-d9p2-replication.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page, gate_part_two=false** | 2025 d9 p2 only (replication, k1, seven blocks of 5) | 35 | 13/35 | 37% | `m5pro-d9p2-replication.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off **samp3**, fallback off, **ctx=aoc, example_tests=page, gate_part_two=false** | 2025 d9 p2 only (replication, k3, seven blocks of 5) | 35 | 16/35 | 46% | `m5pro-d9p2-replication.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
@@ -209,10 +212,15 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 - **Caveat on the 2025 scan: 70% vs 2024's 56% is set composition, not a year difference** —
   2025 d1–12 includes the easy early days, 2024 d8–15 does not. The *structure* transfers; the
   rate is not comparable.
-- **Ledger 54** by the end of the M2 Max runs (`solutions/README.md`; 68 now), oracle-clean
+- **Ledger 54** by the end of the M2 Max runs (`solutions/README.md`; 69 now), oracle-clean
   throughout.
 
 ### Headline reads (m5pro-64)
+
+- **2025 d9 p2, registered replication, every trial posed Part 2 with the verified Part 1
+  program: k1 13/35 → k3 16/35** (`m5pro-d9p2-replication.md`). One-sided Fisher p = 0.31: not
+  re-established. Drafts were correct 20% of the time (28/140), which predicts 49% at k3 against
+  a measured 46%: the draws were independent again; the prediction had assumed 27%.
 
 - **2025 d9 p2 at 20 trials per arm, corrected harness: k1 5/15 → k3 13/20** over trials that
   reached Part 2 (`m5pro-d9p2-power-aoc.md`). One-sided Fisher p = 0.065: inconclusive under the

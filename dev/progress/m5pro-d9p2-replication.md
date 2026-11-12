@@ -1,16 +1,9 @@
-# m5pro-64: k1 against k3 on 2025 d9 p2, replication with Part 2 always reached — running
+# m5pro-64: k1 against k3 on 2025 d9 p2, replication with Part 2 always reached — not re-established
 
-**Status (2026-11-10): running.** Design, prediction and readings were registered (#58) and the
-plumbing check passed. The 14 blocks below were launched at 22:42 PST on 2026-11-10 from commit
-`e73722e` (clean), detached (`nohup`).
-Results will replace this line and fill the section marked *pending*.
-
-**Checking on it, and resuming.** `pgrep -f m5pro-d9p2-rep` shows whether a block is running;
-the launcher logs to `dev/experiments/m5pro-d9p2-rep.log`. Each finished block leaves
-`dev/experiments/<timestamp>_m5pro-d9p2-rep-kK-bB_<fingerprint>.json` (fingerprints
-`80b37d599dd8` at k1, `96c4abf665d6` at k3). If the run stopped with nothing running, a block with
-a result file holding 5 trials is done; every other block is rerun whole, in the order below, with
-the maintainer's go. A partial result file from a stopped block is not used.
+**Result (2026-11-11): k1 13/35, k3 16/35; one-sided Fisher p = 0.31. Not re-established on
+this problem under the registered readings.** The draws behaved as independent, at a per-draft
+rate of 20%, below the 27% the prediction assumed. The design, prediction and readings below were
+registered before launch (#58).
 
 ## Why a second test
 
@@ -118,4 +111,96 @@ the write-up. Neither changes the run or the reading.
 
 ## Result
 
-*pending*
+Fourteen runs, `m5pro-d9p2-rep-k1-b1` to `m5pro-d9p2-rep-k3-b7`, launched at 22:42 PST on
+2026-11-10 from commit `e73722e` (clean), detached, and finished at 14:57 PST on 2026-11-11 in the
+registered order; no block failed or was rerun. Every file records Ollama 0.40.11 and the same
+`qwen3.8:27b` digest as the first test, and the fingerprints registered above.
+
+| | Part 2 solved | solved by a draft, before repair | drafts that solved |
+|---|---|---|---|
+| k1 | **13/35 (37%)** | 9/35 | 9/35 (26%) |
+| k3 | **16/35 (46%)** | 14/35 | 19/105 (18%) |
+
+**Registered reading: not re-established on this problem.** k3 is 8.6 points above k1 (95%
+Newcombe interval −14 to +30 points), one-sided Fisher p = 0.31, under the registered 10 points.
+Against the prediction, k1 came in at 13 (about 10 predicted) and k3 at 16 (about 21 predicted,
+at the bottom of its plausible range).
+
+**Why the predicted lift did not appear: the draft rate, not the draws.** Across both arms,
+drafts solved 28 times in 140 (p̂ = 20%), below the 27% the prediction used. Independent draws at
+20% predict 1 − 0.80³ = 49% at k3; the measured 46% lies inside its 95% Wilson interval (30% to
+62%). At that rate three drafts are expected to solve 49% against 20% for one, 29 points before
+repair; repair lifted k1 to 37%, leaving about 12 points, against the 34 the test was powered for. The per-draft rate also differed between the arms, 26% at k1 against 18%
+at k3; that difference is within chance (two-sided Fisher p = 0.34).
+
+**Within a trial, the three drafts were close to independent.** Correct drafts per k3 trial, against
+a binomial at the k3 draft rate (18%):
+
+| correct drafts in the trial | 0 | 1 | 2 | 3 |
+|---|---|---|---|---|
+| trials | 21 | 9 | 5 | 0 |
+| expected if independent | 19.2 | 12.7 | 2.8 | 0.2 |
+
+There are slightly more trials with two correct drafts than independence expects, a hint of
+correlation within a trial that these counts cannot test.
+
+**Repair narrowed the gap at k1.** It rescued 4 of the 26 k1 trials whose draft failed, against 2
+of 12 in the first test; at k3 it ran on the 21 trials where all three drafts failed and rescued 2.
+
+**Combined with the first test** (Fisher's method, reported, not deciding): p = 0.10.
+
+**Time and tokens** (solved trials as the denominator): k1 1,145 s and 80,493 tokens per solve,
+k3 2,720 s and 190,143. Three drafts cost about 2.4 times as much per solve here. The run took
+16.2 hours (k1 4.1, k3 12.1), against about 16 estimated.
+
+**Timeouts: none was correct but slow.** 45 of the 140 drafts (32%) ran past the 60 s limit on
+the full input. Re-executed from their saved code with a 600 s limit (`dev/rerun_timeouts.py`,
+the harness's sandbox, two at a time):
+
+| at 600 s | drafts |
+|---|---|
+| stopped at the 8 GB memory cap (after 3 to 433 s) | 26 |
+| still running at 600 s | 17 |
+| finished with a wrong answer (285 s, 308 s) | 2 |
+| finished with the right answer | **0** |
+
+A ten-times longer limit would not have changed the draft rate on this problem. Its timeouts are
+runaway programs, most of them brute force over the full grid that exhausts memory within
+seconds, not correct programs that are merely slow. The cap was added for the re-execution after
+six drafts run at once froze the machine: the sandbox does not cap memory on macOS. It measured
+resident size for the first 15 drafts and physical footprint, which counts compressed pages, for
+the other 30.
+
+**Example verdicts** (one worked example; every attempt, drafts and repairs):
+
+| | examples passed | examples failed |
+|---|---|---|
+| oracle solved | 34 | 0 |
+| oracle wrong | 43 | 68 |
+| timed out on the full input | 94 | 44 |
+
+The example never rejected a correct answer. It passed 137 of the 249 attempts the oracle
+rejected: 94 that then timed out and 43 that answered wrong. Attempts without a candidate to
+verify (22) carry no verdict, apart from one that failed validation before the example.
+
+**Selection without the oracle** (added after launch, not registered). In each k3 trial, a
+selector that sees only the example takes the first draft, in draft order, that passes it and
+produces an answer:
+
+| | trials |
+|---|---|
+| takes a correct draft | 12 |
+| takes a wrong draft, though a correct one was among the three | 2 |
+| takes a wrong draft, none of the three correct | 13 |
+| takes nothing: no draft passed the example and answered | 8 |
+
+It solves 12 of 35 trials, against 14 of 35 for the oracle choosing among the same drafts, and
+would submit a wrong answer in 15. Of those 15, a choice among passing drafts by agreement could
+have caught at most the 3 where the passing drafts disagreed. With one worked example and no
+oracle, the selector took a wrong draft more often than a right one (15 against 12).
+
+**What this does and does not show.** On 2025 d9 p2, with the verified Part 1 program in the
+prompt, three drafts did not beat one draft with repair by the registered margin. The draws still
+behaved as independent, so the prediction failed on the draft rate it assumed, not on the
+mechanism: sampling's gain follows the per-draft rate, and at 20% against one draft with repair
+that gain is small. The result is for this problem; it does not test other problems or models.

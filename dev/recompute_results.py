@@ -181,6 +181,20 @@ def arm1_power() -> str:
     return f"{frac(k1)} -> {frac(k3)}, p {fisher_greater(*k1, *k3):.3f}"
 
 
+def arm1_replication() -> str:
+    """2025 d9 p2, k1 against k3, every trial posed Part 2 (registered replication, 7 blocks per arm)."""
+    cell = ["2025_day09_part2"]
+
+    def arm(k: str) -> Tuple[int, int]:
+        runs = [name for name in RUNS if f"_m5pro-d9p2-rep-{k}-b" in name]
+        if len(runs) != 7:
+            raise LookupError(f"{k}: {len(runs)} replication blocks, expected 7")
+        return solved(outcomes(runs, cell))
+
+    k1, k3 = arm("k1"), arm("k3")
+    return f"{frac(k1)} -> {frac(k3)}, p {fisher_greater(*k1, *k3):.2f}"
+
+
 def arm2() -> str:
     def per_solution(run: str) -> Tuple[float, float]:
         trials = [t for t in TRIALS if t["run"] == run]
@@ -252,12 +266,12 @@ class Claim:
 
 
 CLAIMS = [
-    Claim("corpus runs", corpus_runs, "92 recorded experiment runs",
-          {"RESULTS.md": ["92 recorded experiment runs"]}),
-    Claim("corpus attempts", corpus_attempts, "3,334 candidate attempts",
-          {"RESULTS.md": ["3,334 candidate attempts"]}),
-    Claim("corpus GPU-hours", corpus_hours, "~210 GPU-hours", {"RESULTS.md": ["~210 GPU-hours"]}),
-    Claim("corpus tokens", corpus_tokens, "41.6M tokens", {"RESULTS.md": ["41.6M tokens"]}),
+    Claim("corpus runs", corpus_runs, "107 recorded experiment runs",
+          {"RESULTS.md": ["107 recorded experiment runs"]}),
+    Claim("corpus attempts", corpus_attempts, "3,642 candidate attempts",
+          {"RESULTS.md": ["3,642 candidate attempts"]}),
+    Claim("corpus GPU-hours", corpus_hours, "~225 GPU-hours", {"RESULTS.md": ["~225 GPU-hours"]}),
+    Claim("corpus tokens", corpus_tokens, "45.7M tokens", {"RESULTS.md": ["45.7M tokens"]}),
     Claim("ledger", ledger_size, "69 verified solutions",
           {"README.md": ["**69 verified solutions**"], "RESULTS.md": ["69 oracle-verified solutions"],
            "assets/social-preview.html": ["69 verified solutions"]}),
@@ -279,18 +293,23 @@ CLAIMS = [
           {"RESULTS.md": ["9/19 at one draft and 11/21 at\nthree"]}),
     Claim("arm 1, powered test on 2025 d9 p2", arm1_power, "5/15 -> 13/20, p 0.065",
           {"RESULTS.md": ["| solved | 5/15 (33%) | 13/20 (65%) | **p = 0.065 — inconclusive** |"],
-           "README.md": ["5/15 at one draft, 13/20 at\n>   three, one-sided p = 0.065"]}),
+           "README.md": ["the registered 20-trial test gave 5/15 at one draft and 13/20 at three"]}),
+    Claim("arm 1, registered replication on 2025 d9 p2", arm1_replication, "13/35 -> 16/35, p 0.31",
+          {"RESULTS.md": ["| solved | 13/35 (37%) | 16/35 (46%) | **p = 0.31 — not re-established** |",
+                          "replication at 13/35 against 16/35 (one-sided p = 0.31)"],
+           "README.md": ["replication gave 13/35 at one draft and 16/35 at three (one-sided p = 0.31)",
+                         "gave 13/35 at one draft and 16/35 at three: one-sided p = 0.31"]}),
     Claim("arm 2", arm2,
           "1,389 s vs 891 s (0.64x); 38,460 vs >=119,068 tokens (>=3.09x)",
           {"RESULTS.md": ["| 7/8 | **891 s** (0.64×) | ≥119,068 (≥3.09×) |", "1,389 s"],
            "README.md": ["| 7/8 | **891 s** (0.64×) | ≥119,068 (≥3.09×) |"]}),
-    Claim("repair by model", repair_by_model, "7/203 vs 14/80; same problems 6/193 vs 8/67",
-          {"RESULTS.md": ["muse's 14 times in 80. On the problems both models repaired, 6 in 193 against 8 in 67"],
-           "README.md": ["succeeded 7 times in 203 attempts, muse's 14 in 80", "both repaired, 6 in 193 against 8 in 67"]}),
-    Claim("repair share of solves", repair_share_of_solves, "7 of 262 vs 14 of 131",
-          {"RESULTS.md": ["7 of the reference's 262 solves came\n  from repair, against 14 of 131",
-                          "7 of\nits 262 solved cells were solved by repair", "solved 14 of\nits 131 by repair"],
-           "PLAN.md": ["repair produced 7\nof the reference model's 262 solves"]}),
+    Claim("repair by model", repair_by_model, "13/368 vs 14/80; same problems 12/358 vs 8/67",
+          {"RESULTS.md": ["muse's 14 times in 80. On the problems both models repaired, 12 in 358 against 8 in 67"],
+           "README.md": ["succeeded 13 times in 368 attempts, muse's 14 in 80", "both repaired, 12 in 358 against 8 in 67"]}),
+    Claim("repair share of solves", repair_share_of_solves, "13 of 294 vs 14 of 131",
+          {"RESULTS.md": ["13 of the reference's 294 solves came\n  from repair, against 14 of 131",
+                          "13 of\nits 294 solved cells were solved by repair", "solved 14 of\nits 131 by repair"],
+           "PLAN.md": ["repair produced 13\nof the reference model's 294 solves"]}),
     Claim("arm 3 decider", arm3, "10/10 vs 1/10, p 0.0001",
           {"RESULTS.md": ["10/10 against the reference's 1/10 in the decider, p = 0.0001"]}),
 ]
