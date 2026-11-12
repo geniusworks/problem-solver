@@ -135,9 +135,15 @@ set, or is recorded as an instrument change.
    `solve_problem` through success, wrong answer, timeout, crash, harness error, repair, fallback
    and unverified, with no Ollama, puzzle files, learning database or oracle. It guards the
    outcome categories that earlier measurement bugs blurred.
-3. **Split `shared/solver.py` (1,410 lines) by responsibility:** generation, verification, repair
+3. **Split `shared/solver.py` (1,433 lines) by responsibility:** generation, verification, repair
    and fallback, with `solver.py` coordinating the stages. Behaviour unchanged, shown by item 2's
    suite and identical fingerprints and prompts on the regression set.
+4. **One capped runner in `shared/sandbox.py`.** `communicate_capped` (asyncio: the solve loop and
+   `dev/rerun_timeouts.py`) and `run_capped` (subprocess: the oracle's own runner and the example
+   runs) repeat the same watch loop. They have already drifted: only the asyncio one gives a
+   timed-out process five seconds to exit and honours a free-memory floor. One loop, with the
+   other a thin wrapper, keeps the time and memory caps identical on every path that runs
+   generated code. Checked by the sandbox tests on both paths and the ledger's 69 verifying.
 
 The problem-and-checker boundary is "Beyond AoC", step 2, shaped by the second domain rather than
 built ahead of it. Not planned: a second LLM provider (nothing measured needs one yet), and
