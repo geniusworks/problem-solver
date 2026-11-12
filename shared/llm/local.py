@@ -82,7 +82,11 @@ class OllamaProvider(LLMProvider):
         # them into fast, direct coders.
         self.think = think
         self.model_info = {"name": model, "description": "Description of the model."}
+        # The prompt and raw reply of the most recent code-producing call (the implementation
+        # call of generate_solution, or improve_solution), which the solver saves on the attempt
+        # under --include-replay.
         self.last_prompt: Optional[str] = None
+        self.last_raw_response: Optional[str] = None
         # Token usage of the most recent generate_solution call (analysis + impl
         # generate() calls summed), read by the solver to fill AttemptRecord.
         # These were structurally zero in every result JSON before this.
@@ -97,6 +101,8 @@ class OllamaProvider(LLMProvider):
         strategy_effectiveness: Optional[Dict[str, float]] = None
     ) -> str:
         """Generate a solution for the given problem."""
+        self.last_prompt = None
+        self.last_raw_response = None
         if self.debug:
             logger.info("Analyzing problem...")
         
@@ -149,6 +155,7 @@ Final Question: {problem.final_question}""",
             )
             generation_time = (datetime.now() - start_time).total_seconds()
 
+            self.last_raw_response = response.content
             # Total token usage across both model calls (analysis + impl), for
             # the solver to record on the attempt.
             impl_in, impl_out = self._tokens(response)
@@ -568,7 +575,10 @@ Final Question: {problem.final_question}
 
 Provide ONLY the improved code between ```python and ``` markers. Do not include any explanations."""
 
+        self.last_prompt = prompt
+        self.last_raw_response = None
         response = await self.generate(prompt, temperature=self.temperature)
+        self.last_raw_response = response.content
 
         # Record THIS call's tokens. Without this the attribute still holds the
         # counts from the last generate_solution(), so every repair attempt

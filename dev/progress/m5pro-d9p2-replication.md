@@ -43,8 +43,7 @@ its trials are not pooled with that run's, and its reading does not depend on th
   `3612768`, Ollama 0.40.11, the same `qwen3.8:27b` digest as the first test); each trial made one
   Part 2 attempt and none on Part 1, and every attempt recorded `draft_index` and the example
   verdict.
-- **Drafts are saved** (`--include-replay`): each attempt's prompt, response and code go into the
-  result file. The flag changes what is recorded, not the configuration or its fingerprint.
+- **Drafts are saved** (`--include-replay`): each attempt's code goes into the result file. The flag changes what is recorded, not the configuration or its fingerprint.
 - **Expected time:** about 16 GPU-hours, from the first test's Part 2 times (about 490 s per k1
   trial and 1,150 s per k3 trial).
 

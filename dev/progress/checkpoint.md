@@ -5,11 +5,15 @@ The **live status snapshot** — where the project actually stands right now. Th
 `dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
 file current as work lands so it never goes stale.
 
-## Current status (2026-11-11)
+## Current status (2026-11-12)
 
-**Now: the registered speed-directed repair test on 2025 d9 p2 is running**
-(`m5pro-d9p2-speed-repair.md`), launched 21:32 PST on 2026-11-11; that file says how to check on
-it and resume it. Do not launch it again. The registered replication of the k1-vs-k3 test on 2025 d9 p2
+**Now: nothing is running; next is the AoC 2026 submitter decision.** The registered
+speed-directed repair test on 2025 d9 p2 finished 2026-11-12 and was **inconclusive**
+(`m5pro-d9p2-speed-repair.md`): `targeted_feedback` off 8/35, on 12/35, one draft, one-sided
+Fisher p = 0.21; the gap is in first drafts, which the flag does not touch, and none of 39 repairs
+after a timeout or memory-cap stop solved; the flag stays off for AoC 2026; 8.9 GPU-hours. Since
+2026-11-12, `--include-replay` saves each attempt's prompt and raw response beside its code. The
+registered replication of the k1-vs-k3 test on 2025 d9 p2
 finished 2026-11-11 and did **not re-establish** sampling on that problem
 (`m5pro-d9p2-replication.md`): k1 13/35, k3 16/35, every trial posed Part 2 with the verified
 Part 1 program, one-sided Fisher p = 0.31, 8.6 points apart against the registered 10; the draws
@@ -29,7 +33,7 @@ independent (27% per draft predicts 61% at k3, 65% measured); 11.9 GPU-hours. Ea
 a verdict (`RESULTS.md`): arm 1 measured and replicated under the original prompts and not
 re-established under the corrected ones; arm 2 splits by cost type; arm 3's one complementary pair was one-way, so the
 ensemble was not run. Ledger 69 verified, 0 wrong (2024 d2 p2 added 2026-11-09 by the sandbox
-plumbing check, 12/12 at k1, `1ac712678732`); tests 335 passing, and CI runs them, `mypy` and
+plumbing check, 12/12 at k1, `1ac712678732`); tests 338 passing, and CI runs them, `mypy` and
 `dev/recompute_results.py --check` on every PR. Generated code now runs without `.env` secrets
 (`shared/sandbox.py`), and each result file records Ollama, model digests and machine. A
 reconciliation pass on 2026-11-08 checked every published claim against the result files and added
@@ -41,9 +45,7 @@ depend on an exact checker; on 2025 d9 p2 the example passed 59 of the 104 Part 
 oracle rejected in the power test and 137 of 249 in the replication, where a selector using it
 alone took a wrong draft in 15 of 35 trials. What is next, in priority order, is `PLAN.md`,
 "Open": AoC 2026 (needs the
-submitter decision by about 2026-11-25); the registered speed-directed repair test on 2025 d9 p2,
-before the freeze (`m5pro-d9p2-speed-repair.md`, running since 21:32 PST on 2026-11-11; that
-file says how to check on and resume it, and it must not be launched again); then the test of
+submitter decision by about 2026-11-25); then the test of
 whether the Part 1 context informs or cues recall, designed for AoC 2026 (`part2-context-heldout-plan.md`). Nothing starts without the
 maintainer's go. The sections below are the dated record, newest
 first.

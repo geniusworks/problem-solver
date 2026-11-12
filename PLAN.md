@@ -3,7 +3,7 @@
 What is open now, then the path beyond AoC. The sections after those are the record of how the
 roadmap got here.
 
-## Open (as of 2026-11-11)
+## Open (as of 2026-11-12)
 
 Each thesis arm has a verdict (`RESULTS.md`): sampling measured and replicated under the original
 harness, not re-established under the corrected one (on 2025 d9 p2, its one mid-rate problem, a
@@ -23,16 +23,20 @@ on:
    The registration also names, as secondary measures on every attempt, how often the worked
    examples accept an answer the oracle rejects and reject one it accepts ("Beyond AoC", step 1):
    no extra GPU time, and every 2026 problem instead of one.
-2. **Speed-directed repair on 2025 d9 p2.** Registered in `m5pro-d9p2-speed-repair.md`:
-   `targeted_feedback` off against on, one draft, 35 trials each in alternating blocks. Its result
-   decides whether the guidance is switched on for AoC 2026, so it runs before the freeze. About
-   8–9 GPU-hours; powered for a large effect only. *Running* since 21:32 PST on 2026-11-11.
-3. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered
+2. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered
    design in `part2-context-heldout-plan.md`: Part 2 cold against Part 2 with the Part 1 context,
    on the AoC 2026 Part 2s, about 4.6 GPU-hours over the event. *Waits on the AoC 2026 item*
    (its decision, and the accepted answers to score against); the harness option it needs,
    `gate_part_two=false`, is built. Arms that rewrote Part 1 on public puzzles were dropped:
    Part 2's text depends on Part 1's, so the edits cannot separate information from recall.
+
+Done 2026-11-12:
+- **Speed-directed repair on 2025 d9 p2: inconclusive** (`m5pro-d9p2-speed-repair.md`).
+  `targeted_feedback` off 8/35, on 12/35, one draft; one-sided Fisher p = 0.21, 11 points apart.
+  The gap is in first drafts, which the flag does not touch; none of 39 repairs after a timeout or
+  memory-cap stop solved. The flag stays off for AoC 2026. 8.9 GPU-hours.
+- `--include-replay` now saves each attempt's prompt and raw response beside its code; until
+  2026-11-12 it saved only the code.
 
 Done 2026-11-11:
 - **The registered replication on 2025 d9 p2: not re-established** (`m5pro-d9p2-replication.md`).
@@ -54,8 +58,8 @@ The project's aim is general problem-solving through orchestration (`README.md`,
 is the testbed. Every result so far rests on an exact checker, the accepted answer, which most real
 domains lack. Generalising is therefore sequenced as measurements, each gating the next, not as a
 framework built ahead of evidence: of the components a general system might make pluggable, some
-have measured value here and some do not (mixing models lost to choosing one; repair produced 13
-of the reference model's 306 solves).
+have measured value here and some do not (mixing models lost to choosing one; repair produced 17
+of the reference model's 314 solves).
 
 1. **How much does the method depend on an exact checker?** Record, per attempt, the verdict of the
    worked examples alongside the oracle's. **Wired 2026-11-09:** every verified attempt records
@@ -83,7 +87,7 @@ of the reference model's 306 solves).
 
 None of this displaces AoC 2026, which has a date; step 1 can run alongside it.
 
-## Parked: speed-directed repair under the corrected harness
+## Tested: speed-directed repair under the corrected harness
 
 On the hardest cells the commonest failure is now a timeout on the full input, often after the
 worked example passed (27 of 51 failed attempts on 2024 d24 p2 and 2025 d10 p2). The solver
@@ -99,7 +103,12 @@ worked example (`m5pro-d9p2-power-aoc.md`), and 94 of 138 in its replication
 correctly: 26 hit the cap (most within 10 s), 17 were still running, 2 answered wrong. On 2025 d9
 p2, then, a longer limit would not have helped within 600 s; efficiency guidance is what would
 have to fix them. **The trigger is met on 2025 d9 p2** (2026-11-11), and the A/B is registered
-(`m5pro-d9p2-speed-repair.md`, "Open" item 2).
+(`m5pro-d9p2-speed-repair.md`). **Run 2026-11-12: inconclusive** (8/35 off, 12/35 on, p = 0.21;
+the gap is in first drafts, which the flag does not touch). Most slow drafts now stop at the 8 GB
+memory cap before the 60 s limit, and the guidance is keyed to the timeout, so it reached 5 repair
+prompts; none solved, and no repair after a time or memory stop solved in either arm (0 of 39).
+Not pursued before AoC 2026. Making the guidance fire on a memory-cap stop is a code change that
+would need its own registered test.
 
 ## Conditional: a second reference model
 
@@ -112,7 +121,7 @@ maintainer decides on.
 
 ## After AoC 2026: engineering that lowers the cost of the next experiment
 
-Deferred until the speed-repair test and the AoC 2026 runs are done, so the measurement path does
+Deferred until the AoC 2026 runs are done, so the measurement path does
 not change before the event. Each keeps prompts and fingerprints identical on a fixed regression
 set, or is recorded as an instrument change.
 

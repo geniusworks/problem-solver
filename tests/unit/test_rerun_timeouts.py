@@ -1,4 +1,4 @@
-"""dev/rerun_timeouts.py picks only first-pass drafts that hit the execution limit."""
+"""dev/rerun_timeouts.py picks the drafts the harness stopped, by kind of stop and stage."""
 
 import importlib.util
 import json
@@ -12,10 +12,12 @@ rerun_timeouts = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(rerun_timeouts)
 
 TIMED_OUT = "Solution timed out after 60 seconds"
+OVER_CAP = "Solution exceeded the memory cap of 8192 MB and was stopped"
 
 
-def attempt(stage, outcome, error=None, code="def solve(d): pass"):
-    return {"stage": stage, "outcome": outcome, "error": error, "code": code, "draft_index": 0}
+def attempt(stage, outcome, error=None, code="def solve(d): pass", repair_iteration=0):
+    return {"stage": stage, "outcome": outcome, "error": error, "code": code, "draft_index": 0,
+            "repair_iteration": repair_iteration}
 
 
 def result_file(tmp_path, attempts):
@@ -34,15 +36,36 @@ def test_only_first_pass_timeouts_are_rerun(tmp_path):
         attempt("generate", "wrong"),
         attempt("repair", "error", TIMED_OUT),
     ])
-    picked = list(rerun_timeouts.timed_out_drafts([path]))
+    picked = list(rerun_timeouts.stopped_drafts([path]))
     assert [a["stage"] for _, _, a in picked] == ["generate"]
     assert TIMED_OUT in picked[0][2]["error"]
+
+
+def test_memory_cap_stops_are_picked_by_their_own_kind(tmp_path):
+    path = result_file(tmp_path, [
+        attempt("generate", "error", TIMED_OUT),
+        attempt("generate", "error", OVER_CAP),
+        attempt("repair", "error", OVER_CAP, repair_iteration=1),
+    ])
+    picked = list(rerun_timeouts.stopped_drafts([path], stopped_by="memory"))
+    assert [a["error"] for _, _, a in picked] == [OVER_CAP]
+    assert picked[0][2]["stage"] == "generate"
+
+
+def test_all_stages_adds_repairs(tmp_path):
+    path = result_file(tmp_path, [
+        attempt("generate", "error", OVER_CAP),
+        attempt("repair", "error", OVER_CAP, repair_iteration=1),
+        attempt("repair", "error", TIMED_OUT, repair_iteration=2),
+    ])
+    picked = list(rerun_timeouts.stopped_drafts([path], stopped_by="memory", all_stages=True))
+    assert [a["repair_iteration"] for _, _, a in picked] == [0, 1]
 
 
 def test_a_run_saved_without_code_is_refused(tmp_path):
     path = result_file(tmp_path, [attempt("generate", "error", TIMED_OUT, code=None)])
     with pytest.raises(SystemExit, match="include-replay"):
-        list(rerun_timeouts.timed_out_drafts([path]))
+        list(rerun_timeouts.stopped_drafts([path]))
 
 
 def run(code, tmp_path, timeout=20, max_mb=200):

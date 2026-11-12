@@ -13,7 +13,7 @@ at what cost?
 Advent of Code 2024 and 2025 puzzles. An exact oracle runs each candidate on the real puzzle input
 and compares its output with the accepted answer. Configurations are compared over repeat trials
 on the same problems; the decisive comparisons were registered (design, prediction and reading
-committed before launch). The corpus is 109 runs, 3,654 candidate attempts and about 225
+committed before launch). The corpus is 123 runs, 3,828 candidate attempts and about 235
 GPU-hours.
 
 **Results.** (1) The largest effect was a defect in the harness: Part 2 prompts omitted the Part 1
@@ -27,7 +27,7 @@ as independent tries predict from the single-draft rate (52% predicted, 49% meas
 three-draft trials), so what extra attempts buy can be estimated in advance, and it is large only
 where one attempt succeeds part of the time. (3) One candidate model solved a problem the reference rarely solved (10/10
 against 1/10), and no problem was found the other way, so a mix of the two was not run. (4) Repair
-contributed 13 of the reference model's 306 solves.
+contributed 17 of the reference model's 314 solves.
 
 **Limits.** The puzzles and their solutions are public and predate the models, so capability
 figures describe this testbed. The headline results rest on one model family, one benchmark and
@@ -60,20 +60,23 @@ Each is detailed under [Scope and limits](#scope-and-limits) and
 - **A second model helped by being chosen, not mixed.** One of six candidate models solved a
   problem 10 of 10 times that the reference solved 1 of 10, and no problem was found where the
   reference's lead held at ten trials, so a mix had nothing to add on the problems measured and
-  was not run. Repair also depends on the model: 13 of the reference's 306 solves came
+  was not run. Repair also depends on the model: 17 of the reference's 314 solves came
   from repair, against 14 of 131 for that candidate.
 - **Cheap draws win on time and lose on tokens.** A fast weak model taking four times the draws
   costs 0.64× the wall-clock per solution and at least 3.09× the tokens, and solved 7 of 8
   problem-parts against 8 (one trial).
 - **What still fails is mostly speed.** On the hardest problems the commonest failure is a
   program that runs past the 60 s timeout on the full input, often after passing the example. On
-  2025 d9 p2, none of 45 such drafts finished correctly within 600 s under an 8 GB memory cap.
+  2025 d9 p2, none of 45 such drafts finished correctly within 600 s under an 8 GB memory cap,
+  and a registered test of repair guidance aimed at speed was inconclusive (8/35 without, 12/35
+  with, one-sided p = 0.21) with the whole gap in first drafts, which the guidance does not
+  touch: no repair after a timeout or memory-cap stop solved, 0 of 39.
 - **Every multi-draft rate is oracle-selected.** A trial counts as solved when any draft or repair
   matches the accepted answer, so these are the rates of a perfect verifier. Choosing by the worked
   example alone, on 2025 d9 p2, solved 12 of 35 three-draft trials and took a wrong answer in 15.
 
-**Corpus (2026-11-11):** 109 recorded experiment runs · 3,654 candidate attempts · ~225 GPU-hours ·
-45.8M tokens (tables in `dev/results/`; runs that left only a log are not counted; the
+**Corpus (2026-11-12):** 123 recorded experiment runs · 3,828 candidate attempts · ~235 GPU-hours ·
+48.1M tokens (tables in `dev/results/`; runs that left only a log are not counted; the
 token total includes draft counts copied onto repair records before 2026-10-12, see the defect
 table) · **69 oracle-verified solutions across two AoC years, 0 wrong in the ledger.**
 
@@ -356,14 +359,16 @@ three trials produced, three did not survive ten.
 
 With true example feedback and too-high/too-low hints, the reference's repairs rescued none of its
 band cells (`m5pro-band-k1-vs-k3-aoc.md`), 2 of 12 failed first drafts on 2025 d9 p2
-(`m5pro-d9p2-power-aoc.md`) and 4 of 26 in that test's replication (`m5pro-d9p2-replication.md`);
-across all its runs under the corrected harness, 13 of
-its 306 solved cells were solved by repair. `muse-glimmer:30b`, in the same harness, solved 14 of
+(`m5pro-d9p2-power-aoc.md`), 4 of 26 in that test's replication (`m5pro-d9p2-replication.md`)
+and 4 of 31 in the speed-repair test's control arm (`m5pro-d9p2-speed-repair.md`); across all its
+runs under the corrected harness without repair guidance, 17 of
+its 314 solved cells were solved by repair. `muse-glimmer:30b`, in the same harness, solved 14 of
 its 131 by repair, among them 3 of its 6 solves of 2024 d20 p2 (`arm3-portfolio-test.md`).
 
 Counted per repair attempt rather than per solve, so that a model with more failed drafts does not
-simply get more chances: under the corrected harness the reference's repairs succeeded 13 times in
-368, muse's 14 times in 80. On the problems both models repaired, 12 in 358 against 8 in 67. Repair
+simply get more chances: under the corrected harness without guidance the reference's repairs
+succeeded 17 times in 427, muse's 14 times in 80. On the problems both models repaired, 16 in 417
+against 8 in 67. Repair
 attempts within one trial are not independent, so these are descriptive rates, not a test.
 
 ### On the hardest cells the limit is often speed
@@ -379,7 +384,19 @@ failed by crashing or
 answering wrong instead (`arm3-precheck-*.md`). On 2025 d9 p2 a longer limit did not rescue
 them: the 45 drafts that timed out in the replication, re-run with 600 s under an 8 GB memory cap,
 gave no correct answer (26 hit the cap, 17 were still running, 2 answered wrong;
-`m5pro-d9p2-replication.md`). Larger models did not move these cells:
+`m5pro-d9p2-replication.md`).
+
+Repair told why a draft was slow did not rescue them either. The solver's speed guidance (it
+says the failure is one of performance and asks for an asymptotically faster algorithm, behind
+`targeted_feedback`) was A/B'd on 2025 d9 p2 in a registered test, one draft and 35 trials per arm
+(`m5pro-d9p2-speed-repair.md`): 8/35 off, 12/35 on, one-sided Fisher p = 0.21 (95% Newcombe
+interval −10 to +31 points), inconclusive by its registered readings. The gap is in first drafts,
+which the flag does not touch (10 solved with it on, 4 off); repair, where it acts, rescued 2
+trials with it on and 4 off. Under the memory cap most slow drafts stopped at 8 GB within
+seconds rather than at the 60 s limit, and the guidance is keyed to the timeout, so it reached
+only 5 repair prompts; none solved, and in both arms none of the 39 repairs after a timeout or a
+memory-cap stop solved. Re-executed with a 24 GB cap, none of the 35 attempts the 8 GB cap stopped
+finished correctly within 60 s: 29 passed 24 GB as well, within 36 s. Larger models did not move these cells:
 `gemma4:31b` and `ornith-1.5:35b` solved neither 2024 d24 p2 nor 2025 d10 p2.
 
 ### The newest, smallest model scored highest
@@ -428,7 +445,9 @@ these five nulls and not itself tested:
 The harness fix redrew the evidence under three of them. The problem behind 1 and 2 (2024 d13 p2)
 is solved 3 of 3 at one draft, and the 2025 "walls" behind 3 have been solved at least sometimes.
 Hypotheses 4 and 5 remain nulls measured on the original harness; 5 also ran with mispaired example
-tests. The rule itself held up: the largest gain the project found came from giving the model
+tests. Under the corrected harness the same guidance, re-tested where its speed half should
+matter most, was inconclusive, and repair rescued fewer trials with it than without (2 against 4
+of 35; `m5pro-d9p2-speed-repair.md`). The rule itself held up: the largest gain the project found came from giving the model
 information it had been denied. The same split appeared in arm 2, which is unaffected by the
 Part 2 defect: four times the draws bought a ~25%-per-draw parsing failure and did not buy a
 problem that emitted identical `TypeError`s every time.
@@ -605,14 +624,14 @@ was measured with local models of about 30B:
    repair already lifted the single draft there. Measure the per-draft rate first, and compare
    against one draft with repair, not one draft alone.
 2. **Don't count on repair to rescue hard problems.** Feedback with true example results and
-   too-high/too-low hints rarely rescued the reference (13 of its 306 solves came from repair);
+   too-high/too-low hints rarely rescued the reference (17 of its 314 solves came from repair);
    another model's repairs did better (14 of 131). A fresh draft or a different
    model is the more reliable second try.
 3. **Check whether failures are timeouts.** Many hard-cell failures are timeouts on the full input,
-   often after passing the example. Asking for an efficient algorithm addresses a different limit
-   from a bigger model; more execution time did not help on 2025 d9 p2 (none of 45 timed-out
-   drafts finished correctly within 600 s). Cap memory as well as time: those drafts grow past
-   8 GB in seconds.
+   often after passing the example. On 2025 d9 p2 neither more execution time (none of 45
+   timed-out drafts finished correctly within 600 s) nor repair guidance asking for a faster
+   algorithm (0 of 5 guided repairs solved; registered test inconclusive) rescued them; a fresh
+   draft did better. Cap memory as well as time: those drafts grow past 8 GB in seconds.
 4. **Choose a second model by measurement, not by its maker.** Of six candidates, one reliably
    solved something the reference missed, and no cell was found where the reference reliably beat
    it, so a mix had nothing to add. Measure each model alone on your failure cases and on your
@@ -667,16 +686,17 @@ had to be removed before the measurements meant anything, and the negative resul
   its exact command, and every result file records the commit, Ollama version, model digest and
   package versions it ran with (since 2026-11-09). Packages are pinned in `requirements.lock`.
 - **Data:** per-run, per-trial and per-attempt outcomes, timings, token counts, example verdicts
-  and execution-error kinds for all 109 runs are in `dev/results/`, with each run's commit, Ollama
+  and execution-error kinds for all 123 runs are in `dev/results/`, with each run's commit, Ollama
   version, model digests and machine where recorded (since 2026-11-09).
   `venv/bin/python dev/recompute_results.py` recomputes this document's headline figures from
   those tables, and CI fails when the two disagree.
 - **Not public:** puzzle text, puzzle inputs and accepted answers (Advent of Code asks that they
-  not be redistributed), and therefore the raw result files, whose saved prompts contain puzzle
-  text. A fresh clone cannot run the oracle until you supply your own AoC session (see the
-  README's [data policy](README.md#data-privacy-and-advent-of-codes-rules)). Re-executing saved
-  drafts, as in the 600 s timeout re-run, needs those inputs and cannot be repeated from the
-  repository alone.
+  not be redistributed), and therefore the raw result files, which hold the accepted answers and,
+  since 2026-11-12 under `--include-replay`, prompts that carry puzzle text. A fresh clone cannot
+  run the oracle until you supply your own AoC session (see the README's
+  [data policy](README.md#data-privacy-and-advent-of-codes-rules)). Re-executing saved drafts,
+  as in the 600 s timeout re-run, needs those inputs and cannot be repeated from the repository
+  alone.
 - **Determinism:** generation is unseeded, so a re-run reproduces rates within sampling error,
   not individual outcomes.
 

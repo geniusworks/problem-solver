@@ -114,6 +114,8 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m5pro-64** | qwen3.8:27b | tk-off **samp3**, fallback off, **ctx=aoc, example_tests=page, gate_part_two=false** | 2025 d9 p2 only (replication, k3, seven blocks of 5) | 35 | 16/35 | 46% | `m5pro-d9p2-replication.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page**, 8 GB memory cap | 2024 d1 p1 then p2 (pre-run check after the memory cap; run `20261112T034130Z_m5pro-precheck-memcap`, commit `370ec58`) | 3 | 6/6 | 100% | `dev/results/` (machine row above) |
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page**, 8 GB memory cap | 2024 d1 p1 then p2 (pre-run check after running candidates in an empty directory; run `20261112T052037Z_m5pro-precheck-isolation`, commit `1cf5669`) | 3 | 6/6 | 100% | `dev/results/` (machine row above) |
+| **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page, gate_part_two=false**, 8 GB memory cap | 2025 d9 p2 only (speed-directed repair, `targeted_feedback` off, seven blocks of 5) | 35 | 8/35 | 23% | `m5pro-d9p2-speed-repair.md` |
+| **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page, gate_part_two=false, targeted_feedback**, 8 GB memory cap | 2025 d9 p2 only (speed-directed repair, `targeted_feedback` on, seven blocks of 5) | 35 | 12/35 | 34% | `m5pro-d9p2-speed-repair.md` |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
@@ -219,6 +221,10 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 
 ### Headline reads (m5pro-64)
 
+- **2025 d9 p2, registered speed-directed repair, one draft: `targeted_feedback` off 8/35 → on
+  12/35** (`m5pro-d9p2-speed-repair.md`). One-sided Fisher p = 0.21: inconclusive. The gap is in
+  first drafts (4 → 10), which the flag does not touch; repair rescued 4 trials off and 2 on, and
+  none of 39 repairs after a timeout or memory-cap stop solved.
 - **2025 d9 p2, registered replication, every trial posed Part 2 with the verified Part 1
   program: k1 13/35 → k3 16/35** (`m5pro-d9p2-replication.md`). One-sided Fisher p = 0.31: not
   re-established. Drafts were correct 20% of the time (28/140), which predicts 49% at k3 against

@@ -112,7 +112,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
                         help="Run each problem N times; the pipeline is non-deterministic, "
                              "so a single run is not evidence (default 1)")
     parser.add_argument("--include-replay", action="store_true",
-                        help="Persist prompts and generated code for replay")
+                        help="Save each attempt's prompt, raw response and code in the result file")
     parser.add_argument("--dry-run", action="store_true",
                         help="Score existing recorded solutions without calling a model")
     parser.add_argument("--debug", action="store_true")
