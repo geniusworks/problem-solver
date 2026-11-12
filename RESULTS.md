@@ -1,6 +1,6 @@
 # Results: measuring whether coordinating LLM attempts beats a single one
 
-*Report as of 2026-11-11. Its headline figures are recomputed from the run tables by
+*Report as of 2026-11-12. Its headline figures are recomputed from the run tables by
 `dev/recompute_results.py`, which CI runs against this file.*
 
 ## Abstract
