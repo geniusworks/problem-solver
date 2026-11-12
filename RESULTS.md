@@ -147,6 +147,17 @@ The project argued three reasons that coordinating several attempts should beat 
 | **2. economics** | many cheap draws + a verifier beat one expensive pass at equal cost | ⚖️ **splits by which cost you pay** (one trial on 8 problem-parts) |
 | **3. portfolios** | diverse models decorrelate error | ➖ **not supported where measured**: the one complementary pair was one-way, so choosing the better model gave the gain |
 
+Why each arm was expected to hold, as argued before it was measured:
+
+1. **pass@k.** A model samples from a distribution. On problems it can *sometimes* solve, the
+   modal answer is not reliably right, but the right one appears among several draws, and a
+   verifier can pick it out. A stronger model needs fewer draws, but the gap should reappear at its
+   own harder frontier.
+2. **Economics.** Where correctness is checkable, many cheap draws plus selection could beat one
+   expensive pass at equal or lower cost, a trade that improves as the cost per draw falls.
+3. **Portfolios.** Different models have different blind spots; an ensemble wins where their
+   mistakes are uncorrelated.
+
 
 ## The harness hid Part 1, and that looked like a capability limit
 
@@ -398,6 +409,25 @@ Part 2 defect: four times the draws bought a ~25%-per-draw parsing failure and d
 problem that emitted identical `TypeError`s every time.
 
 ---
+
+### Earlier findings, on smaller models
+
+Measured on the 16 GB machine with smaller models, before the reference model and before the
+harness fix; each is a committed A/B in `dev/progress/`.
+
+- **Single runs are noise.** Across byte-identical configurations, 4 of 6 baseline problems
+  flipped between solved and unsolved, so every comparison here uses repeat trials.
+- **Several drafts helped.** At temperature 0.7, three drafts per model lifted the solve rate on
+  2024 d1–3 from 39% to 61% and took 0 → 3 of 6 problems to solved in every trial, with the oracle
+  choosing among the drafts (`milestone-e-self-consistency.md`).
+- **Plurality of executed answers as a selector without the oracle** picked the correct answer 10
+  of 11 times on that sample (`milestone-e-answer-consensus.md`).
+- **Model capability dominated the hard problems.** On 2024 d4–7 the original 7B baseline solved 1
+  of 8; two newer models that also fit 16 GB, `qwen3.5:9b` and `gemma4:12b`, solved 5 of 8
+  (`scale-2024-d4-7.md`, `9b-confirmation-d4-7.md`, `model-bakeoff-gemma4-vs-9b.md`).
+- **Reasoning models needed thinking switched off.** Left to think, `qwen3.5:9b` emitted tens of
+  thousands of characters of reasoning and never reached code; `enable_thinking=false` made it a
+  direct coder.
 
 ## What the measurements cost in credibility, and why that matters
 

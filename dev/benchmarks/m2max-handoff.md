@@ -201,4 +201,4 @@ The thesis is scale-invariant only if voting still helps where the *strong* mode
 - `dev/benchmarks/cross-machine-results.md` — the results table + the m2max run plan.
 - `dev/progress/`: `gemma4-samp3-confirmation.md`, `ensemble-samp3-d4-7.md`,
   `9b-confirmation-d4-7.md`, `9b-timeout-investigation.md` — the frontier findings.
-- `README.md` §"Does orchestrated voting scale?" — the thesis this testing is meant to settle.
+- `RESULTS.md`, "The thesis, and what happened to each arm" — the thesis this testing is meant to settle.

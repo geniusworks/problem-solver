@@ -50,7 +50,7 @@ neither:         d5 p2, d6 p2
 
 Their errors *appeared* decorrelated on the hard Part 2s, so the *union* looked like **6/8** — one
 more than either alone — a cheap M1 test of the "diverse portfolios decorrelate error" arm of the
-orchestration thesis (README, "Does orchestrated voting scale?").
+orchestration thesis (`RESULTS.md`, "The thesis, and what happened to each arm").
 
 > **TESTED — it did not hold (`ensemble-samp3-d4-7.md`).** The combined `gemma4:12b|qwen3.5:9b` samp3
 > run got **5/8, not 6/8**, at ~2.2× wall. Both models participated fully, but neither solved d7 p2

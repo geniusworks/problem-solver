@@ -69,7 +69,7 @@ ensembling where members have genuinely robust, distinct strengths.)
 - The cheap-M1 ensemble lever **did not pay off**: 5/8, same as gemma4 alone, at ~2.2× cost.
 - The "6/8 union" I predicted in `gemma4-samp3-confirmation.md` **was tested and did not hold** —
   recording the correction.
-- Refined takeaway for the thesis (README "Does orchestrated voting scale?"): ensemble diversity is
+- Refined takeaway for the thesis (`RESULTS.md`, "The thesis, and what happened to each arm"): ensemble diversity is
   not free correctness; it pays only when members' distinct solves are *reproducible*. The lever that
   would actually attack d7 p2 is **more samples on that problem**, or a **stronger model** — both of
   which the m2max-32 / 30B+ runs are positioned to test — not a second same-tier model.
