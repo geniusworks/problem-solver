@@ -13,6 +13,7 @@ To change a published figure: change the docs, update the claim here, same PR.
 
 import argparse
 import csv
+import hashlib
 import json
 import math
 import re
@@ -315,6 +316,18 @@ CLAIMS = [
 ]
 
 
+def social_card_rendered() -> List[str]:
+    """The PNG was rendered from the current HTML (dev/render_social_preview.py records it)."""
+    html = REPO_ROOT / "assets" / "social-preview.html"
+    record = REPO_ROOT / "assets" / "social-preview.rendered-from"
+    current = hashlib.sha256(html.read_bytes()).hexdigest()
+    recorded = record.read_text().split()[1] if record.exists() else None
+    if recorded == current:
+        return []
+    return ["assets/social-preview.png was not rendered from the current HTML; "
+            "run venv/bin/python dev/render_social_preview.py"]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--check", action="store_true", help="exit 1 on any mismatch")
@@ -332,6 +345,10 @@ def main() -> int:
         for problem in problems:
             print(f"        {problem}")
     print(f"{len(CLAIMS) - failures} of {len(CLAIMS)} claims match")
+    card = social_card_rendered()
+    for problem in card:
+        print(f"FAIL  social card: {problem}")
+    failures += bool(card)
     return 1 if failures and args.check else 0
 
 

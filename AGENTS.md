@@ -95,6 +95,15 @@ general code.
   whether a test is one- or two-sided; round a lower bound down, never up; keep what was measured
   apart from what is argued. Every figure README, RESULTS or the social card publishes is a claim
   in `dev/recompute_results.py`.
+- **Standing order: a changed result is updated everywhere it is stated, in the same PR.** A run
+  or analysis that moves a published figure (a rate, p-value, interval, verdict, count or corpus
+  total) updates README, RESULTS, PLAN, `checkpoint.md`, the `dev/progress/` write-ups that quote
+  it, `cross-machine-results.md`, and the social card: `assets/social-preview.html`, then
+  `assets/social-preview.png` rendered from it with `venv/bin/python dev/render_social_preview.py`.
+  Search for the old value (`git grep`) rather than relying on memory, and add or update the
+  claim in `dev/recompute_results.py`; its `--check` fails when a published figure drifts from
+  the data or when the PNG was not rendered from the current HTML. A new verdict on a thesis arm
+  changes the arm's status line in each of those files, not only the write-up.
 - **Prune in the PR that orphans something.** A file, dependency (`requirements*.txt`,
   `requirements.lock`, `mypy.ini`), code path, config section, diagram or doc that nothing uses or
   links any more is deleted in the same PR. History lives in git, not in stale files, and docs
