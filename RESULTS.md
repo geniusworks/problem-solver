@@ -503,7 +503,7 @@ in the verified ledger, which it could only be by solving.
 The rule adopted: **a tally maintained by addition in prose is not a measurement.** Recompute from
 the artifacts.
 
-Three further instrument gaps, found in November 2026, changed no reported solve rate. The
+Four further instrument gaps, found in November 2026, changed no reported solve rate. The
 `--config` parser read `targeted_feedback=false` as the string "false", which is truthy, so the
 flag could not be switched off from the command line; the one recorded run that set it asked for
 it on (`targeted-feedback-negative.md`), and it was caught by a fingerprint mismatch before the
@@ -512,7 +512,11 @@ record's draft number had held the trial number instead, so drafts within a tria
 told apart; it is recorded correctly from 2026-11-10 (`draft_index`). And generated code had no
 memory cap on macOS: a runaway draft could slow the machine for up to its 60 s limit, which can
 inflate wall-clock times, and six such drafts re-run at once froze it. Every execution path has
-stopped a process past 8 GB since 2026-11-11.
+stopped a process past 8 GB since 2026-11-11. Generated code also ran in the problem directory,
+beside the accepted answers, where a program could have read them and passed the oracle; it runs
+in an empty directory holding a copy of its input since 2026-11-11 in the solve loop and since
+2026-11-12 in the oracle's own runner, and none of the 1,091 programs saved with their code reads
+any file but its input.
 
 ---
 

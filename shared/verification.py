@@ -70,20 +70,27 @@ def run_solution_file(
 ) -> tuple:
     """Run a solution against the real puzzle input.
 
-    Returns (output, error). The solution is executed with its working directory
-    set to the problem directory, because generated solutions open the bare
-    relative path 'input.txt'.
+    Returns (output, error). Generated solutions open the bare relative path
+    'input.txt', so the solution runs in a fresh, empty directory holding only a
+    copy of the input, as the solve loop's runs do (shared/execution.py). The
+    problem directory itself also holds the accepted answers, and the result must
+    not depend on a program being able to read them.
     """
+    import shutil
+    import tempfile
+
     problem_dir = get_problem_dir(year, day)
     input_path = problem_dir / config.INPUT_FILE
 
     if not input_path.exists():
         return None, f"missing input file: {input_path}"
 
-    stopped, proc = run_capped(
-        [sys.executable, str(path.resolve())], cwd=str(problem_dir),
-        timeout=timeout, max_bytes=memory_cap_bytes(),
-    )
+    with tempfile.TemporaryDirectory(prefix="problem-solver-verify-") as workdir:
+        shutil.copyfile(input_path, Path(workdir) / config.INPUT_FILE)
+        stopped, proc = run_capped(
+            [sys.executable, str(path.resolve())], cwd=workdir,
+            timeout=timeout, max_bytes=memory_cap_bytes(),
+        )
     if stopped == OVER_MEMORY:
         return None, f"over the memory cap of {memory_cap_bytes() // (1024 * 1024)} MB"
     if stopped:
@@ -100,8 +107,8 @@ def verify_solution_code(
 ) -> VerificationResult:
     """Score generated source against ground truth without recording anything.
 
-    The code is written to a scratch file and run with its working directory set
-    to the problem directory, matching how a recorded solution is executed.
+    The code is written to a scratch file and run as a recorded solution is
+    (run_solution_file).
     """
     import tempfile
 

@@ -85,9 +85,10 @@ components.
      environment without `.env` secrets, CPU, file-size and process limits, and a memory cap
      (8 GB per process, `config/resources.yaml`). The cap is an address-space limit on Linux;
      macOS ignores that, so the runners also poll the child's physical footprint (resident plus
-     compressed) and kill it above the cap. A full-input run happens in a fresh temporary
-     directory holding only a copy of `input.txt`, so the accepted answers and verified
-     solutions beside the real input are not reachable by relative path. It keeps network
+     compressed) and kill it above the cap. A full-input run, in the solve loop and in the oracle's
+     own runner (`shared/verification.py`), happens in a fresh temporary directory holding only a
+     copy of `input.txt`, so the accepted answers and verified solutions beside the real input are
+     not reachable by relative path. It keeps network
      access and the user's file permissions, so it is not a security boundary.
    - A correctness **oracle**: candidates are judged against cached accepted AoC
      answers (`shared/ground_truth.py`) and worked examples, with an overfit gate

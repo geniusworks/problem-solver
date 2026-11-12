@@ -45,11 +45,13 @@ def _package_versions() -> Dict[str, Optional[str]]:
 
 
 def _ollama(models: Iterable[str]) -> Dict[str, Any]:
-    """Ollama's version and the digest of each model the run uses."""
+    """Ollama's host, its version and the digest of each model the run uses. The host is
+    recorded because it is read from OLLAMA_HOST, outside the config fingerprint: the same
+    model name served from another machine shares the fingerprint."""
     import requests
 
     host = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
-    info: Dict[str, Any] = {"version": None, "models": {}}
+    info: Dict[str, Any] = {"host": host, "version": None, "models": {}}
     try:
         info["version"] = requests.get(f"{host}/api/version", timeout=3).json().get("version")
         tags = requests.get(f"{host}/api/tags", timeout=3).json().get("models", [])
