@@ -17,6 +17,17 @@ from shared.solving.feedback import FeedbackMixin
 logger = logging.getLogger("shared.solver")
 
 
+def _last_exchange(model: Any) -> Tuple[Optional[str], Optional[str]]:
+    """The prompt and raw reply of the model's last code-producing call, where it keeps them."""
+    return getattr(model, "last_prompt", None), getattr(model, "last_raw_response", None)
+
+
+def _draft_index(cand_id: str) -> int:
+    """The draft number in a candidate id: ``model#s2`` is draft 2, a bare model name draft 0."""
+    _, marker, index = cand_id.rpartition("#s")
+    return int(index) if marker and index.isdigit() else 0
+
+
 @dataclass
 class CandidateVerdict:
     """Judgement on one generated candidate, from _verify_candidate."""
