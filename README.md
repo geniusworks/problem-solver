@@ -541,6 +541,7 @@ shared/
   experiment/            The platform: SolverConfig, results, runner
   verification.py        Correctness oracle (candidate vs accepted answer)
   sandbox.py             What generated code may see: no .env secrets, resource limits
+                         (not a security boundary: network and file reads stay open)
   ground_truth.py        Cached accepted answers
   overfit_detection.py   Overfit gate before a solution is recorded
   solver.py              BaseSolver.solve_problem orchestrator + stages
