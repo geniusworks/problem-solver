@@ -119,11 +119,13 @@ result is generalised, sized the same way. **Not triggered:** the powered test w
 lift (p = 0.31, `m5pro-d9p2-replication.md`). It stays parked; reviving it is GPU time the
 maintainer decides on.
 
-## After AoC 2026: engineering that lowers the cost of the next experiment
+## Engineering that lowers the cost of the next experiment
 
-Deferred until the AoC 2026 runs are done, so the measurement path does
-not change before the event. Each keeps prompts and fingerprints identical on a fixed regression
-set, or is recorded as an instrument change.
+Each keeps prompts and fingerprints identical on a fixed regression set, or is recorded as an
+instrument change. Items 2 and 3 are brought forward to before the AoC 2026 freeze (2026-11-12,
+maintainer's decision), so the submitter is wired into the split code and AoC 2026 runs on code
+the checks below have vouched for; the split must be done by about 2026-11-20, and a step whose
+replay differs unexplained is reverted and waits. The rest wait until after the event.
 
 1. **Remove the dead strategy-learning path from the solve loop.** The strategies a prompt uses
    come from keyword matching on the puzzle text and stay. The learned "effectiveness" scores do
@@ -131,13 +133,20 @@ set, or is recorded as an instrument change.
    always the 0.5 default, and the model provider ignores them. `learning/optimizer.py`'s
    strategy weights and the `strategy_effectiveness` argument go; checked by comparing generated
    prompts before and after.
-2. **Test the whole orchestration with fake models and checkers.** One suite drives
-   `solve_problem` through success, wrong answer, timeout, crash, harness error, repair, fallback
-   and unverified, with no Ollama, puzzle files, learning database or oracle. It guards the
-   outcome categories that earlier measurement bugs blurred.
+2. **Test the whole orchestration with fake models and checkers.** *Done 2026-11-12:*
+   `tests/integration/test_solver_outcome_paths.py` drives `solve_problem` through success, wrong
+   answer, repair rounds, timeout and memory cap with and without guidance, crash, no code,
+   harness error, silent run, unverified, several drafts, consensus and fallback, with no Ollama,
+   puzzle files, learning database or oracle. Alongside it, `tests/unit/test_fingerprint_freeze.py`
+   checks every recorded configuration since October 2026 still hashes to its recorded
+   fingerprint, and `dev/replay_solver.py` replays recorded runs through the real solver with
+   the recorded programs standing in for the model, so a change can be checked against
+   real trials without a GPU.
 3. **Split `shared/solver.py` (1,433 lines) by responsibility:** generation, verification, repair
-   and fallback, with `solver.py` coordinating the stages. Behaviour unchanged, shown by item 2's
-   suite and identical fingerprints and prompts on the regression set.
+   and fallback, with `solver.py` coordinating the stages. *In progress, before the freeze.*
+   Behaviour unchanged, shown by item 2's suite, the fingerprint test, and a replay of the
+   speed-repair and replication runs (70 trials each) identical to the baseline replay of the
+   code before the split; then the `--trials 3` pre-run check.
 4. **One capped runner in `shared/sandbox.py`.** `communicate_capped` (asyncio: the solve loop and
    `dev/rerun_timeouts.py`) and `run_capped` (subprocess: the oracle's own runner and the example
    runs) repeat the same watch loop. They have already drifted: only the asyncio one gives a
