@@ -23,7 +23,8 @@ from shared.quality.code_formatter import format_code
 from shared.tempfiles import TempFileManager
 from shared.config import RESOURCES_CONFIG, DEFAULT_EXECUTION_TIMEOUT
 from shared.sandbox import (
-    OVER_MEMORY, child_env, communicate_capped, configured_limiter, memory_cap_bytes, resource_limiter,
+    OVER_MEMORY, child_env, communicate_capped, configured_limiter, cpu_limit_seconds,
+    memory_cap_bytes, resource_limiter,
 )
 import asyncio
 
@@ -327,7 +328,7 @@ class SolutionExecutor:
                     cwd=workdir,
                     env=child_env(),
                     preexec_fn=resource_limiter(
-                        max_memory, max_processes, cpu_seconds=max(timeout, 1)
+                        max_memory, max_processes, cpu_seconds=cpu_limit_seconds(timeout)
                     ),
                 )
 

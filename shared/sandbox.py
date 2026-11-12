@@ -60,6 +60,19 @@ def child_env() -> Dict[str, str]:
     return env
 
 
+# How far the CPU-time limit sits above the wall-clock timeout. The limit only backstops a
+# process that ignores the timeout's SIGTERM; set equal to the timeout, a program that keeps a
+# core busy reached it as the timeout's 0.2 s watchdog poll came round, and the kernel's kill
+# was reported as a crash ("Process failed: Unknown error") instead of a timeout, in 6 attempts
+# of the speed-repair test (2026-11-11/12). Above the timeout plus its 5 s grace, it never races.
+CPU_BACKSTOP_SECONDS = 10
+
+
+def cpu_limit_seconds(timeout_seconds: float) -> int:
+    """The RLIMIT_CPU for a run whose wall-clock timeout is `timeout_seconds`."""
+    return max(int(timeout_seconds), 1) + CPU_BACKSTOP_SECONDS
+
+
 def resource_limiter(
     max_memory_mb: int, max_processes: int, cpu_seconds: int
 ) -> Optional[Any]:
@@ -68,7 +81,8 @@ def resource_limiter(
     Applied limits, and what is genuinely enforced:
 
     - RLIMIT_CPU     CPU-seconds. Backstops the wall-clock timeout against a busy
-                     loop that ignores SIGTERM.
+                     loop that ignores SIGTERM; callers pass cpu_limit_seconds(timeout),
+                     which stays clear of the timeout.
     - RLIMIT_FSIZE   Maximum file size the solution can write.
     - RLIMIT_NPROC   Process count, so a runaway solution cannot fork-bomb.
     - RLIMIT_AS      Address space. Works on Linux; **silently unavailable on
@@ -110,7 +124,7 @@ def configured_limiter(timeout_seconds: float) -> Optional[Any]:
     return resource_limiter(
         execution.get("max_memory_mb", 512),
         execution.get("max_processes", 1),
-        cpu_seconds=max(int(timeout_seconds), 1),
+        cpu_seconds=cpu_limit_seconds(timeout_seconds),
     )
 
 
