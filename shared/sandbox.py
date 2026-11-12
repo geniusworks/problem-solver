@@ -138,9 +138,10 @@ def footprint_bytes(pid: int) -> int:
 
 
 async def communicate_capped(
-    process: "asyncio.subprocess.Process", timeout: float, max_bytes: int
+    process: "asyncio.subprocess.Process", timeout: float, max_bytes: int, min_free: int = 0
 ) -> Tuple[Optional[str], bytes, bytes]:
-    """Wait for `process`, stopping it past `timeout` seconds or `max_bytes` resident memory.
+    """Wait for `process`, stopping it past `timeout` seconds, past `max_bytes` of physical
+    footprint, or when the machine has less than `min_free` bytes available.
 
     Returns (stopped, stdout, stderr): stopped is None when the process finished
     on its own, else TIMED_OUT or OVER_MEMORY. A timed-out process gets SIGTERM
@@ -150,7 +151,8 @@ async def communicate_capped(
     deadline = time.monotonic() + timeout
     stopped: Optional[str] = None
     while not output.done():
-        if footprint_bytes(process.pid) > max_bytes:
+        if (footprint_bytes(process.pid) > max_bytes
+                or (min_free and psutil.virtual_memory().available < min_free)):
             stopped = OVER_MEMORY
             process.kill()
             break

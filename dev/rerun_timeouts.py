@@ -8,11 +8,9 @@ Reports how many were correct but slow, wrong, or still too slow.
 Memory is not capped by the sandbox on macOS (RLIMIT_AS is unavailable there,
 see shared/sandbox.py), and drafts that time out are often brute force that
 grows without bound: six of them at once exhausted a 64 GB machine. So each
-draft runs under a watchdog that kills it when its physical footprint passes
---max-memory-gb, or when the machine has less than --min-free-gb available,
-reported as "over the memory cap". The footprint counts compressed pages,
-which resident size does not: a grid of zeros compresses so well that a draft
-can show a few GB resident while holding tens of GB.
+draft runs under the sandbox's watchdog, which kills it when its physical
+footprint passes --max-memory-gb or the machine has less than --min-free-gb
+available, reported as "over the memory cap".
 
 Each verdict is printed as it lands; --done skips drafts already in an earlier
 output file, so a stopped run resumes.
@@ -24,7 +22,6 @@ output file, so a stopped run resumes.
 import argparse
 import asyncio
 import collections
-import ctypes
 import json
 import sys
 import tempfile
@@ -35,10 +32,8 @@ from typing import Any, Dict, Iterable, Iterator, Tuple
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
-import psutil  # noqa: E402
-
 from shared.config import RESOURCES_CONFIG  # noqa: E402
-from shared.sandbox import child_env, resource_limiter  # noqa: E402
+from shared.sandbox import child_env, communicate_capped, resource_limiter  # noqa: E402
 
 
 Draft = Tuple[str, Dict[str, Any], Dict[str, Any]]
@@ -56,28 +51,10 @@ def timed_out_drafts(paths: Iterable[str]) -> Iterator[Draft]:
                     yield run["config"]["name"], result, attempt
 
 
-def footprint_bytes(pid: int) -> int:
-    """A process's physical footprint (resident plus compressed), as Activity Monitor shows
-    it; resident size where libproc is unavailable."""
-    if _LIBPROC is not None:
-        usage = (ctypes.c_uint64 * 40)()
-        # proc_pid_rusage(RUSAGE_INFO_V2): after a 16-byte uuid, ri_phys_footprint is the
-        # eighth 64-bit field.
-        if _LIBPROC.proc_pid_rusage(pid, 2, ctypes.byref(usage)) == 0:
-            return int(usage[9])
-    try:
-        return int(psutil.Process(pid).memory_info().rss)
-    except psutil.Error:
-        return 0
-
-
-_LIBPROC = ctypes.CDLL("/usr/lib/libproc.dylib") if sys.platform == "darwin" else None
-
-
 async def run_capped(code: str, input_file: Path, timeout: int, max_bytes: int,
                      min_free: int = 0) -> Tuple[str, str]:
     """Run a draft as the harness does (module file, input path as argv, sandboxed env and
-    limits), killing it if it outlives `timeout` or its memory passes `max_bytes`.
+    limits) under the shared watchdog (`shared.sandbox.communicate_capped`).
     Returns (status, stdout) with status "ok", "failed", "timed out" or "over the memory cap"."""
     execution = RESOURCES_CONFIG.get("execution", {})
     with tempfile.TemporaryDirectory() as tmp:
@@ -90,23 +67,10 @@ async def run_capped(code: str, input_file: Path, timeout: int, max_bytes: int,
             preexec_fn=resource_limiter(execution.get("max_memory_mb", 512),
                                         execution.get("max_processes", 1), cpu_seconds=timeout),
         )
-        output = asyncio.ensure_future(process.communicate())
-        status = "ok"
-        deadline = time.time() + timeout
-        while not output.done():
-            if (footprint_bytes(process.pid) > max_bytes
-                    or psutil.virtual_memory().available < min_free):
-                status = "over the memory cap"
-            elif time.time() > deadline:
-                status = "timed out"
-            if status != "ok":
-                process.kill()
-                break
-            await asyncio.sleep(0.2)
-        stdout, _ = await output
-        if status == "ok" and process.returncode != 0:
-            status = "failed"
-        return status, stdout.decode()
+        stopped, stdout, _ = await communicate_capped(process, timeout, max_bytes, min_free)
+    if stopped:
+        return stopped, stdout.decode()
+    return ("ok" if process.returncode == 0 else "failed"), stdout.decode()
 
 
 async def rerun(gate: asyncio.Semaphore, timeout: int, max_bytes: int, min_free: int, name: str,
