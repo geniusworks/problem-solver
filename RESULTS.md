@@ -93,7 +93,8 @@ what it is, how the pipeline works, how to run it — see the [README](README.md
 | Checking | each candidate runs on the full puzzle input in a sandbox (no `.env` secrets; 60 s; 8 GB memory cap from 2026-11-11) and is compared with the accepted answer |
 | Machines | M2 Max / 32 GB (Ollama 0.32.11, then 0.32.14) for arms 1 and 2 under the original harness; M5 Pro / 64 GB (Ollama 0.34.4, then 0.40.11) since 2026-10-12 |
 | Trials | three per cell unless stated; the registered tests 20 or 35 per arm |
-| Data | every run exported to `dev/results/` (runs, trials, attempts); headline figures recomputed by `dev/recompute_results.py` |
+| Data | every run exported to `dev/results/`: runs (configuration, fingerprint, and since 2026-11-09 commit, Ollama version, model digests, machine), trials, attempts (with each execution error's kind); headline figures recomputed by `dev/recompute_results.py` |
+| Identity | the fingerprint identifies the configuration; the code and prompt templates are identified by the commit each run records |
 
 Per-run machine, Ollama and package versions are in `dev/benchmarks/cross-machine-results.md`.
 Generation is not seeded: the pipeline is non-deterministic by design, and repeat trials are the
@@ -109,6 +110,9 @@ control for it.
 - **Trial:** one complete solve attempt on a cell: its drafts, then repairs if every draft failed.
   A trial is **solved** when any of its drafts or repairs outputs the accepted answer on the full
   input. Because the oracle does this choosing, multi-draft rates are those of a perfect verifier.
+  "Correct" is per instance: the account's one input and its accepted answer, plus an overfit
+  gate against programs that copy example values; it is not a proof of correctness on every
+  input.
 - **Reached Part 2:** under the corrected harness a trial solves Part 1 first; if that fails, its
   Part 2 is *not reached* and is excluded from Part 2 rates unless stated. The 2025 d9 p2
   replication posed Part 2 directly with a verified Part 1 program, so every trial reached it.
@@ -593,10 +597,11 @@ had to be removed before the measurements meant anything, and the negative resul
 - **Code and configuration:** this repository; each result's write-up in `dev/progress/` gives
   its exact command, and every result file records the commit, Ollama version, model digest and
   package versions it ran with (since 2026-11-09). Packages are pinned in `requirements.lock`.
-- **Data:** per-run, per-trial and per-attempt outcomes, timings, token counts and example
-  verdicts for all 108 runs are in `dev/results/`. `venv/bin/python dev/recompute_results.py`
-  recomputes this document's headline figures from those tables, and CI fails when the two
-  disagree.
+- **Data:** per-run, per-trial and per-attempt outcomes, timings, token counts, example verdicts
+  and execution-error kinds for all 108 runs are in `dev/results/`, with each run's commit, Ollama
+  version, model digests and machine where recorded (since 2026-11-09).
+  `venv/bin/python dev/recompute_results.py` recomputes this document's headline figures from
+  those tables, and CI fails when the two disagree.
 - **Not public:** puzzle text, puzzle inputs and accepted answers (Advent of Code asks that they
   not be redistributed), and therefore the raw result files, whose saved prompts contain puzzle
   text. A fresh clone cannot run the oracle until you supply your own AoC session (see the

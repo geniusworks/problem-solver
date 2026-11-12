@@ -37,9 +37,11 @@ and, more to the point, whether that could be *measured* rather than asserted.
 >   lost on tokens (one trial, 8 problem-parts).
 > - **The caveat** — the puzzles are public and pre-date the models, so a model may have trained on
 >   solutions. That softens the *"how capable is the model?"* numbers and any comparison that
->   changes the prompt or the model, not comparisons of one strategy against another with the same
->   model, prompt and problems. Every result here is one model family on one benchmark; the limits
->   are listed in [RESULTS.md](RESULTS.md#scope-and-limits).
+>   changes the prompt or the model. Comparisons of one strategy against another with the same
+>   model, prompt and problems are less exposed, but their effect sizes may not carry over to
+>   unseen problems; AoC 2026 is the test. "Solved" means correct on this account's puzzle input.
+>   Every result here is one model family on one benchmark; the limits are listed in
+>   [RESULTS.md](RESULTS.md#scope-and-limits).
 > - **Where to go next** — [RESULTS.md](RESULTS.md) for the full science · [How it works](#how-it-works)
 >   for the pipeline · [Getting started](#getting-started) to run it yourself.
 
@@ -48,7 +50,9 @@ and, more to the point, whether that could be *measured* rather than asserted.
 
 - **Oracle** — the automatic judge. It runs the model's code against the real puzzle input and
   compares the output to the known-correct answer. Cheap and exact, which is what makes everything
-  else measurable.
+  else measurable. *Verified* means correct on this account's input: one instance, not a proof
+  that the program is right for every input. An overfit gate rejects programs that copy example
+  values into the code.
 - **The model's *frontier*** — the problems it solves *sometimes but not always*. Easy ones it always
   gets; impossible ones it never does; the frontier is the uncertain band in between — where
   coordinating attempts can actually help.
@@ -65,8 +69,10 @@ and, more to the point, whether that could be *measured* rather than asserted.
   get: on 2025 d9 p2, choosing by the worked example alone solved 12 of 35 three-draft trials and
   took a wrong answer in 15, where the oracle solved 14 from the same drafts.
 - **Contamination** — the puzzles are public and predate the models, so a model may have trained on
-  solutions to them. It muddies *"how capable is the model"*, and any comparison that changes the
-  prompt or the model, but not a comparison of strategies with the same model, prompt and problems.
+  solutions to them. It muddies *"how capable is the model"* and any comparison that changes the
+  prompt or the model. A comparison of strategies with the same model, prompt and problems is less
+  exposed, since both arms share whatever was memorized, but memory can still shift the per-draft
+  rate that sets a strategy's gain, so effect sizes here may not carry over to unseen problems.
 
 </details>
 
@@ -465,8 +471,9 @@ anyway. This repo is built so that constraint is structural rather than a matter
   quote **short fragments of the public worked *examples*** (never real inputs) where a specific
   parsing failure has to be shown to be understood.
 - **Raw run artifacts** (`dev/experiments/*.json`) are gitignored too — they embed accepted
-  answers, generated source and execution output. Their outcomes, timings and token counts, with
-  none of that, are committed as tables in `dev/results/`, and `dev/recompute_results.py`
+  answers, generated source and execution output. Their outcomes, timings, token counts, example
+  verdicts, error kinds and run environments (commit, Ollama version, model digests), with none
+  of that, are committed as tables in `dev/results/`, and `dev/recompute_results.py`
   recomputes the published figures from them (CI checks that the docs match). That includes the
   example-only selection analysis, which needs only each draft's outcome and example verdict.
   What cannot be repeated from the repo is re-executing saved drafts (the 600 s timeout re-run):
