@@ -23,8 +23,10 @@ and, more to the point, whether that could be *measured* rather than asserted.
 >   apparent capability cliff was mostly missing information. *Caveat:* the puzzles are public,
 >   and the added Part 1 text is also their published wording, which may cue recall; a test that
 >   separates the two is planned.
-> - **Sampling can only help where a single draft succeeds part of the time**, because draws
->   behave as independent. It took the model's "sometimes" problems from **42% to 75%** under the
+> - **Extra attempts pay off about as independent tries predict.** In three registered tests,
+>   three drafts solved 49% of 75 trials where the single-draft rates predicted 52%, so how often
+>   one attempt succeeds tells you what more attempts will buy: a lot in the middle, little near
+>   0% or 100%. Sampling therefore only helps where a single draft succeeds part of the time. It took the model's "sometimes" problems from **42% to 75%** under the
 >   original harness, replicated on a second year. Under the corrected harness few problems sit in that
 >   band, and on the one that does, 2025 d9 p2, the lift was not re-established: a registered
 >   replication gave 13/35 at one draft and 16/35 at three (one-sided p = 0.31; 95% interval for
@@ -114,8 +116,10 @@ it. In order of how much they changed the project:
 1. **The harness, not the strategy, was the biggest effect.** A Part 2 prompt without its Part 1
    statement looked like a capability cliff; restoring it took one problem from 6/20 to 19/19
    with nothing else changed. → [The harness hid Part 1](RESULTS.md#the-harness-hid-part-1-and-that-looked-like-a-capability-limit)
-2. **Sampling** lifted the "sometimes" problems under the original harness and was not
-   re-established under the corrected one; drafts behave as independent tries throughout.
+2. **Extra attempts pay off as independent tries predict** (52% predicted, 49% measured, three
+   tests), so their value follows from one attempt's success rate. Sampling lifted the
+   "sometimes" problems under the original harness and was not re-established under the
+   corrected one.
    → [Arm 1](RESULTS.md#arm-1--sampling-at-the-frontier)
 3. **A second model helped by being chosen, not mixed.** → [Arm 3](RESULTS.md#arm-3--choose-the-better-model-a-mix-had-nothing-to-add)
 4. **Cheap draws win on time and lose on tokens** (one trial). → [Arm 2](RESULTS.md#arm-2--cheap-draws-win-on-time-and-lose-on-tokens)
