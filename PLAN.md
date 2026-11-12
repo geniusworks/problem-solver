@@ -23,7 +23,11 @@ on:
    The registration also names, as secondary measures on every attempt, how often the worked
    examples accept an answer the oracle rejects and reject one it accepts ("Beyond AoC", step 1):
    no extra GPU time, and every 2026 problem instead of one.
-2. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered
+2. **Speed-directed repair on 2025 d9 p2.** Registered in `m5pro-d9p2-speed-repair.md`:
+   `targeted_feedback` off against on, one draft, 35 trials each in alternating blocks. Its result
+   decides whether the guidance is switched on for AoC 2026, so it runs before the freeze. About
+   8–9 GPU-hours; powered for a large effect only. *Waits on* the maintainer's go.
+3. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered
    design in `part2-context-heldout-plan.md`: Part 2 cold against Part 2 with the Part 1 context,
    on the AoC 2026 Part 2s, about 4.6 GPU-hours over the event. *Waits on the AoC 2026 item*
    (its decision, and the accepted answers to score against); the harness option it needs,
@@ -94,9 +98,8 @@ worked example (`m5pro-d9p2-power-aoc.md`), and 94 of 138 in its replication
 600 s under an 8 GB memory cap, none of that replication's 45 timed-out drafts finished
 correctly: 26 hit the cap (most within 10 s), 17 were still running, 2 answered wrong. On 2025 d9
 p2, then, a longer limit would not have helped within 600 s; efficiency guidance is what would
-have to fix them. **The trigger is met on 2025 d9 p2** (2026-11-11). Running the A/B, about 10–20
-GPU-hours with a registered design, *waits on a maintainer decision:* in the slack before the
-AoC 2026 freeze or after the event.
+have to fix them. **The trigger is met on 2025 d9 p2** (2026-11-11), and the A/B is registered
+(`m5pro-d9p2-speed-repair.md`, "Open" item 2).
 
 ## Conditional: a second reference model
 

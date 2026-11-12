@@ -37,8 +37,9 @@ depend on an exact checker; on 2025 d9 p2 the example passed 59 of the 104 Part 
 oracle rejected in the power test and 137 of 249 in the replication, where a selector using it
 alone took a wrong draft in 15 of 35 trials. What is next, in priority order, is `PLAN.md`,
 "Open": AoC 2026 (needs the
-submitter decision by about 2026-11-25); then the test of whether the Part 1 context informs or
-cues recall, designed for AoC 2026 (`part2-context-heldout-plan.md`). Nothing starts without the
+submitter decision by about 2026-11-25); the registered speed-directed repair test on 2025 d9 p2,
+before the freeze (`m5pro-d9p2-speed-repair.md`, waits on the maintainer's go); then the test of
+whether the Part 1 context informs or cues recall, designed for AoC 2026 (`part2-context-heldout-plan.md`). Nothing starts without the
 maintainer's go. The sections below are the dated record, newest
 first.
 
