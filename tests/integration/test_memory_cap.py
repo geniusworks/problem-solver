@@ -81,3 +81,11 @@ def test_the_example_check_stops_a_draft_at_the_cap_not_the_timeout():
     start = time.monotonic()
     assert _run_on_example(GROWS, "1\n", timeout=25) is None
     assert time.monotonic() - start < 15
+
+
+def test_the_footprint_counts_memory_a_process_holds():
+    import os
+    held = bytearray(300 * 1024 ** 2)
+    for i in range(0, len(held), 16384):
+        held[i] = 1
+    assert sandbox.footprint_bytes(os.getpid()) > 300 * 1024 ** 2

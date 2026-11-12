@@ -15,7 +15,10 @@ Two things are constrained:
 - **Resources.** CPU time, file size, process count and (on Linux) address
   space, via setrlimit in the child before it execs. macOS ignores the
   address-space limit, so memory is also watched from outside: the runners
-  below poll the child's resident memory and kill it above the same cap. A
+  below poll the child's physical footprint and kill it above the same cap.
+  The footprint counts compressed pages, which resident size does not: a grid
+  of zeros compresses so well that a draft can show a few GB resident while
+  holding tens of GB. A
   draft that grows without bound (brute force over a huge grid can pass 8 GB in
   seconds) otherwise exhausts the machine; six at once froze a 64 GB Mac.
 
@@ -25,8 +28,10 @@ one secret the process itself carried.
 """
 
 import asyncio
+import ctypes
 import os
 import subprocess
+import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -114,7 +119,18 @@ def memory_cap_bytes() -> int:
     return max(int(RESOURCES_CONFIG.get("execution", {}).get("max_memory_mb", 512)), 1) * 1024 * 1024
 
 
-def _resident_bytes(pid: int) -> int:
+_LIBPROC = ctypes.CDLL("/usr/lib/libproc.dylib") if sys.platform == "darwin" else None
+
+
+def footprint_bytes(pid: int) -> int:
+    """A process's physical footprint (resident plus compressed), as Activity Monitor
+    shows it; resident size where libproc is unavailable."""
+    if _LIBPROC is not None:
+        usage = (ctypes.c_uint64 * 40)()
+        # proc_pid_rusage(RUSAGE_INFO_V2): after a 16-byte uuid, ri_phys_footprint is the
+        # eighth 64-bit field.
+        if _LIBPROC.proc_pid_rusage(pid, 2, ctypes.byref(usage)) == 0:
+            return int(usage[9])
     try:
         return int(psutil.Process(pid).memory_info().rss)
     except psutil.Error:
@@ -134,7 +150,7 @@ async def communicate_capped(
     deadline = time.monotonic() + timeout
     stopped: Optional[str] = None
     while not output.done():
-        if _resident_bytes(process.pid) > max_bytes:
+        if footprint_bytes(process.pid) > max_bytes:
             stopped = OVER_MEMORY
             process.kill()
             break
@@ -173,7 +189,7 @@ def run_capped(
             pass
         if stopped:
             continue
-        if _resident_bytes(process.pid) > max_bytes:
+        if footprint_bytes(process.pid) > max_bytes:
             stopped = OVER_MEMORY
             process.kill()
         elif time.monotonic() > deadline:
