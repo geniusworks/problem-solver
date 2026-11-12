@@ -31,7 +31,7 @@ Done 2026-11-11:
 - **The registered replication on 2025 d9 p2: not re-established** (`m5pro-d9p2-replication.md`).
   k1 13/35, k3 16/35, every trial posed Part 2 with the verified Part 1 program; one-sided Fisher
   p = 0.31, 8.6 points apart against the registered 10. The draws were independent (20% per draft
-  predicts 49% at k3; 46% measured); the prediction assumed 27%. 16.2 GPU-hours.
+  predicts 49% at k3; 46% measured); the prediction assumed 27%. 16.3 GPU-hours.
 
 Done 2026-11-09:
 - **The powered arm-1 test on 2025 d9 p2: inconclusive** (`m5pro-d9p2-power-aoc.md`). k1 5/15,
@@ -87,9 +87,10 @@ those cells, A/B `targeted_feedback` on them under the corrected harness. Regist
 The pattern is now recorded on a third hard cell: on 2025 d9 p2, 37 of 48 timeouts had passed the
 worked example (`m5pro-d9p2-power-aoc.md`), and 94 of 138 in its replication
 (`m5pro-d9p2-replication.md`); the two cells named above have no verdicts yet. Re-executed at
-600 s, none of that replication's 45 timed-out drafts was correct but slow: 26 hit an 8 GB memory
-cap, 17 were still running, 2 answered wrong. So on 2025 d9 p2 the timeouts are runaway programs,
-which is what efficiency guidance would have to fix; a longer limit would not.
+600 s under an 8 GB memory cap, none of that replication's 45 timed-out drafts finished
+correctly: 26 hit the cap (most within 10 s), 17 were still running, 2 answered wrong. On 2025 d9
+p2, then, a longer limit would not have helped within 600 s; efficiency guidance is what would
+have to fix them.
 
 ## Conditional: a second reference model
 
@@ -494,7 +495,7 @@ problems. In order:
       stage C; arm 3 is recorded as one-way dominance.
       Stage A done 2026-11-08, 5.9 h: two reference-favoured cells, 2024 d15 p2 and d20 p2.
       ✅ **Deciders done 2026-11-08: neither holds** (d15 p2 reference 0/10; d20 p2 9/10 against
-      6/10, p = 0.15). Stage C not run; arm 3 recorded as one-way (`arm3-portfolio-test.md`).
+      6/10 over all trials, 9/9 against 6/7 over trials that reached Part 2, p = 0.44). Stage C not run; arm 3 recorded as one-way (`arm3-portfolio-test.md`).
 
    **Procedure, per model, in that order** (steps 1 and 2 done 2026-11-01 for all three: 6/6 each
    on the plumbing check, predictions in `arm3-precheck-gemma4-31b.md`,
@@ -542,7 +543,8 @@ problems. In order:
   frontier?"** Measured: **42% → 75%**, and now decomposed — 1 sample+repair 42%, 3 samples no repair
   58%, 3 samples+repair **75%**. Each partial configuration beats one sample with repair, and the combination beats both; the
   one-draft, no-repair corner was not run, so the two levers cannot be separated.
-  (`passk-ab-d13-d15.md`.)
+  (`passk-ab-d13-d15.md`.) *(2026-11-11: measured under the original harness; not re-established
+  under the corrected one, `m5pro-d9p2-replication.md`.)*
 - **The d4–7 comparison set is retired** (solved out at 100%); **d8–15 is the working instrument**
   (56%), and the frontier band within it is classified.
 
@@ -565,7 +567,8 @@ Remaining under this heading: **widen the replication.** Two "sometimes" problem
 successful replication attempt, not a confirmation at scale. More frontier problems — 2024 d16–25
 (uncached), or a third year — would firm up the effect size rather than just its direction.
 *(2026-11-08: 2024 d16–25 has since been scanned and banded, and arm 1 was narrowed under the
-corrected prompts; see the open items at the top of this section.)*
+corrected prompts. 2026-11-11: not re-established under them, `m5pro-d9p2-replication.md`; the
+open items are at the top of this file.)*
 
 ### 2. Draw diversity — temperature RULED OUT; strategy-level diversity is the live lever
 

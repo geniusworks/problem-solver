@@ -143,7 +143,8 @@ Runs: `m5pro-d15p2-ref-k1-n10`, `1ac712678732`, 6,862 s, 765k tokens
   solve more than muse, so **muse's d15 p2 decider was not run**: one of the four registered runs,
   dropped because no result of it could change the decision. Muse's 1/3 in stage A is the better
   record.
-- **2024 d20 p2: 9/10 against 6/10, p = 0.15.** The reference is ahead, not shown to be. Muse's
+- **2024 d20 p2: 9/9 against 6/7 over trials that reached Part 2, one-sided p = 0.44** (9/10
+  against 6/10 over all trials, p = 0.15). The reference is ahead, not shown to be. Muse's
   four misses were three failed Part Ones (Part One 7/10, against the reference's 9/10) and one
   Part Two with a wrong answer; of the Part Twos it reached it solved 6 of 7, three of them by
   repair.
