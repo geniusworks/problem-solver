@@ -335,7 +335,9 @@ shared/
                          (not a security boundary: network and file reads stay open)
   ground_truth.py        Cached accepted answers
   overfit_detection.py   Overfit gate before a solution is recorded
-  solver.py              BaseSolver.solve_problem orchestrator + stages
+  solver.py              BaseSolver.solve_problem: the orchestrator, problem preparation, records
+  solving/               The stages: generation, consensus, candidates (verify + select),
+                         repair (repair rounds + fallback), feedback (what a repair is told)
   aoc.py                 AoC I/O: session, HTTP, problem fetch + cache
   paths.py               Path primitives (leaf module, no cycles)
   ledger.py              Oracle-gated solution recording

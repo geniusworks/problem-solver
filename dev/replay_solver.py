@@ -69,7 +69,7 @@ def _problem_digest(problem: Any) -> str:
 class RecordedModel:
     """Returns one trial's recorded drafts, then each draft's recorded repairs."""
 
-    def __init__(self, attempts: List[Dict[str, Any]]) -> None:
+    def __init__(self, attempts: List[Dict[str, Any]], workspace: Optional[Path] = None) -> None:
         model_attempts = [a for a in attempts if a.get("stage") in ("generate", "repair")]
         self.drafts: Dict[int, Dict[int, Dict[str, Any]]] = {}
         for attempt in model_attempts:
@@ -84,6 +84,16 @@ class RecordedModel:
         self.last_prompt: Optional[str] = None
         self.last_raw_response: Optional[str] = None
         self.diverged: List[str] = []
+        # Tracebacks in the feedback name the temporary workspace, whose path differs on every
+        # replay; it is hashed as a placeholder so two replays of the same trial compare equal.
+        # The resolved path (/private/var/... on macOS) first: it contains the unresolved one.
+        self.workspace_paths = sorted({str(workspace), str(workspace.resolve())},
+                                      key=len, reverse=True) if workspace else []
+
+    def _without_workspace(self, text: str) -> str:
+        for path in self.workspace_paths:
+            text = text.replace(path, "<workspace>")
+        return text
 
     def _diverge(self, message: str) -> Diverged:
         self.diverged.append(message)
@@ -110,7 +120,7 @@ class RecordedModel:
             raise self._diverge("repair asked for code no recorded draft holds")
         self.rounds[draft] += 1
         round_ = self.rounds[draft]
-        self.feedback.append((draft, round_, _digest(feedback or "")))
+        self.feedback.append((draft, round_, _digest(self._without_workspace(feedback or ""))))
         recorded = self.drafts.get(draft, {}).get(round_)
         if recorded is None:
             raise self._diverge(f"repair {round_} of draft {draft} asked for; none recorded")
@@ -140,7 +150,7 @@ async def replay_trial(run: Dict[str, Any], result: Dict[str, Any], workspace: P
 
     config = _config(run["config"])
     solver = solver_module.BaseSolver(workspace, config=config)
-    model = RecordedModel(result["attempts"])
+    model = RecordedModel(result["attempts"], workspace)
     name = (config.models or ("model",))[0]
     solver.models = {name: model}  # type: ignore[dict-item]
     replayed = await run_problem(solver, result["year"], result["day"], result["part"],

@@ -7,12 +7,12 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-11-12)
 
-**Now: splitting `shared/solver.py` before the AoC 2026 freeze** (`PLAN.md`, "Engineering",
-items 2 and 3), checked by replaying recorded runs through the solver without a GPU; then the
-AoC 2026 submitter decision. The first replay found a harness race (fixed 2026-11-12): from
+**Now: rerunning speed-repair blocks on-b5 and on-b6**, after `shared/solver.py` was split into
+`shared/solving/` (`PLAN.md`, "Engineering", items 2 and 3; a replay of 140 recorded trials
+through the solver is identical before and after); then the AoC 2026 submitter decision. The first replay found a harness race (fixed 2026-11-12): from
 2026-11-11 a busy program's timeout could be recorded as a crash, which cost 3 repairs in the
 speed-repair test's "on" arm their guidance, so its blocks on-b5 and on-b6 meet the registered
-harness-failure rule and are to be rerun, with the maintainer's go. The registered
+harness-failure rule and are to be rerun (approved by the maintainer). The registered
 speed-directed repair test on 2025 d9 p2 finished 2026-11-12 and was **inconclusive**
 (`m5pro-d9p2-speed-repair.md`): `targeted_feedback` off 8/35, on 12/35, one draft, one-sided
 Fisher p = 0.21; the gap is in first drafts, which the flag does not touch, and none of 39 repairs
@@ -40,7 +40,7 @@ independent (27% per draft predicts 61% at k3, 65% measured); 11.9 GPU-hours. Ea
 a verdict (`RESULTS.md`): arm 1 measured and replicated under the original prompts and not
 re-established under the corrected ones; arm 2 splits by cost type; arm 3's one complementary pair was one-way, so the
 ensemble was not run. Ledger 69 verified, 0 wrong (2024 d2 p2 added 2026-11-09 by the sandbox
-plumbing check, 12/12 at k1, `1ac712678732`); tests 363 passing, and CI runs them, `mypy` and
+plumbing check, 12/12 at k1, `1ac712678732`); tests 365 passing, and CI runs them, `mypy` and
 `dev/recompute_results.py --check` on every PR. Generated code now runs without `.env` secrets
 (`shared/sandbox.py`), and each result file records Ollama, model digests and machine. A
 reconciliation pass on 2026-11-08 checked every published claim against the result files and added

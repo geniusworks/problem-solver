@@ -133,11 +133,19 @@ See `.env.example` for available environment variables.
 
 #### Solution Management
 - `execution.py`: sandboxed code execution + `PerformanceMetrics`
-- `solver.py`: `BaseSolver.solve_problem`, a short orchestrator over four stage
-  methods — `_prepare_problem` → `_generate_candidates` → `_reach_consensus` →
-  `_execute_and_repair`. Self-consistency (`samples_per_model`) fans out several
-  candidates per model in the generation stage; the execution stage verifies each
-  against the oracle, repairs, and falls back
+- `solver.py`: `BaseSolver.solve_problem`, a short orchestrator over four stages —
+  `_prepare_problem` → `_generate_candidates` → `_reach_consensus` →
+  `_execute_and_repair` — plus problem preparation, the attempt records and model
+  selection. The other stages live in `solving/` (split out of a 1,433-line
+  `solver.py` on 2026-11-12, behaviour unchanged): `generation.py` draws the
+  candidate pool, where self-consistency (`samples_per_model`) fans out several
+  candidates per model; `consensus.py` holds source consensus and the default-off
+  collaborative improvement; `candidates.py` verifies one candidate against the
+  oracle (`_verify_candidate`, the only copy) and selects among those accepted;
+  `repair.py` runs the verify and repair rounds and the fallback models;
+  `feedback.py` writes what a failed candidate's repair is told. `BaseSolver`
+  takes them as mixins, and the stages reach the ledger writer and the accepted
+  answer through it, so tests replace those in one place
 - `submission/` (top-level package): the real AoC answer submitter, **isolated
   and deliberately unwired** — kept for the solver phase (Milestone F), not
   called from the solve loop
