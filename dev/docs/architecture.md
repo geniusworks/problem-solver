@@ -2,7 +2,9 @@
 
 ## Overview
 
-The Problem Solver is an AI-powered system designed to solve Advent of Code problems. This document outlines its architecture and core components.
+Problem Solver is a research platform for measuring LLM orchestration, with Advent of Code as its
+testbed; secondarily it is an AoC solver. This document outlines its architecture and core
+components.
 
 ## Core Systems
 
@@ -62,8 +64,8 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
    - One SQLite database (`learning/solver.db`) for model performance and
      strategy effectiveness — recorded from the *verified* outcome, not at
      generation time.
-   - Strategy effectiveness tracking and problem-type classification feeding
-     model/strategy selection.
+   - Model ranking reads each model's verified success rate; the strategy-weight
+     half is an unimplemented stub (`learning/optimizer.py`).
    - Optional collaborative improvement phase, enabled via the
      `ENABLE_COLLABORATIVE_IMPROVEMENT` flag (off by default). Any candidate it
      produces goes through the same oracle verification as every other path.
@@ -82,8 +84,8 @@ The Problem Solver is an AI-powered system designed to solve Advent of Code prob
    - Generated code always runs in a child process started by `shared/sandbox.py`: an
      environment without `.env` secrets, CPU, file-size and process limits, and a memory cap
      (8 GB per process, `config/resources.yaml`). The cap is an address-space limit on Linux;
-     macOS ignores that, so the runners also poll the child's resident memory and kill it above
-     the cap. It keeps network access and the user's file permissions.
+     macOS ignores that, so the runners also poll the child's physical footprint (resident plus
+     compressed) and kill it above the cap. It keeps network access and the user's file permissions.
    - A correctness **oracle**: candidates are judged against cached accepted AoC
      answers (`shared/ground_truth.py`) and worked examples, with an overfit gate
      (`shared/overfit_detection.py`). Claimed vs. verified is tracked separately;
@@ -96,14 +98,11 @@ Configuration is layered to separate shared defaults from local settings:
 ### YAML Configuration (Shared Defaults)
 - `config/resources.yaml`: the one live config file — execution/request limits and
   the submission toggle (`shared/config.py` reads it into `RESOURCES_CONFIG`).
-- The former `models.yaml` / `hardware.yaml` / `cache.yaml` were read only by unused
-  constants and their own unit tests; they and their loaders have been removed.
 
 ### Environment Configuration (Local Settings)
-- API keys and credentials
-- Hardware-specific settings
-- Local preferences
-- Debug settings
+- `AOC_SESSION` (the Advent of Code session cookie) and `AOC_CONTACT`
+- `OLLAMA_HOST`, `SOLVER_MODELS`, `MAX_REPAIR_ITERATIONS`
+- `ENABLE_COLLABORATIVE_IMPROVEMENT`, `SUBMIT_SOLUTIONS`, `LOG_LEVEL`
 
 See `.env.example` for available environment variables.
 
@@ -120,7 +119,7 @@ See `.env.example` for available environment variables.
 - Provider-specific error handling
 - Validation error types
 
-#### Core utilities (formerly the `utils.py` grab-bag, now split by concern)
+#### Core utilities
 - `paths.py`: problem path primitives — the repo's leaf layer, imports only
   config, so verification/ground_truth/ledger can depend on it without a cycle
 - `aoc.py`: Advent of Code I/O — session/auth, HTTP, problem fetch + caching
@@ -129,8 +128,7 @@ See `.env.example` for available environment variables.
 - `logging_setup.py`: application logging configuration
 
 #### Solution Management
-- `execution.py`: safe code execution + `PerformanceMetrics` (relocated here
-  from the deleted `testing.py`)
+- `execution.py`: sandboxed code execution + `PerformanceMetrics`
 - `solver.py`: `BaseSolver.solve_problem`, a short orchestrator over four stage
   methods — `_prepare_problem` → `_generate_candidates` → `_reach_consensus` →
   `_execute_and_repair`. Self-consistency (`samples_per_model`) fans out several
@@ -146,7 +144,7 @@ The learning system records performance; model ranking reads it, and the strateg
 an unimplemented stub (`learning/optimizer.py`):
 
 - `database.py`: Performance metrics storage
-- `optimizer.py`: Strategy selection and optimization
+- `optimizer.py`: strategy weights (an unimplemented stub)
 - `schema.sql`: Database schema
 
 ## Data Flow
@@ -167,9 +165,8 @@ an unimplemented stub (`learning/optimizer.py`):
    - Performance metrics collected
 
 4. Learning
-   - Performance data stored
-   - Strategies optimized
-   - Future approach adjusted
+   - Performance data stored from verified outcomes
+   - Model ranking for the next problem reads it (experiments pin their models, so it is inert there)
 
 ## AoC Part Handling Example (2024 Day 1)
 

@@ -54,6 +54,8 @@ either run; every solve was a first draft.
 
 - **Arm 1 under the site's conditions** has one cell at a mid-range per-draft rate: 2025 d9
   p2. A powered k1-vs-k3 needs that cell at more trials, or more cells found at that rate.
+  *(2026-11-11: two registered tests on it followed, inconclusive (`m5pro-d9p2-power-aoc.md`) and
+  then not re-established (`m5pro-d9p2-replication.md`).)*
 - **Arm-3 entry cells confirmed**, the reference at most 1 of 3 at k3: 2024 d24 p2 (0/3,
   0/9 drafts), 2025 d10 p2 (0/3, 0/9), 2024 d14 p2 (1/3, 1/9) and d17 p2 (1/3, 1/9). Add 2024
   d21 p1 (0/3 at k1, 0/4 on record), not re-run here. 2024 d24 p1 leaves the list (3/3 at k3).

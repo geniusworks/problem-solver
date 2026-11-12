@@ -51,7 +51,7 @@ are low partly by selection: a cell that was unlucky in three trials makes the l
 score higher on a fresh run. The candidate is measured fresh on the same cells, so the entry check
 favours it. A lead there is a reason to run a decider, which re-measures both models on the cell,
 not a result. Ornith's lead on 2024 d14 p2 (3/3 against 1/3) was of this kind: the decider put
-both at 1/10 (`arm3-precheck-ornith-1-5-35b.md`).
+ornith at 1 of 7 trials that reached Part 2 and the reference at 1/10 (`arm3-precheck-ornith-1-5-35b.md`).
 
 ## Result (2026-11-06): criterion met on 2024 d14 p2; the prediction failed
 
@@ -63,7 +63,7 @@ reached cells solved; 0 wrong, 0 overfit; 1.58M tokens.
 |---|---|---|---|---|---|
 | 2024 d14 p2 | **3/3** | **9/9** | 1/3 | 3/12 | none |
 | 2024 d17 p2 | 1/3 (by a repair) | 0/9 | 1/3 | 2/12 | 8 crashes, 1 too low |
-| 2024 d21 p1 | **1/3** | 1/9 | 0/3 at k1 | 0/3 (0/7 on record) | 6 crashes, 4 too low, 2 too high, 2 timeouts |
+| 2024 d21 p1 | **1/3** | 1/9 | 0/3 at k1 | 0/3 (0/7 on record) | 8 crashes, 4 too low, 2 too high |
 | 2024 d24 p2 | 0/3 | 0/9 | 0/3 | 0/10 | 20 wrong, 3 timeouts, 3 crashes |
 | 2025 d10 p2 | 0/3 | 0/9 | 0/3 | 1/12 | 12 crashes, 11 too low, 2 too high, 2 timeouts |
 
@@ -79,7 +79,7 @@ solved by all three drafts.
   weighs less here: 0/7 is the reference's whole record on the cell, not a three-trial sample.
 - **The rest of the prediction held:** 0/3 on 2024 d24 p2 and 2025 d10 p2, 1/3 on d17 p2.
 - **Its failures differ in kind from the reference's.** On the entry cells muse failed mostly by
-  crashing or by a wrong answer, with 7 timeouts in 76 failed attempts; the reference's failures
+  crashing or by a wrong answer, with 5 timeouts in 76 failed attempts; the reference's failures
   on the hardest of them were mostly 60 s timeouts (`m5pro-band-k1-vs-k3-aoc.md`).
 - **Slower than the reference** on these cells: 35,389 s against roughly 30,000 s.
 

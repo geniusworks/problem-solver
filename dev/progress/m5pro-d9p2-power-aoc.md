@@ -4,6 +4,10 @@
 p = 0.065. Inconclusive under the registered readings.** The draws behaved as independent. The
 design, prediction and readings below were committed before launch (`f5d8d4b`).
 
+*2026-11-11: a registered replication with every trial reaching Part 2, 35 trials per arm, did
+not re-establish the lift on this problem: k1 13/35, k3 16/35, one-sided p = 0.31
+(`m5pro-d9p2-replication.md`).*
+
 ## Why this cell
 
 Arm 1 (sampling) was measured and replicated under the original harness, which posed Part 2
@@ -49,7 +53,9 @@ From the prior first-draft rate p ≈ 0.27 and independent draws, with repair co
 | k3 | 1 − 0.73³ ≈ 61% | about 11, plausibly 7 to 15 |
 
 **Power:** at those rates and about 18 reached trials per arm, a one-sided Fisher test at
-α = 0.05 detects the difference about 70% of the time. Lower than the 80% planned, because the
+α = 0.05 detects the difference about 70% of the time *(corrected 2026-11-11: the exact power
+of a one-sided Fisher test at 18 trials per arm is 60%; the 70% came from a normal
+approximation)*. Lower than the 80% planned, because the
 prior draft rate (27%) came in under the planning figure (one in three). The run is kept at 20
 trials per arm as approved; the trial count is not extended after seeing results.
 
@@ -82,7 +88,7 @@ Ollama 0.40.11, the model digest and packages recorded in each file. Pre-run che
 | k1 | 15/20 | **5/15 (33%)** | 5/20 | 3/15 |
 | k3 | 20/20 | **13/20 (65%)** | 13/20 | 13/20 |
 
-**Registered reading: inconclusive.** k3 is 32 points above k1 (95% Newcombe interval −1 to +56
+**Registered reading: inconclusive.** k3 is 32 points above k1 (95% Newcombe interval −2 to +56
 points), one-sided Fisher p = 0.065, short of 0.05 and more than 10 points apart. Arm 1 is
 neither re-established nor ruled out on this cell, and its status is not restated.
 

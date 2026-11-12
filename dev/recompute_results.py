@@ -182,6 +182,15 @@ def arm1_power() -> str:
     return f"{frac(k1)} -> {frac(k3)}, p {fisher_greater(*k1, *k3):.3f}"
 
 
+def d9_after_the_fix() -> str:
+    """2025 d9 p2, the reference at three drafts with the Part 1 context, every such run."""
+    runs = [name for name, run in RUNS.items()
+            if run["config"].get("problem_context") == "aoc"
+            and run["config"].get("samples_per_model") == 3
+            and run["config"].get("models") == ["qwen3.8:27b"]]
+    return frac(solved(outcomes(runs, ["2025_day09_part2"], reached_only=True)))
+
+
 def arm1_replication() -> str:
     """2025 d9 p2, k1 against k3, every trial posed Part 2 (registered replication, 7 blocks per arm)."""
     cell = ["2025_day09_part2"]
@@ -294,11 +303,13 @@ CLAIMS = [
           {"RESULTS.md": ["9/19 at one draft and 11/21 at\nthree"]}),
     Claim("arm 1, powered test on 2025 d9 p2", arm1_power, "5/15 -> 13/20, p 0.065",
           {"RESULTS.md": ["| solved | 5/15 (33%) | 13/20 (65%) | **p = 0.065 — inconclusive** |"],
-           "README.md": ["the registered 20-trial test gave 5/15 at one draft and 13/20 at three"]}),
+           "README.md": ["20 trials per arm, had given 5/15 at one draft and 13/20 at\nthree"]}),
+    Claim("2025 d9 p2 after the fix, three drafts", d9_after_the_fix, "31/58",
+          {"README.md": ["**31/58** at three drafts"], "RESULTS.md": ["**31/58** three-draft trials"]}),
     Claim("arm 1, registered replication on 2025 d9 p2", arm1_replication, "13/35 -> 16/35, p 0.31",
           {"RESULTS.md": ["| solved | 13/35 (37%) | 16/35 (46%) | **p = 0.31 — not re-established** |",
-                          "replication at 13/35 against 16/35 (one-sided p = 0.31)"],
-           "README.md": ["replication gave 13/35 at one draft and 16/35 at three (one-sided p = 0.31)",
+                          "replication at 13/35 against 16/35 (one-sided p = 0.31;"],
+           "README.md": ["replication gave 13/35 at one draft and 16/35 at three (one-sided p = 0.31;",
                          "gave 13/35 at one draft and 16/35 at three: one-sided p = 0.31"]}),
     Claim("arm 2", arm2,
           "1,389 s vs 891 s (0.64x); 38,460 vs >=119,068 tokens (>=3.09x)",
@@ -312,7 +323,7 @@ CLAIMS = [
                           "13 of\nits 294 solved cells were solved by repair", "solved 14 of\nits 131 by repair"],
            "PLAN.md": ["repair produced 13\nof the reference model's 294 solves"]}),
     Claim("arm 3 decider", arm3, "10/10 vs 1/10, p 0.0001",
-          {"RESULTS.md": ["10/10 against the reference's 1/10 in the decider, p = 0.0001"]}),
+          {"RESULTS.md": ["10/10 against the reference's 1/10 in the decider, one-sided Fisher p = 0.0001"]}),
 ]
 
 

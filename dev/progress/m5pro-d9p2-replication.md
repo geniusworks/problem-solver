@@ -151,11 +151,11 @@ of 12 in the first test; at k3 it ran on the 21 trials where all three drafts fa
 
 **Time and tokens** (solved trials as the denominator): k1 1,145 s and 80,493 tokens per solve,
 k3 2,720 s and 190,143. Three drafts cost about 2.4 times as much per solve here. The run took
-16.2 hours (k1 4.1, k3 12.1), against about 16 estimated.
+16.3 hours (k1 4.2, k3 12.1), against about 16 estimated.
 
-**Timeouts: none was correct but slow.** 45 of the 140 drafts (32%) ran past the 60 s limit on
-the full input. Re-executed from their saved code with a 600 s limit (`dev/rerun_timeouts.py`,
-the harness's sandbox, two at a time):
+**Timeouts: none finished correctly within 600 s.** 45 of the 140 drafts (32%) ran past the
+60 s limit on the full input. Re-executed from their saved code with a 600 s limit and an 8 GB
+memory cap (`dev/rerun_timeouts.py`, the harness's sandbox, two at a time):
 
 | at 600 s | drafts |
 |---|---|
@@ -164,12 +164,13 @@ the harness's sandbox, two at a time):
 | finished with a wrong answer (285 s, 308 s) | 2 |
 | finished with the right answer | **0** |
 
-A ten-times longer limit would not have changed the draft rate on this problem. Its timeouts are
-runaway programs, most of them brute force over the full grid that exhausts memory within
-seconds, not correct programs that are merely slow. The cap was added for the re-execution after
-six drafts run at once froze the machine: the sandbox does not cap memory on macOS. It measured
-resident size for the first 15 drafts and physical footprint, which counts compressed pages, for
-the other 30.
+On this problem a ten-times longer limit would not have raised the draft rate within 600 s: 22
+of the 26 capped drafts passed 8 GB within 10 s (median 5.4 s), and none of the rest finished
+correctly. The 17 still running at 600 s are unresolved; whether any would have finished
+correctly later is not known. The cap was added for the re-execution after six drafts run at
+once froze the machine, because the sandbox did not cap memory on macOS (it has since 2026-11-11).
+It measured resident size for the first 15 drafts and physical footprint, which counts compressed
+pages, for the other 30.
 
 **Example verdicts** (one worked example; every attempt, drafts and repairs):
 
@@ -203,4 +204,5 @@ oracle, the selector took a wrong draft more often than a right one (15 against 
 prompt, three drafts did not beat one draft with repair by the registered margin. The draws still
 behaved as independent, so the prediction failed on the draft rate it assumed, not on the
 mechanism: sampling's gain follows the per-draft rate, and at 20% against one draft with repair
-that gain is small. The result is for this problem; it does not test other problems or models.
+that gain is about 12 points, which 35 trials per arm cannot separate from zero (the test was
+powered for 34). The result is for this problem; it does not test other problems or models.
