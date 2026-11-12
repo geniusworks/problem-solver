@@ -1,7 +1,7 @@
 """What a failed candidate's repair is told: the execution feedback and its targeted guidance.
 
 Moved out of shared/solver.py unchanged (2026-11-12); BaseSolver gets _build_execution_feedback
-from FeedbackMixin, and shared.solver re-exports the guidance functions.
+from FeedbackMixin (through CandidateMixin), and shared.solver re-exports _is_timeout_error.
 """
 
 from typing import Any, List, Optional
