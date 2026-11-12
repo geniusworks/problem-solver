@@ -31,6 +31,6 @@ jobs:
       - name: Tests
         run: PYTHONPATH=. python -m pytest -q
       - name: Type check
-        run: python -m mypy shared learning submission experiment.py solve.py dev/export_results.py dev/recompute_results.py dev/rerun_timeouts.py
+        run: python -m mypy shared learning submission experiment.py solve.py dev/export_results.py dev/recompute_results.py dev/rerun_timeouts.py dev/replay_solver.py
       - name: Published figures match the committed results
         run: python dev/recompute_results.py --check
