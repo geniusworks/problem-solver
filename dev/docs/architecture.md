@@ -163,7 +163,7 @@ an unimplemented stub (`learning/optimizer.py`):
    - Validated against test cases
 
 3. Solution Execution
-   - Code executed in safe environment
+   - Code executed in a resource-limited environment (see Solution Execution above)
    - Results validated
    - Performance metrics collected
 
