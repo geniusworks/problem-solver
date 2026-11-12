@@ -32,6 +32,8 @@ def main() -> int:
     )
     RENDERED_FROM.write_text(f"sha256 {source_hash()} assets/social-preview.html\n")
     print(f"rendered {PNG.relative_to(REPO_ROOT)} from {HTML.relative_to(REPO_ROOT)}")
+    print("GitHub's link preview uses an uploaded copy: after merging, upload this PNG under the "
+          "repo's Settings > General > Social preview.")
     return 0
 
 

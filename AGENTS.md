@@ -99,7 +99,9 @@ general code.
   or analysis that moves a published figure (a rate, p-value, interval, verdict, count or corpus
   total) updates README, RESULTS, PLAN, `checkpoint.md`, the `dev/progress/` write-ups that quote
   it, `cross-machine-results.md`, and the social card: `assets/social-preview.html`, then
-  `assets/social-preview.png` rendered from it with `venv/bin/python dev/render_social_preview.py`.
+  `assets/social-preview.png` rendered from it with `venv/bin/python dev/render_social_preview.py`,
+  then uploaded by the maintainer under the repo's Settings → General → Social preview (GitHub's
+  link preview uses that uploaded copy, not the committed file, and no API can upload it).
   Search for the old value (`git grep`) rather than relying on memory, and add or update the
   claim in `dev/recompute_results.py`; its `--check` fails when a published figure drifts from
   the data or when the PNG was not rendered from the current HTML. A new verdict on a thesis arm
