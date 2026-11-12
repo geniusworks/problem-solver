@@ -5,7 +5,6 @@ import re
 import os
 import json
 from pathlib import Path
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, List, Tuple, Optional, Dict, Any
 
 if TYPE_CHECKING:
@@ -22,8 +21,11 @@ from shared.aoc import fetch_problem_text, ensure_problem_files, ensure_problem_
 from shared.ledger import record_solution
 from shared.strategy_recommender import StrategyRecommender
 from learning.database import LearningDatabase
-from shared.solving.candidates import CandidateVerdict, _last_exchange
+from shared.solving.candidates import CandidateVerdict
+from shared.solving.consensus import ConsensusMixin
+from shared.solving.generation import GenerationMixin
 from shared.solving.repair import RepairMixin
+from shared.solving.state import _Prep
 from shared.solving.feedback import _is_timeout_error  # noqa: F401  # pylint: disable=unused-import
 from shared.experiment import AttemptRecord, Outcome, SolverConfig
 
@@ -37,41 +39,7 @@ def _known_answer(year: int, day: int, part: int) -> Optional[str]:
     return get_known_answer(year, day, part)
 
 
-@dataclass
-class _Prep:
-    """Output of the setup stage: what the later stages need, or an early answer.
-
-    ``solved`` is set only when an already-recorded solution ran clean on the
-    full input, in which case solve_problem returns it without generating.
-    """
-
-    solved: Optional[str] = None
-    parsed_problem: Any = None
-    strategies: Any = None
-    effectiveness: Any = None
-    problem_type: str = ""
-    primary_models: List[str] = field(default_factory=list)
-    reviewer_models: List[str] = field(default_factory=list)
-
-
-@dataclass
-class _Candidates:
-    """Output of the generation stage: the candidate pool and its bookkeeping.
-
-    Keyed by candidate id (self-consistency draws several per model);
-    ``candidate_models`` maps each back to the model that produced it.
-    """
-
-    answers: Dict[str, str] = field(default_factory=dict)
-    candidate_models: Dict[str, str] = field(default_factory=dict)
-    generation_times: Dict[str, float] = field(default_factory=dict)
-    generation_tokens: Dict[str, Dict[str, int]] = field(default_factory=dict)
-    # (prompt, raw response) of the call that produced each draft, for --include-replay.
-    generation_replay: Dict[str, Tuple[Optional[str], Optional[str]]] = field(default_factory=dict)
-    failures: List[Any] = field(default_factory=list)
-
-
-class BaseSolver(RepairMixin):
+class BaseSolver(GenerationMixin, ConsensusMixin, RepairMixin):
     """Base class for solving AoC problems."""
 
     def __init__(
@@ -232,132 +200,6 @@ class BaseSolver(RepairMixin):
         except Exception as e:
             raise  # Let the error propagate to the top level
 
-    async def _reach_consensus(
-        self, cands: "_Candidates", prep: "_Prep", year: int, day: int, part: int,
-    ) -> Tuple[Optional[str], Dict[str, float]]:
-        """Quality-weighted source consensus, then optional collaborative improvement.
-
-        Returns (accepted solution or None, quality_scores). The scores are
-        returned even when nothing is accepted here, because the execution
-        stage reuses them to rank candidates.
-        """
-        answers = cands.answers
-        parsed_problem = prep.parsed_problem
-        reviewer_models = prep.reviewer_models
-        # If we have answers, try to reach consensus
-        consensus_answer: Optional[str] = None
-        quality_scores: Dict[str, float] = {}
-        analyzer: Optional["CodeQualityAnalyzer"] = None
-        if answers:
-            # Get quality metrics for all solutions
-            from shared.quality.code_quality import CodeQualityAnalyzer
-            analyzer = CodeQualityAnalyzer()
-                
-            for model_name, solution in answers.items():
-                metrics = analyzer.analyze(solution)
-                quality_scores[model_name] = metrics.overall_score
-                
-            # Weight solutions by quality score when determining consensus
-            weighted_answers = {}
-            for model_name, solution in answers.items():
-                weight = quality_scores[model_name]
-                weighted_answers[model_name] = (solution, weight)
-                
-            consensus_answer = self._get_weighted_consensus_answer(weighted_answers)
-            if consensus_answer:
-                # Consensus is agreement about *code*, which says nothing
-                # about whether the code is correct. This branch used to
-                # return here without ever executing it, bypassing the whole
-                # oracle. Verify before accepting.
-                consensus_verdict = await self._verify_candidate(
-                    "consensus", consensus_answer, year, day, part,
-                    self.build_test_cases(parsed_problem),
-                    _known_answer(year, day, part),
-                )
-                self._record_attempt(
-                    "consensus", year, day, part, consensus_verdict.outcome,
-                    stage="consensus",
-                    verdict=consensus_verdict,
-                    answer=consensus_verdict.answer,
-                    code=consensus_answer,
-                    error=None if consensus_verdict.accepted else consensus_verdict.feedback,
-                )
-                if not consensus_verdict.accepted:
-                    logger.info(
-                        "Consensus candidate rejected by verification (%s); "
-                        "continuing to execution-based selection.",
-                        consensus_verdict.outcome.value,
-                    )
-                    consensus_answer = None
-
-            if consensus_answer:
-                # Record the consensus in the solution directory
-                record_solution(
-                    year, day, part, "consensus", consensus_answer
-                )
-                return consensus_answer, quality_scores
-
-        # If no consensus, optionally try collaborative improvement
-        if len(answers) > 0 and self.enable_collaborative_improvement:
-            # answers is non-empty, so the quality pass above created the analyzer.
-            assert analyzer is not None
-            # Select best solution as starting point based on quality score
-            best_model = max(quality_scores.items(), key=lambda x: x[1])[0]
-            best_answer = answers[best_model]
-                
-            # Initialize collaborative improvement
-            from shared.llm.collaborative import CollaborativeImprovement
-            collaborator = CollaborativeImprovement(
-                [self.models[name] for name in reviewer_models if name in self.models],
-                max_iterations=3
-            )
-                
-            try:
-                # Attempt collaborative improvement
-                improved_candidate = await collaborator.improve_solution(best_answer)
-                    
-                if improved_candidate and improved_candidate.solution != best_answer:
-                    # Analyze improvement impact
-                    original_metrics = analyzer.analyze(best_answer)
-                    improved_metrics = analyzer.analyze(improved_candidate.solution)
-                    impact_score = improved_metrics.overall_score - original_metrics.overall_score
-                        
-                    # Record improvement attempt
-                    if not self.db:
-                        from learning import LearningDatabase
-                        self.db = LearningDatabase(self.learning_dir)
-                    self.db.record_improvement(
-                        problem_id=f"{year}_day{day:02d}_part{part}",
-                        model_name=improved_candidate.author,
-                        improvement_type="collaborative",
-                        impact_score=impact_score
-                    )
-                        
-                    # Accept the improved candidate only if it passes the same
-                    # oracle as every other path. This previously ran the
-                    # stub validator (validate_solution -> return True) and
-                    # returned unverified code -- the exact oracle-bypass hole
-                    # closed on the consensus path. Verification, not a fake
-                    # gate, decides acceptance.
-                    improved_verdict = await self._verify_candidate(
-                        improved_candidate.author or "collaborative",
-                        improved_candidate.solution,
-                        year, day, part,
-                        self.build_test_cases(parsed_problem),
-                        _known_answer(year, day, part),
-                    )
-                    if improved_verdict.accepted:
-                        record_solution(
-                            year, day, part,
-                            improved_candidate.author or "collaborative",
-                            improved_candidate.solution,
-                        )
-                        return improved_candidate.solution, quality_scores
-            except Exception as e:
-                logging.warning(f"Collaborative improvement failed: {str(e)}")
-
-        return None, quality_scores
-
     # ------------------------------------------------------------------
     # solve_problem stages (extracted for readability; see the orchestrator above)
     # ------------------------------------------------------------------
@@ -472,94 +314,20 @@ class BaseSolver(RepairMixin):
             reviewer_models=reviewer_models,
         )
 
-    async def _generate_candidates(
-        self, prep: _Prep, year: int, day: int, part: int
-    ) -> _Candidates:
-        """Draw the candidate pool. Self-consistency fans out samples here.
-
-        Each draw is independent -- a sample that raises records its own
-        no-candidate failure and does not abort the rest. The pool is keyed by
-        candidate id; candidate_models maps each back to the producing model,
-        which is what the learning DB and ledger record against.
-        """
-        cands = _Candidates()
-        logging.info("")
-        logging.info(
-            f"Attempting solution with top {len(prep.primary_models)} primary model(s)"
-        )
-
-        for model_name in prep.primary_models:
-            if model_name not in self.models:
-                logging.warning(f"Model {model_name} not available, skipping")
-                continue
-
-            model = self.models[model_name]
-            for sample_idx in range(self.config.samples_per_model):
-                cand_id = (
-                    model_name if self.config.samples_per_model == 1
-                    else f"{model_name}#s{sample_idx}"
-                )
-                cands.candidate_models[cand_id] = model_name
-                try:
-                    logging.info("")
-                    logging.info(f"Trying primary model: {cand_id}")
-                    logging.info("")
-
-                    start_time = datetime.now()
-                    solution = await model.generate_solution(
-                        prep.parsed_problem,
-                        year,
-                        day,
-                        strategies=prep.strategies,
-                        strategy_effectiveness=prep.effectiveness,
-                    )
-                    cands.generation_times[cand_id] = (
-                        datetime.now() - start_time
-                    ).total_seconds()
-                    # Token usage the model just reported (analysis + impl calls),
-                    # so the attempt records real cost, not a zero.
-                    cands.generation_tokens[cand_id] = getattr(
-                        model, "last_token_usage", {"input_tokens": 0, "output_tokens": 0}
-                    )
-                    cands.generation_replay[cand_id] = _last_exchange(model)
-                    # Every candidate enters the pool; correctness is decided by
-                    # execution against the oracle further down.
-                    cands.answers[cand_id] = solution
-
-                except Exception as e:
-                    cands.failures.append((cand_id, str(e)))
-                    # A candidate that never produced usable code is a distinct,
-                    # real (verified) failure to record; it still spent tokens.
-                    tokens = getattr(
-                        model, "last_token_usage", {"input_tokens": 0, "output_tokens": 0}
-                    )
-                    prompt, raw_response = _last_exchange(model)
-                    self._record_attempt(
-                        model_name, year, day, part, Outcome.NO_CANDIDATE,
-                        stage="generate",
-                        draft_index=sample_idx,
-                        error=f"{type(e).__name__}: {e}",
-                        prompt=prompt,
-                        raw_response=raw_response,
-                        input_tokens=tokens.get("input_tokens", 0),
-                        output_tokens=tokens.get("output_tokens", 0),
-                    )
-                    self._record_model_performance(
-                        model_name, success=False, problem_type=prep.problem_type
-                    )
-
-        return cands
-
     # ------------------------------------------------------------------
-    # Pipeline stages
+    # Records, and the module-level names the stages reach through BaseSolver
     #
-    # solve_problem was a single ~540-line method. These are the stages it
-    # decomposes into, each independently testable. The important one is
-    # _verify_candidate: the main loop and the fallback loop previously each
-    # had their own copy of the acceptance logic, and only the main one was
-    # updated when the ground-truth oracle landed -- so a fallback model could
-    # still return a wrong answer as the solution.
+    # The stages live in shared/solving/ (generation, consensus, candidates,
+    # repair, feedback). They reach the ledger writer and the accepted answer
+    # through _record_solution and _accepted_answer, so the names in this module
+    # stay the ones tests and dev/replay_solver.py replace. Verification has one
+    # copy, _verify_candidate: the main loop and the fallback loop once each had
+    # their own, and only one was updated when the ground-truth oracle landed.
     # ------------------------------------------------------------------
+
+    def _accepted_answer(self, year: int, day: int, part: int) -> Optional[str]:
+        """The accepted answer, through this module's _known_answer, which tests replace."""
+        return _known_answer(year, day, part)
 
     def _record_solution(self, year: int, day: int, part: int, model: str, code: str) -> None:
         """Record an accepted solution in the ledger. Looked up on this module, so tests and
@@ -698,84 +466,6 @@ class BaseSolver(RepairMixin):
         fallback = list(self.models.keys())[:limit]
         logging.info(f"Top models: [] -> using fallback models {fallback}")
         return fallback
-
-    def _get_weighted_consensus_answer(
-        self, weighted_answers: Dict[str, Tuple[str, float]]
-    ) -> Optional[str]:
-        """Get consensus answer from multiple model outputs, weighted by confidence.
-        
-        Args:
-            weighted_answers: Dictionary mapping model names to (answer, weight) tuples
-            
-        Returns:
-            The consensus answer if one exists, None otherwise
-        """
-        if not weighted_answers:
-            return None
-            
-        # Group identical answers, summing weights and counting distinct models
-        answer_groups: Dict[str, float] = {}
-        models_per_answer: Dict[str, int] = {}
-        for model_name, (answer, weight) in weighted_answers.items():
-            answer_groups[answer] = answer_groups.get(answer, 0.0) + weight
-            models_per_answer[answer] = models_per_answer.get(answer, 0) + 1
-
-        # Find answer with highest total weight
-        best_answer = max(answer_groups.items(), key=lambda x: x[1])[0]
-        best_weight = answer_groups[best_answer]
-
-        # Agreement requires more than one voter. A lone candidate holds 100% of
-        # the total weight, so it cleared the threshold trivially and was
-        # returned as "consensus" -- which is not consensus, it is a single
-        # unreviewed opinion.
-        agreeing = models_per_answer[best_answer]
-        if agreeing < self.config.min_consensus_models:
-            logger.info(
-                "No consensus: best answer has %d agreeing model(s), need %d.",
-                agreeing, self.config.min_consensus_models,
-            )
-            return None
-
-        # Only return consensus if weight is significantly higher than others.
-        #
-        # Every weight is a code-quality score, so all of them are 0.0 when
-        # quality analysis fails -- which is exactly what happens when the
-        # generated code is unparseable. Dividing here then raised
-        # ZeroDivisionError and aborted the whole solve, turning a recoverable
-        # bad-candidate case into a hard failure. With no usable weights there is
-        # no evidence of agreement, so there is no consensus.
-        total_weight = sum(answer_groups.values())
-        if total_weight <= 0:
-            logger.warning(
-                "No usable quality weights for consensus (all %d candidate(s) scored "
-                "0.0); treating as no consensus.",
-                len(answer_groups),
-            )
-            return None
-
-        if best_weight / total_weight >= self.config.consensus_threshold:
-            return best_answer
-
-        return None
-
-    def _print_consensus_summary(self, answers: Dict[str, Any], failures: List[tuple], consensus_answer: Optional[str], consensus_models: List[str]) -> None:
-        """Print a summary of the consensus results."""
-        logging.info("")  # Single blank line before summary
-        logging.info("Consensus Summary:")
-        logging.info("-" * 40)
-        logging.info(f"Successful models: {list(answers.keys())}")
-        logging.info(f"Failed models: {failures}")
-        logging.info("")  # Single blank line after summary
-
-        if consensus_answer:
-            logging.info(f"Consensus reached! Answer: {consensus_answer}")
-            logging.info(f"Agreeing models: {consensus_models}")
-        else:
-            logging.info("No consensus reached")
-            logging.info("Model answers:")
-            for model, data in answers.items():
-                logging.info(f"  {model}: {data}")
-            logging.info("")  # Single blank line after answers
 
     async def _get_existing_solution(
         self, year: int, day: int, part: int

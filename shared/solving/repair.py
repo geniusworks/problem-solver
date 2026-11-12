@@ -9,14 +9,12 @@ runs when every primary candidate and its repairs failed.
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from shared.execution import TestCase
 from shared.experiment import Outcome
 from shared.solving.candidates import CandidateMixin, _draft_index, _last_exchange
-
-if TYPE_CHECKING:
-    from shared.solver import _Candidates, _Prep
+from shared.solving.state import _Candidates, _Prep
 
 # The solver's logger, so log records keep the name they had before the move.
 logger = logging.getLogger("shared.solver")
