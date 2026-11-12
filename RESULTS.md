@@ -127,7 +127,9 @@ control for it.
   replication posed Part 2 directly with a verified Part 1 program, so every trial reached it.
 - **Per-draft rate:** the share of first-pass drafts that are correct. If drafts succeed
   independently at rate *p*, a k3 trial is solved by a draft with probability 1 − (1 − *p*)³; the
-  **independence check** compares that prediction with the measured k3 rate.
+  **independence check** compares that prediction with the measured k3 rate. It concerns outcomes
+  only: whether one draft's success makes another's more or less likely. It does not show that
+  the drafts take different approaches, which would need their code compared.
 - **Frontier, "sometimes" band, wall:** cells the model solves in some trials and not others; and
   cells it had never solved.
 - **Original and corrected harness:** before and after 2026-10-13, when Part 2 prompts gained the
