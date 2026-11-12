@@ -9,7 +9,6 @@ UNVERIFIED, which is not the same as CORRECT and must never be recorded as solve
 import ast
 import logging
 import re
-import subprocess
 import sys
 from dataclasses import dataclass
 from enum import Enum
@@ -19,7 +18,7 @@ from typing import Optional
 from shared import config
 from shared.ground_truth import get_known_answer
 from shared.paths import get_problem_dir
-from shared.sandbox import child_env, configured_limiter
+from shared.sandbox import OVER_MEMORY, memory_cap_bytes, run_capped
 
 SOLUTION_FILENAME_RE = re.compile(r"(\d{4})_day(\d{1,2})_part(\d)\.py$")
 
@@ -81,18 +80,13 @@ def run_solution_file(
     if not input_path.exists():
         return None, f"missing input file: {input_path}"
 
-    try:
-        proc = subprocess.run(
-            [sys.executable, str(path.resolve())],
-            cwd=str(problem_dir),
-            env=child_env(),
-            preexec_fn=configured_limiter(timeout),
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            check=False,
-        )
-    except subprocess.TimeoutExpired:
+    stopped, proc = run_capped(
+        [sys.executable, str(path.resolve())], cwd=str(problem_dir),
+        timeout=timeout, max_bytes=memory_cap_bytes(),
+    )
+    if stopped == OVER_MEMORY:
+        return None, f"over the memory cap of {memory_cap_bytes() // (1024 * 1024)} MB"
+    if stopped:
         return None, f"timed out after {timeout}s"
 
     if proc.returncode != 0:

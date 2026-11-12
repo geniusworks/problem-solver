@@ -13,15 +13,29 @@ Two things are constrained:
   program a model wrote. Children now get `child_env()`: enough to start
   Python, nothing from .env.
 - **Resources.** CPU time, file size, process count and (on Linux) address
-  space, via setrlimit in the child before it execs.
+  space, via setrlimit in the child before it execs. macOS ignores the
+  address-space limit, so memory is also watched from outside: the runners
+  below poll the child's physical footprint and kill it above the same cap.
+  The footprint counts compressed pages, which resident size does not: a grid
+  of zeros compresses so well that a draft can show a few GB resident while
+  holding tens of GB. A
+  draft that grows without bound (brute force over a huge grid can pass 8 GB in
+  seconds) otherwise exhausts the machine; six at once froze a 64 GB Mac.
 
 Not constrained: network access and reads elsewhere on the filesystem. Solutions
 run as the user, with the user's permissions; the environment scrub removes the
 one secret the process itself carried.
 """
 
+import asyncio
+import ctypes
 import os
-from typing import Any, Dict, Optional
+import subprocess
+import sys
+import time
+from typing import Any, Dict, List, Optional, Tuple
+
+import psutil
 
 from shared.config import RESOURCES_CONFIG
 
@@ -30,6 +44,12 @@ from shared.config import RESOURCES_CONFIG
 _PASSED_THROUGH = ("PATH", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "SYSTEMROOT")
 
 MAX_FILE_BYTES = 64 * 1024 * 1024
+
+# How often a running child's memory is checked.
+_POLL_SECONDS = 0.2
+
+TIMED_OUT = "timed out"
+OVER_MEMORY = "over the memory cap"
 
 
 def child_env() -> Dict[str, str]:
@@ -92,3 +112,89 @@ def configured_limiter(timeout_seconds: float) -> Optional[Any]:
         execution.get("max_processes", 1),
         cpu_seconds=max(int(timeout_seconds), 1),
     )
+
+
+def memory_cap_bytes() -> int:
+    """The per-process memory cap from config/resources.yaml (execution.max_memory_mb)."""
+    return max(int(RESOURCES_CONFIG.get("execution", {}).get("max_memory_mb", 512)), 1) * 1024 * 1024
+
+
+_LIBPROC = ctypes.CDLL("/usr/lib/libproc.dylib") if sys.platform == "darwin" else None
+
+
+def footprint_bytes(pid: int) -> int:
+    """A process's physical footprint (resident plus compressed), as Activity Monitor
+    shows it; resident size where libproc is unavailable."""
+    if _LIBPROC is not None:
+        usage = (ctypes.c_uint64 * 40)()
+        # proc_pid_rusage(RUSAGE_INFO_V2): after a 16-byte uuid, ri_phys_footprint is the
+        # eighth 64-bit field.
+        if _LIBPROC.proc_pid_rusage(pid, 2, ctypes.byref(usage)) == 0:
+            return int(usage[9])
+    try:
+        return int(psutil.Process(pid).memory_info().rss)
+    except psutil.Error:
+        return 0
+
+
+async def communicate_capped(
+    process: "asyncio.subprocess.Process", timeout: float, max_bytes: int, min_free: int = 0
+) -> Tuple[Optional[str], bytes, bytes]:
+    """Wait for `process`, stopping it past `timeout` seconds, past `max_bytes` of physical
+    footprint, or when the machine has less than `min_free` bytes available.
+
+    Returns (stopped, stdout, stderr): stopped is None when the process finished
+    on its own, else TIMED_OUT or OVER_MEMORY. A timed-out process gets SIGTERM
+    and five seconds before SIGKILL; one over the cap is killed at once.
+    """
+    output = asyncio.ensure_future(process.communicate())
+    deadline = time.monotonic() + timeout
+    stopped: Optional[str] = None
+    while not output.done():
+        if (footprint_bytes(process.pid) > max_bytes
+                or (min_free and psutil.virtual_memory().available < min_free)):
+            stopped = OVER_MEMORY
+            process.kill()
+            break
+        if time.monotonic() > deadline:
+            stopped = TIMED_OUT
+            process.terminate()
+            try:
+                await asyncio.wait_for(asyncio.shield(output), timeout=5)
+            except asyncio.TimeoutError:
+                process.kill()
+            break
+        await asyncio.sleep(_POLL_SECONDS)
+    stdout, stderr = await output
+    return stopped, stdout or b"", stderr or b""
+
+
+def run_capped(
+    args: List[str], cwd: str, timeout: float, max_bytes: int
+) -> Tuple[Optional[str], "subprocess.CompletedProcess[str]"]:
+    """Synchronous `communicate_capped` for code run with subprocess (text output).
+
+    Starts `args` with child_env() and configured_limiter(timeout). Returns
+    (stopped, completed); stopped is None, TIMED_OUT or OVER_MEMORY.
+    """
+    process = subprocess.Popen(
+        args, cwd=cwd, env=child_env(), preexec_fn=configured_limiter(timeout),
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+    )
+    deadline = time.monotonic() + timeout
+    stopped: Optional[str] = None
+    while True:
+        try:
+            stdout, stderr = process.communicate(timeout=_POLL_SECONDS)
+            break
+        except subprocess.TimeoutExpired:
+            pass
+        if stopped:
+            continue
+        if footprint_bytes(process.pid) > max_bytes:
+            stopped = OVER_MEMORY
+            process.kill()
+        elif time.monotonic() > deadline:
+            stopped = TIMED_OUT
+            process.kill()
+    return stopped, subprocess.CompletedProcess(args, process.returncode, stdout, stderr)

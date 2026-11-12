@@ -13,7 +13,6 @@ ever return the answer to the part being solved.
 """
 
 import re
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -24,7 +23,7 @@ from bs4 import BeautifulSoup
 from shared import config
 from shared.ground_truth import get_known_answer
 from shared.paths import get_problem_dir
-from shared.sandbox import child_env, configured_limiter
+from shared.sandbox import memory_cap_bytes, run_capped
 
 # Enough of the input to see its shape without paying for all of it.
 INPUT_PREVIEW_LINES = 12
@@ -164,12 +163,13 @@ def _run_on_example(code: str, example_input: str, timeout: int = 20) -> Optiona
         Path(workdir, "input.txt").write_text(example_input, encoding="utf-8")
         Path(workdir, "solution.py").write_text(code, encoding="utf-8")
         try:
-            done = subprocess.run(
+            stopped, done = run_capped(
                 [sys.executable, "-I", "solution.py"], cwd=workdir,
-                env=child_env(), preexec_fn=configured_limiter(timeout),
-                capture_output=True, text=True, timeout=timeout,
+                timeout=timeout, max_bytes=memory_cap_bytes(),
             )
-        except (subprocess.TimeoutExpired, OSError):
+        except OSError:
+            return None
+        if stopped:
             return None
     lines = done.stdout.strip().splitlines()
     return lines[-1].strip() if lines else None

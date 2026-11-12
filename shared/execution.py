@@ -20,7 +20,9 @@ from shared.performance import PerformanceMonitor
 from shared.quality.code_formatter import format_code
 from shared.tempfiles import TempFileManager
 from shared.config import RESOURCES_CONFIG, DEFAULT_EXECUTION_TIMEOUT
-from shared.sandbox import child_env, configured_limiter, resource_limiter
+from shared.sandbox import (
+    OVER_MEMORY, child_env, communicate_capped, configured_limiter, memory_cap_bytes, resource_limiter,
+)
 import asyncio
 
 logger = logging.getLogger(__name__)
@@ -144,21 +146,11 @@ async def execute_solution(code: str, input_data: str, timeout: int = 5) -> "Exe
             preexec_fn=configured_limiter(timeout),
         )
 
-        try:
-            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
-        except asyncio.TimeoutError:
-            # Ensure process is terminated and awaited to avoid resource warnings
-            try:
-                process.terminate()
-            except ProcessLookupError:
-                pass
-            try:
-                await asyncio.wait_for(process.wait(), timeout=1.0)
-            except Exception:
-                try:
-                    process.kill()
-                except Exception:
-                    pass
+        cap = memory_cap_bytes()
+        stopped, stdout, stderr = await communicate_capped(process, timeout, cap)
+        if stopped == OVER_MEMORY:
+            return ExecutionResult(output="", performance=None, error=_over_memory_error(cap))
+        if stopped:
             # Raise the builtin TimeoutError so callers/tests can catch it.
             raise _bi.TimeoutError(f"Execution timed out after {timeout} seconds")
 
@@ -176,6 +168,12 @@ async def execute_solution(code: str, input_data: str, timeout: int = 5) -> "Exe
         if isinstance(e, _bi.TimeoutError):
             raise
         return ExecutionResult(output="", performance=None, error=str(e))
+
+def _over_memory_error(cap_bytes: int) -> str:
+    """The error for a run stopped at the memory cap. It says "memory", never "timed out",
+    so repair feedback does not mistake it for a slow but bounded program."""
+    return f"Solution exceeded the memory cap of {cap_bytes // (1024 * 1024)} MB and was stopped"
+
 
 class SolutionExecutor:
     """Handles execution and validation of generated solutions."""
@@ -325,42 +323,31 @@ class SolutionExecutor:
                 ),
             )
             
-            try:
-                stdout, stderr = await asyncio.wait_for(
-                    process.communicate(), timeout=timeout
-                )
-                
-                if process.returncode != 0:
-                    error_msg = stderr.decode() if stderr else "Unknown error"
-                    
-                    # Enhance error messages for common issues
-                    if "NameError" in error_msg:
-                        if "name 'Union' is not defined" in error_msg:
-                            error_msg = "Missing import: Solution uses typing.Union without importing it"
-                        elif "name 'chain' is not defined" in error_msg:
-                            error_msg = "Missing import: Solution uses itertools.chain without importing it"
-                        elif "name 'Optional' is not defined" in error_msg:
-                            error_msg = "Missing import: Solution uses typing.Optional without importing it"
-                    
-                    return ExecutionResult("", error=f"Process failed: {error_msg}")
-                    
-                return ExecutionResult(stdout.decode())
-                
-            except asyncio.TimeoutError:
-                # Terminate, then reap. Calling terminate() without awaiting the
-                # process left zombies behind and produced "Task was destroyed but
-                # it is pending" warnings; a solution ignoring SIGTERM was never
-                # killed at all.
-                process.terminate()
-                try:
-                    await asyncio.wait_for(process.wait(), timeout=5)
-                except asyncio.TimeoutError:
-                    process.kill()
-                    await process.wait()
+            stopped, stdout, stderr = await communicate_capped(
+                process, timeout, max_memory * 1024 * 1024
+            )
+            if stopped == OVER_MEMORY:
+                return ExecutionResult("", error=_over_memory_error(max_memory * 1024 * 1024))
+            if stopped:
                 return ExecutionResult(
                     "", error=f"Solution timed out after {timeout} seconds"
                 )
-                
+            if process.returncode != 0:
+                error_msg = stderr.decode() if stderr else "Unknown error"
+
+                # Enhance error messages for common issues
+                if "NameError" in error_msg:
+                    if "name 'Union' is not defined" in error_msg:
+                        error_msg = "Missing import: Solution uses typing.Union without importing it"
+                    elif "name 'chain' is not defined" in error_msg:
+                        error_msg = "Missing import: Solution uses itertools.chain without importing it"
+                    elif "name 'Optional' is not defined" in error_msg:
+                        error_msg = "Missing import: Solution uses typing.Optional without importing it"
+
+                return ExecutionResult("", error=f"Process failed: {error_msg}")
+
+            return ExecutionResult(stdout.decode())
+
         except Exception as e:
             return ExecutionResult("", error=str(e))
 

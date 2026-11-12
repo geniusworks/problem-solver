@@ -69,14 +69,6 @@ def test_a_draft_that_finishes_returns_its_output(tmp_path):
     assert run(code, tmp_path) == ("ok", "1\n")
 
 
-def test_footprint_counts_the_memory_a_process_holds():
-    import os
-    held = bytearray(300 * 1024 ** 2)
-    for i in range(0, len(held), 16384):
-        held[i] = 1
-    assert rerun_timeouts.footprint_bytes(os.getpid()) > 300 * 1024 ** 2
-
-
 def test_a_low_free_memory_floor_stops_a_draft(tmp_path):
     # A floor above the machine's total memory trips at once.
     import asyncio

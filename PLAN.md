@@ -750,8 +750,8 @@ its "too recently" page, which is parsed and sets the real wait.
 The Milestone C deferred cleanups are done (PR #26), and so are the 2026-11-09 ones: `mypy` is
 clean on all code and runs in CI, `OllamaProvider` takes its model as a required argument (the
 stale `codellama:7b` default is gone), and autopep8 is 2.3.2 (formatter output byte-identical to
-2.0.4 on all 74 recorded and fixture programs). Generated code runs without `.env` secrets and under resource limits
-(`shared/sandbox.py`) but with network access and the user's file permissions; a macOS sandbox
+2.0.4 on all 74 recorded and fixture programs). Generated code runs without `.env` secrets and under resource limits,
+including an 8 GB memory cap that macOS also enforces (`shared/sandbox.py`), but with network access and the user's file permissions; a macOS sandbox
 profile that denies network is the next step if less trusted code is ever run.
 
 ## Documentation

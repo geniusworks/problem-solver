@@ -13,16 +13,17 @@ finished 2026-11-11 and did **not re-establish** sampling on that problem
 Part 1 program, one-sided Fisher p = 0.31, 8.6 points apart against the registered 10; the draws
 were independent (20% per draft predicts 49% at k3, 46% measured), but the draft rate was below
 the 27% predicted and repair lifted k1; 16.2 GPU-hours. Its 45 timed-out drafts, re-run at 600 s,
-gave no correct answer. That re-run exposed an instrument gap: the sandbox does not cap memory on
-macOS, and six such drafts at once froze the machine (2026-11-11); a memory watchdog on every
-path that runs generated code is the next PR. The registered k1-vs-k3 power test on 2025 d9 p2 finished
+gave no correct answer. That re-run exposed an instrument gap: the sandbox did not cap memory on
+macOS, and six such drafts at once froze the machine (2026-11-11). Since 2026-11-12 every path
+that runs generated code stops a process past 8 GB of physical footprint; all 69 ledger
+solutions verify under the cap, and the pre-run check gave 6/6. The registered k1-vs-k3 power test on 2025 d9 p2 finished
 2026-11-09 and was **inconclusive** (`m5pro-d9p2-power-aoc.md`): k1 5/15, k3 13/20 over trials
 that reached Part 2, one-sided Fisher p = 0.065 against the registered 0.05; the draws behaved as
 independent (27% per draft predicts 61% at k3, 65% measured); 11.9 GPU-hours. Each thesis arm has
 a verdict (`RESULTS.md`): arm 1 confirmed under the original prompts and not re-established under
 the corrected ones; arm 2 splits by cost type; arm 3's one complementary pair was one-way, so the
 ensemble was not run. Ledger 69 verified, 0 wrong (2024 d2 p2 added 2026-11-09 by the sandbox
-plumbing check, 12/12 at k1, `1ac712678732`); tests 316 passing, and CI runs them, `mypy` and
+plumbing check, 12/12 at k1, `1ac712678732`); tests 324 passing, and CI runs them, `mypy` and
 `dev/recompute_results.py --check` on every PR. Generated code now runs without `.env` secrets
 (`shared/sandbox.py`), and each result file records Ollama, model digests and machine. A
 reconciliation pass on 2026-11-08 checked every published claim against the result files and added
