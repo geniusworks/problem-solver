@@ -22,6 +22,8 @@
   .stat { font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 44px; margin-top: 30px; color: #94a3b8; }
   .stat .to { color: #34d399; }
   .stat .arrow { font-family: Lato, sans-serif; margin: 0 18px; }
+  .stat .label { font-family: Lato, sans-serif; font-weight: 400; font-size: 22px; color: #94a3b8; margin-left: 10px; }
+  .stat .sep { font-family: Lato, sans-serif; font-weight: 400; margin: 0 22px; color: #475569; }
   .caption { font-size: 22px; color: #94a3b8; margin-top: 10px; }
   .caveat { font-size: 18px; color: #7c879b; margin-top: 6px; font-style: italic; }
   .footer { font-size: 20px; color: #7c879b; margin-top: 30px; }
@@ -38,10 +40,10 @@
   <div class="text">
     <div class="kicker">RESEARCH PLATFORM</div>
     <h1>Problem Solver</h1>
-    <div class="question">What actually makes LLMs solve more problems?<br>Measured, not asserted.</div>
-    <div class="stat">6/20<span class="arrow">&rarr;</span><span class="to">19/19</span></div>
-    <div class="caption">trials solved, one Part 2: the only change was adding Part 1 to the prompt</div>
-    <div class="caveat">public puzzles: whether the added text informs or cues recall is untested</div>
+    <div class="question">Do more LLM attempts solve more problems?<br>Measured, not asserted.</div>
+    <div class="stat"><span class="predicted">52%</span><span class="label">predicted</span><span class="sep">&middot;</span><span class="to">49%</span><span class="label">measured</span></div>
+    <div class="caption">Three attempts succeed about as often as independent tries predict,<br>so one attempt's success rate tells you what more will buy.</div>
+    <div class="caveat">75 three-attempt trials in three registered tests · one model · Advent of Code</div>
     <div class="footer">local models &nbsp;&middot;&nbsp; an exact oracle &nbsp;&middot;&nbsp; 69 verified solutions, 0 wrong</div>
   </div>
   <div class="halo"></div>

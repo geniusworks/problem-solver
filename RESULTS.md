@@ -21,9 +21,11 @@ statement, and restoring it took single drafts on one problem from 6/20 to 19/19
 changed. (2) Under the original harness, three drafts with repair raised the solve rate on the
 reference model's "sometimes" problems from 42% to 75%, replicated on a second year; under the
 corrected harness that lift was not re-established: on the one problem with a mid-range per-draft
-rate, a registered replication gave 13/35 against 16/35 (one-sided p = 0.31). In all three tests
-that measured it, drafts behaved as independent tries, so sampling's gain follows from the
-per-draft rate. (3) One candidate model solved a problem the reference rarely solved (10/10
+rate, a registered replication gave 13/35 against 16/35 (one-sided p = 0.31). The most consistent
+finding about the question itself: in all three registered tests, three drafts did about as well
+as independent tries predict from the single-draft rate (52% predicted, 49% measured over 75
+three-draft trials), so what extra attempts buy can be estimated in advance, and it is large only
+where one attempt succeeds part of the time. (3) One candidate model solved a problem the reference rarely solved (10/10
 against 1/10), and no problem was found the other way, so a mix of the two was not run. (4) Repair
 contributed 13 of the reference model's 300 solves.
 
@@ -43,8 +45,10 @@ Each is detailed under [Scope and limits](#scope-and-limits) and
   test is the cleaner measure. What looked like a capability limit was mostly missing
   information. The puzzles are public, so the added text may also cue recall; that is not yet
   separated (see contamination).
-- **Sampling: a gain under the original harness, not re-established under the corrected one;
-  the draws behave as independent throughout.** Under the original harness, three attempts with
+- **Extra attempts pay off as independent tries predict; sampling gained under the original
+  harness and was not re-established under the corrected one.** Across the three registered tests,
+  three drafts solved 49% of 75 trials where the single-draft rates predicted 52%, so the gain from
+  more attempts follows from how often one attempt succeeds. Under the original harness, three attempts with
   repair took the model's "sometimes" problems from 42% to 75%, replicated on a second year
   (combined one-sided p ≈ 0.005). Under the corrected harness most problems are solved by nearly
   every draft or by nearly none, three drafts gave no measurable lift (9/19 against 11/21), and on
@@ -269,6 +273,25 @@ times in 80 (20%), three independent drafts at that rate solve 49% of trials, an
 solved 50% (`m5pro-d19p2-power.md`). The draws behave as independent, so sampling's gain follows
 from the per-draft rate.
 *(`passk-ab-d13-d15.md`, `topology-parallel3.md`, `passk-replication-2025.md`.)*
+
+**The independence check across the three registered tests.** In each, the first-pass drafts of
+both arms give a per-draft rate *p*; independent draws then predict 1 − (1 − *p*)³ for a
+three-draft trial, compared here with the three-draft arm's rate *before repair* (a trial solved by
+one of its three drafts), which is what the prediction is about:
+
+| test | drafts correct | predicted at three drafts | measured, drafts only |
+|---|---|---|---|
+| 2024 d19 p2, original harness (`m5pro-d19p2-power.md`) | 16/80 (20%) | 49% | 50% (10/20) |
+| 2025 d9 p2, power test (`m5pro-d9p2-power-aoc.md`) | 20/75 (27%) | 61% | 65% (13/20) |
+| 2025 d9 p2, replication (`m5pro-d9p2-replication.md`) | 28/140 (20%) | 49% | 40% (14/35) |
+| **all three, 75 three-draft trials** | | **52%** (39 expected) | **49%** (37) |
+
+Each prediction lies inside the 95% Wilson interval of its measured rate; two measured rates are
+above the prediction and one below, with no systematic gap. (The replication's registered check counted its two repair
+rescues as well, 46%.) This is the project's most consistent finding about its question: what
+extra drafts buy follows from the single-draft rate, so it can be estimated before the compute
+is spent, and it is large only where one draft succeeds part of the time. It rests on one model and
+two problems, and the intervals are wide (each test is 20 or 35 trials per arm).
 
 ### Arm 2 — Cheap draws win on time and lose on tokens
 

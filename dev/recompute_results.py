@@ -255,6 +255,32 @@ def replication_timeouts() -> str:
             f"{len(passed)} passed the example")
 
 
+def independence_checks() -> str:
+    """The three registered k1-vs-k3 tests: per-draft rate from both arms' first-pass drafts in
+    trials that reached Part 2, the predicted three-draft rate 1 - (1 - p)^3, and the k3 arm's
+    rate solved by a draft (before repair); then pooled over the three tests' k3 trials."""
+    tests = [("_m5pro-d19p2-k1-n20_", "_m5pro-d19p2-k3-n20_", "2024_day19_part2"),
+             ("_m5pro-d9p2-power-aoc-k1_", "_m5pro-d9p2-power-aoc-k3_", "2025_day09_part2"),
+             ("_m5pro-d9p2-rep-k1-b", "_m5pro-d9p2-rep-k3-b", "2025_day09_part2")]
+    parts, expected, measured, trials = [], 0.0, 0, 0
+    for k1, k3, cell in tests:
+        both = {n for n in RUNS if k1 in n or k3 in n}
+        reached = {(t["run"], t["trial"]) for t in TRIALS
+                   if t["run"] in both and t["problem_id"] == cell and t["outcome"] != "not_reached"}
+        drafts = [a for a in ATTEMPTS if (a["run"], a["trial"]) in reached
+                  and a["problem_id"] == cell and a["stage"] == "generate"]
+        p = sum(a["outcome"] == "solved" for a in drafts) / len(drafts)
+        k3_trials = {key for key in reached if k3 in key[0]}
+        by_draft = sum(any(a["outcome"] == "solved" for a in drafts if (a["run"], a["trial"]) == key)
+                       for key in k3_trials)
+        predicted = 1 - (1 - p) ** 3
+        parts.append(f"{predicted:.0%} vs {by_draft}/{len(k3_trials)}")
+        expected += predicted * len(k3_trials)
+        measured += by_draft
+        trials += len(k3_trials)
+    return f"{'; '.join(parts)}; pooled {expected / trials:.0%} vs {measured / trials:.0%} of {trials}"
+
+
 def arm1_replication() -> str:
     """2025 d9 p2, k1 against k3, every trial posed Part 2 (registered replication, 7 blocks per arm)."""
     cell = ["2025_day09_part2"]
@@ -362,8 +388,7 @@ CLAIMS = [
           {"RESULTS.md": ["those Part 2s were 13/71 on\nrecord and 32/40 after"]}),
     Claim("d19 p2 controlled A/B", d19_ab, "6/20 -> 19/19, p = 2.6e-06",
           {"RESULTS.md": ["| 6/20 | **19/19** (one-sided Fisher p = 2.6e-6) |"],
-           "README.md": ["took one problem from 6/20 to 19/19"],
-           "assets/social-preview.html": ['class="stat">6/20<', 'class="to">19/19<']}),
+           "README.md": ["took one problem from 6/20 to 19/19"]}),
     Claim("arm 1, original harness", arm1_original,
           "10/24 -> 9/12 (blind 7/12), p 0.061; 2025 2/8 -> 6/6, p 0.009; combined 0.005",
           {"RESULTS.md": ["| 2024 alone | 10/24 → 9/12 (+33 points, 95% interval −1 to +57) | **p ≈ 0.061 — marginal** |",
@@ -382,6 +407,12 @@ CLAIMS = [
     Claim("2025 d9 p2 replication timeouts", replication_timeouts,
           "45 of 140 drafts; 138 of 249 rejected; 94 passed the example",
           {"RESULTS.md": ["138 of 249 on 2025 d9 p2", "and 94 of the 138"]}),
+    Claim("independence check, three registered tests", independence_checks,
+          "49% vs 10/20; 61% vs 13/20; 49% vs 14/35; pooled 52% vs 49% of 75",
+          {"RESULTS.md": ["| 16/80 (20%) | 49% | 50% (10/20) |", "| 20/75 (27%) | 61% | 65% (13/20) |",
+                          "| 28/140 (20%) | 49% | 40% (14/35) |", "| **52%** (39 expected) | **49%** (37) |"],
+           "README.md": ["three drafts solved 49% of 75 trials where the single-draft rates predicted 52%"],
+           "assets/social-preview.html": ['class="predicted">52%<', 'class="to">49%<']}),
     Claim("arm 1, registered replication on 2025 d9 p2", arm1_replication, "13/35 -> 16/35, p 0.31",
           {"RESULTS.md": ["| solved | 13/35 (37%) | 16/35 (46%) | **p = 0.31 — not re-established** |",
                           "replication at 13/35 against 16/35 (one-sided p = 0.31;"],
