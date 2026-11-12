@@ -110,6 +110,30 @@ result is generalised, sized the same way. **Not triggered:** the powered test w
 lift (p = 0.31, `m5pro-d9p2-replication.md`). It stays parked; reviving it is GPU time the
 maintainer decides on.
 
+## After AoC 2026: engineering that lowers the cost of the next experiment
+
+Deferred until the speed-repair test and the AoC 2026 runs are done, so the measurement path does
+not change before the event. Each keeps prompts and fingerprints identical on a fixed regression
+set, or is recorded as an instrument change.
+
+1. **Remove the dead strategy-learning path from the solve loop.** The strategies a prompt uses
+   come from keyword matching on the puzzle text and stay. The learned "effectiveness" scores do
+   not: the solve loop never writes them (only the unwired submission code does), so they are
+   always the 0.5 default, and the model provider ignores them. `learning/optimizer.py`'s
+   strategy weights and the `strategy_effectiveness` argument go; checked by comparing generated
+   prompts before and after.
+2. **Test the whole orchestration with fake models and checkers.** One suite drives
+   `solve_problem` through success, wrong answer, timeout, crash, harness error, repair, fallback
+   and unverified, with no Ollama, puzzle files, learning database or oracle. It guards the
+   outcome categories that earlier measurement bugs blurred.
+3. **Split `shared/solver.py` (1,410 lines) by responsibility:** generation, verification, repair
+   and fallback, with `solver.py` coordinating the stages. Behaviour unchanged, shown by item 2's
+   suite and identical fingerprints and prompts on the regression set.
+
+The problem-and-checker boundary is "Beyond AoC", step 2, shaped by the second domain rather than
+built ahead of it. Not planned: a second LLM provider (nothing measured needs one yet), and
+splitting `SolverConfig` into sections (it would change every fingerprint for no measured gain).
+
 ---
 
 # The record
