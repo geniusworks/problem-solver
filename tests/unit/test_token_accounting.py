@@ -113,3 +113,16 @@ async def test_analysis_call_temperature_follows_the_config(monkeypatch, mode, e
 
     assert seen[0] == expected, "analysis call"
     assert seen[-1] == 0.9, "implementation call"
+
+
+@pytest.mark.asyncio
+async def test_repair_keeps_its_prompt_and_reply(monkeypatch):
+    """The solver saves these on the attempt (--include-replay); the prompt carries the feedback."""
+    reply = "```python\ndef solve():\n    return 1\n```"
+    p = _provider(monkeypatch, [_Resp(reply, 1, 1)])
+    p.last_prompt, p.last_raw_response = "stale prompt", "stale reply"
+
+    await p.improve_solution("def solve():\n    return 0\n", _Problem(), feedback="PERFORMANCE failure")
+
+    assert "Feedback: PERFORMANCE failure" in p.last_prompt
+    assert p.last_raw_response == reply

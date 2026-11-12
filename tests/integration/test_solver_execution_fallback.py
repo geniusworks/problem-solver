@@ -71,11 +71,13 @@ class RepairablePrimaryModel:
     async def generate_solution(  # type: ignore[override]
         self, parsed_problem, year: int, day: int, strategies, strategy_effectiveness
     ) -> str:
+        self.last_prompt, self.last_raw_response = "draft prompt", "draft reply"
         return "def solve():\n    return 0\n  # bad-initial"
 
     async def improve_solution(self, solution: str, problem, feedback=None) -> str:  # type: ignore[override]
         self.calls.append((solution, feedback))
         self.last_token_usage = {"input_tokens": 333, "output_tokens": 44}
+        self.last_prompt, self.last_raw_response = f"repair prompt: {feedback}", "repair reply"
         if "# good" in solution:
             return solution
         return "def solve():\n    return 2\n  # good"
@@ -306,6 +308,14 @@ async def test_solver_uses_repair_loop_when_all_initial_candidates_fail(
     assert (drafts[0].input_tokens, drafts[0].output_tokens) == (900, 110)
     assert all((a.input_tokens, a.output_tokens) == (333, 44) for a in repairs)
     assert all(a.quality_score is None for a in repairs)
+
+    # Each attempt saves the prompt and reply that produced its code, so --include-replay can
+    # show what a repair was told. Neither was ever set before 2026-11-12.
+    assert (drafts[0].prompt, drafts[0].raw_response) == ("draft prompt", "draft reply")
+    assert repairs[0].prompt.startswith("repair prompt: ") and "boom" in repairs[0].prompt
+    assert repairs[0].raw_response == "repair reply"
+    assert drafts[0].to_dict(include_replay=True)["prompt"] == "draft prompt"
+    assert "prompt" not in drafts[0].to_dict()
 
     # A failed candidate must persist WHY it failed, so the wrong-vs-error split
     # is diagnosable from the result JSON without --include-replay. The recording

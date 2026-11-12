@@ -79,7 +79,14 @@ class _Candidates:
     candidate_models: Dict[str, str] = field(default_factory=dict)
     generation_times: Dict[str, float] = field(default_factory=dict)
     generation_tokens: Dict[str, Dict[str, int]] = field(default_factory=dict)
+    # (prompt, raw response) of the call that produced each draft, for --include-replay.
+    generation_replay: Dict[str, Tuple[Optional[str], Optional[str]]] = field(default_factory=dict)
     failures: List[Any] = field(default_factory=list)
+
+
+def _last_exchange(model: Any) -> Tuple[Optional[str], Optional[str]]:
+    """The prompt and raw reply of the model's last code-producing call, where it keeps them."""
+    return getattr(model, "last_prompt", None), getattr(model, "last_raw_response", None)
 
 
 def _draft_index(cand_id: str) -> int:
@@ -612,6 +619,7 @@ class BaseSolver:
                     cands.generation_tokens[cand_id] = getattr(
                         model, "last_token_usage", {"input_tokens": 0, "output_tokens": 0}
                     )
+                    cands.generation_replay[cand_id] = _last_exchange(model)
                     # Every candidate enters the pool; correctness is decided by
                     # execution against the oracle further down.
                     cands.answers[cand_id] = solution
@@ -623,11 +631,14 @@ class BaseSolver:
                     tokens = getattr(
                         model, "last_token_usage", {"input_tokens": 0, "output_tokens": 0}
                     )
+                    prompt, raw_response = _last_exchange(model)
                     self._record_attempt(
                         model_name, year, day, part, Outcome.NO_CANDIDATE,
                         stage="generate",
                         draft_index=sample_idx,
                         error=f"{type(e).__name__}: {e}",
+                        prompt=prompt,
+                        raw_response=raw_response,
                         input_tokens=tokens.get("input_tokens", 0),
                         output_tokens=tokens.get("output_tokens", 0),
                     )
@@ -656,6 +667,7 @@ class BaseSolver:
         # generation_* dicts, which stay the draft's.
         attempt_times: Dict[str, float] = dict(generation_times)
         attempt_tokens: Dict[str, Dict[str, int]] = dict(generation_tokens)
+        attempt_replay = dict(cands.generation_replay)
         failures = cands.failures
         parsed_problem = prep.parsed_problem
         strategies, effectiveness = prep.strategies, prep.effectiveness
@@ -708,6 +720,7 @@ class BaseSolver:
                             exec_test_cases, known_answer,
                         )
                         tokens = attempt_tokens.get(cand_id, {})
+                        prompt, raw_response = attempt_replay.get(cand_id, (None, None))
                         self._record_attempt(
                             model_name, year, day, part, verdict.outcome,
                             stage="repair" if iteration else "generate",
@@ -720,6 +733,8 @@ class BaseSolver:
                             # quality_scores were computed on the drafts.
                             quality_score=None if iteration else quality_scores.get(cand_id),
                             code=solution,
+                            prompt=prompt,
+                            raw_response=raw_response,
                             input_tokens=tokens.get("input_tokens", 0),
                             output_tokens=tokens.get("output_tokens", 0),
                             # Persist why a candidate failed (traceback / expected-vs-got).
@@ -806,6 +821,7 @@ class BaseSolver:
                     if repair_error is not None and usage is stale_usage:
                         usage = None
                     repair_tokens = dict(usage or {"input_tokens": 0, "output_tokens": 0})
+                    repair_replay = _last_exchange(model)
 
                     if improved_code and improved_code != solution:
                         improved_candidates[cand_id] = improved_code
@@ -813,6 +829,7 @@ class BaseSolver:
                         # the repair's own cost, not the draft's.
                         attempt_times[cand_id] = repair_seconds
                         attempt_tokens[cand_id] = repair_tokens
+                        attempt_replay[cand_id] = repair_replay
                     else:
                         # The call was made and paid for but yielded nothing to
                         # run, so no later iteration will record it.
@@ -826,6 +843,8 @@ class BaseSolver:
                             wall_clock_seconds=repair_seconds,
                             input_tokens=repair_tokens.get("input_tokens", 0),
                             output_tokens=repair_tokens.get("output_tokens", 0),
+                            prompt=repair_replay[0],
+                            raw_response=repair_replay[1],
                             error=repair_error or "repair returned the code unchanged",
                         )
 
@@ -1018,6 +1037,8 @@ class BaseSolver:
         wall_clock_seconds: float = 0.0,
         quality_score: Optional[float] = None,
         code: Optional[str] = None,
+        prompt: Optional[str] = None,
+        raw_response: Optional[str] = None,
         input_tokens: int = 0,
         output_tokens: int = 0,
         verdict: Optional["CandidateVerdict"] = None,
@@ -1044,6 +1065,8 @@ class BaseSolver:
             wall_clock_seconds=wall_clock_seconds,
             quality_score=quality_score,
             code=code,
+            prompt=prompt,
+            raw_response=raw_response,
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             examples_passed=verdict.examples_passed if verdict else None,

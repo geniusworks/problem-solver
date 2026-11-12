@@ -65,7 +65,7 @@ and, more to the point, whether that could be *measured* rather than asserted.
   can turn "sometimes" into "solved" on problems the model can already sometimes solve.
 - **Self-repair** — show the model its own execution error (the traceback, the example's result,
   whether the answer was too high or too low) and let it try again. It adds information, but the
-  reference model's repairs rarely succeeded (13 of 368 attempts).
+  reference model's repairs rarely succeeded (17 of 427 attempts).
 - **Solved** — a trial counts as solved when any of its drafts or repairs produces the accepted
   answer. The oracle does the choosing, so multi-draft rates are what a perfect verifier would
   get: on 2025 d9 p2, choosing by the worked example alone solved 12 of 35 three-draft trials and
@@ -123,8 +123,8 @@ it. In order of how much they changed the project:
    → [Arm 1](RESULTS.md#arm-1--sampling-at-the-frontier)
 3. **A second model helped by being chosen, not mixed.** → [Arm 3](RESULTS.md#arm-3--choose-the-better-model-a-mix-had-nothing-to-add)
 4. **Cheap draws win on time and lose on tokens** (one trial). → [Arm 2](RESULTS.md#arm-2--cheap-draws-win-on-time-and-lose-on-tokens)
-5. **Repair rarely rescued the reference model, and the hardest failures are speed**, which more
-   time did not fix. → [Findings the thesis did not predict](RESULTS.md#findings-the-thesis-did-not-predict)
+5. **Repair rarely rescued the reference model, and the hardest failures are speed**, which
+   neither more time nor a repair told to find a faster algorithm fixed. → [Findings the thesis did not predict](RESULTS.md#findings-the-thesis-did-not-predict)
 6. **Measurement is most of the work:** twelve instrument defects, each of which moved results.
    → [What the measurements cost](RESULTS.md#what-the-measurements-cost-in-credibility-and-why-that-matters)
 
@@ -258,7 +258,8 @@ anyway. This repo is built so that constraint is structural rather than a matter
   recomputes the published figures from them (CI checks that the docs match). That includes the
   example-only selection analysis, which needs only each draft's outcome and example verdict.
   What cannot be repeated from the repo is re-executing saved drafts (the 600 s timeout re-run):
-  it needs the per-account inputs, and the saved prompts carry puzzle text.
+  it needs the per-account inputs. Since 2026-11-12, runs saved with `--include-replay` also hold
+  each attempt's prompt, which carries puzzle text.
 
 <details>
 <summary>Why this is compliant with AoC's guidelines</summary>
@@ -367,11 +368,7 @@ one-way, so the ensemble was not run. Open, in priority order (`PLAN.md`, "Open"
    automatically or by hand, and at what rate; then the submitter is wired in (without it an
    unseen year cannot reach Part 2), and the models, prompts and configuration are frozen before
    2026-12-01.
-2. **Speed-directed repair.** On the hardest problems drafts pass the example and then run out of
-   time, and repair rescues none of them. A registered test switches on guidance to find a faster
-   algorithm (`dev/progress/m5pro-d9p2-speed-repair.md`), before the AoC 2026 freeze so its
-   result can decide the setting there. *Running* since 2026-11-11.
-3. **Does the Part 1 context inform, or cue recall?** The headline's caveat, tested on AoC 2026,
+2. **Does the Part 1 context inform, or cue recall?** The headline's caveat, tested on AoC 2026,
    where nothing can be recalled: Part 2 with and without the Part 1 context
    (`dev/progress/part2-context-heldout-plan.md`). *Waits on* item 1.
 

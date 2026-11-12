@@ -1,9 +1,12 @@
-"""Re-execute timed-out drafts on the full input with a longer limit.
+"""Re-execute stopped drafts on the full input with a longer limit or a higher memory cap.
 
 Takes result files saved with --include-replay, picks the first-pass drafts
-(stage "generate") that hit the execution limit, and runs each again through the
-harness's own executor (sandboxed, same resource limits) with a longer timeout.
-Reports how many were correct but slow, wrong, or still too slow.
+(stage "generate") that the harness stopped, and runs each again through the
+harness's own executor (sandboxed, same resource limits) with --timeout and
+--max-memory-gb. Reports how many were correct, wrong, or stopped again.
+
+--stopped-by picks which stop: "timeout" (the time limit, the default) or
+"memory" (the harness's memory cap). --all-stages adds repairs to the drafts.
 
 Memory is not capped by the sandbox on macOS (RLIMIT_AS is unavailable there,
 see shared/sandbox.py), and drafts that time out are often brute force that
@@ -17,6 +20,8 @@ output file, so a stopped run resumes.
 
     venv/bin/python dev/rerun_timeouts.py --timeout 600 --jobs 2 --max-memory-gb 8 \
         dev/experiments/*_m5pro-d9p2-rep-k*.json
+    venv/bin/python dev/rerun_timeouts.py --stopped-by memory --all-stages --timeout 60 \
+        --jobs 1 --max-memory-gb 24 dev/experiments/*_m5pro-d9p2-speed-*.json
 """
 
 import argparse
@@ -39,13 +44,20 @@ from shared.sandbox import child_env, communicate_capped, resource_limiter  # no
 Draft = Tuple[str, Dict[str, Any], Dict[str, Any]]
 
 
-def timed_out_drafts(paths: Iterable[str]) -> Iterator[Draft]:
+# How the harness words each stop in an attempt's error (shared/execution.py).
+STOP_MARKERS = {"timeout": "timed out", "memory": "exceeded the memory cap"}
+
+
+def stopped_drafts(paths: Iterable[str], stopped_by: str = "timeout",
+                   all_stages: bool = False) -> Iterator[Draft]:
+    marker = STOP_MARKERS[stopped_by]
     for path in paths:
         run = json.loads(Path(path).read_text())
         for result in run["results"]:
             for attempt in result["attempts"]:
-                if (attempt.get("stage") == "generate" and attempt["outcome"] == "error"
-                        and "timed out" in (attempt.get("error") or "")):
+                if ((all_stages or attempt.get("stage") == "generate")
+                        and attempt["outcome"] == "error"
+                        and marker in (attempt.get("error") or "")):
                     if not attempt.get("code"):
                         raise SystemExit(f"{path}: no saved code; rerun needs --include-replay")
                     yield run["config"]["name"], result, attempt
@@ -86,6 +98,7 @@ async def rerun(gate: asyncio.Semaphore, timeout: int, max_bytes: int, min_free:
     else:
         verdict = "still timed out" if status == "timed out" else status
     row = {"run": name, "trial": result["trial"], "draft_index": attempt.get("draft_index"),
+           "repair_iteration": attempt.get("repair_iteration", 0),
            "verdict": verdict, "seconds": round(elapsed, 1)}
     print(json.dumps(row), flush=True)
     return row
@@ -100,9 +113,11 @@ async def main(args: argparse.Namespace) -> None:
         for line in Path(path).read_text().splitlines():
             if line.startswith("{"):
                 row = json.loads(line)
-                done.add((row["run"], row["trial"], row["draft_index"]))
-    drafts = [d for d in timed_out_drafts(args.results)
-              if (d[0], d[1]["trial"], d[2].get("draft_index")) not in done]
+                done.add((row["run"], row["trial"], row["draft_index"],
+                          row.get("repair_iteration", 0)))
+    drafts = [d for d in stopped_drafts(args.results, args.stopped_by, args.all_stages)
+              if (d[0], d[1]["trial"], d[2].get("draft_index"),
+                  d[2].get("repair_iteration", 0)) not in done]
     rows = await asyncio.gather(*(rerun(gate, args.timeout, max_bytes, min_free, *d) for d in drafts))
     print(dict(collections.Counter(row["verdict"] for row in rows)), f"of {len(rows)}")
 
@@ -110,6 +125,8 @@ async def main(args: argparse.Namespace) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("results", nargs="+")
+    parser.add_argument("--stopped-by", choices=sorted(STOP_MARKERS), default="timeout")
+    parser.add_argument("--all-stages", action="store_true", help="include repairs, not only drafts")
     parser.add_argument("--timeout", type=int, default=600)
     parser.add_argument("--jobs", type=int, default=2)
     parser.add_argument("--max-memory-gb", type=float, default=8.0)
