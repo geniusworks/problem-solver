@@ -467,7 +467,10 @@ anyway. This repo is built so that constraint is structural rather than a matter
 - **Raw run artifacts** (`dev/experiments/*.json`) are gitignored too — they embed accepted
   answers, generated source and execution output. Their outcomes, timings and token counts, with
   none of that, are committed as tables in `dev/results/`, and `dev/recompute_results.py`
-  recomputes the published figures from them (CI checks that the docs match).
+  recomputes the published figures from them (CI checks that the docs match). That includes the
+  example-only selection analysis, which needs only each draft's outcome and example verdict.
+  What cannot be repeated from the repo is re-executing saved drafts (the 600 s timeout re-run):
+  it needs the per-account inputs, and the saved prompts carry puzzle text.
 
 <details>
 <summary>Why this is compliant with AoC's guidelines</summary>

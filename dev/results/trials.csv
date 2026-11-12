@@ -1351,3 +1351,9 @@ run,problem_id,trial,outcome,winning_model,wall_clock_seconds,attempts_to_solve,
 20261111T211239Z_m5pro-d9p2-rep-k3-b7_96c4abf665d6.json,2025_day09_part2,2,solved,qwen3.8:27b,947.241,1,67527
 20261111T211239Z_m5pro-d9p2-rep-k3-b7_96c4abf665d6.json,2025_day09_part2,3,solved,qwen3.8:27b,711.972,3,56425
 20261111T211239Z_m5pro-d9p2-rep-k3-b7_96c4abf665d6.json,2025_day09_part2,4,solved,qwen3.8:27b,1602.841,7,115467
+20261112T034130Z_m5pro-precheck-memcap_1ac712678732.json,2024_day01_part1,0,solved,qwen3.8:27b,58.343,1,7910
+20261112T034130Z_m5pro-precheck-memcap_1ac712678732.json,2024_day01_part2,0,solved,qwen3.8:27b,63.446,1,8489
+20261112T034130Z_m5pro-precheck-memcap_1ac712678732.json,2024_day01_part1,1,solved,qwen3.8:27b,53.306,1,7502
+20261112T034130Z_m5pro-precheck-memcap_1ac712678732.json,2024_day01_part2,1,solved,qwen3.8:27b,60.45,1,8235
+20261112T034130Z_m5pro-precheck-memcap_1ac712678732.json,2024_day01_part1,2,solved,qwen3.8:27b,111.483,1,10557
+20261112T034130Z_m5pro-precheck-memcap_1ac712678732.json,2024_day01_part2,2,solved,qwen3.8:27b,64.291,1,8610

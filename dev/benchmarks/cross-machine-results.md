@@ -15,7 +15,7 @@ result rows tagged with the machine `id`. Keep config columns identical across m
 |----|------|-----|-------|-------|--------|-------------------|-------|
 | **m1-16** | Apple M1 | 16 GB | 8 | 26.5.2 (25F84) | 0.32.0 | ~dense-14B Q4 (~10 GB); ~10–11 GB usable after macOS | all runs below unless noted |
 | **m2max-32** | Apple M2 Max | 32 GB | 12 | 26.6.1 (25G76) | **0.32.14** (was 0.32.11 until 2026-08-16) | ~dense-30B / 30B-MoE Q4 — `qwen2.5-coder:32b` (19 GB), `qwen3-coder:30b` (18 GB), `qwen3.8:27b` (17 GB), all 100% GPU | bring-up 2026-08-15 (`m2max-handoff.md` §3); Python 3.14; cold learning DB. **The 4/8 and 6/8 rows below ran on 0.32.11**; upgraded to pull `qwen3.8:27b`, which 0.32.11 refuses. Upgrade verified behaviour-neutral: 6/6 on a 3-trial control (`ollama-0.32.14-runtime-check.md`) |
-| **m5pro-64** | Apple M5 Pro | 64 GB | 18 | 27.0.1 | **0.34.4** at bring-up; **0.40.11** on 2026-11-09 (upgrade date not recorded; result files record the version from 2026-11-09). autopep8 2.0.4 → 2.3.2 on 2026-11-09, before the d9 p2 power test and its pre-run check (formatter output byte-identical on all 74 recorded programs). **Memory cap on generated code from 2026-11-11:** 8 GB physical footprint per process, enforced by a watchdog (macOS ignores the address-space limit, so generated code had no memory cap before); all 69 ledger solutions verify under it, and the pre-run check gave 6/6 (`1ac712678732`, fingerprint unchanged). Before it, a runaway draft could run for its 60 s limit and slow the machine, which can inflate wall-clock times; verdicts are unaffected | resident: `qwen3.8:27b` (17 GB; 18.2 GB loaded, 100% GPU), `qwen3.6:35b-a3b` (35.5B MoE, 22.6 GB, unmeasured). The ~40 GB class fits on paper; none pulled or measured | bring-up 2026-10-12; **Python 3.11.16** (m2max-32 ran 3.14) and a newer Ollama and macOS than every row below, so the first run was a `qwen3.8:27b` calibration on d4–7 at `--trials 3`: **23/24 against the M2 Max's 16/16, about 2.3× faster** (`m5pro-calibration-qwen38-d4-7.md`) |
+| **m5pro-64** | Apple M5 Pro | 64 GB | 18 | 27.0.1 | **0.34.4** at bring-up; **0.40.11** on 2026-11-09 (upgrade date not recorded; result files record the version from 2026-11-09). autopep8 2.0.4 → 2.3.2 on 2026-11-09, before the d9 p2 power test and its pre-run check (formatter output byte-identical on all 74 recorded programs). **Memory cap on generated code from 2026-11-11:** 8 GB physical footprint per process, enforced by a watchdog (macOS ignores the address-space limit, so generated code had no memory cap before); all 69 ledger solutions verify under it, and the pre-run check gave 6/6 (`1ac712678732`, fingerprint unchanged; the first run of it, from the PR branch, was lost before export, so it was repeated from `main` on 2026-11-11 and exported). Before it, a runaway draft could run for its 60 s limit and slow the machine, which can inflate wall-clock times; verdicts are unaffected | resident: `qwen3.8:27b` (17 GB; 18.2 GB loaded, 100% GPU), `qwen3.6:35b-a3b` (35.5B MoE, 22.6 GB, unmeasured). The ~40 GB class fits on paper; none pulled or measured | bring-up 2026-10-12; **Python 3.11.16** (m2max-32 ran 3.14) and a newer Ollama and macOS than every row below, so the first run was a `qwen3.8:27b` calibration on d4–7 at `--trials 3`: **23/24 against the M2 Max's 16/16, about 2.3× faster** (`m5pro-calibration-qwen38-d4-7.md`) |
 
 ## Which models fit each machine (measured)
 
@@ -112,7 +112,7 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page, gate_part_two=false** | 2024 d1 p2 only (plumbing check) | 3 | 3/3 | 100% | `m5pro-d9p2-replication.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page, gate_part_two=false** | 2025 d9 p2 only (replication, k1, seven blocks of 5) | 35 | 13/35 | 37% | `m5pro-d9p2-replication.md` |
 | **m5pro-64** | qwen3.8:27b | tk-off **samp3**, fallback off, **ctx=aoc, example_tests=page, gate_part_two=false** | 2025 d9 p2 only (replication, k3, seven blocks of 5) | 35 | 16/35 | 46% | `m5pro-d9p2-replication.md` |
-| **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page**, 8 GB memory cap | 2024 d1 p1 then p2 (pre-run check after the memory cap) | 3 | 6/6 | 100% | `cross-machine-results.md` (machine row) |
+| **m5pro-64** | qwen3.8:27b | tk-off samp1, fallback off, **ctx=aoc, example_tests=page**, 8 GB memory cap | 2024 d1 p1 then p2 (pre-run check after the memory cap; run `20261112T034130Z_m5pro-precheck-memcap`, commit `370ec58`) | 3 | 6/6 | 100% | `dev/results/` (machine row above) |
 
 † ran on ollama **0.32.14**; the two rows above ran on 0.32.11. Upgrade verified behaviour-neutral
 (6/6 on a 3-trial control, `ollama-0.32.14-runtime-check.md`).
@@ -222,7 +222,16 @@ All 2024, temperature 0.7 unless noted; "samp" = `samples_per_model`; "tk-off" =
   program: k1 13/35 → k3 16/35** (`m5pro-d9p2-replication.md`). One-sided Fisher p = 0.31: not
   re-established. Drafts were correct 20% of the time (28/140), which predicts 49% at k3 against
   a measured 46%: the draws were independent again; the prediction had assumed 27%.
-
+- **The arm-3 decider: `muse-glimmer:30b` 10/10 against the reference's 1/10 on 2024 d14 p2**
+  (one-sided Fisher p = 0.0001, `arm3-precheck-muse-glimmer-30b.md`). Stage A then found no cell
+  where the reference's lead held at 10 trials, so no ensemble was run (`arm3-portfolio-test.md`).
+- **The "sometimes" band under the corrected harness: k1 9/19 → k3 11/21**, no measurable lift;
+  the cells split into solved by nearly every draft or nearly none (`m5pro-band-k1-vs-k3-aoc.md`).
+- **13 Part 2s the reference had failed, rescanned with the Part 1 statement: 2/53 → 29/37**
+  single-draft trials (`m5pro-rescan-part2-aoc.md`). Selected on prior failure, and two smaller
+  settings changed alongside; the controlled test is the next line.
+- **2024 d19 p2 with only the context changed: 6/20 → 19/19** single drafts, 20 trials each, same
+  machine, a day apart; one-sided Fisher p = 2.6e-6 (`part2-prompt-omits-part1.md`).
 - **2025 d9 p2 at 20 trials per arm, corrected harness: k1 5/15 → k3 13/20** over trials that
   reached Part 2 (`m5pro-d9p2-power-aoc.md`). One-sided Fisher p = 0.065: inconclusive under the
   registered readings. First drafts were correct 27% of the time (20/75), which predicts 61% at k3

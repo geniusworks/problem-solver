@@ -3641,3 +3641,9 @@ run,problem_id,trial,model,stage,repair_iteration,draft_index,outcome,input_toke
 20261111T211239Z_m5pro-d9p2-rep-k3-b7_96c4abf665d6.json,2025_day09_part2,4,qwen3.8:27b,repair,2,0,solved,8226,1446,69.140821,1,1,False
 20261111T211239Z_m5pro-d9p2-rep-k3-b7_96c4abf665d6.json,2025_day09_part2,4,qwen3.8:27b,repair,2,1,error,6057,1305,63.105033,0,1,False
 20261111T211239Z_m5pro-d9p2-rep-k3-b7_96c4abf665d6.json,2025_day09_part2,4,qwen3.8:27b,repair,2,2,wrong,4888,996,42.698234,1,1,False
+20261112T034130Z_m5pro-precheck-memcap_1ac712678732.json,2024_day01_part1,0,qwen3.8:27b,generate,0,0,solved,6795,1115,57.455748,1,1,False
+20261112T034130Z_m5pro-precheck-memcap_1ac712678732.json,2024_day01_part2,0,qwen3.8:27b,generate,0,0,solved,7272,1217,62.574619,1,1,False
+20261112T034130Z_m5pro-precheck-memcap_1ac712678732.json,2024_day01_part1,1,qwen3.8:27b,generate,0,0,solved,6590,912,52.438799,1,1,False
+20261112T034130Z_m5pro-precheck-memcap_1ac712678732.json,2024_day01_part2,1,qwen3.8:27b,generate,0,0,solved,7142,1093,59.535493,1,1,False
+20261112T034130Z_m5pro-precheck-memcap_1ac712678732.json,2024_day01_part1,2,qwen3.8:27b,generate,0,0,solved,8098,2459,110.695216,1,1,False
+20261112T034130Z_m5pro-precheck-memcap_1ac712678732.json,2024_day01_part2,2,qwen3.8:27b,generate,0,0,solved,7348,1262,63.358901,1,1,False

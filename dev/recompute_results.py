@@ -191,6 +191,30 @@ def d9_after_the_fix() -> str:
     return frac(solved(outcomes(runs, ["2025_day09_part2"], reached_only=True)))
 
 
+def example_only_selector() -> str:
+    """Replication k3 trials: take the first draft (by draft_index) that passes the worked example
+    and produces an answer; score it against the oracle beside the oracle's own pick."""
+    runs = {name for name in RUNS if "_m5pro-d9p2-rep-k3-b" in name}
+    drafts: Dict[Tuple[str, str], List[dict]] = defaultdict(list)
+    for a in ATTEMPTS:
+        if a["run"] in runs and a["stage"] == "generate":
+            drafts[(a["run"], a["trial"])].append(a)
+    right = wrong = none = oracle = 0
+    for group in drafts.values():
+        group.sort(key=lambda a: int(a["draft_index"]))
+        oracle += any(a["outcome"] == "solved" for a in group)
+        passing = [a for a in group if a["outcome"] in ("solved", "wrong")
+                   and a["examples_total"] and a["examples_passed"] == a["examples_total"]
+                   and int(a["examples_total"]) > 0]
+        if not passing:
+            none += 1
+        elif passing[0]["outcome"] == "solved":
+            right += 1
+        else:
+            wrong += 1
+    return f"{right}/{len(drafts)} right, {wrong} wrong, {none} none; oracle {oracle}/{len(drafts)}"
+
+
 def arm1_replication() -> str:
     """2025 d9 p2, k1 against k3, every trial posed Part 2 (registered replication, 7 blocks per arm)."""
     cell = ["2025_day09_part2"]
@@ -276,10 +300,10 @@ class Claim:
 
 
 CLAIMS = [
-    Claim("corpus runs", corpus_runs, "107 recorded experiment runs",
-          {"RESULTS.md": ["107 recorded experiment runs"]}),
-    Claim("corpus attempts", corpus_attempts, "3,642 candidate attempts",
-          {"RESULTS.md": ["3,642 candidate attempts"]}),
+    Claim("corpus runs", corpus_runs, "108 recorded experiment runs",
+          {"RESULTS.md": ["108 recorded experiment runs"]}),
+    Claim("corpus attempts", corpus_attempts, "3,648 candidate attempts",
+          {"RESULTS.md": ["3,648 candidate attempts"]}),
     Claim("corpus GPU-hours", corpus_hours, "~225 GPU-hours", {"RESULTS.md": ["~225 GPU-hours"]}),
     Claim("corpus tokens", corpus_tokens, "45.7M tokens", {"RESULTS.md": ["45.7M tokens"]}),
     Claim("ledger", ledger_size, "69 verified solutions",
@@ -306,6 +330,10 @@ CLAIMS = [
            "README.md": ["20 trials per arm, had given 5/15 at one draft and 13/20 at\nthree"]}),
     Claim("2025 d9 p2 after the fix, three drafts", d9_after_the_fix, "31/58",
           {"README.md": ["**31/58** at three drafts"], "RESULTS.md": ["**31/58** three-draft trials"]}),
+    Claim("example-only selector, 2025 d9 p2 replication", example_only_selector,
+          "12/35 right, 15 wrong, 8 none; oracle 14/35",
+          {"README.md": ["solved 12 of 35 three-draft trials and\n  took a wrong answer in 15, where the oracle solved 14"],
+           "RESULTS.md": ["solved 12 of 35 three-draft trials and took a wrong answer in 15"]}),
     Claim("arm 1, registered replication on 2025 d9 p2", arm1_replication, "13/35 -> 16/35, p 0.31",
           {"RESULTS.md": ["| solved | 13/35 (37%) | 16/35 (46%) | **p = 0.31 — not re-established** |",
                           "replication at 13/35 against 16/35 (one-sided p = 0.31;"],
@@ -318,10 +346,10 @@ CLAIMS = [
     Claim("repair by model", repair_by_model, "13/368 vs 14/80; same problems 12/358 vs 8/67",
           {"RESULTS.md": ["muse's 14 times in 80. On the problems both models repaired, 12 in 358 against 8 in 67"],
            "README.md": ["succeeded 13 times in 368 attempts, muse's 14 in 80", "both repaired, 12 in 358 against 8 in 67"]}),
-    Claim("repair share of solves", repair_share_of_solves, "13 of 294 vs 14 of 131",
-          {"RESULTS.md": ["13 of the reference's 294 solves came\n  from repair, against 14 of 131",
-                          "13 of\nits 294 solved cells were solved by repair", "solved 14 of\nits 131 by repair"],
-           "PLAN.md": ["repair produced 13\nof the reference model's 294 solves"]}),
+    Claim("repair share of solves", repair_share_of_solves, "13 of 300 vs 14 of 131",
+          {"RESULTS.md": ["13 of the reference's 300 solves came\n  from repair, against 14 of 131",
+                          "13 of\nits 300 solved cells were solved by repair", "solved 14 of\nits 131 by repair"],
+           "PLAN.md": ["repair produced 13\nof the reference model's 300 solves"]}),
     Claim("arm 3 decider", arm3, "10/10 vs 1/10, p 0.0001",
           {"RESULTS.md": ["10/10 against the reference's 1/10 in the decider, one-sided Fisher p = 0.0001"]}),
 ]
