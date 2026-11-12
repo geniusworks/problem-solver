@@ -12,6 +12,7 @@ from shared.solving.candidates import CandidateMixin
 from shared.solving.state import _Candidates, _Prep
 
 if TYPE_CHECKING:
+    from shared.llm.local import OllamaProvider
     from learning import LearningDatabase
     from shared.quality.code_quality import CodeQualityAnalyzer
 
@@ -22,7 +23,7 @@ logger = logging.getLogger("shared.solver")
 class ConsensusMixin(CandidateMixin):
     """The consensus stage, as BaseSolver uses it."""
 
-    models: Dict[str, Any]
+    models: Dict[str, "OllamaProvider"]
     enable_collaborative_improvement: bool
     db: Optional["LearningDatabase"]
     learning_dir: Any

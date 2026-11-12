@@ -5,18 +5,21 @@ Moved out of shared/solver.py unchanged (2026-11-12).
 
 import logging
 from datetime import datetime
-from typing import Any, Callable, Dict
+from typing import TYPE_CHECKING, Any, Callable, Dict
 
 from shared.experiment import Outcome, SolverConfig
 from shared.solving.candidates import _last_exchange
 from shared.solving.state import _Candidates, _Prep
+
+if TYPE_CHECKING:
+    from shared.llm.local import OllamaProvider
 
 
 class GenerationMixin:
     """The generation stage, as BaseSolver uses it."""
 
     config: SolverConfig
-    models: Dict[str, Any]
+    models: Dict[str, "OllamaProvider"]
     # Defined on BaseSolver.
     _record_attempt: Callable[..., Any]
     _record_model_performance: Callable[..., None]

@@ -9,12 +9,15 @@ runs when every primary candidate and its repairs failed.
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
 from shared.execution import TestCase
 from shared.experiment import Outcome
 from shared.solving.candidates import CandidateMixin, _draft_index, _last_exchange
 from shared.solving.state import _Candidates, _Prep
+
+if TYPE_CHECKING:
+    from shared.llm.local import OllamaProvider
 
 # The solver's logger, so log records keep the name they had before the move.
 logger = logging.getLogger("shared.solver")
@@ -42,7 +45,7 @@ class _Costs:
 class RepairMixin(CandidateMixin):
     """The execute-repair-fallback stage, as BaseSolver uses it."""
 
-    models: Dict[str, Any]
+    models: Dict[str, "OllamaProvider"]
     # Defined on BaseSolver.
     _record_attempt: Callable[..., Any]
     _record_model_performance: Callable[..., None]
