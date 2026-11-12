@@ -88,6 +88,31 @@ def fisher_greater(a: int, n1: int, b: int, n2: int) -> float:
                for x in range(b, min(total, n2) + 1) if 0 <= total - x <= n1) / denominator
 
 
+def _wilson(successes: int, n: int, z: float = 1.959964) -> Tuple[float, float]:
+    p = successes / n
+    centre = p + z * z / (2 * n)
+    half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))
+    return (centre - half) / (1 + z * z / n), (centre + half) / (1 + z * z / n)
+
+
+def newcombe(a: int, n1: int, b: int, n2: int) -> str:
+    """95% Newcombe hybrid-score interval for b/n2 - a/n1, in points: the lower bound rounded
+    down, the upper to the nearest point."""
+    p1, p2 = a / n1, b / n2
+    (l1, u1), (l2, u2) = _wilson(a, n1), _wilson(b, n2)
+    low = (p2 - p1) - math.sqrt((p2 - l2) ** 2 + (u1 - p1) ** 2)
+    high = (p2 - p1) + math.sqrt((u2 - p2) ** 2 + (p1 - l1) ** 2)
+    return f"{math.floor(100 * low):+d} to {math.floor(100 * high + 0.5):+d}"
+
+
+def intervals() -> str:
+    """The intervals RESULTS.md quotes beside its main comparisons."""
+    pairs = {"d19": (6, 20, 19, 19), "13 cells": (2, 53, 29, 37), "band": (9, 19, 11, 21),
+             "decider": (1, 10, 10, 10), "2024": (10, 24, 9, 12), "2025": (2, 8, 6, 6),
+             "power": (5, 15, 13, 20), "replication": (13, 35, 16, 35)}
+    return "; ".join(f"{name} {newcombe(*counts)}" for name, counts in pairs.items())
+
+
 def fisher_combined(*p_values: float) -> float:
     """Fisher's method for two p-values (chi-square, 4 degrees of freedom)."""
     statistic = -2 * sum(math.log(p) for p in p_values)
@@ -301,11 +326,17 @@ class Claim:
 
 CLAIMS = [
     Claim("corpus runs", corpus_runs, "108 recorded experiment runs",
-          {"RESULTS.md": ["108 recorded experiment runs"]}),
+          {"RESULTS.md": ["108 recorded experiment runs", "The corpus is 108 runs"]}),
     Claim("corpus attempts", corpus_attempts, "3,648 candidate attempts",
-          {"RESULTS.md": ["3,648 candidate attempts"]}),
+          {"RESULTS.md": ["3,648 candidate attempts", "3,648 candidate attempts and about 225\nGPU-hours"]}),
     Claim("corpus GPU-hours", corpus_hours, "~225 GPU-hours", {"RESULTS.md": ["~225 GPU-hours"]}),
     Claim("corpus tokens", corpus_tokens, "45.7M tokens", {"RESULTS.md": ["45.7M tokens"]}),
+    Claim("95% Newcombe intervals", intervals,
+          "d19 +42 to +85; 13 cells +56 to +85; band -24 to +33; decider +48 to +98; "
+          "2024 -1 to +57; 2025 +23 to +93; power -2 to +56; replication -14 to +30",
+          {"RESULTS.md": ["70 points (95% Newcombe interval\n+42 to +85)", "(75 points, +56 to +85)",
+                          "interval\n−24 to +33", "interval +48 to\n  +98", "interval −1 to +57",
+                          "+23 to +93", "interval −2 to +56", "interval −14 to +30"]}),
     Claim("ledger", ledger_size, "69 verified solutions",
           {"README.md": ["**69 verified solutions**"], "RESULTS.md": ["69 oracle-verified solutions"],
            "assets/social-preview.html": ["69 verified solutions"]}),
@@ -320,11 +351,11 @@ CLAIMS = [
            "assets/social-preview.html": ['class="stat">6/20<', 'class="to">19/19<']}),
     Claim("arm 1, original harness", arm1_original,
           "10/24 -> 9/12 (blind 7/12), p 0.061; 2025 2/8 -> 6/6, p 0.009; combined 0.005",
-          {"RESULTS.md": ["| 2024 alone | 10/24 → 9/12 | **p ≈ 0.061 — marginal** |",
-                          "| 2025 replication | 2/8 → 6/6 | **p ≈ 0.009** |",
+          {"RESULTS.md": ["| 2024 alone | 10/24 → 9/12 (+33 points, 95% interval −1 to +57) | **p ≈ 0.061 — marginal** |",
+                          "| 2025 replication | 2/8 → 6/6 (+75 points, +23 to +93) | **p ≈ 0.009** |",
                           "**p ≈ 0.005**"]}),
     Claim("arm 1, corrected harness", arm1_corrected, "9/19 -> 11/21",
-          {"RESULTS.md": ["9/19 at one draft and 11/21 at\nthree"]}),
+          {"RESULTS.md": ["gave 9/19 at one draft and 11/21 at three"]}),
     Claim("arm 1, powered test on 2025 d9 p2", arm1_power, "5/15 -> 13/20, p 0.065",
           {"RESULTS.md": ["| solved | 5/15 (33%) | 13/20 (65%) | **p = 0.065 — inconclusive** |"],
            "README.md": ["20 trials per arm, had given 5/15 at one draft and 13/20 at\nthree"]}),
@@ -351,7 +382,7 @@ CLAIMS = [
                           "13 of\nits 300 solved cells were solved by repair", "solved 14 of\nits 131 by repair"],
            "PLAN.md": ["repair produced 13\nof the reference model's 300 solves"]}),
     Claim("arm 3 decider", arm3, "10/10 vs 1/10, p 0.0001",
-          {"RESULTS.md": ["10/10 against the reference's 1/10 in the decider, one-sided Fisher p = 0.0001"]}),
+          {"RESULTS.md": ["10/10 against the reference's 1/10 in the decider (+90 points", "one-sided Fisher p = 0.0001). It also gave"]}),
 ]
 
 
