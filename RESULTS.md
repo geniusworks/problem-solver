@@ -79,8 +79,10 @@ table) · **69 oracle-verified solutions across two AoC years, 0 wrong in the le
 
 > **Read the contamination section before the capability numbers.** AoC 2024/2025 solutions predate
 > the models used here and are public, so the *capability* results are descriptive of this testbed
-> rather than clean measurements. The *orchestration* comparisons — which hold the problems fixed
-> and vary the strategy — are largely unaffected.
+> rather than clean measurements. The *orchestration* comparisons, which hold the model, prompt and
+> problems fixed and vary the strategy, are less exposed: both arms share whatever was memorized.
+> Memory can still shift the per-draft rate that sets a strategy's gain, so their effect sizes
+> may not carry over to unseen problems; AoC 2026 is the test.
 
 This document is the consolidated result. The write-ups in [`dev/progress/`](dev/progress/) are
 the audit trail, with dated notes where a later run changed a finding. For the project itself —
