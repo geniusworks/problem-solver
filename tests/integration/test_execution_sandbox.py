@@ -212,3 +212,41 @@ class TestTheOracleRunsAwayFromTheAnswers:
         sums = "print(sum(int(x) for x in open('input.txt').read().split()))\n"
 
         assert verify_solution_code(sums, 2099, 1, 1).verdict is Verdict.CORRECT
+
+
+class TestTheTimeoutFiresBeforeTheCpuLimit:
+    """A program that keeps a core busy must be reported as timed out, not as a crash.
+
+    With the CPU-time limit equal to the timeout, such a program reached it as the watchdog's
+    0.2 s poll came round, and the kernel's kill read as "Process failed: Unknown error":
+    6 attempts of the speed-repair test were mislabelled that way, and 3 repairs in its "on" arm
+    lost the speed guidance a timeout gets (2026-11-12)."""
+
+    def test_the_cpu_limit_is_above_the_timeout_and_its_grace(self):
+        from shared.sandbox import cpu_limit_seconds
+
+        for timeout in (1, 2, 60):
+            assert cpu_limit_seconds(timeout) > timeout + 5
+
+    def test_the_limit_a_child_sees_is_the_backstop(self, tmp_path):
+        import subprocess
+        import sys
+
+        from shared.sandbox import configured_limiter, cpu_limit_seconds
+
+        probe = "import resource; print(resource.getrlimit(resource.RLIMIT_CPU)[0])"
+        done = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True,
+                              preexec_fn=configured_limiter(60), check=True)
+        assert int(done.stdout) == cpu_limit_seconds(60)
+
+    async def test_a_busy_loop_is_reported_as_a_timeout(self, tmp_path):
+        from shared.execution import SolutionExecutor
+
+        (tmp_path / "input.txt").write_text("1\n")
+        module = tmp_path / "busy.py"
+        module.write_text("while True:\n    pass\n")
+        executor = SolutionExecutor(tmp_path, timeout=2)
+
+        for _ in range(3):
+            result = await executor.execute_solution(module, str(tmp_path / "input.txt"))
+            assert "timed out" in (result.error or ""), result.error

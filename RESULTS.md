@@ -396,8 +396,9 @@ interval −10 to +31 points), inconclusive by its registered readings. The gap 
 which the flag does not touch (10 solved with it on, 4 off); repair, where it acts, rescued 2
 trials with it on and 4 off. Under the memory cap most slow drafts stopped at 8 GB within
 seconds rather than at the 60 s limit, and the guidance is keyed to the timeout, so it reached
-only 5 repair prompts; none solved, and in both arms none of the 39 repairs after a timeout or a
-memory-cap stop solved. Re-executed with a 24 GB cap, none of the 35 attempts the 8 GB cap stopped
+only 5 repair prompts (3 more lost it to a harness race; the two affected blocks are to be rerun);
+none solved, and in both arms none of the 39 repairs after a recorded timeout or memory-cap stop
+solved, nor the 4 after timeouts recorded as crashes. Re-executed with a 24 GB cap, none of the 35 attempts the 8 GB cap stopped
 finished correctly within 60 s: 29 passed 24 GB as well, within 36 s. Larger models did not move these cells:
 `gemma4:31b` and `ornith-1.5:35b` solved neither 2024 d24 p2 nor 2025 d10 p2.
 
@@ -503,7 +504,7 @@ in the verified ledger, which it could only be by solving.
 The rule adopted: **a tally maintained by addition in prose is not a measurement.** Recompute from
 the artifacts.
 
-Four further instrument gaps, found in November 2026, changed no reported solve rate. The
+Five further instrument gaps, found in November 2026, changed no reported solve rate. The
 `--config` parser read `targeted_feedback=false` as the string "false", which is truthy, so the
 flag could not be switched off from the command line; the one recorded run that set it asked for
 it on (`targeted-feedback-negative.md`), and it was caught by a fingerprint mismatch before the
@@ -516,7 +517,11 @@ stopped a process past 8 GB since 2026-11-11. Generated code also ran in the pro
 beside the accepted answers, where a program could have read them and passed the oracle; it runs
 in an empty directory holding a copy of its input since 2026-11-11 in the solve loop and since
 2026-11-12 in the oracle's own runner, and none of the 1,091 programs saved with their code reads
-any file but its input.
+any file but its input. And from 2026-11-11 the 60 s timeout, checked every 0.2 s by the memory
+watchdog, could lose a race with a CPU-time limit of the same 60 s, so that 6 timeouts in the
+speed-repair test were recorded as crashes and 3 of its repairs went without the speed guidance;
+the CPU limit sits 10 s above the timeout since 2026-11-12, and the two affected blocks are to be
+rerun under the test's registered rule.
 
 ---
 

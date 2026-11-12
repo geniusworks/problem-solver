@@ -34,7 +34,10 @@ Done 2026-11-12:
 - **Speed-directed repair on 2025 d9 p2: inconclusive** (`m5pro-d9p2-speed-repair.md`).
   `targeted_feedback` off 8/35, on 12/35, one draft; one-sided Fisher p = 0.21, 11 points apart.
   The gap is in first drafts, which the flag does not touch; none of 39 repairs after a timeout or
-  memory-cap stop solved. The flag stays off for AoC 2026. 8.9 GPU-hours.
+  memory-cap stop solved. The flag stays off for AoC 2026. 8.9 GPU-hours. A harness race found
+  later the same day (timeouts recorded as crashes) cost 3 "on" repairs their guidance; blocks
+  on-b5 and on-b6 meet the registered harness-failure rule and are to be rerun (about 1 GPU-hour,
+  waits on the maintainer's go).
 - `--include-replay` now saves each attempt's prompt and raw response beside its code; until
   2026-11-12 it saved only the code.
 

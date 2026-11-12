@@ -7,6 +7,19 @@ apart, so by the registered readings **inconclusive**, and `targeted_feedback` s
 memory-cap stop solved, 5 of them with the speed guidance. Design, prediction and readings below
 were registered before launch (#72) and are unchanged.
 
+> **2026-11-12, later: two "on" blocks meet the registered harness-failure rule.** Replaying this
+> run through the solver showed that 6 attempts recorded as crashes ("Process failed: Unknown
+> error") were timeouts: the memory watchdog in force since 2026-11-11 checks the 60 s timeout
+> every 0.2 s, and the CPU-time limit, also 60 s, could kill a program that kept a core busy
+> before the check came round. Re-executed under the fix (the CPU limit now sits 10 s above the
+> timeout), all 6 time out at 60.1 to 60.2 s. One is in the off arm and five in the on arm; three
+> of those five were followed by a repair, which therefore went without the speed guidance, in
+> blocks on-b5 (trial 4) and on-b6 (trial 3). The rule fixed in advance makes such a block a
+> harness failure, rerun whole. With the six counted as timeouts, the on arm had 13 timed-out
+> attempts and the off arm 13, the speed guidance should have reached 8 repair prompts, and none
+> of 43 repairs after a timeout or memory-cap stop solved. The reading below stands until the
+> two blocks are rerun, which waits on the maintainer's go.
+
 A first launch at 21:28 PST on 2026-11-11 was stopped within a minute, before any result was
 written: its "off" block reported fingerprint `619ec3965b58` instead of `80b37d599dd8`, because
 the `--config` parser read `targeted_feedback=false` as the truthy string "false". Fixed in #76
@@ -142,9 +155,10 @@ now, 13/35 then (one-sided p = 0.15).
 
 ### Did it fire
 
-In the "on" arm the speed guidance was in the recorded feedback of all 8 timed-out attempts and the
-wrong-answer guidance in all 28 wrong answers; the "off" arm's feedback carried neither. No block
-met the harness-failure rule. Feedback on a trial's last attempt reaches no repair, so the speed
+In the "on" arm the speed guidance was in the recorded feedback of all 8 attempts recorded as
+timed out and the wrong-answer guidance in all 28 wrong answers; the "off" arm's feedback carried
+neither. Five more "on" attempts were timeouts recorded as crashes, and blocks on-b5 and on-b6
+meet the harness-failure rule (see the dated note under the status). Feedback on a trial's last attempt reaches no repair, so the speed
 guidance reached 5 repair prompts and the wrong-answer guidance 21.
 
 **What the registration did not foresee: most slow drafts now stop at the memory cap.** The cap
