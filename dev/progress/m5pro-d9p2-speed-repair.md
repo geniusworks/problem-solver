@@ -18,7 +18,7 @@ were registered before launch (#72) and are unchanged.
 > harness failure, rerun whole. With the six counted as timeouts, the on arm had 13 timed-out
 > attempts and the off arm 13, the speed guidance should have reached 8 repair prompts, and none
 > of 43 repairs after a timeout or memory-cap stop solved. The reading below stands until the
-> two blocks are rerun, which waits on the maintainer's go.
+> two blocks are rerun (approved by the maintainer).
 
 A first launch at 21:28 PST on 2026-11-11 was stopped within a minute, before any result was
 written: its "off" block reported fingerprint `619ec3965b58` instead of `80b37d599dd8`, because

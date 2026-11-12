@@ -37,7 +37,7 @@ Done 2026-11-12:
   memory-cap stop solved. The flag stays off for AoC 2026. 8.9 GPU-hours. A harness race found
   later the same day (timeouts recorded as crashes) cost 3 "on" repairs their guidance; blocks
   on-b5 and on-b6 meet the registered harness-failure rule and are to be rerun (about 1 GPU-hour,
-  waits on the maintainer's go).
+  approved by the maintainer, after the solver split).
 - `--include-replay` now saves each attempt's prompt and raw response beside its code; until
   2026-11-12 it saved only the code.
 
@@ -145,11 +145,13 @@ replay differs unexplained is reverted and waits. The rest wait until after the 
    fingerprint, and `dev/replay_solver.py` replays recorded runs through the real solver with
    the recorded programs standing in for the model, so a change can be checked against
    real trials without a GPU.
-3. **Split `shared/solver.py` (1,433 lines) by responsibility:** generation, verification, repair
-   and fallback, with `solver.py` coordinating the stages. *In progress, before the freeze.*
-   Behaviour unchanged, shown by item 2's suite, the fingerprint test, and a replay of the
-   speed-repair and replication runs (70 trials each) identical to the baseline replay of the
-   code before the split; then the `--trials 3` pre-run check.
+3. **Split `shared/solver.py` (1,433 lines) by responsibility.** *Done 2026-11-12:* generation,
+   candidate verification, repair and fallback, consensus and execution feedback live in
+   `shared/solving/`, and `solver.py` (536 lines) coordinates the stages. Behaviour unchanged:
+   item 2's suite and the fingerprint test pass, and a replay of the speed-repair and
+   replication runs (140 trials) gives every trial the same outcome, attempts, problem and
+   repair feedback as the replay of the code before the split. The `--trials 3` pre-run check
+   runs before the next GPU run.
 4. **One capped runner in `shared/sandbox.py`.** `communicate_capped` (asyncio: the solve loop and
    `dev/rerun_timeouts.py`) and `run_capped` (subprocess: the oracle's own runner and the example
    runs) repeat the same watch loop. They have already drifted: only the asyncio one gives a
