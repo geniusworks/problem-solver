@@ -5,9 +5,12 @@ generated source and execution output, none of which may be published. This
 writes what the published figures are computed from, without any of that, to
 `dev/results/`:
 
-- runs.csv      one row per result file: name, fingerprint, timing, config
+- runs.csv      one row per result file: name, fingerprint, timing, config, and the
+                environment it ran in (commit, Ollama version, model digests, machine),
+                recorded since 2026-11-09 and blank before
 - trials.csv    one row per problem-trial: outcome, wall-clock, tokens
-- attempts.csv  one row per model call: model, stage, repair round, outcome, tokens
+- attempts.csv  one row per model call: model, stage, repair round, outcome, tokens, and for
+                an execution error its kind (timeout, memory cap, or crash)
 
 `dev/recompute_results.py` reads only these tables. Re-run this after every
 measured run, in the same PR as its write-up:
@@ -27,12 +30,14 @@ SOURCE = REPO_ROOT / "dev" / "experiments"
 TARGET = REPO_ROOT / "dev" / "results"
 
 RUN_FIELDS = ["run", "config_name", "config_fingerprint", "started_at", "finished_at",
-              "duration_seconds", "config"]
+              "duration_seconds", "config", "git_commit", "git_dirty", "ollama_version",
+              "model_digests", "machine"]
 TRIAL_FIELDS = ["run", "problem_id", "trial", "outcome", "winning_model", "wall_clock_seconds",
                 "attempts_to_solve", "total_tokens"]
 ATTEMPT_FIELDS = ["run", "problem_id", "trial", "model", "stage", "repair_iteration",
                   "draft_index", "outcome", "input_tokens", "output_tokens",
-                  "wall_clock_seconds", "examples_passed", "examples_total", "overfit_flagged"]
+                  "wall_clock_seconds", "examples_passed", "examples_total", "overfit_flagged",
+                  "error_kind"]
 
 
 def _duration(run: dict) -> float:
@@ -41,6 +46,34 @@ def _duration(run: dict) -> float:
     if start and end:
         return (datetime.fromisoformat(end) - datetime.fromisoformat(start)).total_seconds()
     return sum(r.get("wall_clock_seconds") or 0 for r in run.get("results", []))
+
+
+def error_kind(attempt: dict) -> str:
+    """For an execution error, whether it timed out, hit the memory cap or crashed.
+
+    Read from the recorded error text, which is not itself exported (it can quote the
+    program's output and the expected answer)."""
+    if attempt.get("outcome") != "error":
+        return ""
+    text = attempt.get("error") or ""
+    if "timed out" in text:
+        return "timeout"
+    if "memory cap" in text:
+        return "memory cap"
+    return "crash" if text else ""
+
+
+def _environment(run: dict) -> dict:
+    env = run.get("environment") or {}
+    git, ollama, machine = env.get("git") or {}, env.get("ollama") or {}, env.get("machine") or {}
+    return {
+        "git_commit": git.get("commit", ""),
+        "git_dirty": git.get("dirty", ""),
+        "ollama_version": ollama.get("version", ""),
+        "model_digests": json.dumps(ollama.get("models") or {}, sort_keys=True) if ollama else "",
+        "machine": " / ".join(str(v) for v in (machine.get("cpu"), machine.get("memory_bytes"))
+                              if v) if machine else "",
+    }
 
 
 def export(source: Path, target: Path) -> dict:
@@ -58,6 +91,7 @@ def export(source: Path, target: Path) -> dict:
             "finished_at": run.get("finished_at"),
             "duration_seconds": round(_duration(run), 1),
             "config": json.dumps(config, sort_keys=True),
+            **_environment(run),
         })
         # Files written before trials were numbered list each problem's trials in order.
         seen: defaultdict = defaultdict(int)
@@ -76,7 +110,8 @@ def export(source: Path, target: Path) -> dict:
             for attempt in result.get("attempts", []):
                 attempts.append({
                     "run": path.name, "problem_id": pid, "trial": trial,
-                    **{k: attempt.get(k) for k in ATTEMPT_FIELDS[3:]},
+                    **{k: attempt.get(k) for k in ATTEMPT_FIELDS[3:-1]},
+                    "error_kind": error_kind(attempt),
                 })
 
     target.mkdir(parents=True, exist_ok=True)
