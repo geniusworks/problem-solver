@@ -1,9 +1,37 @@
 # Results: measuring whether coordinating LLM attempts beats a single one
 
-**A research platform, and what it measured.** Local language models propose Python solutions to
-Advent of Code problems; an exact oracle executes each candidate against the real puzzle input and
-compares it to the accepted answer. Because that check is cheap and exact, orchestration strategies
-can be A/B'd for a real delta over repeat trials.
+*Report as of 2026-11-11. Its headline figures are recomputed from the run tables by
+`dev/recompute_results.py`, which CI runs against this file.*
+
+## Abstract
+
+**Question.** Does coordinating several attempts by a language model (sampling more drafts,
+repairing from execution feedback, mixing models) solve more problems than a single attempt, and
+at what cost?
+
+**Method.** Local models of about 30B parameters, run through Ollama, write Python solutions to
+Advent of Code 2024 and 2025 puzzles. An exact oracle runs each candidate on the real puzzle input
+and compares its output with the accepted answer. Configurations are compared over repeat trials
+on the same problems; the decisive comparisons were registered (design, prediction and reading
+committed before launch). The corpus is 108 runs, 3,648 candidate attempts and about 225
+GPU-hours.
+
+**Results.** (1) The largest effect was a defect in the harness: Part 2 prompts omitted the Part 1
+statement, and restoring it took single drafts on one problem from 6/20 to 19/19 with nothing else
+changed. (2) Under the original harness, three drafts with repair raised the solve rate on the
+reference model's "sometimes" problems from 42% to 75%, replicated on a second year; under the
+corrected harness that lift was not re-established: on the one problem with a mid-range per-draft
+rate, a registered replication gave 13/35 against 16/35 (one-sided p = 0.31). In all three tests
+that measured it, drafts behaved as independent tries, so sampling's gain follows from the
+per-draft rate. (3) One candidate model solved a problem the reference rarely solved (10/10
+against 1/10), and no problem was found the other way, so a mix of the two was not run. (4) Repair
+contributed 13 of the reference model's 300 solves.
+
+**Limits.** The puzzles and their solutions are public and predate the models, so capability
+figures describe this testbed. The headline results rest on one model family, one benchmark and
+few problems; several comparisons are single trials; multi-draft rates are selected by the oracle.
+Each is detailed under [Scope and limits](#scope-and-limits) and
+[contamination](#training-data-contamination-the-largest-threat-to-validity).
 
 ## The short answer
 
@@ -12,15 +40,16 @@ can be A/B'd for a real delta over repeat trials.
   statement in the prompt, single drafts on 13 Part 2s the reference had failed went from 2 of 53
   trials solved to 29 of 37; in the controlled test, 2024 d19 p2, from 6/20 to 19/19. The 13 were
   chosen because they had failed, and two smaller settings changed alongside, so the controlled
-  test is the cleaner measure. What looked like a capability limit was mostly missing information. The puzzles are public, so the added
-  text may also cue recall; that is not yet separated (see contamination).
+  test is the cleaner measure. What looked like a capability limit was mostly missing
+  information. The puzzles are public, so the added text may also cue recall; that is not yet
+  separated (see contamination).
 - **Sampling: a gain under the original harness, not re-established under the corrected one;
   the draws behave as independent throughout.** Under the original harness, three attempts with
   repair took the model's "sometimes" problems from 42% to 75%, replicated on a second year
-  (combined one-sided p ≈ 0.005). Under the
-  corrected harness most problems are solved by nearly every draft or by nearly none, three drafts
-  gave no measurable lift (9/19 against 11/21), and on the one mid-rate problem, 2025 d9 p2, the
-  lift was not re-established: an inconclusive powered test (p = 0.065), then a registered
+  (combined one-sided p ≈ 0.005). Under the corrected harness most problems are solved by nearly
+  every draft or by nearly none, three drafts gave no measurable lift (9/19 against 11/21), and on
+  the one mid-rate problem, 2025 d9 p2, the lift was not re-established: an inconclusive powered
+  test (p = 0.065), then a registered
   replication at 13/35 against 16/35 (one-sided p = 0.31; 95% Newcombe interval −14 to +30
   points). The draws stayed independent; at 20% per draft, three drafts were expected to add about
   12 points over one draft with repair, which 35 trials per arm cannot separate from zero.
@@ -50,10 +79,8 @@ table) · **69 oracle-verified solutions across two AoC years, 0 wrong in the le
 > and vary the strategy — are largely unaffected.
 
 This document is the consolidated result. The write-ups in [`dev/progress/`](dev/progress/) are
-the audit trail, with dated notes where a later run changed a finding. The headline figures
-here are recomputed from the run tables in `dev/results/` by `dev/recompute_results.py`, which CI
-runs against this file. For the project itself — what it is, how the pipeline works,
-how to run it — see the [README](README.md).
+the audit trail, with dated notes where a later run changed a finding. For the project itself —
+what it is, how the pipeline works, how to run it — see the [README](README.md).
 
 ---
 
@@ -69,6 +96,42 @@ how to run it — see the [README](README.md).
 | Data | every run exported to `dev/results/` (runs, trials, attempts); headline figures recomputed by `dev/recompute_results.py` |
 
 Per-run machine, Ollama and package versions are in `dev/benchmarks/cross-machine-results.md`.
+Generation is not seeded: the pipeline is non-deterministic by design, and repeat trials are the
+control for it.
+
+### Terms and measures
+
+- **Problem-part, or cell:** one part (Part 1 or Part 2) of one day's puzzle, for example
+  2025 d9 p2. Rates are reported per cell or pooled over named cells.
+- **Draft:** one program generated from the problem prompt. **k1** and **k3** are trials with one
+  and three drafts (`samples_per_model`). **Repair:** a further attempt that is shown the failed
+  program's execution result; up to two rounds.
+- **Trial:** one complete solve attempt on a cell: its drafts, then repairs if every draft failed.
+  A trial is **solved** when any of its drafts or repairs outputs the accepted answer on the full
+  input. Because the oracle does this choosing, multi-draft rates are those of a perfect verifier.
+- **Reached Part 2:** under the corrected harness a trial solves Part 1 first; if that fails, its
+  Part 2 is *not reached* and is excluded from Part 2 rates unless stated. The 2025 d9 p2
+  replication posed Part 2 directly with a verified Part 1 program, so every trial reached it.
+- **Per-draft rate:** the share of first-pass drafts that are correct. If drafts succeed
+  independently at rate *p*, a k3 trial is solved by a draft with probability 1 − (1 − *p*)³; the
+  **independence check** compares that prediction with the measured k3 rate.
+- **Frontier, "sometimes" band, wall:** cells the model solves in some trials and not others; and
+  cells it had never solved.
+- **Original and corrected harness:** before and after 2026-10-13, when Part 2 prompts gained the
+  Part 1 statement, answer and program (`problem_context=aoc`).
+- **Registered test:** design, prediction and the reading of each outcome were committed to the
+  repository before the run started. Everything else is exploratory.
+
+### Statistical methods
+
+Two solve rates are compared with a **one-sided Fisher exact test** in the predicted direction,
+at α = 0.05 for registered tests. Differences are given in percentage points with a **95% Newcombe
+hybrid-score interval** (Newcombe, 1998), and single proportions with a **Wilson interval**
+(Wilson, 1927); lower bounds are rounded down. Two p-values are combined by **Fisher's method**
+where stated, which assumes independent tests. Power was computed exactly for the Fisher test.
+p-values of exploratory comparisons are descriptive and not corrected for multiplicity. Trials are
+the unit of analysis; attempts within a trial are not independent, so attempt-level rates are
+descriptive.
 
 ## The thesis, and what happened to each arm
 
@@ -77,7 +140,7 @@ The project argued three reasons that coordinating several attempts should beat 
 | arm | claim | verdict |
 |---|---|---|
 | **1. pass@k** | the gap between "sometimes solves" and "solves" never closes at a model's own frontier | ⚠️ **measured and replicated under the original harness; not re-established under the corrected one: on its one mid-rate problem, inconclusive (p = 0.065), then not re-established in a registered replication (p = 0.31)** |
-| **2. economics** | many cheap draws + a verifier beat one expensive pass at equal cost | ⚖️ **splits by which cost you pay** |
+| **2. economics** | many cheap draws + a verifier beat one expensive pass at equal cost | ⚖️ **splits by which cost you pay** (one trial on 8 problem-parts) |
 | **3. portfolios** | diverse models decorrelate error | ➖ **not supported where measured**: the one complementary pair was one-way, so choosing the better model gave the gain |
 
 
@@ -101,7 +164,8 @@ input. Re-run under it:
 | 13 other Part 2s the reference had failed, one draft | 2/53 | **29/37** |
 
 The d19 row is the controlled A/B: same machine, a day apart, 20 trials each, the context the
-only setting changed, prediction registered. The 13-problem row is broader and less controlled:
+only setting changed, prediction registered; the difference is 70 points (95% Newcombe interval
++42 to +85). The 13-problem row (75 points, +56 to +85) is broader and less controlled:
 its "before" trials ran on two machines between August and October, its "after" run also changed
 the example source and the analysis temperature, and it counts only trials whose Part 1 was
 solved (5 were not). Counting every trial at any number of drafts, those Part 2s were 13/71 on
@@ -122,8 +186,9 @@ what they rescued or failed to rescue on Part 2s is what had to be re-measured.
 
 **Under the corrected harness: not re-established.** The bands measured under the original
 harness (below) were Part 2s posed without Part 1, and their repair prompts carried mispaired
-example tests (see the defect table). Re-run with both fixed, the reference's "sometimes" cells gave 9/19 at one draft and 11/21 at
-three, no measurable lift (`m5pro-band-k1-vs-k3-aoc.md`). At the draft level those cells split in
+example tests (see the defect table). Re-run with both fixed, the reference's "sometimes" cells
+gave 9/19 at one draft and 11/21 at three, no measurable lift (+5 points, 95% Newcombe interval
+−24 to +33; `m5pro-band-k1-vs-k3-aoc.md`). At the draft level those cells split in
 two: solved by 8–9 of 9 drafts, or by 0–1 of 9; the 1-of-6 problem below is solved 3 of 3 at one
 draft. Independence predicts exactly this: three draws lift a 10% draft rate little and a 90% one
 has no room to rise. One cell, 2025 d9 p2 (3 of 9 drafts), sat where independent draws predict a
@@ -147,8 +212,8 @@ verified Part 1 program, 35 trials per arm, the arms alternating in blocks of fi
 |---|---|---|---|
 | solved | 13/35 (37%) | 16/35 (46%) | **p = 0.31 — not re-established** |
 
-k3 is 8.6 points above k1 (95% Newcombe interval −14 to +30), under the registered 10. The draws were
-independent once more: drafts solved 28 times in 140 (20%), which predicts 49% at three drafts;
+k3 is 8.6 points above k1 (95% Newcombe interval −14 to +30), under the registered 10. The draws
+were independent once more: drafts solved 28 times in 140 (20%), which predicts 49% at three drafts;
 46% was measured. The prediction failed on the draft rate it assumed (27%), not on independence.
 At 20% per draft, three drafts were expected to solve 49% against one draft's 20%; repair lifted
 one draft to 37% (it rescued 4 of 26 failed drafts), leaving about 12 points expected and 9
@@ -178,14 +243,16 @@ solved was unaffected.
 
 | evidence | rates | one-sided Fisher exact |
 |---|---|---|
-| 2024 alone | 10/24 → 9/12 | **p ≈ 0.061 — marginal** |
-| 2025 replication | 2/8 → 6/6 | **p ≈ 0.009** |
+| 2024 alone | 10/24 → 9/12 (+33 points, 95% interval −1 to +57) | **p ≈ 0.061 — marginal** |
+| 2025 replication | 2/8 → 6/6 (+75 points, +23 to +93) | **p ≈ 0.009** |
 | **combined** (Fisher's method) | | **p ≈ 0.005** |
 
-2024 alone was marginal; 2025 alone gave p ≈ 0.009 on 14 trials; combined, p ≈ 0.005. A 20-trial
-test on 2024 d19 p2 then showed why it worked: first drafts were correct 16 times in 80 (20%), three independent drafts at that rate
-solve 49% of trials, and three drafts solved 50% (`m5pro-d19p2-power.md`). The draws behave as
-independent, so sampling's gain follows from the per-draft rate.
+2024 alone was marginal; 2025 alone gave p ≈ 0.009 on 14 trials; combined, p ≈ 0.005. Both
+tests had their predictions written down before the k3 arm ran. A 20-trial registered test on
+2024 d19 p2 then showed why it worked: first drafts were correct 16
+times in 80 (20%), three independent drafts at that rate solve 49% of trials, and three drafts
+solved 50% (`m5pro-d19p2-power.md`). The draws behave as independent, so sampling's gain follows
+from the per-draft rate.
 *(`passk-ab-d13-d15.md`, `topology-parallel3.md`, `passk-replication-2025.md`.)*
 
 ### Arm 2 — Cheap draws win on time and lose on tokens
@@ -223,16 +290,17 @@ re-measured both models. Six candidates were tried:
   1 of the 7 trials that reached Part 2, the reference 1/10 (`arm3-precheck-ornith-1-5-35b.md`);
 - `gemma4:31b` did not meet it (`arm3-precheck-gemma4-31b.md`);
 - **`muse-glimmer:30b` met it and held**: 2024 d14 p2 with 18 of 19 first drafts across two runs,
-  10/10 against the reference's 1/10 in the decider, one-sided Fisher p = 0.0001. It also gave the first verified
-  2024 d21 (`arm3-precheck-muse-glimmer-30b.md`).
+  10/10 against the reference's 1/10 in the decider (+90 points, 95% Newcombe interval +48 to
+  +98; one-sided Fisher p = 0.0001). It also gave the first verified 2024 d21
+  (`arm3-precheck-muse-glimmer-30b.md`).
 
 **The portfolio test.** A mix of 3 drafts from each model is 6 drafts, so it was to be compared
 with each model alone at 6; with independent draws, it can beat both only summed over cells where
 the better model differs. Muse alone on 14 cells the reference solves (34/42 Part 2 trials) gave
 two cells where the reference looked ahead. Neither held: on 2024 d15 p2 the reference solved
 0/10, and on d20 p2 it was 9/9 against muse's 6/7 over trials that reached Part 2, one-sided
-p = 0.44 (9/10 against 6/10 over all trials; `arm3-portfolio-test.md`).
-No cell where the reference's lead held at 10 trials, so the ensemble was not run.
+p = 0.44 (9/10 against 6/10 over all trials; `arm3-portfolio-test.md`). No cell was found where
+the reference's lead held at 10 trials, so the ensemble was not run.
 
 **Result:** on these cells the complementarity runs one way. Muse solves most of what the reference
 solves and adds 2024 d14 p2; choosing muse gives the gain a mix could. This does not show that a mix
@@ -265,8 +333,9 @@ the 60 s execution timeout on the full input: 27 of 51 failed attempts on 2024 d
 p2 (`m5pro-band-k1-vs-k3-aoc.md`), and 138 of 249 on 2025 d9 p2 in its replication
 (`m5pro-d9p2-replication.md`; 48 of 104 in the power test, where wrong answers were the larger
 share). Many of those programs passed the worked example first: 11 of the 27 (15 had no example
-result to compare), and 94 of the 138. `gemma4:31b` timed out on 19 of 27 attempts at 2025 d10 p2. `muse-glimmer:30b`
-timed out rarely (5 of 76 failed attempts on its four entry cells) and failed by crashing or
+result to compare), and 94 of the 138. `gemma4:31b` timed out on 19 of 27 attempts at 2025 d10
+p2. `muse-glimmer:30b` timed out rarely (5 of 76 failed attempts on its four entry cells) and
+failed by crashing or
 answering wrong instead (`arm3-precheck-*.md`). On 2025 d9 p2 a longer limit did not rescue
 them: the 45 drafts that timed out in the replication, re-run with 600 s under an 8 GB memory cap,
 gave no correct answer (26 hit the cap, 17 were still running, 2 answered wrong;
@@ -287,8 +356,9 @@ Three models of similar size on the same 8 problem-parts (2024 d4–7, one trial
 The 2024 specialist scored *below* what 12B models had achieved on half the RAM. The winner is the
 smallest model and is not a coding model at all. Generation, specialisation and architecture
 change together across the three, and each ran once, so this describes these models; it does not
-isolate generation as the cause. On genuinely hard problems the relationship is
-stronger than a gap: the generalist's solve set is a **strict superset** of the specialist's.
+isolate generation as the cause. In a separate three-trial run on four harder cells (2024 d15 and
+2025 d9, original harness), `qwen3-coder:30b` solved a **strict subset** of what the generalist
+solved, 3/12 against 6/12 (`ensemble-precheck-negative.md`).
 
 Two problems the project had written off as impossible fell to this: one to a *better algorithm*
 (a topological sort), one to a *plain brute force* that finally ran inside the timeout. They had
@@ -307,7 +377,8 @@ Under the original harness, five hypotheses were falsified by the next run:
 5. *Better-worded repair feedback will help* — falsified, with the guidance verified to have fired
    on 49 of 70 attempts.
 
-Read together they gave the project its filter for what to try next:
+Read together they gave the project its filter for what to try next, a heuristic drawn from
+these five nulls and not itself tested:
 
 > **Interventions that add no new information do not help, however well-targeted the wording.**
 > Temperature added variance without information. Reworded feedback added exhortation without
@@ -352,6 +423,13 @@ in the verified ledger, which it could only be by solving.
 The rule adopted: **a tally maintained by addition in prose is not a measurement.** Recompute from
 the artifacts.
 
+Two further instrument gaps, found in November 2026, changed no reported solve rate. Each attempt
+record's draft number had held the trial number instead, so drafts within a trial could not be
+told apart; it is recorded correctly from 2026-11-10 (`draft_index`). And generated code had no
+memory cap on macOS: a runaway draft could slow the machine for up to its 60 s limit, which can
+inflate wall-clock times, and six such drafts re-run at once froze it. Every execution path has
+stopped a process past 8 GB since 2026-11-11.
+
 ---
 
 ## Training-data contamination: the largest threat to validity
@@ -365,7 +443,7 @@ paraphrases — were in the model's training data.
 It is the first objection a reader should raise, and it affects the findings unevenly:
 
 **Weakened by contamination — the capability claims.**
-The 8/8 sweep of 2024 d4–7, the "generation beats size" ladder, and the 69-solution ledger all
+The 8/8 sweep of 2024 d4–7, the three-model comparison, and the 69-solution ledger all
 measure *something*, but they cannot distinguish "this model is more capable" from "this model has
 seen more of this benchmark". A newer model is both stronger *and* more likely to have ingested the
 2024/2025 corpus, and those two explanations are entangled here. **Treat the capability numbers as
@@ -420,7 +498,8 @@ plausibly produce exactly this intermittency.
   problem-parts each. The two registered arm-1 tests on 2025 d9 p2 ran 20 and 35 trials per arm.
 - **Registered and exploratory results are reported side by side.** Registered tests had their
   design, prediction and reading committed before launch (the d19 p2 power test, the two 2025 d9
-  p2 tests, the arm-3 deciders); everything else, including the three-trial leads and the Fisher
+  p2 tests, the arm-3 deciders); the original-harness arm-1 tests registered their predictions
+  before the k3 arm ran. Everything else, including the three-trial leads and the Fisher
   combinations, is exploratory and uncorrected for the number of comparisons made.
 - **Multi-draft rates are oracle-selected.** A trial counts as solved when any draft or repair
   matches the accepted answer, and repair hints (too high, too low) come from that answer. Without
@@ -429,6 +508,13 @@ plausibly produce exactly this intermittency.
 - **Two AoC years**, 2024 and 2025 — a single problem domain with a cheap exact checker, which is
   the regime where this approach works at all.
 - **Rates are not comparable across years**: the problem ranges are not difficulty-matched.
+- **Few problems carry the main results.** The controlled harness test is one problem; the
+  corrected-harness sampling tests are one problem at 20 and 35 trials per arm; the original
+  bands are four and two "sometimes" problems. Trials on one problem measure repeatability there,
+  not generality across problems.
+- **No independent replication.** One maintainer ran every experiment on three machines of one
+  hardware family; the 2025 replication and the registered tests guard against chance, not
+  against a shared mistake in the harness, of which twelve were found.
 - **Arm 2's wall-clock ratio is approximate** — identical configs vary ~16% run-to-run.
 - The pass@k arms ran with the repair loop at its default, so they measure *k samples + repair*
   rather than textbook pass@k over independent draws.
@@ -439,8 +525,8 @@ plausibly produce exactly this intermittency.
   ranking has nothing to choose between and the headline comparisons are unaffected by it. The
   strategy-weight half of the same mechanism is an unimplemented stub.
 - **Hardware:** arms 1 and 2 were measured on one machine, the M2 Max / 32 GB; a third, M5 Pro /
-  64 GB (2026-10-12), re-measured arm 1 under the corrected harness and measured arm 3. Faster hardware moves the
-  capability numbers (larger models fit, execution-timeout "speed walls" move) and arm 2's
+  64 GB (2026-10-12), re-measured arm 1 under the corrected harness and measured arm 3. Faster
+  hardware moves the capability numbers (larger models fit, execution-timeout "speed walls" move) and arm 2's
   wall-clock economics. Still missing: k=5 for a dose-response curve, and AoC 2026 as a clean
   contamination check.
 
@@ -449,7 +535,7 @@ plausibly produce exactly this intermittency.
 For a verifier-gated setup like this one (a cheap, exact check picks among candidates), from what
 was measured with local models of about 30B:
 
-1. **Spend extra draws where a single draft succeeds part of the time.** Independent draws predict
+1. **Extra draws can only pay where a single draft succeeds part of the time.** Independent draws predict
    that at roughly 25–75% per draft three draws lift the solve rate sharply, and near 0% or near
    100% buy little. The lift was measured under the original harness; under the corrected one, on
    the one mid-rate problem (20% per draft), it was not re-established (37% → 46%, p = 0.31):
@@ -462,8 +548,8 @@ was measured with local models of about 30B:
 3. **Check whether failures are timeouts.** Many hard-cell failures are timeouts on the full input,
    often after passing the example. Asking for an efficient algorithm addresses a different limit
    from a bigger model; more execution time did not help on 2025 d9 p2 (none of 45 timed-out
-   drafts finished correctly within 600 s). Cap memory as well as time: those drafts grow past 8 GB in
-   seconds.
+   drafts finished correctly within 600 s). Cap memory as well as time: those drafts grow past
+   8 GB in seconds.
 4. **Choose a second model by measurement, not by its maker.** Of six candidates, one reliably
    solved something the reference missed, and no cell was found where the reference reliably beat
    it, so a mix had nothing to add. Measure each model alone on your failure cases and on your
@@ -475,30 +561,71 @@ was measured with local models of about 30B:
 
 ## Where this generalizes, and where it doesn't
 
-The mechanism needs a **cheap, exact verifier**. Sampling and repair convert into correctness only
-because a check can collapse many guesses to one verified answer. Where that check exists — unit
-tests, a compiler, a proof checker, a simulator — the findings should transfer. Where correctness is
-subjective or expensive to verify, the coordination has little to grip, and the expectation
-is that none of this applies.
+This section is argued, not measured: every experiment here used one benchmark with an exact
+checker. The mechanism needs a **cheap, exact verifier**. Sampling and repair convert into
+correctness only because a check can collapse many guesses to one verified answer. Where that
+check exists — unit tests, a compiler, a proof checker, a simulator — the findings may transfer,
+though a partial checker lets wrong candidates through: on 2025 d9 p2 the worked example alone
+passed 137 of the 249 attempts the oracle rejected. Where correctness is subjective or expensive
+to verify, the coordination has little to grip, and the expectation is that none of this applies.
 
 ## Related work
 
-Sampling several programs and keeping one that passes a check is pass@k evaluation (Chen et al.,
-2021, *Evaluating Large Language Models Trained on Code*); choosing among samples by agreement is
-self-consistency (Wang et al., 2022). Here an exact oracle does the choosing, so the multi-draft
-rates are upper bounds on what a verifier-free selector reaches. That self-repair helps less than
-fresh samples at equal budget matches Olausson et al. (2023, *Is Self-Repair a Silver Bullet for
-Code Generation?*). The contribution here is not a new method but registered, repeated
-measurements of these levers on one model's own frontier, with the harness defects found along the
-way.
+Sampling several programs and counting a problem solved when any passes a check is pass@k
+evaluation (Chen et al., 2021). Choosing among samples without ground truth has been done by
+agreement between samples (self-consistency; Wang et al., 2023), by filtering on the problem's
+example tests (AlphaCode; Li et al., 2022) and by agreement on model-generated tests (CodeT;
+Chen et al., 2023). Here an exact oracle does the choosing, so the multi-draft rates are upper
+bounds on what such selectors reach; the example-only selector measured on 2025 d9 p2 is the
+filter-on-examples case, and one worked example let through more wrong drafts than right ones.
+Under the original harness three fresh drafts beat one draft with repair (58% against 42%), and
+repair produced few of the reference model's solves; that is in line with Olausson et al. (2024),
+who find self-repair gains modest once the cost of repair is counted. Contamination of code
+benchmarks by public solutions is a known threat; the planned AoC
+2026 run follows the usual remedy of evaluating on problems released after the models.
 
-## Reproducing
+The contribution here is not a new method. It is a set of repeated, partly registered
+measurements of these levers on one model's own frontier, an account of the harness defects that
+had to be removed before the measurements meant anything, and the negative results that followed.
 
-Every result lists its exact command in its `dev/progress/` write-up. Configurations are
-fingerprinted, so two runs with different behavior cannot share a hash — the mechanism that caught
-a duplicate experiment before it wasted three hours, and that forced behavior changes to be
-config-gated so they could be A/B'd at all.
+## Data and code availability, and reproducing
 
-Puzzle inputs, problem text and scraped answers are **not** in this repository (see the README's
-[data policy](README.md#data-privacy-and-advent-of-codes-rules)); a fresh clone cannot run the
-oracle until you supply your own AoC session.
+- **Code and configuration:** this repository; each result's write-up in `dev/progress/` gives
+  its exact command, and every result file records the commit, Ollama version, model digest and
+  package versions it ran with (since 2026-11-09). Packages are pinned in `requirements.lock`.
+- **Data:** per-run, per-trial and per-attempt outcomes, timings, token counts and example
+  verdicts for all 108 runs are in `dev/results/`. `venv/bin/python dev/recompute_results.py`
+  recomputes this document's headline figures from those tables, and CI fails when the two
+  disagree.
+- **Not public:** puzzle text, puzzle inputs and accepted answers (Advent of Code asks that they
+  not be redistributed), and therefore the raw result files, whose saved prompts contain puzzle
+  text. A fresh clone cannot run the oracle until you supply your own AoC session (see the
+  README's [data policy](README.md#data-privacy-and-advent-of-codes-rules)). Re-executing saved
+  drafts, as in the 600 s timeout re-run, needs those inputs and cannot be repeated from the
+  repository alone.
+- **Determinism:** generation is unseeded, so a re-run reproduces rates within sampling error,
+  not individual outcomes.
+
+Configurations are fingerprinted, so two runs with different behavior cannot share a hash — the
+mechanism that caught a duplicate experiment before it wasted three hours, and that forced
+behavior changes to be config-gated so they could be A/B'd at all.
+
+## References
+
+- Chen, B., Zhang, F., Nguyen, A., Zan, D., Lin, Z., Lou, J.-G., & Chen, W. (2023). CodeT: Code
+  generation with generated tests. *ICLR 2023*. arXiv:2207.10397.
+- Chen, M., Tworek, J., Jun, H., et al. (2021). Evaluating large language models trained on code.
+  arXiv:2107.03374.
+- Fisher, R. A. (1925). *Statistical Methods for Research Workers*. Oliver and Boyd. (Exact test;
+  combination of probabilities.)
+- Li, Y., Choi, D., Chung, J., et al. (2022). Competition-level code generation with AlphaCode.
+  *Science*, 378(6624), 1092–1097.
+- Newcombe, R. G. (1998). Interval estimation for the difference between independent proportions:
+  comparison of eleven methods. *Statistics in Medicine*, 17(8), 873–890.
+- Olausson, T. X., Inala, J. P., Wang, C., Gao, J., & Solar-Lezama, A. (2024). Is self-repair a
+  silver bullet for code generation? *ICLR 2024*. arXiv:2306.09896.
+- Wang, X., Wei, J., Schuurmans, D., Le, Q., Chi, E. H., Narang, S., Chowdhery, A., & Zhou, D.
+  (2023). Self-consistency improves chain of thought reasoning in language models. *ICLR 2023*.
+  arXiv:2203.11171.
+- Wilson, E. B. (1927). Probable inference, the law of succession, and statistical inference.
+  *Journal of the American Statistical Association*, 22(158), 209–212.
