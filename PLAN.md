@@ -3,33 +3,35 @@
 What is open now, then the path beyond AoC. The sections after those are the record of how the
 roadmap got here.
 
-## Open (as of 2026-11-10)
+## Open (as of 2026-11-11)
 
 Each thesis arm has a verdict (`RESULTS.md`): sampling measured and replicated under the original
-harness, open under the corrected one (the powered test on 2025 d9 p2 was
-inconclusive, `m5pro-d9p2-power-aoc.md`); economics splits by whether time or tokens
+harness, not re-established under the corrected one (on 2025 d9 p2, its one mid-rate problem, a
+powered test was inconclusive and its registered replication gave p = 0.31,
+`m5pro-d9p2-replication.md`); economics splits by whether time or tokens
 is the binding cost; portfolios: the one complementary pair was one-way, so the ensemble was not
 run. In priority order; nothing starts without the maintainer's go, and each item says what it waits
 on:
 
-1. **A replication of the arm-1 test on 2025 d9 p2, with Part 2 always reached.** Registered in
-   `m5pro-d9p2-replication.md`: k1 against k3, 35 trials each, `gate_part_two=false` so no trial
-   is lost to Part 1, arms alternating in blocks of five, read on its own at one-sided p < 0.05
-   (about 87% power at the predicted 27% against 61%). About 16 GPU-hours, before AoC 2026.
-   *Running* since 22:42 PST on 2026-11-10; *waits on* GPU time (about 16 hours), then the write-up.
-2. **AoC 2026** (§4b), opening **2026-12-01**: the clean contamination test, and the only item
+1. **AoC 2026** (§4b), opening **2026-12-01**: the clean contamination test, and the only item
    with a deadline. *Waits on a maintainer decision:* submit automatically or by hand, and the
    rate limit. Then the submitter is wired into the solve loop (§5; it is tested, about half a
    day of code). Decide by about 2026-11-25 to leave time. **Frozen before 2026-12-01**, each
    item recorded in an AoC 2026 registration written before the event: the models by digest;
    prompts, configuration and fingerprints; each model's release date and stated training cutoff;
    no setting tuned on a 2026 problem; results published per problem as well as in aggregate.
-3. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered
+2. **Does the Part 1 context inform, or cue recall?** The headline's open caveat. Registered
    design in `part2-context-heldout-plan.md`: Part 2 cold against Part 2 with the Part 1 context,
    on the AoC 2026 Part 2s, about 4.6 GPU-hours over the event. *Waits on the AoC 2026 item*
    (its decision, and the accepted answers to score against); the harness option it needs,
    `gate_part_two=false`, is built. Arms that rewrote Part 1 on public puzzles were dropped:
    Part 2's text depends on Part 1's, so the edits cannot separate information from recall.
+
+Done 2026-11-11:
+- **The registered replication on 2025 d9 p2: not re-established** (`m5pro-d9p2-replication.md`).
+  k1 13/35, k3 16/35, every trial posed Part 2 with the verified Part 1 program; one-sided Fisher
+  p = 0.31, 8.6 points apart against the registered 10. The draws were independent (20% per draft
+  predicts 49% at k3; 46% measured); the prediction assumed 27%. 16.2 GPU-hours.
 
 Done 2026-11-09:
 - **The powered arm-1 test on 2025 d9 p2: inconclusive** (`m5pro-d9p2-power-aoc.md`). k1 5/15,
@@ -45,8 +47,8 @@ The project's aim is general problem-solving through orchestration (`README.md`,
 is the testbed. Every result so far rests on an exact checker, the accepted answer, which most real
 domains lack. Generalising is therefore sequenced as measurements, each gating the next, not as a
 framework built ahead of evidence: of the components a general system might make pluggable, some
-have measured value here and some do not (mixing models lost to choosing one; repair produced 7
-of the reference model's 262 solves).
+have measured value here and some do not (mixing models lost to choosing one; repair produced 13
+of the reference model's 294 solves).
 
 1. **How much does the method depend on an exact checker?** Record, per attempt, the verdict of the
    worked examples alongside the oracle's. **Wired 2026-11-09:** every verified attempt records
@@ -54,12 +56,16 @@ of the reference model's 262 solves).
    runs before then, which cannot be re-scored because candidate code is not stored). **First
    data 2026-11-09** (`m5pro-d9p2-power-aoc.md`, 2025 d9, one example per part): on Part 1 the
    example agreed with the oracle on all 90 attempts; on Part 2 it passed 59 of the 104 the oracle
-   rejected (37 then timed out, 22 answered wrong) and rejected 1 of 22 correct ones. What
-   remains: the same on more problems, and what sampling and selection achieve with the examples
-   as the only check. The second is computed, without GPU time, from the d9 p2 replication's
-   k3 trials (`m5pro-d9p2-replication.md`): a selector that sees only the example, against the
-   oracle, with its false acceptances, false rejections and solve rate. This stands in for the partial checkers of other domains (unit tests, static analysis).
-   Small, no new GPU work beyond that set.
+   rejected (37 then timed out, 22 answered wrong) and rejected 1 of 22 correct ones. **Second
+   data 2026-11-11** (`m5pro-d9p2-replication.md`, Part 2 only): the example passed 137 of the
+   249 attempts the oracle rejected (94 then timed out, 43 answered wrong) and rejected none of 34
+   correct ones. **Selection with the example as the only check**, on that run's 35 three-draft
+   trials: taking the first draft that passes the example and answers solves 12, takes a wrong
+   draft in 15 and finds nothing in 8; the oracle, choosing among the same drafts, solves 14. On
+   this problem one worked example lets through more wrong drafts than right ones. What
+   remains: the same on more problems, with more than one example where the page has them. This
+   stands in for the partial checkers of other domains (unit tests, static analysis). Small, no
+   new GPU work beyond that set.
 2. **Where is AoC hard-wired?** Audit the seams (verification is keyed on year/day/part,
    `shared/verification.py`; fetch, parsing and prompts are AoC-shaped) and define a minimal
    problem-and-checker interface, shaped by what step 1 shows a checker must provide.
@@ -79,16 +85,20 @@ harness with mispaired example tests (`targeted-feedback-negative.md`), so it is
 would matter. **If** the recorded example verdicts confirm the passed-example-then-timeout pattern on
 those cells, A/B `targeted_feedback` on them under the corrected harness. Registered design first.
 The pattern is now recorded on a third hard cell: on 2025 d9 p2, 37 of 48 timeouts had passed the
-worked example (`m5pro-d9p2-power-aoc.md`); the two cells named above have no verdicts yet.
+worked example (`m5pro-d9p2-power-aoc.md`), and 94 of 138 in its replication
+(`m5pro-d9p2-replication.md`); the two cells named above have no verdicts yet. Re-executed at
+600 s, none of that replication's 45 timed-out drafts was correct but slow: 26 hit an 8 GB memory
+cap, 17 were still running, 2 answered wrong. So on 2025 d9 p2 the timeouts are runaway programs,
+which is what efficiency guidance would have to fix; a longer limit would not.
 
 ## Conditional: a second reference model
 
 The orchestration findings rest almost entirely on `qwen3.8:27b`. **If** the powered arm-1 test
 on 2025 d9 p2 showed a lift, repeat its design on one more model of a different family before the
-result is generalised, sized the same way (about 20 trials per arm). It was inconclusive
-(p = 0.065, `m5pro-d9p2-power-aoc.md`), so the trigger is not met and this stays parked unless
-the registered replication (`m5pro-d9p2-replication.md`, "Open" item 1) re-establishes the arm.
-Either way it is GPU time the maintainer decides on.
+result is generalised, sized the same way. **Not triggered:** the powered test was inconclusive
+(p = 0.065, `m5pro-d9p2-power-aoc.md`) and its registered replication did not re-establish the
+lift (p = 0.31, `m5pro-d9p2-replication.md`). It stays parked; reviving it is GPU time the
+maintainer decides on.
 
 ---
 

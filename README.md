@@ -24,8 +24,9 @@ and, more to the point, whether that could be *measured* rather than asserted.
 > - **Sampling helps where a single draft succeeds part of the time**, because draws behave as
 >   independent. It took the model's "sometimes" problems from **42% to 75%** under the original
 >   harness, replicated on a second year. Under the corrected harness few problems sit in that
->   band; the powered retest on the one that does was inconclusive (5/15 at one draft, 13/20 at
->   three, one-sided p = 0.065 against a registered 0.05).
+>   band, and on the one that does, 2025 d9 p2, it was not re-established: a registered
+>   replication gave 13/35 at one draft and 16/35 at three (one-sided p = 0.31). The draws were
+>   independent again, but at 20% per draft three drafts add little over one draft with repair.
 > - **Choosing the right model beat mixing models.** One model solved a problem 10 of 10 times that
 >   the reference solved 1 of 10, with nothing found the other way. Cheap draws win on time and lose
 >   on tokens.
@@ -140,8 +141,13 @@ three drafts gave no measurable lift (9/19 against 11/21). On the one mid-rate p
 p2, the registered 20-trial test gave 5/15 at one draft and 13/20 at three (trials that reached
 Part 2): one-sided Fisher p = 0.065, inconclusive under the reading fixed in advance. The draws
 again behaved as independent: first drafts succeeded 27% of the time, predicting 61% at three, and
-65% was measured. (`passk-ab-d13-d15.md`, `passk-replication-2025.md`, `m5pro-d19p2-power.md`,
-`m5pro-band-k1-vs-k3-aoc.md`, `m5pro-d9p2-power-aoc.md`)
+65% was measured. A registered replication with every trial reaching Part 2, 35 trials per arm,
+gave 13/35 at one draft and 16/35 at three: one-sided p = 0.31, **not re-established** on this
+problem. The draws were independent once more (20% per draft predicts 49% at three; 46%
+measured), but the draft rate was lower than the 27% assumed, and repair lifted one draft from
+26% to 37%, so three drafts were expected to add about 12 points, and added 9.
+(`passk-ab-d13-d15.md`, `passk-replication-2025.md`, `m5pro-d19p2-power.md`,
+`m5pro-band-k1-vs-k3-aoc.md`, `m5pro-d9p2-power-aoc.md`, `m5pro-d9p2-replication.md`)
 
 <details>
 <summary>The statistics</summary>
@@ -166,8 +172,8 @@ trials did not survive ten. (`arm3-precheck-muse-glimmer-30b.md`, `arm3-portfoli
 **4. Repair depends on the model, and what still fails is mostly speed.**
 
 Shown its own failure with true example results and a too-high/too-low hint, the reference fixed
-almost nothing: its repairs succeeded 7 times in 203 attempts, muse's 14 in 80 (on the problems
-both repaired, 6 in 193 against 8 in 67). On the hardest
+almost nothing: its repairs succeeded 13 times in 368 attempts, muse's 14 in 80 (on the problems
+both repaired, 12 in 358 against 8 in 67). On the hardest
 problems the commonest failure is a program that runs past the 60 s timeout on the full input (27 of
 51 failed attempts on two of them), often after passing the example. Larger models did not move
 those problems. (`m5pro-band-k1-vs-k3-aoc.md`, `arm3-portfolio-test.md`)
@@ -236,13 +242,14 @@ information the model had been denied.
 
 **Re-earning the claims.** Every Part 2 the reference had failed was re-run under the corrected
 harness, and sampling was re-tested on the problems still in between. The draft rates turned out
-mostly all-or-nothing, and the powered test on the one mid-rate problem came out inconclusive
-(p = 0.065), so the sampling arm stays open under the corrected harness. The portfolio arm, untested for want of a model pair, got its pair on a 64 GB machine,
+mostly all-or-nothing. On the one mid-rate problem a powered test came out inconclusive
+(p = 0.065) and its registered replication did not re-establish the lift (p = 0.31), so under the
+corrected harness sampling's measured gain rests on the original harness's results; the
+independence of the draws held throughout. The portfolio arm, untested for want of a model pair, got its pair on a 64 GB machine,
 with an entry criterion, a selection-bias guard and ten-trial deciders; the complementarity ran one
 way.
 
-**What is open:** a registered replication of the sampling test, now running, built so no trial is lost to
-Part 1; AoC 2026 in December, the first problems the models cannot have seen
+**What is open:** AoC 2026 in December, the first problems the models cannot have seen
 ([Status](#status)), and with it whether the Part 1 context informs or cues recall.
 
 ## How it works
@@ -345,7 +352,7 @@ independent draws. A problem twice called an "insight wall" was solved 3 of 3, s
 reaches insight problems, not only fiddly ones**; one predicted at 70% scored 0 of 3, and its full
 record puts it near 12% per draw (`dev/progress/CORRECTION-d15p2-is-not-a-wall.md`). Under the
 corrected harness the draft rates are mostly near 0% or 100%, three drafts gave no measurable lift,
-and the powered test on 2025 d9 p2, the one mid-rate problem, was inconclusive (finding 2).
+and on 2025 d9 p2, the one mid-rate problem, the lift was not re-established (finding 2).
 
 **Arm 2 — economics, and it splits.** *Many cheap draws beat one expensive pass* is **true on
 wall-clock** (0.64× per verified solution) and **false on tokens** (at least 3.09×), and volume does not reach
@@ -544,19 +551,18 @@ configs, the correctness oracle and overfit gate, self-consistency and answer-ba
 **69 verified solutions** across two AoC years (`dev/verify_solutions.py` clean).
 
 **Each thesis arm has a verdict** ([What we learned](#what-we-learned)): sampling measured and
-replicated under the original harness, open under the corrected one (the powered test was
-inconclusive); economics
+replicated under the original harness, not re-established under the corrected one (on its one
+mid-rate problem, an inconclusive test and then a registered replication, p = 0.31); economics
 splits by whether time or tokens is the binding cost; portfolios: the one complementary pair was
 one-way, so the ensemble was not run. Open, in priority order (`PLAN.md`, "Open"):
-- **A decisive sampling test under the corrected harness:** the first, on 2025 d9 p2, was
-  inconclusive; a replication with every trial reaching Part 2 and 35 trials per arm is running
-  (`dev/progress/m5pro-d9p2-replication.md`).
 - **A clean contamination test:** AoC 2026, in December, is the first set of problems published
   after the models' training cutoff. It needs the answer submitter wired first: without it an
   unseen year cannot reach Part 2.
 - **Beyond AoC:** how far the results depend on an exact checker. Every attempt records the
-  worked examples' verdict beside the oracle's from 2026-11-09, so the next runs measure it; then
-  a second domain (`PLAN.md`, "Beyond AoC").
+  worked examples' verdict beside the oracle's from 2026-11-09. First data, 2025 d9 p2: the
+  example passed most of the Part 2 attempts the oracle rejected, and a selector using it alone
+  took a wrong draft in 15 of 35 trials (`m5pro-d9p2-replication.md`). Then a second domain
+  (`PLAN.md`, "Beyond AoC").
 - **Does the Part 1 context inform, or cue recall?** The headline's caveat, tested on AoC 2026,
   where nothing can be recalled: Part 2 with and without the Part 1 context
   (`dev/progress/part2-context-heldout-plan.md`).
