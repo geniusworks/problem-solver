@@ -624,7 +624,17 @@ was measured with local models of about 30B:
 
 ## Where this generalizes, and where it doesn't
 
-This section is argued, not measured: every experiment here used one benchmark with an exact
+**Two conditions, read together.** Two measured findings combine into one statement about when
+extra attempts pay. First, what extra attempts can add is set by how often one attempt succeeds:
+three drafts did about as well as independent tries predict (52% predicted, 49% measured over 75
+trials), so the room is large only in the middle and small near 0% or 100%. Second, that room is
+realised only if something can pick the right attempt out: with the exact oracle, three drafts
+solved 14 of 35 replication trials before repair; choosing by the worked example alone solved 12
+and took a wrong answer in 15. So extra attempts help where one attempt succeeds part of the time
+*and* a check can tell right from wrong. This is a synthesis of two findings, measured on one
+model and two problems, not a separately tested claim.
+
+The rest of this section is argued, not measured: every experiment here used one benchmark with an exact
 checker. The mechanism needs a **cheap, exact verifier**. Sampling and repair convert into
 correctness only because a check can collapse many guesses to one verified answer. Where that
 check exists — unit tests, a compiler, a proof checker, a simulator — the findings may transfer,
