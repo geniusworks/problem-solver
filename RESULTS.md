@@ -1,6 +1,6 @@
 # Results: measuring whether coordinating LLM attempts beats a single one
 
-*Report as of 2026-11-12. Its headline figures are recomputed from the run tables by
+*Report as of 2026-11-13. Its headline figures are recomputed from the run tables by
 `dev/recompute_results.py`, which CI runs against this file.*
 
 ## Abstract
@@ -13,7 +13,7 @@ at what cost?
 Advent of Code 2024 and 2025 puzzles. An exact oracle runs each candidate on the real puzzle input
 and compares its output with the accepted answer. Configurations are compared over repeat trials
 on the same problems; the decisive comparisons were registered (design, prediction and reading
-committed before launch). The corpus is 124 runs, 3,836 candidate attempts and about 235
+committed before launch). The corpus is 125 runs, 3,842 candidate attempts and about 235
 GPU-hours.
 
 **Results.** (1) The largest effect was a defect in the harness: Part 2 prompts omitted the Part 1
@@ -27,7 +27,7 @@ as independent tries predict from the single-draft rate (52% predicted, 49% meas
 three-draft trials), so what extra attempts buy can be estimated in advance, and it is large only
 where one attempt succeeds part of the time. (3) One candidate model solved a problem the reference rarely solved (10/10
 against 1/10), and no problem was found the other way, so a mix of the two was not run. (4) Repair
-contributed 17 of the reference model's 320 solves.
+contributed 17 of the reference model's 326 solves.
 
 **Limits.** The puzzles and their solutions are public and predate the models, so capability
 figures describe this testbed. The headline results rest on one model family, one benchmark and
@@ -60,7 +60,7 @@ Each is detailed under [Scope and limits](#scope-and-limits) and
 - **A second model helped by being chosen, not mixed.** One of six candidate models solved a
   problem 10 of 10 times that the reference solved 1 of 10, and no problem was found where the
   reference's lead held at ten trials, so a mix had nothing to add on the problems measured and
-  was not run. Repair also depends on the model: 17 of the reference's 320 solves came
+  was not run. Repair also depends on the model: 17 of the reference's 326 solves came
   from repair, against 14 of 131 for that candidate.
 - **Cheap draws win on time and lose on tokens.** A fast weak model taking four times the draws
   costs 0.64× the wall-clock per solution and at least 3.09× the tokens, and solved 7 of 8
@@ -77,7 +77,7 @@ Each is detailed under [Scope and limits](#scope-and-limits) and
   matches the accepted answer, so these are the rates of a perfect verifier. Choosing by the worked
   example alone, on 2025 d9 p2, solved 12 of 35 three-draft trials and took a wrong answer in 15.
 
-**Corpus (2026-11-12):** 124 recorded experiment runs · 3,836 candidate attempts · ~235 GPU-hours ·
+**Corpus (2026-11-13):** 125 recorded experiment runs · 3,842 candidate attempts · ~235 GPU-hours ·
 48.2M tokens (tables in `dev/results/`; runs that left only a log are not counted; the
 token total includes draft counts copied onto repair records before 2026-10-12, see the defect
 table) · **69 oracle-verified solutions across two AoC years, 0 wrong in the ledger.**
@@ -366,7 +366,7 @@ band cells (`m5pro-band-k1-vs-k3-aoc.md`), 2 of 12 failed first drafts on 2025 d
 (`m5pro-d9p2-power-aoc.md`), 4 of 26 in that test's replication (`m5pro-d9p2-replication.md`)
 and 4 of 31 in the speed-repair test's control arm (`m5pro-d9p2-speed-repair.md`); across all its
 runs under the corrected harness without repair guidance, 17 of
-its 320 solved cells were solved by repair. `muse-glimmer:30b`, in the same harness, solved 14 of
+its 326 solved cells were solved by repair. `muse-glimmer:30b`, in the same harness, solved 14 of
 its 131 by repair, among them 3 of its 6 solves of 2024 d20 p2 (`arm3-portfolio-test.md`).
 
 Counted per repair attempt rather than per solve, so that a model with more failed drafts does not
@@ -637,7 +637,7 @@ was measured with local models of about 30B:
    repair already lifted the single draft there. Measure the per-draft rate first, and compare
    against one draft with repair, not one draft alone.
 2. **Don't count on repair to rescue hard problems.** Feedback with true example results and
-   too-high/too-low hints rarely rescued the reference (17 of its 320 solves came from repair);
+   too-high/too-low hints rarely rescued the reference (17 of its 326 solves came from repair);
    another model's repairs did better (14 of 131). A fresh draft or a different
    model is the more reliable second try.
 3. **Check whether failures are timeouts.** Many hard-cell failures are timeouts on the full input,

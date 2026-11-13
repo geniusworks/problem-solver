@@ -3835,3 +3835,9 @@ run,problem_id,trial,model,stage,repair_iteration,draft_index,outcome,input_toke
 20261113T001051Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,generate,0,0,wrong,13533,5716,240.984828,0,1,False,
 20261113T001051Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,repair,1,0,wrong,5759,4546,194.802315,0,1,False,
 20261113T001051Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,repair,2,0,error,5444,1128,50.919526,1,1,False,timeout
+20261113T183412Z_m5pro-precheck-sandbox_1ac712678732.json,2024_day01_part1,0,qwen3.8:27b,generate,0,0,solved,7907,2386,123.667761,1,1,False,
+20261113T183412Z_m5pro-precheck-sandbox_1ac712678732.json,2024_day01_part2,0,qwen3.8:27b,generate,0,0,solved,7447,1203,64.117231,1,1,False,
+20261113T183412Z_m5pro-precheck-sandbox_1ac712678732.json,2024_day01_part1,1,qwen3.8:27b,generate,0,0,solved,6936,1266,66.84027,1,1,False,
+20261113T183412Z_m5pro-precheck-sandbox_1ac712678732.json,2024_day01_part2,1,qwen3.8:27b,generate,0,0,solved,8537,2487,112.57502,1,1,False,
+20261113T183412Z_m5pro-precheck-sandbox_1ac712678732.json,2024_day01_part1,2,qwen3.8:27b,generate,0,0,solved,7324,1812,87.77963,1,1,False,
+20261113T183412Z_m5pro-precheck-sandbox_1ac712678732.json,2024_day01_part2,2,qwen3.8:27b,generate,0,0,solved,7471,1205,62.660753,1,1,False,
