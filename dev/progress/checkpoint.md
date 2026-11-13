@@ -15,7 +15,9 @@ the submission step, workspaces per account (`AOC_ACCOUNT`), a network-denying s
 cached pages hold hover text only; hidden text is stripped before the prompt and holds the day's
 submissions) and the nightly driver. Its decisions are made and the account,
 `problem-solver-aoc`, is logged in to AoC. The pre-run check with the sandbox on gave 6/6
-(2026-11-13). It waits on the end-to-end test on past puzzles. `shared/solver.py` is split into
+(2026-11-13), and the end-to-end test on past puzzles passed from the experiment account
+(2026-11-13: 2024 d1 and 2025 d9 accepted, the wrong-answer path and the night's cap checked live).
+It waits on the maintainer installing the schedule and wake, and their test night. `shared/solver.py` is split into
 `shared/solving/` (`PLAN.md`, "Engineering", items 2 and 3; a replay of 140 recorded trials
 through the solver is identical before and after). The first replay found a harness race (fixed
 2026-11-12): from 2026-11-11 a busy program's timeout could be recorded as a crash, which cost 3
@@ -61,7 +63,7 @@ depend on an exact checker; on 2025 d9 p2 the example passed 59 of the 104 Part 
 oracle rejected in the power test and 137 of 249 in the replication, where a selector using it
 alone took a wrong draft in 15 of 35 trials. What is next, in priority order, is `PLAN.md`,
 "Open": AoC 2026 (the registration
-draft, its account, decisions and end-to-end test); then the test of
+draft, its schedule and wake, and their test night); then the test of
 whether the Part 1 context informs or cues recall, designed for AoC 2026 (`part2-context-heldout-plan.md`). Nothing starts without the
 maintainer's go. The sections below are the dated record, newest
 first.

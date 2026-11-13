@@ -19,8 +19,9 @@ on:
    nightly run starting at 02:00 PST, five hours after release, so it races no one; the draft registration is `dev/progress/aoc2026-registration.md`. Its code is built and tested
    offline (2026-11-13: the submission step, workspaces per account, a network-denying sandbox,
    the hidden-text audit, the nightly driver). Its decisions are made and the account,
-   `problem-solver-aoc`, is logged in to AoC. The pre-run check with the sandbox on gave 6/6 (2026-11-13).
-   *Waits on* the end-to-end test on past puzzles, with the maintainer's go. **Frozen before
+   `problem-solver-aoc`, is logged in to AoC. The pre-run check with the sandbox on gave 6/6, and
+   the end-to-end test on past puzzles passed from the experiment account (2026-11-13).
+   *Waits on* the maintainer installing the schedule and wake, and their test night. **Frozen before
    2026-12-01**, each item recorded in the registration: the models by digest;
    prompts, configuration and fingerprints; each model's release date and stated training cutoff;
    no setting tuned on a 2026 problem; results published per problem as well as in aggregate.

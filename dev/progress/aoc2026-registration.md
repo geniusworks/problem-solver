@@ -1,9 +1,9 @@
 # AoC 2026 registration — draft, not yet registered
 
 **Status (2026-11-13): draft for the maintainer's review.** The engineering below is built and
-tested offline; against AoC only the experiment account's session has been checked, and nothing
-has been submitted. Its decisions are made (the end); it becomes the registration when the
-engineering has passed its end-to-end test; from then until the last 2026 trial is scored, nothing it names
+tested offline and has passed its end-to-end test on past puzzles from the experiment account
+(below). Its decisions are made (the end); it becomes the registration once the schedule and wake
+have passed their test night; from then until the last 2026 trial is scored, nothing it names
 changes. It covers the clean contamination test (`PLAN.md` §4b) and the run conditions for the
 held-out Part 1 context test (`part2-context-heldout-plan.md`), whose design and readings are
 registered there.
@@ -155,15 +155,23 @@ Built 2026-11-13, each with the test that fails without it:
 
 ## End-to-end test on past puzzles
 
-On the experiment account, before the freeze, with the maintainer's go (it uses the GPU and posts
-to AoC), run as the nightly run itself (`nightly.py --year 2024 --from-day 1 --day 1`, then
-`--year 2025 --from-day 9 --day 9`). Its inputs and answers are new to the project, as 2026's will
-be:
+On the experiment account, 2026-11-13, run as the nightly run itself with the network-denying
+sandbox on (`nightly.py --year 2024 --from-day 1 --day 1`, then `--year 2025 --from-day 9 --day 9`).
+Its inputs and answers are new to the project, as 2026's will be.
 
-- **2024 d1** (6/6 in the recent pre-run checks): read, solve, submit, accepted, Part 2 unlocked,
-  solved, cached, and nothing posted afterwards.
-- **2025 d9** (Part 2 about one trial in three): the wrong-answer path, with the stated wait parsed
-  and respected, a repeated answer refused, and the budget stopping at its cap.
+- **2024 d1:** read, solved, posted, accepted, Part 2 unlocked, solved, posted, accepted, and
+  nothing posted afterwards. Part 1 3 of 3 trials solved, Part 2 6 of 6; two posts, about 20
+  minutes. It found the attempt logs written to the working directory's `years/` rather than the
+  account's workspace; fixed the same day (`tests/unit/test_token_accounting.py`), before 2025 d9.
+- **2025 d9:** Part 1 3 of 3 trials solved, Part 2 1 of 6, each accepted on its first post (the
+  one Part 2 trial with an answer passed the worked example; no other answer was a candidate); about
+  an hour. Attempt logs landed in the account's workspace only.
+- **The wrong-answer path,** which 2025 d9 did not reach: the submission step posted fixed
+  candidates `1` and `0` for 2025 d1 Part 1. AoC replied "That's not the right answer", with a
+  one-minute wait and no too-high or too-low, to both; each was parsed as wrong with its wait,
+  the second was posted 90 seconds after the first (the wait plus the 30-second margin), and a
+  further step stopped at the night's cap of 6 posts. A repeated answer being refused, the bounds
+  and the cap of 3 wrong per part are covered by `tests/unit/test_submission.py` only.
 - The schedule and wake are tested at an arbitrary hour on a test night.
 
 ## Decisions
