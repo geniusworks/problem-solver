@@ -18,9 +18,9 @@ models, not on the date.
 
 ## The account
 
-- **A dedicated experiment account**, created by the maintainer through one of the providers AoC
-  offers (GitHub, Google, Twitter or Reddit; AoC stores the provider's ID, names, URL and image,
-  so the identity names the project, not a person). It is the default for everything automated,
+- **A dedicated experiment account**, `problem-solver-aoc`, created by the maintainer on GitHub
+  and used to log in to AoC (AoC stores the provider's ID, names, URL and image, so the identity
+  names the project, not a person). It is the default for everything automated,
   in testing and in the event.
 - **The maintainer's own account is never used by the harness.** Its inputs and accepted answers
   stay the oracle for the 2024–2025 ledger.
@@ -159,7 +159,7 @@ be:
 
 ## Open decisions
 
-1. **Provider for the experiment account** (maintainer): GitHub, Google, Twitter or Reddit.
+1. **Provider for the experiment account:** *decided 2026-11-13*, GitHub (`problem-solver-aoc`).
 2. **Text the page hides:** stripped before the prompt, or kept as the page has it. On the 37
    cached 2024–2025 pages the audit finds hover text only, which the parser already leaves out,
    so either choice leaves every past prompt unchanged.

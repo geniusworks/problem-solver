@@ -12,8 +12,8 @@ automatically from a dedicated experiment account under a fixed budget, by an un
 run starting five hours after each release. Its code is built and tested offline (2026-11-13):
 the submission step, workspaces per account (`AOC_ACCOUNT`), a network-denying sandbox profile
 (off by default; with it on, all 69 ledger solutions verify), the hidden-text audit (the 37
-cached pages hold hover text only) and the nightly driver. It waits on the maintainer creating
-the account and settling the draft's open decisions, then the pre-run check with the sandbox on
+cached pages hold hover text only) and the nightly driver. It waits on the account's AoC session
+(the account, `problem-solver-aoc`, exists) and the draft's remaining open decisions, then the pre-run check with the sandbox on
 and an end-to-end test on past puzzles. `shared/solver.py` is split into
 `shared/solving/` (`PLAN.md`, "Engineering", items 2 and 3; a replay of 140 recorded trials
 through the solver is identical before and after). The first replay found a harness race (fixed
