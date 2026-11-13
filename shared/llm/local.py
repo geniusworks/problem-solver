@@ -16,6 +16,7 @@ from shared.problem_analysis import ProblemAnalyzer
 import json
 from datetime import datetime
 from shared.aoc import ensure_problem_directory_structure
+from shared.paths import account_dir
 
 logger = logging.getLogger(__name__)
 
@@ -169,7 +170,7 @@ Final Question: {problem.final_question}""",
             
             # Save attempt data
             # Create directory structure
-            dirs = ensure_problem_directory_structure(Path.cwd(), year, day)
+            dirs = ensure_problem_directory_structure(account_dir(), year, day)
             attempts_dir = dirs["attempts"]
             
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -247,7 +248,7 @@ Final Question: {problem.final_question}""",
             
             # Save the failed attempt
             # Create directory structure
-            dirs = ensure_problem_directory_structure(Path.cwd(), year, day)
+            dirs = ensure_problem_directory_structure(account_dir(), year, day)
             attempts_dir = dirs["attempts"]
             
             attempt_file = attempts_dir / f"attempt_{self.model}_{timestamp}.json"
