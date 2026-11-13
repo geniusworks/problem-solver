@@ -91,8 +91,10 @@ components.
      compressed) and kill it above the cap. A full-input run, in the solve loop and in the oracle's
      own runner (`shared/verification.py`), happens in a fresh temporary directory holding only a
      copy of `input.txt`, so the accepted answers and verified solutions beside the real input are
-     not reachable by relative path. It keeps network
-     access and the user's file permissions, so it is not a security boundary.
+     not reachable by relative path. With `execution.deny_network` set (off by default; the
+     AoC 2026 nightly run requires it), the child runs under a macOS sandbox profile denying
+     all network operations. It keeps the user's file permissions, so it is not a security
+     boundary.
    - A correctness **oracle**: candidates are judged against cached accepted AoC
      answers (`shared/ground_truth.py`) and worked examples, with an overfit gate
      (`shared/overfit_detection.py`). Claimed vs. verified is tracked separately;
@@ -103,11 +105,16 @@ components.
 Configuration is layered to separate shared defaults from local settings:
 
 ### YAML Configuration (Shared Defaults)
-- `config/resources.yaml`: the one live config file — execution/request limits and
-  the submission toggle (`shared/config.py` reads it into `RESOURCES_CONFIG`).
+- `config/resources.yaml`: the live config file — execution/request limits, the
+  no-network switch, and the submission toggle and budget (`shared/config.py` reads it
+  into `RESOURCES_CONFIG`).
+- `config/nightly.yaml`: the AoC 2026 nightly run's configurations and trials.
 
 ### Environment Configuration (Local Settings)
-- `AOC_SESSION` (the Advent of Code session cookie) and `AOC_CONTACT`
+- `AOC_SESSION` (the maintainer account's session cookie) and `AOC_CONTACT`
+- `AOC_ACCOUNT`: another AoC account to act as; its workspace is `accounts/<name>/`
+  (`shared/paths.py`, `account_dir`) and its cookie `AOC_SESSION_<NAME>`, with no fallback
+- `DENY_NETWORK`: overrides `execution.deny_network`
 - `OLLAMA_HOST`, `SOLVER_MODELS`, `MAX_REPAIR_ITERATIONS`
 - `ENABLE_COLLABORATIVE_IMPROVEMENT`, `SUBMIT_SOLUTIONS`, `LOG_LEVEL`
 
@@ -129,7 +136,9 @@ See `.env.example` for available environment variables.
 #### Core utilities
 - `paths.py`: problem path primitives — the repo's leaf layer, imports only
   config, so verification/ground_truth/ledger can depend on it without a cycle
-- `aoc.py`: Advent of Code I/O — session/auth, HTTP, problem fetch + caching
+- `aoc.py`: Advent of Code I/O — session/auth, HTTP, problem fetch + caching; one
+  request per fetch, a logged-out page refused rather than cached, `check_session`
+- `page_audit.py`: text in a puzzle's articles a reader would not see
 - `ledger.py`: the solution ledger — `record_solution`/`save_solution_file`,
   oracle-gated so nothing is recorded without producing the accepted answer
 - `logging_setup.py`: application logging configuration
@@ -149,9 +158,11 @@ See `.env.example` for available environment variables.
   `feedback.py` writes what a failed candidate's repair is told. `BaseSolver`
   takes them as mixins, and the stages reach the ledger writer and the accepted
   answer through it, so tests replace those in one place
-- `submission/` (top-level package): the real AoC answer submitter, **isolated
-  and deliberately unwired** — kept for the solver phase (Milestone F), not
-  called from the solve loop
+- `submission/` (top-level package): the AoC 2026 submission step, run after the
+  trials and never from the solve loop: `replies.py` reads AoC's reply and wait,
+  `policy.py` ranks candidates and holds the budget, `client.py` is the only POST,
+  `step.py` ties them together. `shared/experiment/rescore.py` scores recorded
+  answers once one is accepted; `nightly.py` drives the night
 
 ### Learning System (`learning/`)
 

@@ -4,7 +4,7 @@ This was extracted from `SubmissionManager.get_recommended_strategies`. It is
 the only part of the old submission machinery the solve loop actually uses:
 `BaseSolver` calls it to seed generation with candidate strategies and their
 measured effectiveness. It has nothing to do with submitting answers to AoC --
-that (unwired) code lives in the `submission` package.
+that is the `submission` package, a separate step after the trials.
 """
 
 import logging
