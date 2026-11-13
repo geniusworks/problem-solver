@@ -144,3 +144,40 @@ def test_the_session_check_is_one_request_to_the_calendar(account, monkeypatch, 
         with pytest.raises(SessionError):
             asyncio.run(aoc.check_session(2026))
     assert [url for url, _ in made] == ["https://adventofcode.com/2026"]
+
+
+def test_an_account_keeps_its_own_solution_ledger(account, monkeypatch):
+    from shared import ledger
+
+    problem = paths.get_problem_dir(2026, 1)
+    problem.mkdir(parents=True)
+    (problem / "input.txt").write_text("1\n2\n")
+    save_known_answers(2026, 1, {1: "3"})
+    code = "import sys\nprint(sum(int(x) for x in open(sys.argv[1] if len(sys.argv) > 1 else 'input.txt')))\n"
+
+    ledger.record_solution(2026, 1, 1, "model-a", code)
+
+    own = account / "accounts" / "experiment" / "solutions"
+    assert (own / "2026_day01_part1.py").exists()
+    assert "|2026|1|1|3|model-a|" in (own / "README.md").read_text()
+    assert ledger.solutions_dir() == own
+
+
+def test_a_refresh_replaces_the_cached_page_once_part_one_is_accepted(account, monkeypatch, requests_made):
+    monkeypatch.setenv("AOC_SESSION_EXPERIMENT", "experiment-cookie")
+    pages, made = requests_made
+    part_two = LOGGED_IN.replace(
+        "</article>",
+        '</article><p>Your puzzle answer was <code>3</code>.</p>'
+        '<article class="day-desc"><h2 id="part2">--- Part Two ---</h2></article>', 1)
+    pages["https://adventofcode.com/2026/day/1"] = (200, part_two)
+    problem = paths.get_problem_dir(2026, 1)
+    problem.mkdir(parents=True)
+    (problem / "problem.html").write_text(LOGGED_IN)
+
+    asyncio.run(aoc.refresh_problem_page(2026, 1))
+
+    text, _, _ = asyncio.run(aoc.fetch_problem_text(2026, 1, 2))
+    assert "Part Two" in text
+    assert get_known_answer(2026, 1, 1) == "3"
+    assert len(made) == 1

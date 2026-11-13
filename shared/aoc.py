@@ -359,6 +359,23 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, A
             return problem_text, soup, part2_answer
         return problem_text, soup, part1_answer
 
+async def refresh_problem_page(year: int, day: int) -> str:
+    """Fetch a day's page once more and replace the cached copy.
+
+    The cache otherwise keeps the first page fetched, which shows Part 1 only. After Part 1
+    is accepted, one request brings the page with Part 2 and the accepted answer. The old
+    copy is kept until the new one has arrived, and make_request refuses a logged-out page.
+    """
+    html = await make_request(f"{config.AOC_BASE_URL}/{year}/day/{day}")
+    state, part1_answer, part2_answer = await _get_problem_state(BeautifulSoup(html, "html.parser"))
+    create_problem_dir(year, day)
+    await _save_cache(year, day, html, CacheMetadata(
+        state=state, timestamp=datetime.now().isoformat(),
+        part1_answer=part1_answer, part2_answer=part2_answer,
+    ))
+    return html
+
+
 async def fetch_input_data(year: int, day: int, soup: Optional[BeautifulSoup] = None) -> str:
     """Fetch the input data from Advent of Code website."""
     # Get the input data directly - no need to fetch problem page again

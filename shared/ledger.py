@@ -17,7 +17,8 @@ from pathlib import Path
 
 from shared.ground_truth import get_known_answer
 from shared.overfit_detection import analyze_overfit_risk
-from shared.paths import get_problem_dir
+from shared import config
+from shared.paths import account_dir, get_problem_dir
 from shared.verification import Verdict, verify_solution_code
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,15 @@ logger = logging.getLogger(__name__)
 # New rows are inserted immediately above it so they never land in the rejected
 # table that follows.
 VERIFIED_ROWS_MARKER = "<!-- end verified rows -->"
+
+
+def solutions_dir() -> Path:
+    """The ledger's directory: the repository's solutions/ for the maintainer's account,
+    accounts/<name>/solutions/ for another account, whose solutions are verified against
+    its own inputs and so never belong in the repository's ledger."""
+    if config.account_name():
+        return account_dir() / "solutions"
+    return Path(__file__).parent.parent / "solutions"
 
 
 def save_solution_file(year: int, day: int, part: int, model_name: str, solution_code: str) -> str:
@@ -51,10 +61,9 @@ def save_solution_file(year: int, day: int, part: int, model_name: str, solution
     year_path.write_text(solution_code)
 
     # Save to solutions directory
-    root_dir = Path(__file__).parent.parent
-    solutions_dir = root_dir / "solutions"
-    solutions_dir.mkdir(exist_ok=True)
-    solution_path = solutions_dir / solution_filename
+    directory = solutions_dir()
+    directory.mkdir(parents=True, exist_ok=True)
+    solution_path = directory / solution_filename
     solution_path.write_text(solution_code)
 
     return f"solutions/{solution_filename}"
@@ -78,7 +87,7 @@ def record_solution(year: int, day: int, part: int, model_name: str, solution_co
         This function will only record a solution once per year/day/part combination.
         It is safe to call multiple times as it will ignore duplicate entries.
     """
-    solutions_file = Path(__file__).parent.parent / "solutions" / "README.md"
+    solutions_file = solutions_dir() / "README.md"
     solutions_file.parent.mkdir(parents=True, exist_ok=True)
 
     # Ensure file exists with a minimal header
