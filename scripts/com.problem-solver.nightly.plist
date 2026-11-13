@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  The AoC 2026 nightly run (nightly.py), at 02:00 local time on a Mac set to Pacific time:
+  five hours after each puzzle's release. nightly.py exits at once outside the event.
+
+  SUBMIT_SOLUTIONS is read from .env, not set here, so the kill switch stays there:
+  SUBMIT_SOLUTIONS=false stops all posting and leaves the trials running.
+
+  Install (replace REPO_DIR with the checkout's absolute path; the session cookie stays in
+  .env as AOC_SESSION_EXPERIMENT):
+    sed "s|REPO_DIR|$PWD|g" scripts/com.problem-solver.nightly.plist > ~/Library/LaunchAgents/com.problem-solver.nightly.plist
+    launchctl load ~/Library/LaunchAgents/com.problem-solver.nightly.plist
+  Wake the Mac before it runs (needs an administrator):
+    sudo pmset repeat wakeorpoweron MTWRFSU 01:50:00
+  Ollama must be running for the logged-in user (its app starts at login).
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.problem-solver.nightly</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>REPO_DIR/venv/bin/python</string>
+    <string>REPO_DIR/nightly.py</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>REPO_DIR</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>AOC_ACCOUNT</key>
+    <string>experiment</string>
+    <key>DENY_NETWORK</key>
+    <string>true</string>
+  </dict>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>2</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>REPO_DIR/accounts/experiment/nightly/launchd.out</string>
+  <key>StandardErrorPath</key>
+  <string>REPO_DIR/accounts/experiment/nightly/launchd.err</string>
+</dict>
+</plist>

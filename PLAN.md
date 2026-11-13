@@ -16,10 +16,11 @@ on:
 1. **AoC 2026** (§4b), opening **2026-12-01**: the clean contamination test, and the only item
    with a deadline. *Decided 2026-11-12:* answers are submitted automatically from a dedicated
    experiment account, never the maintainer's, under a fixed submission budget, by an unattended
-   nightly run starting at 02:00 PST, five hours after release, so it races no one; the draft registration is `dev/progress/aoc2026-registration.md`. *Waits on* the
-   maintainer creating that account and settling the draft's open decisions, then code (the
-   submitter as its own step, workspaces per account, a network-denying sandbox, the nightly
-   driver) and an end-to-end test on past puzzles with the maintainer's go. **Frozen before
+   nightly run starting at 02:00 PST, five hours after release, so it races no one; the draft registration is `dev/progress/aoc2026-registration.md`. Its code is built and tested
+   offline (2026-11-13: the submission step, workspaces per account, a network-denying sandbox,
+   the hidden-text audit, the nightly driver). *Waits on* the draft's remaining open decisions (the
+   account, `problem-solver-aoc`, is logged in to AoC), then the pre-run check with the sandbox on and an
+   end-to-end test on past puzzles, both with the maintainer's go. **Frozen before
    2026-12-01**, each item recorded in the registration: the models by digest;
    prompts, configuration and fingerprints; each model's release date and stated training cutoff;
    no setting tuned on a 2026 problem; results published per problem as well as in aggregate.
@@ -135,8 +136,7 @@ replay differs unexplained is reverted and waits. The rest wait until after the 
 
 1. **Remove the dead strategy-learning path from the solve loop.** The strategies a prompt uses
    come from keyword matching on the puzzle text and stay. The learned "effectiveness" scores do
-   not: the solve loop never writes them (only the unwired submission code does), so they are
-   always the 0.5 default, and the model provider ignores them. `learning/optimizer.py`'s
+   not: nothing writes them, so they are always the 0.5 default, and the model provider ignores them. `learning/optimizer.py`'s
    strategy weights and the `strategy_effectiveness` argument go; checked by comparing generated
    prompts before and after.
 2. **Test the whole orchestration with fake models and checkers.** *Done 2026-11-12:*
@@ -424,9 +424,9 @@ Only now, and only what measures a positive delta through the harness.
 
 ## Milestone F — Solver phase (deferred, per "platform now, solver later")
 
-- Wire `submission/` for genuinely unseen problems, gated on `submit_solutions`, respecting the
-  cooldown parser. Requires a fresh `AOC_SESSION`. This is where answer-based consensus gets its
-  live A/B.
+- Wire `submission/` for genuinely unseen problems. *Done for AoC 2026 (2026-11-13):* a separate
+  step after the trials, from the experiment account, under the registration's budget
+  (`dev/progress/aoc2026-registration.md`).
 - Scale evaluation: full 2024, plus an earlier public year, as a benchmark. **First data point in
   (`dev/progress/scale-2024-d4-7.md`):** samp3 on 2024 d4–7 solved only 1/8 (new: d6 p1). The 7B is
   capability-limited past the easy problems — 59% of attempts can't emit runnable code, 39% are
@@ -438,8 +438,8 @@ Only now, and only what measures a positive delta through the harness.
 
 ## Maintainer's notes, August to November 2026
 
-**Milestones A–F status:** A–E done, codebase consolidated (C1–C3), F (submission) still deferred —
-there is no unseen problem to submit against. The two questions that gated everything for months are
+**Milestones A–F status:** A–E done, codebase consolidated (C1–C3); F's submitter is built for
+AoC 2026 as a separate step (2026-11-13), the first unseen problems it can submit against. The two questions that gated everything for months are
 now **answered**, which re-points the roadmap entirely.
 
 ### The M5 Pro / 64 GB (2026-10-12) — what a third machine is for
@@ -752,9 +752,8 @@ bug is fixed** (below): a cost claim measured with broken cost accounting is wor
   Feedback only, never a veto. **Open:** the 2 in 13.
 - ~~**No "too high / too low" on a wrong answer**~~ — ✅ **FIXED 2026-10-13**. Only the two words
   reach the feedback builder. The site's wait between wrong submissions is not simulated.
-- **⚠️ An unseen year cannot reach Part Two without submission.** Reaching it needs an accepted
-  Part One answer, which for a new puzzle exists only after submitting. Needs deciding only if AoC 2026 is run
-  (undecided; see the M5 Pro step 5): wire the submitter, or measure Part Ones only.
+- ~~**An unseen year cannot reach Part Two without submission.**~~ Decided 2026-11-12: AoC 2026
+  submits from a dedicated account (`aoc2026-registration.md`); the step is built (2026-11-13).
 
 - ~~**Token accounting is stale across repair attempts**~~ — ✅ **FIXED 2026-08-22**
   (`token-accounting-fix.md`). `improve_solution` never updated `last_token_usage`, so repair
@@ -801,16 +800,13 @@ into clean ones, and is the single highest-value experiment left.
 This is also the natural moment to wire Milestone F: a live year is the first time there has been an
 unsolved answer to submit.
 
-### 5. Submission phase (Milestone F) — still deferred
+### 5. Submission phase (Milestone F) — built for AoC 2026
 
-`submission/` is real (it posts the answer and parses AoC's response) and tested
-(`tests/unit/test_submission.py`: response classification, the wait, its persistence across
-restarts, no post while disabled), but unwired, and both 2024 and 2025 are solved on the
-maintainer's account, so there is no unseen answer to submit. Revisit for a live contest or a fresh
-account. Wiring is small: gate a `submission.validate_solution(...)` call on `SUBMIT_SOLUTIONS=true`
-after `_execute_and_repair`. One known simplification: a wrong answer sets a fixed 60 s wait, while
-AoC lengthens the wait after repeated wrong answers; a resubmission inside AoC's longer wait gets
-its "too recently" page, which is parsed and sets the real wait.
+`submission/` is the separate step of the AoC 2026 registration (2026-11-13): after the trials it
+ranks every recorded answer and posts one at a time from the experiment account, within a budget
+per part and per night, never repeating an answer and never inside the wait AoC states (parsed
+from each reply, with a margin). The solve loop never sees the replies. It halts on any reply it
+does not recognise. Tests: `tests/unit/test_submission.py`.
 
 ### Optional, unblocked (small cleanups)
 

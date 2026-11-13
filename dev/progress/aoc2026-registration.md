@@ -1,8 +1,8 @@
 # AoC 2026 registration — draft, not yet registered
 
-**Status (2026-11-12): draft for the maintainer's review.** Nothing here is built or run yet. It
-becomes the registration when the open decisions at the end are made and the engineering below
-has passed its end-to-end test; from then until the last 2026 trial is scored, nothing it names
+**Status (2026-11-13): draft for the maintainer's review.** The engineering below is built and
+tested offline; nothing has run against AoC. It becomes the registration when the open decisions
+at the end are made and the engineering has passed its end-to-end test; from then until the last 2026 trial is scored, nothing it names
 changes. It covers the clean contamination test (`PLAN.md` §4b) and the run conditions for the
 held-out Part 1 context test (`part2-context-heldout-plan.md`), whose design and readings are
 registered there.
@@ -18,15 +18,16 @@ models, not on the date.
 
 ## The account
 
-- **A dedicated experiment account**, created by the maintainer through one of the providers AoC
-  offers (GitHub, Google, Twitter or Reddit; AoC stores the provider's ID, names, URL and image,
-  so the identity names the project, not a person). It is the default for everything automated,
+- **A dedicated experiment account**, `problem-solver-aoc`, created by the maintainer on GitHub
+  and used to log in to AoC (AoC stores the provider's ID, names, URL and image, so the identity
+  names the project, not a person). It is the default for everything automated,
   in testing and in the event.
 - **The maintainer's own account is never used by the harness.** Its inputs and accepted answers
   stay the oracle for the 2024–2025 ledger.
-- **Every account has its own inputs**, so each account's data lives in its own workspace (its own
-  `years/`) with its own session variable in `.env`. Nothing mixes inputs, answers or submission
-  history across accounts.
+- **Every account has its own inputs**, so each account's data lives in its own workspace
+  (`accounts/<name>/`, selected by `AOC_ACCOUNT`) with its own session variable in `.env`
+  (`AOC_SESSION_<NAME>`). Nothing mixes inputs, answers, results, solutions or submission history
+  across accounts, and nothing falls back from one account's session to another's.
 - **One account for the whole event**, and every wait AoC states is respected. (A second account
   would have different inputs, so it would also be a different measurement.)
 - **AoC's FAQ advises people not to use AI to solve the puzzles**, because the point is to learn
@@ -47,8 +48,10 @@ unplanned change is recorded as an instrument change and the affected results ar
 
 ## The nightly run
 
-Unattended, scheduled each night of the event. It starts at 02:00 PST, five hours after the
-puzzle's release: there is no race to run, and the run does not take part in one.
+Unattended, scheduled each night of the event (`nightly.py`, run by launchd from
+`scripts/com.problem-solver.nightly.plist`). It starts at 02:00 PST, five hours after the
+puzzle's release: there is no race to run, and the run does not take part in one. It refuses to
+start without the experiment account and the network-denying sandbox.
 
 1. Starts at 02:00 PST (the Mac is woken in time). A session check fetches one page that needs a
    login and stops the run, loudly, if the session has expired.
@@ -56,9 +59,14 @@ puzzle's release: there is no race to run, and the run does not take part in one
    and reports it; it never polls.
 3. Runs the registered Part 1 trials, recording every attempt's prompt, code and answer
    (`--include-replay`).
-4. Runs the submission step (below). If Part 1 is accepted, fetches Part 2 and repeats 3–4 for it,
-   with the held-out test's two arms.
+4. Runs the submission step (below). If Part 1 is accepted, scores the recorded Part 1 answers,
+   fetches the page once more for Part 2 and repeats 3–4 for it, with the held-out test's two
+   arms; the context arm is given a recorded Part 1 program that reproduces the accepted answer.
 5. Writes a log and a one-page summary for the morning, and stops.
+
+Each night also does what earlier nights left owed (trials a stopped run did not finish, a part
+whose stated wait outlasted the night, a Part 2 unlocked late), and a run restarted the same
+night resumes at the trial. A Part 1 accepted outside the submission step does not start Part 2.
 
 ## Submitting
 
@@ -71,8 +79,11 @@ loop never sees AoC's replies.
 2. **Per part:** at most 3 wrong submissions over the whole event, shared by all models and trials.
    Never the same answer twice, never inside a stated wait, and a margin on every wait.
 3. **"Too high" or "too low"** only removes candidates it rules out; it is never shown to a model.
-4. **Per night:** at most 6 submissions across all parts, and a stop on any reply the parser does
-   not recognise.
+4. **Per night:** at most 6 submissions across all parts in any 20 hours, so a restarted run
+   shares the night's budget. Any reply the parser does not recognise, a reply that never arrived,
+   or AoC saying a part is solved when no acceptance is recorded halts every later step until
+   the maintainer has looked (`nightly.py --clear-halt`). A wait AoC states gets a 30 s margin; a
+   wait longer than 15 minutes ends the step for the night.
 5. **Budget spent:** the part waits, `unverified`. It can be settled later by the maintainer
    solving it on the experiment account, or by one capped later attempt if new trials give a
    clearly supported new candidate.
@@ -111,20 +122,34 @@ is protected and audited:
 
 ## Engineering before the freeze
 
-Each with the test that fails without it:
+Built 2026-11-13, each with the test that fails without it:
 
-1. The submitter wired as the separate step above: candidate ranking, the per-part and per-night
-   budgets, stated waits, no repeat answers, no posting after an acceptance, the kill switch.
-2. Workspaces per account: inputs, answers and submission history kept apart.
-3. The network-denying sandbox profile; checked by re-verifying the 69-solution ledger and the
-   `--trials 3` pre-run check.
-4. The hidden-text handling chosen in open decision 2.
-5. The nightly driver: schedule, wake, session check, resumable after a restart, log and summary.
+1. **The submission step** (`submission/`): candidate ranking, the per-part and per-night budgets,
+   stated waits, no repeat answers, no posting after an acceptance, the kill switch, and a halt
+   on anything unfamiliar; state written before each post and after each reply. Answers are
+   posted only from a named account. Recorded answers are scored once one is accepted
+   (`shared/experiment/rescore.py`). `tests/unit/test_submission.py`.
+2. **Workspaces per account** (`AOC_ACCOUNT`, `shared/paths.py`): inputs, answers, results,
+   solutions and submission history kept apart. A fetch is one request; a page served logged out
+   raises instead of being cached; the session check is one request.
+   `tests/unit/test_accounts.py`.
+3. **The network-denying sandbox profile** (`execution.deny_network`, `shared/sandbox.py`), on
+   every path that runs generated code, off by default. With it on, the 69-solution ledger
+   re-verifies 69/69; the `--trials 3` pre-run check with it on waits for the maintainer's go.
+   `tests/integration/test_network_sandbox.py`.
+4. **The hidden-text audit** (`shared/page_audit.py`): hidden elements, comments, invisible
+   characters and hover text in the puzzle articles; a day with any but hover text is reported
+   apart. The handling itself waits on open decision 2. `tests/unit/test_page_audit.py`.
+5. **The nightly driver** (`nightly.py`, plan in `config/nightly.yaml`, launchd template in
+   `scripts/`): session check, one fetch, trials resumable at the trial, submission, Part 2, log
+   and summary. The wake and schedule are tested on the test night. `tests/unit/test_nightly.py`.
 
 ## End-to-end test on past puzzles
 
 On the experiment account, before the freeze, with the maintainer's go (it uses the GPU and posts
-to AoC). Its inputs and answers are new to the project, as 2026's will be:
+to AoC), run as the nightly run itself (`nightly.py --year 2024 --from-day 1 --day 1`, then
+`--year 2025 --from-day 9 --day 9`). Its inputs and answers are new to the project, as 2026's will
+be:
 
 - **2024 d1** (6/6 in the recent pre-run checks): read, solve, submit, accepted, Part 2 unlocked,
   solved, cached, and nothing posted afterwards.
@@ -134,9 +159,13 @@ to AoC). Its inputs and answers are new to the project, as 2026's will be:
 
 ## Open decisions
 
-1. **Provider for the experiment account** (maintainer): GitHub, Google, Twitter or Reddit.
-2. **Text the page hides:** stripped before the prompt, or kept as the page has it.
-3. **Models and trials:** which models besides the reference `qwen3.8:27b`, and trials per part.
-4. **The numbers in the budget:** 3 wrong per part and 6 per night are proposals.
+1. **Provider for the experiment account:** *decided 2026-11-13*, GitHub (`problem-solver-aoc`).
+2. **Text the page hides:** stripped before the prompt, or kept as the page has it. On the 37
+   cached 2024–2025 pages the audit finds hover text only, which the parser already leaves out,
+   so either choice leaves every past prompt unchanged.
+3. **Models and trials:** which models besides the reference `qwen3.8:27b`, and trials per part
+   (`config/nightly.yaml`; its entries are proposals).
+4. **The numbers in the budget:** 3 wrong per part and 6 per night are proposals
+   (`config/resources.yaml`, `submission:`).
 
 The session cookie is refreshed around 2026-11-29 and checked daily through the event.

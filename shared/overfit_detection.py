@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import List
 
 from shared import config
+from shared.paths import get_problem_dir
 
 logger = logging.getLogger(__name__)
 
@@ -74,14 +75,7 @@ def analyze_overfit_risk(
 def _load_example_inputs(year: int, day: int) -> List[str]:
     """Load cached example input strings for a given problem if available."""
 
-    base_dir = config.BASE_DIR
-    examples_dir = (
-        base_dir
-        / "years"
-        / str(year)
-        / f"day{day:02d}"
-        / config.EXAMPLES_DIR
-    )
+    examples_dir = get_problem_dir(year, day) / config.EXAMPLES_DIR
 
     if not examples_dir.exists() or not examples_dir.is_dir():
         return []

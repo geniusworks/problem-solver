@@ -118,6 +118,13 @@ def verify_solution_code(
         return verify_solution_file(scratch, year, day, part, timeout=timeout)
 
 
+def answer_line(output: Optional[str]) -> str:
+    """The answer in a program's output: its last non-empty line, where the standardised
+    template prints it (generated solutions sometimes print narration first)."""
+    lines = [line.strip() for line in (output or "").splitlines() if line.strip()]
+    return lines[-1] if lines else ""
+
+
 def verify_solution_file(
     path: Path,
     year: Optional[int] = None,
@@ -150,11 +157,7 @@ def verify_solution_file(
             verdict=Verdict.UNVERIFIED, actual=output,
         )
 
-    # Generated solutions sometimes print a trailing narration line; compare the
-    # last non-empty line, which is where the standardised template prints the
-    # answer.
-    lines = [line.strip() for line in (output or "").splitlines() if line.strip()]
-    actual = lines[-1] if lines else ""
+    actual = answer_line(output)
 
     if actual != expected.strip():
         return VerificationResult(
@@ -226,13 +229,19 @@ def _overfit_reasons(
 
     Never raises: a detector failure must not turn a real result into an error.
     """
-    reasons: list = []
     try:
         source = path.read_text(encoding="utf-8")
     except OSError as e:  # pragma: no cover - defensive
         logger.warning("Could not read %s for overfit analysis: %s", path, e)
-        return reasons
+        return []
+    return overfit_reasons_for_source(source, year, day, part, expected)
 
+
+def overfit_reasons_for_source(
+    source: str, year: int, day: int, part: int, expected: Optional[str] = None
+) -> list:
+    """`_overfit_reasons` for source text, e.g. an attempt's recorded code. Never raises."""
+    reasons: list = []
     try:
         from shared.overfit_detection import analyze_overfit_risk
 
@@ -240,7 +249,7 @@ def _overfit_reasons(
         if analysis.is_suspicious:
             reasons.extend(analysis.reasons)
     except Exception as e:  # pragma: no cover - defensive
-        logger.warning("Overfit analysis failed for %s: %s", path, e)
+        logger.warning("Overfit analysis failed for %d day %d part %d: %s", year, day, part, e)
 
     if expected and answer_appears_as_literal(source, expected):
         reasons.append(

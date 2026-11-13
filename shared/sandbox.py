@@ -22,14 +22,22 @@ Two things are constrained:
   draft that grows without bound (brute force over a huge grid can pass 8 GB in
   seconds) otherwise exhausts the machine; six at once froze a 64 GB Mac.
 
-Not constrained: network access and reads elsewhere on the filesystem. Solutions
-run as the user, with the user's permissions; the environment scrub removes the
-one secret the process itself carried.
+- **Network access**, when execution.deny_network is set (config/resources.yaml, or
+  DENY_NETWORK in the environment): the child runs under a macOS sandbox profile that
+  denies every network operation. Off by default, so the 2024-2025 measurement path is
+  unchanged; the AoC 2026 runs, of code written against puzzles nobody has checked,
+  turn it on (dev/progress/aoc2026-registration.md). Where the profile cannot be applied
+  the run fails rather than proceed with network access.
+
+Not constrained: reads elsewhere on the filesystem. Solutions run as the user, with the
+user's permissions; the environment scrub removes the one secret the process itself
+carried.
 """
 
 import asyncio
 import ctypes
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -50,6 +58,34 @@ _POLL_SECONDS = 0.2
 
 TIMED_OUT = "timed out"
 OVER_MEMORY = "over the memory cap"
+
+
+# A macOS sandbox profile: everything a solution needs, and no network operation at all.
+NO_NETWORK_PROFILE = "(version 1)(allow default)(deny network*)"
+
+
+def network_denied() -> bool:
+    """Whether model-written code runs without network access (execution.deny_network)."""
+    raw = os.getenv("DENY_NETWORK")
+    if raw is not None and raw.strip():
+        return raw.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(RESOURCES_CONFIG.get("execution", {}).get("deny_network", False))
+
+
+def sandboxed(args: List[str]) -> List[str]:
+    """The command that runs `args` as model-written code: under NO_NETWORK_PROFILE when
+    network_denied(), otherwise unchanged. sandbox-exec applies the profile and then execs
+    `args` in the same process, so the resource limits and the memory watchdog still apply
+    to the program itself."""
+    if not network_denied():
+        return list(args)
+    tool = shutil.which("sandbox-exec") or ("/usr/bin/sandbox-exec" if sys.platform == "darwin" else None)
+    if tool is None or not os.path.exists(tool):
+        raise RuntimeError(
+            "execution.deny_network is set but sandbox-exec is unavailable; refusing to run "
+            "model-written code with network access"
+        )
+    return [tool, "-p", NO_NETWORK_PROFILE, *args]
 
 
 def child_env() -> Dict[str, str]:
@@ -192,7 +228,7 @@ def run_capped(
     (stopped, completed); stopped is None, TIMED_OUT or OVER_MEMORY.
     """
     process = subprocess.Popen(
-        args, cwd=cwd, env=child_env(), preexec_fn=configured_limiter(timeout),
+        sandboxed(args), cwd=cwd, env=child_env(), preexec_fn=configured_limiter(timeout),
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
     )
     deadline = time.monotonic() + timeout

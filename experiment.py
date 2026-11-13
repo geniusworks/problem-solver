@@ -27,6 +27,8 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 REPO_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(REPO_ROOT))
 
+from shared.config import account_name  # noqa: E402
+from shared.paths import account_dir, get_problem_dir  # noqa: E402
 from shared.experiment import ExperimentResult, Outcome, ProblemResult, SolverConfig  # noqa: E402
 from shared.experiment.runner import (  # noqa: E402
     compare,
@@ -137,7 +139,7 @@ async def _dry_run(problems: List[Tuple[int, int, int]], config: SolverConfig) -
         pid = problem_id(year, day, part)
         path = REPO_ROOT / "solutions" / f"{pid}.py"
         if not path.exists():
-            path = REPO_ROOT / "years" / str(year) / f"day{day:02d}" / f"{pid}.py"
+            path = get_problem_dir(year, day) / f"{pid}.py"
 
         if not path.exists():
             outcome, answer, expected = Outcome.NO_CANDIDATE, None, None
@@ -186,7 +188,10 @@ async def async_main(args: argparse.Namespace) -> int:
     specs = args.config or ["name=default"]
     configs = [parse_config(spec) for spec in specs]
 
-    out_dir = args.out or (REPO_ROOT / "dev" / "experiments")
+    # Another account's results hold answers to its own inputs, so they stay in its workspace.
+    out_dir = args.out or (
+        account_dir() / "experiments" if account_name() else REPO_ROOT / "dev" / "experiments"
+    )
     experiments: List[ExperimentResult] = []
 
     for config in configs:
@@ -219,7 +224,7 @@ async def async_main(args: argparse.Namespace) -> int:
 
             print(f"  results are saved after each one to {_shown(path)}", flush=True)
             experiment = await run_experiment(
-                problems, config, REPO_ROOT, debug=args.debug,
+                problems, config, account_dir(), debug=args.debug,
                 on_result=report, trials=args.trials,
                 save_to=path, include_replay=args.include_replay,
             )

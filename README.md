@@ -160,7 +160,7 @@ flowchart TD
     M -- "no / examples error" --> REP[Repair with execution feedback<br/>up to max_repair_iterations]
     REP --> V
     Q -- "no (unseen)" --> PLUR[Answer-based consensus:<br/>plurality of executed answers]
-    PLUR --> UNV[Accept as UNVERIFIED<br/>the submission-phase path, unwired]
+    PLUR --> UNV[Accept as UNVERIFIED<br/>scored once an answer is accepted]
     M -- "all candidates fail" --> FB{Fallback models<br/>enabled & available?}
     FB -- yes --> C
     FB -- no --> NONE[[No solution: every attempt<br/>recorded with its failure reason]]
@@ -331,8 +331,9 @@ solve.py                 Single-problem entry point
 shared/
   experiment/            The platform: SolverConfig, results, runner
   verification.py        Correctness oracle (candidate vs accepted answer)
-  sandbox.py             What generated code may see: no .env secrets, resource limits
-                         (not a security boundary: network and file reads stay open)
+  sandbox.py             What generated code may see: no .env secrets, resource limits, and
+                         optionally no network (not a security boundary: file reads stay open)
+  page_audit.py          Text on a puzzle page a reader would not see
   ground_truth.py        Cached accepted answers
   overfit_detection.py   Overfit gate before a solution is recorded
   solver.py              BaseSolver.solve_problem: the orchestrator, problem preparation, records
@@ -344,7 +345,9 @@ shared/
   llm/                   Ollama provider (local.py) + prompts.py
   strategy_recommender.py, strategies.py   Strategy seeding
 learning/                One SQLite DB: model + strategy performance
-submission/              Real AoC submitter -- isolated and UNWIRED (reserved for the solver phase)
+submission/              The AoC 2026 submission step: ranked candidates, a budget, AoC's waits
+nightly.py               The AoC 2026 nightly run (plan: config/nightly.yaml)
+accounts/                Another AoC account's workspace (AOC_ACCOUNT; gitignored)
 solutions/               Verified solutions + the ledger (README.md)
 dev/progress/            The measured findings (baselines, A/Bs, the capability frontier)
 dev/results/             Run outcomes as tables; recompute_results.py checks the docs against them
@@ -370,9 +373,10 @@ one-way, so the ensemble was not run. Open, in priority order (`PLAN.md`, "Open"
 1. **AoC 2026, the clean contamination test.** The first problems published after the models'
    training cutoff. Answers are submitted automatically, from a dedicated experiment account under
    a fixed budget, by an unattended nightly run that starts five hours after each release (draft registration:
-   `dev/progress/aoc2026-registration.md`). *Waits on* the maintainer creating that account and
-   settling the draft's open decisions, then code and an end-to-end test on past puzzles; the
-   models, prompts and configuration are frozen before 2026-12-01.
+   `dev/progress/aoc2026-registration.md`; its code is built and tested offline). *Waits on* the
+   draft's remaining open decisions (the account is logged in to AoC), then the pre-run
+   check with the sandbox on and an end-to-end test on past puzzles; the models, prompts and
+   configuration are frozen before 2026-12-01.
 2. **Does the Part 1 context inform, or cue recall?** The headline's caveat, tested on AoC 2026,
    where nothing can be recalled: Part 2 with and without the Part 1 context
    (`dev/progress/part2-context-heldout-plan.md`). *Waits on* item 1.
@@ -385,16 +389,17 @@ Not scheduled: what decorrelates draws. Temperature and reworded feedback moved 
 mixing models was one-way on the problems measured; prompt variants remain untested.
 
 <details>
-<summary>Reproducing older runs, and the deliberately unwired submitter</summary>
+<summary>Reproducing older runs, and the submitter</summary>
 
 Runs recorded before 2026-10-13 posed Part 2 without the Part 1 statement and reproduce with
 `problem_context=legacy,analysis_temperature=model_default,example_tests=parser`
 (`dev/progress/part2-prompt-omits-part1.md`); runs of 2026-10-13 itself need only
 `example_tests=parser` (`dev/progress/example-tests-mispaired.md`).
 
-**Deliberately unwired:** the AoC answer submitter (`submission/`) is real and tested, and
-kept out of the solve loop by design — the evaluation set is *past* AoC years, already solved on the
-maintainer's account, so there is no unseen answer to submit. Wiring it is the live-contest path.
+**The submitter** (`submission/`) is kept out of the solve loop by design: it is a separate step
+after the trials, posts only from a named experiment account (`AOC_ACCOUNT`), never the
+maintainer's, and only with `SUBMIT_SOLUTIONS=true`, under the AoC 2026 registration's budget.
+The 2024–2025 evaluation is already solved on the maintainer's account and submits nothing.
 
 </details>
 

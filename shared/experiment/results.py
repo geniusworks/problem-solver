@@ -8,7 +8,7 @@ success and failure rather than being folded into either.
 """
 
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -82,6 +82,15 @@ class AttemptRecord:
     raw_response: Optional[str] = field(default=None, repr=False)
     code: Optional[str] = field(default=None, repr=False)
 
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "AttemptRecord":
+        """Rebuild a record from a saved result file. Keys this version no longer has
+        (sample_index, before 2026-11-10) are dropped."""
+        known = {f.name for f in fields(cls)}
+        values = {key: value for key, value in data.items() if key in known}
+        values["outcome"] = Outcome(values.get("outcome", Outcome.ERROR.value))
+        return cls(**values)
+
     @property
     def succeeded(self) -> bool:
         """Only a verified-correct answer counts. UNVERIFIED is not success."""
@@ -118,6 +127,19 @@ class ProblemResult:
 
     attempts: List[AttemptRecord] = field(default_factory=list)
     wall_clock_seconds: float = 0.0
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "ProblemResult":
+        """Rebuild a result from a saved result file; derived keys are recomputed."""
+        return cls(
+            problem_id=data["problem_id"], year=data["year"], day=data["day"],
+            part=data["part"], config_fingerprint=data["config_fingerprint"],
+            outcome=Outcome(data.get("outcome", Outcome.ERROR.value)),
+            answer=data.get("answer"), expected=data.get("expected"),
+            winning_model=data.get("winning_model"), trial=data.get("trial", 0),
+            attempts=[AttemptRecord.from_dict(a) for a in data.get("attempts", [])],
+            wall_clock_seconds=data.get("wall_clock_seconds", 0.0),
+        )
 
     @property
     def solved(self) -> bool:
@@ -365,6 +387,26 @@ class ExperimentResult:
             "environment": self.environment,
             "results": [r.to_dict(include_replay) for r in self.results],
         }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "ExperimentResult":
+        """Rebuild a saved result file; summary, per-problem and per-model are recomputed."""
+        summary = data.get("summary", {})
+        return cls(
+            config_name=summary.get("config_name", data.get("config", {}).get("name", "")),
+            config_fingerprint=summary.get("config_fingerprint", ""),
+            config=data.get("config", {}),
+            results=[ProblemResult.from_dict(r) for r in data.get("results", [])],
+            trials=summary.get("trials", 1),
+            started_at=data.get("started_at"),
+            finished_at=data.get("finished_at"),
+            environment=data.get("environment"),
+        )
+
+    @classmethod
+    def load(cls, path: Path) -> "ExperimentResult":
+        with open(path, encoding="utf-8") as f:
+            return cls.from_dict(json.load(f))
 
     def save(self, path: Path, include_replay: bool = False) -> Path:
         path.parent.mkdir(parents=True, exist_ok=True)

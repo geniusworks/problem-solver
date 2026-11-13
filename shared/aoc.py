@@ -11,6 +11,7 @@ import logging
 import os
 import asyncio
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Tuple, Dict, Any, Optional, List
@@ -18,10 +19,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 import aiohttp
-import requests
 from bs4 import BeautifulSoup
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
 from shared import config
 from shared.errors import SessionError
@@ -29,95 +27,50 @@ from shared.parser import parse_problem_text
 
 logger = logging.getLogger(__name__)
 
-# Configure retry strategy
-session = requests.Session()
-session.headers.update(
-    {
-        "User-Agent": config.USER_AGENT,
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Connection": "keep-alive",
-        "Host": "adventofcode.com",
-        "Sec-Fetch-Site": "none",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Dest": "document",
-    }
-)
-
-retry_strategy = Retry(
-    total=5,
-    backoff_factor=2,
-    status_forcelist=[429, 500, 502, 503, 504],
-    allowed_methods=["GET"],
-)
-adapter = HTTPAdapter(max_retries=retry_strategy)
-session.mount("https://", adapter)
-session.mount("http://", adapter)
-
-
 # Path primitives live in shared.paths (a leaf module); this module uses two of
 # them for its cache/fetch paths.
 from shared.paths import get_problem_dir, create_problem_dir
 
 
-async def validate_session_cookie(session_cookie: str) -> Tuple[bool, str]:
-    """Validate the session cookie by making a test request.
-    
-    Returns:
-        Tuple of (is_valid, error_message)
+def logged_in(html: str) -> bool:
+    """Whether an adventofcode.com page was served to a logged-in user.
+
+    A logged-in page's header links to /<year>/auth/logout and names the user in
+    <div class="user">; a logged-out one links to /<year>/auth/login instead. Anything
+    else reads as logged out, so a changed header stops a run rather than letting it
+    cache a page without the account's answers.
     """
-    url = f"{config.AOC_BASE_URL}/settings"
-    
-    async with aiohttp.ClientSession() as session:
-        headers = {
-            "Cookie": f"session={session_cookie}",
-            "User-Agent": config.USER_AGENT
-        }
-        async with session.get(url, headers=headers) as response:
-            if response.status == 200:
-                return True, ""
-            elif response.status == 302 or response.status == 401:
-                return False, "Session cookie is invalid or expired. Please update AOC_SESSION in your .env file with a valid session cookie from adventofcode.com"
-            else:
-                return False, f"Unexpected error validating session cookie: HTTP {response.status}"
+    soup = BeautifulSoup(html, "html.parser")
+    links = [str(a.get("href", "")) for a in soup.find_all("a")]
+    if any(href.endswith("/auth/login") for href in links):
+        return False
+    return any(href.endswith("/auth/logout") for href in links) and soup.find(
+        "div", class_="user"
+    ) is not None
+
+
+def _expired_message() -> str:
+    return (
+        f"The session for the AoC account in use has expired or is invalid: update "
+        f"{config.aoc_session_variable()} in .env with a fresh session cookie from adventofcode.com"
+    )
 
 
 def get_session_cookie() -> str:
-    """Get the session cookie from environment variables. If invalid, prompt for a new one."""
-    session_cookie = config.AOC_SESSION
-    if not session_cookie:
-        print("\nAOC_SESSION environment variable not set.")
-        return _prompt_for_session()
-    
-    # Validate the session cookie synchronously
-    url = "https://adventofcode.com/2024/day/1"
-    response = requests.get(
-        url,
-        cookies={"session": session_cookie},
-        headers={"User-Agent": config.USER_AGENT},
-        timeout=30,
-    )
-    
-    if response.status_code == 400:
-        raise SessionError("Authentication failed: Your session token appears to be invalid or expired. Please update AOC_SESSION in your .env file with a valid session cookie from adventofcode.com")
-    
-    return session_cookie
+    """The active account's session cookie (config.aoc_session()), without a request.
 
-async def get_session_cookie_async() -> str:
-    """Async version of get_session_cookie that validates the session."""
-    session_cookie = get_session_cookie()
-    logger = logging.getLogger(__name__)
-    logger.debug("Got session cookie: %s", session_cookie[:10] if session_cookie else None)
-    
-    # Validate the session cookie
-    is_valid, error_message = await validate_session_cookie(session_cookie)
-    logger.debug("Session validation result: %s, %s", is_valid, error_message)
-    if not is_valid:
-        print(f"\n{error_message}")
-        return _prompt_for_session()
-        
-    return session_cookie
+    The maintainer's account, when its cookie is unset and a terminal is attached, is
+    prompted for one. Any other account never is: an unattended run stops instead, and
+    nothing falls back to another account's cookie.
+    """
+    session_cookie = config.aoc_session()
+    if session_cookie:
+        return session_cookie
+    if config.account_name() or not sys.stdin.isatty():
+        raise SessionError(f"{config.aoc_session_variable()} is not set in .env")
+    print(f"\n{config.aoc_session_variable()} environment variable not set.")
+    return _prompt_for_session()
+
 
 def _prompt_for_session() -> str:
     """Prompt the user for a new session cookie and update .env file."""
@@ -126,14 +79,13 @@ def _prompt_for_session() -> str:
     print("2. Open browser developer tools (F12)")
     print("3. Go to Application/Storage > Cookies")
     print("4. Find and copy the 'session' cookie value")
-    
+
     while True:
         session_cookie = input("\nEnter your session cookie (or 'q' to quit): ").strip()
         if session_cookie.lower() == 'q':
             raise SessionError("Session cookie required to continue")
-            
-        is_valid, error_message = asyncio.run(validate_session_cookie(session_cookie))
-        if is_valid:
+
+        if asyncio.run(_session_is_valid(session_cookie, datetime.now().year - 1)):
             # Update .env file
             env_path = Path(__file__).parent.parent / '.env'
             if env_path.exists():
@@ -142,35 +94,54 @@ def _prompt_for_session() -> str:
                 os.environ['AOC_SESSION'] = session_cookie
                 print("\nSession cookie validated and saved to .env file")
             return session_cookie
-        else:
-            print(f"\nInvalid session cookie: {error_message}")
-            print("Please try again")
+        print("\nThat session cookie is not logged in. Please try again")
+
+
+async def _get(url: str, session_cookie: str, timeout: int = 30) -> Tuple[int, str]:
+    """One GET to adventofcode.com as the given session. Returns (status, body)."""
+    async with aiohttp.ClientSession() as http:
+        headers = {"Cookie": f"session={session_cookie}", "User-Agent": config.USER_AGENT}
+        async with http.get(
+            url, headers=headers, timeout=aiohttp.ClientTimeout(total=timeout)
+        ) as response:
+            return response.status, await response.text()
+
+
+async def _session_is_valid(session_cookie: str, year: int) -> bool:
+    status, body = await _get(f"{config.AOC_BASE_URL}/{year}", session_cookie)
+    return status == 200 and logged_in(body)
+
+
+async def check_session(year: int) -> None:
+    """Confirm the active account's session with one request, or raise SessionError.
+
+    Fetches the year's calendar page, which needs no puzzle to be open, and reads it for
+    the logged-in header.
+    """
+    if not await _session_is_valid(get_session_cookie(), year):
+        raise SessionError(_expired_message())
 
 
 async def make_request(url: str, timeout: int = 30) -> str:
-    """Make a request to Advent of Code with appropriate headers and delay."""
-    logger = logging.getLogger(__name__)
-    session_cookie = await get_session_cookie_async()
-    logger.debug("Making request to %s", url)
-    logger.debug("Session cookie length: %d", len(session_cookie) if session_cookie else 0)
+    """Make one request to Advent of Code as the active account.
 
-    # Add session cookie
-    async with aiohttp.ClientSession() as session:
-        headers = {
-            "Cookie": f"session={session_cookie}",
-            "User-Agent": config.USER_AGENT,
-        }
-        logger.debug("Request headers: %s", headers)
-        async with session.get(
-            url, headers=headers, timeout=aiohttp.ClientTimeout(total=timeout)
-        ) as response:
-            logger.debug("Response status: %d", response.status)
-            if response.status == 400:
-                raise SessionError("Authentication failed: Your session token appears to be invalid or expired. Please update AOC_SESSION in your .env file with a valid session cookie from adventofcode.com")
-            response.raise_for_status()
-            text = await response.text()
-            logger.debug("Response text length: %d characters", len(text))
-            return text
+    Nothing is requested to validate the session first: a logged-out reply shows itself.
+    An input is refused with HTTP 400, and a puzzle page served without the logged-in
+    header raises rather than being returned, so a page missing the account's accepted
+    answers and later parts is never cached.
+    """
+    logger = logging.getLogger(__name__)
+    logger.debug("Making request to %s", url)
+    status, text = await _get(url, get_session_cookie(), timeout=timeout)
+    logger.debug("Response status: %d", status)
+    if status == 400:
+        raise SessionError(_expired_message())
+    if status != 200:
+        raise aiohttp.ClientError(f"HTTP {status} from {url}")
+    if text.lstrip().lower().startswith("<!doctype html") and not logged_in(text):
+        raise SessionError(_expired_message())
+    logger.debug("Response text length: %d characters", len(text))
+    return text
 
 
 class ProblemState(Enum):
@@ -387,6 +358,23 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, A
         if part == 2:
             return problem_text, soup, part2_answer
         return problem_text, soup, part1_answer
+
+async def refresh_problem_page(year: int, day: int) -> str:
+    """Fetch a day's page once more and replace the cached copy.
+
+    The cache otherwise keeps the first page fetched, which shows Part 1 only. After Part 1
+    is accepted, one request brings the page with Part 2 and the accepted answer. The old
+    copy is kept until the new one has arrived, and make_request refuses a logged-out page.
+    """
+    html = await make_request(f"{config.AOC_BASE_URL}/{year}/day/{day}")
+    state, part1_answer, part2_answer = await _get_problem_state(BeautifulSoup(html, "html.parser"))
+    create_problem_dir(year, day)
+    await _save_cache(year, day, html, CacheMetadata(
+        state=state, timestamp=datetime.now().isoformat(),
+        part1_answer=part1_answer, part2_answer=part2_answer,
+    ))
+    return html
+
 
 async def fetch_input_data(year: int, day: int, soup: Optional[BeautifulSoup] = None) -> str:
     """Fetch the input data from Advent of Code website."""
