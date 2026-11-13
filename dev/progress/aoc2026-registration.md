@@ -147,7 +147,9 @@ Built 2026-11-13, each with the test that fails without it:
 ## End-to-end test on past puzzles
 
 On the experiment account, before the freeze, with the maintainer's go (it uses the GPU and posts
-to AoC). Its inputs and answers are new to the project, as 2026's will be:
+to AoC), run as the nightly run itself (`nightly.py --year 2024 --from-day 1 --day 1`, then
+`--year 2025 --from-day 9 --day 9`). Its inputs and answers are new to the project, as 2026's will
+be:
 
 - **2024 d1** (6/6 in the recent pre-run checks): read, solve, submit, accepted, Part 2 unlocked,
   solved, cached, and nothing posted afterwards.

@@ -121,8 +121,9 @@ def account(tmp_path, monkeypatch):
     return tmp_path / "accounts" / "experiment"
 
 
-def night(world, last_day=1):
-    return asyncio.run(nightly.run_night(2026, last_day, PLAN, world.tools(), START))
+def night(world, last_day=1, first_day=1):
+    return asyncio.run(nightly.run_night(2026, last_day, PLAN, world.tools(), START,
+                                         first_day=first_day))
 
 
 def test_a_night_runs_part_one_submits_then_part_two(account):
@@ -243,3 +244,25 @@ def test_the_registered_plan_parses():
     assert plan.year == 2026
     assert [c.problem_context for c in plan.configs[2]] == ["legacy", "aoc"]
     assert plan.configs[2][1].gate_part_two is False
+
+
+def test_an_unverified_part_one_program_never_reaches_the_context_arm(account):
+    # the solve loop saved a program it could not verify; the trials' answer is accepted,
+    # but their code was not recorded, so nothing can be verified in its place
+    world = FakeWorld({1: ("11", None), 2: ("22", DOUBLE)}, [RIGHT, RIGHT])
+    asyncio.run(world.ensure_problem_files(2026, 1))
+    saved = get_problem_dir(2026, 1) / "2026_day01_part1.py"
+    saved.write_text("print(12)\n")
+
+    done = night(world)
+
+    assert not saved.exists()
+    assert "no recorded program reproduces" in done.summary(2026)
+
+
+def test_one_day_can_be_run_alone(account):
+    world = FakeWorld({1: ("11", SUMS)}, [WRONG])
+
+    night(world, last_day=9, first_day=9)
+
+    assert world.fetches == [9]

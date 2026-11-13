@@ -20,6 +20,8 @@ dev/progress/aoc2026-registration.md, "The nightly run":
 Usage:
     AOC_ACCOUNT=experiment venv/bin/python nightly.py            # tonight's puzzle
     AOC_ACCOUNT=experiment venv/bin/python nightly.py --day 3    # catch up to day 3
+    AOC_ACCOUNT=experiment venv/bin/python nightly.py --year 2025 --from-day 9 --day 9
+                                                                 # one past day (end-to-end test)
 """
 
 import argparse
@@ -196,7 +198,12 @@ def score_recorded(year: int, day: int, part: int, night: Night) -> List[Experim
 
 def install_part_one_program(year: int, day: int, experiments: List[ExperimentResult],
                              night: Night) -> bool:
-    """Write a model's verified Part 1 program where the context arm reads it."""
+    """Write a model's verified Part 1 program where the context arm reads it.
+
+    The solve loop may already have saved a program there that it could not verify (no
+    answer was known during the trials). If no recorded program reproduces the accepted
+    answer, that file is removed, so the context arm is never shown an unverified program.
+    """
     from shared.ledger import save_solution_file
 
     for experiment in experiments:
@@ -207,6 +214,7 @@ def install_part_one_program(year: int, day: int, experiments: List[ExperimentRe
                 if verify_solution_code(attempt.code, year, day, 1).verdict is Verdict.CORRECT:
                     save_solution_file(year, day, 1, attempt.model, attempt.code)
                     return True
+    (get_problem_dir(year, day) / f"{problem_id(year, day, 1)}.py").unlink(missing_ok=True)
     night.note(f"{problem_id(year, day, 1)}: no recorded program reproduces the accepted "
                f"answer, so the context arm has no Part 1 program")
     return False
@@ -260,7 +268,7 @@ def audit(year: int, day: int, night: Night) -> None:
 
 
 async def run_night(year: int, last_day: int, plan: Plan, tools: Tools,
-                    now: Optional[datetime] = None) -> Night:
+                    now: Optional[datetime] = None, first_day: int = 1) -> Night:
     night = Night(started=now or datetime.now(timezone.utc))
     if not settings.account_name():
         night.stop("AOC_ACCOUNT is not set: the nightly runs only as the experiment account")
@@ -274,7 +282,7 @@ async def run_night(year: int, last_day: int, plan: Plan, tools: Tools,
         night.stop(f"session check failed: {error}")
         return night
     night.note("session checked")
-    for day in range(1, last_day + 1):
+    for day in range(first_day, last_day + 1):
         try:
             await tools.ensure_problem_files(year, day)
         except Exception as error:
@@ -330,6 +338,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--plan", type=Path, default=PLAN_FILE)
     parser.add_argument("--day", type=int, help="Last day to work on (default: tonight's)")
+    parser.add_argument("--year", type=int,
+                        help="Event year (default: the plan's; the end-to-end test uses 2024 and 2025)")
+    parser.add_argument("--from-day", type=int, default=1,
+                        help="First day to work on (default 1; the end-to-end test runs one day)")
     parser.add_argument("--refresh-page", type=int, metavar="DAY",
                         help="Fetch DAY's page once (after solving a part by hand) and exit")
     parser.add_argument("--clear-halt", action="store_true",
@@ -337,6 +349,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = parser.parse_args(argv)
 
     plan = Plan.load(args.plan)
+    if args.year:
+        plan.year = args.year
     if args.clear_halt:
         print(clear_halt())
         return 0
@@ -360,7 +374,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         handlers=[logging.FileHandler(folder / f"{stamp}.log"), logging.StreamHandler()],
     )
     with _Lock(folder / ".lock"):
-        night = asyncio.run(run_night(plan.year, last_day, plan, Tools.real(), started))
+        night = asyncio.run(run_night(plan.year, last_day, plan, Tools.real(), started,
+                                      first_day=args.from_day))
     summary = folder / f"{stamp}-summary.md"
     summary.write_text(night.summary(plan.year), encoding="utf-8")
     print(f"summary: {summary}")
