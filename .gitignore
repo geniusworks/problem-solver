@@ -25,8 +25,8 @@ wheels/
 .coverage.*
 htmlcov/
 
-# Virtual Environment
-venv/
+# Virtual Environment (a directory, or a worktree's link to the main checkout's)
+/venv
 ENV/
 env/
 
@@ -54,15 +54,11 @@ debug_response.html
 
 # Learning database
 *.db
-!years/example/**/*.db
 
-# Exclude all AoC data except example structure
-years/*
+# AoC data: pages, inputs and accepted answers (a directory, or a worktree's link)
+/years
 # Other AoC accounts' workspaces: their inputs, answers, results and submission history
 accounts/
-!years/example/
-!years/example/**
-!years/example/**/*.db
 
 # Keep solutions directory
 !/solutions/
