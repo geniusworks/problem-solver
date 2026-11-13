@@ -18,8 +18,8 @@ on:
    experiment account, never the maintainer's, under a fixed submission budget, by an unattended
    nightly run starting at 02:00 PST, five hours after release, so it races no one; the draft registration is `dev/progress/aoc2026-registration.md`. Its code is built and tested
    offline (2026-11-13: the submission step, workspaces per account, a network-denying sandbox,
-   the hidden-text audit, the nightly driver). *Waits on* that account's AoC session (the account,
-   `problem-solver-aoc`, exists) and the draft's remaining open decisions, then the pre-run check with the sandbox on and an
+   the hidden-text audit, the nightly driver). *Waits on* the draft's remaining open decisions (the
+   account, `problem-solver-aoc`, is logged in to AoC), then the pre-run check with the sandbox on and an
    end-to-end test on past puzzles, both with the maintainer's go. **Frozen before
    2026-12-01**, each item recorded in the registration: the models by digest;
    prompts, configuration and fingerprints; each model's release date and stated training cutoff;
