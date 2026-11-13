@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -25,8 +26,42 @@ PROBLEM_URL_TEMPLATE = f"{AOC_BASE_URL}/{{year}}/day/{{day}}"
 LEADERBOARD_URL_TEMPLATE = f"{AOC_BASE_URL}/{{year}}/leaderboard/day/{{day}}"
 INPUT_URL_TEMPLATE = f"{AOC_BASE_URL}/{{year}}/day/{{day}}/input"
 
-# Session cookie from environment variable
+# Which Advent of Code account the harness acts as. Empty: the maintainer's account, whose
+# cached pages and accepted answers under years/ are the oracle for the 2024-2025 results.
+# A name: a separate account (the experiment account of the AoC 2026 registration), with its
+# own inputs, so its own workspace, accounts/<name>/, and its own session variable,
+# AOC_SESSION_<NAME>. Nothing falls back from one account to the other. See shared.paths.
+AOC_ACCOUNT = os.getenv("AOC_ACCOUNT", "").strip()
+
+# The maintainer account's session cookie. Code reads the active account's cookie through
+# aoc_session(), never this constant.
 AOC_SESSION = os.getenv("AOC_SESSION")
+
+_ACCOUNT_NAME = re.compile(r"^[a-z0-9][a-z0-9_-]{0,31}$")
+
+
+def account_name() -> str:
+    """The active account's name ("" for the maintainer's), checked for use in a path."""
+    if AOC_ACCOUNT and not _ACCOUNT_NAME.match(AOC_ACCOUNT):
+        raise ValueError(
+            f"AOC_ACCOUNT={AOC_ACCOUNT!r}: use lower-case letters, digits, '-' or '_'"
+        )
+    return AOC_ACCOUNT
+
+
+def aoc_session_variable() -> str:
+    """The environment variable holding the active account's session cookie."""
+    name = account_name()
+    if not name:
+        return "AOC_SESSION"
+    return "AOC_SESSION_" + name.upper().replace("-", "_")
+
+
+def aoc_session() -> Optional[str]:
+    """The active account's session cookie, or None if its variable is unset."""
+    value = os.getenv(aoc_session_variable(), "").strip()
+    return value or None
+
 
 def load_yaml_config(filename: str) -> Dict[str, Any]:
     """Load configuration from YAML file."""

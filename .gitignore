@@ -58,6 +58,8 @@ debug_response.html
 
 # Exclude all AoC data except example structure
 years/*
+# Other AoC accounts' workspaces: their inputs, answers, results and submission history
+accounts/
 !years/example/
 !years/example/**
 !years/example/**/*.db

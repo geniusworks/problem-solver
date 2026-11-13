@@ -19,6 +19,8 @@ from importlib import metadata
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 
+from shared import config
+
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 # Packages whose version can change what a run measures.
@@ -89,4 +91,6 @@ def capture_environment(models: Iterable[str]) -> Dict[str, Any]:
         "ollama": _ollama(list(models)),
         "machine": _machine(),
         "git": {"commit": commit, "dirty": bool(status)},
+        # "" is the maintainer's account; a name is a separate account with its own inputs.
+        "aoc_account": config.account_name(),
     }

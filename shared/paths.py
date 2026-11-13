@@ -37,9 +37,27 @@ def get_problem_year_day() -> Tuple[int, int]:
     return year, day
 
 
+def account_dir() -> Path:
+    """The workspace of the AoC account the harness acts as (config.AOC_ACCOUNT).
+
+    The maintainer's account is the repository root, as before accounts existed. Another
+    account has its own inputs and accepted answers, so its own tree, accounts/<name>/,
+    with the same layout: years/, and the solver's tmp/ and learning/ when it runs there.
+    """
+    name = config.account_name()
+    if not name:
+        return config.BASE_DIR
+    return config.BASE_DIR / "accounts" / name
+
+
+def years_dir() -> Path:
+    """Where the active account's cached pages, inputs and accepted answers live."""
+    return account_dir() / "years"
+
+
 def get_problem_dir(year: int, day: int) -> Path:
     """Get the directory path for the given year and day."""
-    return config.BASE_DIR / f"years/{year}/day{day:02d}"
+    return years_dir() / str(year) / f"day{day:02d}"
 
 
 def create_problem_dir(year: int, day: int) -> Path:
