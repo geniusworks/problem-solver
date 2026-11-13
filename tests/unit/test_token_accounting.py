@@ -16,6 +16,7 @@ import types
 
 import pytest
 
+from shared import config
 from shared.llm.local import OllamaProvider
 
 
@@ -95,10 +96,11 @@ async def test_repair_honours_the_configured_temperature(monkeypatch):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("mode, expected", [("configured", 0.9), ("model_default", None)])
-async def test_analysis_call_temperature_follows_the_config(monkeypatch, mode, expected):
+async def test_analysis_call_temperature_follows_the_config(monkeypatch, tmp_path, mode, expected):
     """The analysis call that precedes each draft was sent with no temperature,
     so it ran at the model's default while the implementation call ran at the
     configured one (dev/progress/part2-prompt-omits-part1.md)."""
+    monkeypatch.setattr(config, "BASE_DIR", tmp_path)  # the draft's attempt log lands here
     p = OllamaProvider(model="m", temperature=0.9, analysis_temperature=mode)
     seen = []
 
@@ -126,3 +128,21 @@ async def test_repair_keeps_its_prompt_and_reply(monkeypatch):
 
     assert "Feedback: PERFORMANCE failure" in p.last_prompt
     assert p.last_raw_response == reply
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("account, folder", [("", "years"), ("experiment", "accounts/experiment/years")])
+async def test_a_drafts_attempt_log_lands_in_the_active_accounts_workspace(
+        monkeypatch, tmp_path, account, folder):
+    """It was written under the working directory, so a run as the experiment account put its
+    prompts and code among the maintainer's own files (years/<year>/day<NN>/attempts)."""
+    monkeypatch.setattr(config, "BASE_DIR", tmp_path / "repo")
+    monkeypatch.setattr(config, "AOC_ACCOUNT", account)
+    monkeypatch.chdir(tmp_path)
+    p = _provider(monkeypatch, [_Resp("analysis", 1, 1),
+                                _Resp("```python\ndef solve():\n    return 1\n```", 1, 1)])
+    from shared.parser import parse_problem_text
+    await p.generate_solution(parse_problem_text("--- Day 1: T ---\nAdd. What is the total?"), 2024, 1)
+
+    written = sorted(path.relative_to(tmp_path) for path in tmp_path.rglob("attempt_*.json"))
+    assert [str(path.parent) for path in written] == [f"repo/{folder}/2024/day01/attempts"]
