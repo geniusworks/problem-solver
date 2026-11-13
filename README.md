@@ -369,7 +369,7 @@ splits by whether time or tokens is the binding cost; portfolios: the one comple
 one-way, so the ensemble was not run. Open, in priority order (`PLAN.md`, "Open"):
 1. **AoC 2026, the clean contamination test.** The first problems published after the models'
    training cutoff. Answers are submitted automatically, from a dedicated experiment account under
-   a fixed budget, by an unattended nightly run (draft registration:
+   a fixed budget, by an unattended nightly run that starts five hours after each release (draft registration:
    `dev/progress/aoc2026-registration.md`). *Waits on* the maintainer creating that account and
    settling the draft's open decisions, then code and an end-to-end test on past puzzles; the
    models, prompts and configuration are frozen before 2026-12-01.

@@ -16,7 +16,7 @@ on:
 1. **AoC 2026** (§4b), opening **2026-12-01**: the clean contamination test, and the only item
    with a deadline. *Decided 2026-11-12:* answers are submitted automatically from a dedicated
    experiment account, never the maintainer's, under a fixed submission budget, by an unattended
-   nightly run; the draft registration is `dev/progress/aoc2026-registration.md`. *Waits on* the
+   nightly run starting at 02:00 PST, five hours after release, so it races no one; the draft registration is `dev/progress/aoc2026-registration.md`. *Waits on* the
    maintainer creating that account and settling the draft's open decisions, then code (the
    submitter as its own step, workspaces per account, a network-denying sandbox, the nightly
    driver) and an end-to-end test on past puzzles with the maintainer's go. **Frozen before

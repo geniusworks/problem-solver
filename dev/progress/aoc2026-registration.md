@@ -47,13 +47,13 @@ unplanned change is recorded as an instrument change and the affected results ar
 
 ## The nightly run
 
-Unattended, scheduled each night of the event:
+Unattended, scheduled each night of the event. It starts at 02:00 PST, five hours after the
+puzzle's release: there is no race to run, and the run does not take part in one.
 
-1. Starts a short margin after 21:00 PST on a network-synced clock (the Mac is woken in time). A
-   session check fetches one page that needs a login and stops the run, loudly, if the session has
-   expired.
-2. Fetches the day's page and input once and caches them. If the puzzle is not yet available it
-   tries once more a minute later; it never polls.
+1. Starts at 02:00 PST (the Mac is woken in time). A session check fetches one page that needs a
+   login and stops the run, loudly, if the session has expired.
+2. Fetches the day's page and input once and caches them. If either is unavailable, the run stops
+   and reports it; it never polls.
 3. Runs the registered Part 1 trials, recording every attempt's prompt, code and answer
    (`--include-replay`).
 4. Runs the submission step (below). If Part 1 is accepted, fetches Part 2 and repeats 3–4 for it,

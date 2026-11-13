@@ -9,7 +9,7 @@ file current as work lands so it never goes stale.
 
 **Now: the AoC 2026 registration** (draft, `aoc2026-registration.md`): answers submitted
 automatically from a dedicated experiment account under a fixed budget, by an unattended nightly
-run; waits on the maintainer creating the account and settling the draft's open decisions, then
+run starting five hours after each release; waits on the maintainer creating the account and settling the draft's open decisions, then
 code and an end-to-end test on past puzzles. `shared/solver.py` is split into
 `shared/solving/` (`PLAN.md`, "Engineering", items 2 and 3; a replay of 140 recorded trials
 through the solver is identical before and after). The first replay found a harness race (fixed
