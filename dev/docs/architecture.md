@@ -41,8 +41,10 @@ components.
      model list with the tags actually installed (`_resolve_available_models`).
    - Dynamic prompt generation (`shared/llm/prompts.py`)
    - Strategy recommendation (`shared/strategy_recommender.py` +
-     `shared/strategies.py`) — seeds generation with candidate strategies and
-     their learning-DB effectiveness.
+     `shared/strategies.py`) — seeds the prompt with strategies matched by keyword
+     from the puzzle text. It also passes an "effectiveness" score per strategy,
+     which is always the 0.5 default (the solve loop never records one) and which
+     the model provider ignores.
    - **Model fallback** — the top `max_primary_models` (by learning-DB metrics)
      are tried first; if all fail verification the remaining installed models are
      tried; every attempt records its *verified* outcome to the learning DB.
@@ -61,9 +63,10 @@ components.
    - Attempt tracking and analysis
 
 4. **Learning System** (`learning/`)
-   - One SQLite database (`learning/solver.db`) for model performance and
-     strategy effectiveness — recorded from the *verified* outcome, not at
-     generation time.
+   - One SQLite database (`learning/solver.db`) for model performance, recorded
+     from the *verified* outcome, not at generation time. It also has a strategy
+     table that nothing in the solve loop writes (`record_strategy_result` has no
+     caller outside its tests).
    - Model ranking reads each model's verified success rate; the strategy-weight
      half is an unimplemented stub (`learning/optimizer.py`).
    - Optional collaborative improvement phase, enabled via the
