@@ -115,7 +115,9 @@ PLAN = nightly.Plan(
 def account(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "BASE_DIR", tmp_path)
     monkeypatch.setattr(config, "AOC_ACCOUNT", "experiment")
-    monkeypatch.setenv("DENY_NETWORK", "true")
+    # The driver's precondition; the profile itself is macOS-only and covered by
+    # tests/integration/test_network_sandbox.py, so the fake trials here run without it.
+    monkeypatch.setattr(nightly, "network_denied", lambda: True)
     return tmp_path / "accounts" / "experiment"
 
 
@@ -188,9 +190,9 @@ def test_an_unavailable_page_stops_the_run_without_retrying(account):
 
 def test_it_refuses_the_maintainer_account_and_open_network(account, monkeypatch):
     world = FakeWorld({1: ("11", SUMS)}, [])
-    monkeypatch.setenv("DENY_NETWORK", "false")
+    monkeypatch.setattr(nightly, "network_denied", lambda: False)
     assert "network" in night(world).stopped
-    monkeypatch.setenv("DENY_NETWORK", "true")
+    monkeypatch.setattr(nightly, "network_denied", lambda: True)
     monkeypatch.setattr(config, "AOC_ACCOUNT", "")
     assert "AOC_ACCOUNT" in night(world).stopped
     assert world.trials == []
