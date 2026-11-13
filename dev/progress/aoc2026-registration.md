@@ -50,11 +50,12 @@ unplanned change is recorded as an instrument change and the affected results ar
 ## The nightly run
 
 Unattended, scheduled each night of the event (`nightly.py`, run by launchd from
-`scripts/com.problem-solver.nightly.plist`). It starts at 02:00 PST, five hours after the
+`scripts/com.problem-solver.nightly.plist`, whose header gives the install, test-night and removal
+steps). It starts at 02:00 PST, five hours after the
 puzzle's release: there is no race to run, and the run does not take part in one. It refuses to
 start without the experiment account and the network-denying sandbox.
 
-1. Starts at 02:00 PST (the Mac is woken in time). A session check fetches one page that needs a
+1. Starts at 02:00 PST (the Mac is woken in time and kept awake while the run lasts). A session check fetches one page that needs a
    login and stops the run, loudly, if the session has expired.
 2. Fetches the day's page and input once and caches them. If either is unavailable, the run stops
    and reports it; it never polls. The page is audited for text it hides (below).

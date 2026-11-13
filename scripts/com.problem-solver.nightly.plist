@@ -2,18 +2,36 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
   The AoC 2026 nightly run (nightly.py), at 02:00 local time on a Mac set to Pacific time:
-  five hours after each puzzle's release. nightly.py exits at once outside the event.
+  five hours after each puzzle's release. Outside the event it prints "No AoC 2026 puzzle is
+  open tonight." to launchd.out and exits. caffeinate keeps the Mac awake while it runs.
 
-  SUBMIT_SOLUTIONS is read from .env, not set here, so the kill switch stays there:
-  SUBMIT_SOLUTIONS=false stops all posting and leaves the trials running.
+  Posting is switched in .env, not here: SUBMIT_SOLUTIONS=true posts, and false or unset
+  (config/resources.yaml, `submission: enabled: false`) runs the trials and posts nothing.
+  Only the submission step reads it, and that step runs only for a named account. Set it to
+  true before 2026-12-01; the session cookie stays in .env as AOC_SESSION_EXPERIMENT.
 
-  Install (replace REPO_DIR with the checkout's absolute path; the session cookie stays in
-  .env as AOC_SESSION_EXPERIMENT):
+  Install, from the checkout (REPO_DIR becomes its absolute path):
     sed "s|REPO_DIR|$PWD|g" scripts/com.problem-solver.nightly.plist > ~/Library/LaunchAgents/com.problem-solver.nightly.plist
-    launchctl load ~/Library/LaunchAgents/com.problem-solver.nightly.plist
-  Wake the Mac before it runs (needs an administrator):
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.problem-solver.nightly.plist
+    launchctl print gui/$(id -u)/com.problem-solver.nightly | grep -E "state|path"
+  Wake the Mac before it runs (needs an administrator; replaces any other repeating wake):
     sudo pmset repeat wakeorpoweron MTWRFSU 01:50:00
-  Ollama must be running for the logged-in user (its app starts at login).
+    pmset -g sched
+
+  It runs only in a logged-in session: a LaunchAgent, and Ollama's app, start at login. With
+  FileVault on, a Mac that shut down or restarted waits at the unlock screen and misses the
+  night, so through the event stay logged in, leave the Mac on (sleep is fine) and turn off
+  automatic restarts for macOS updates.
+
+  Test night: install a copy with another Label, the hour and minute to test, and nightly.py's
+  options for 2024 day 2 added to ProgramArguments (year 2024, from-day 2, day 2; see
+  nightly.py -h); set the wake a few minutes before it; put the Mac to sleep; next morning read
+  accounts/experiment/nightly/2024/. Then remove the copy.
+
+  After the event:
+    launchctl bootout gui/$(id -u)/com.problem-solver.nightly
+    rm ~/Library/LaunchAgents/com.problem-solver.nightly.plist
+    sudo pmset repeat cancel
 -->
 <plist version="1.0">
 <dict>
@@ -21,6 +39,8 @@
   <string>com.problem-solver.nightly</string>
   <key>ProgramArguments</key>
   <array>
+    <string>/usr/bin/caffeinate</string>
+    <string>-i</string>
     <string>REPO_DIR/venv/bin/python</string>
     <string>REPO_DIR/nightly.py</string>
   </array>
