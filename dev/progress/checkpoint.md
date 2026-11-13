@@ -14,8 +14,8 @@ the submission step, workspaces per account (`AOC_ACCOUNT`), a network-denying s
 (off by default; with it on, all 69 ledger solutions verify), the hidden-text audit (the 37
 cached pages hold hover text only; hidden text is stripped before the prompt and holds the day's
 submissions) and the nightly driver. Its decisions are made and the account,
-`problem-solver-aoc`, is logged in to AoC. It waits on the pre-run check with the sandbox on and
-an end-to-end test on past puzzles. `shared/solver.py` is split into
+`problem-solver-aoc`, is logged in to AoC. The pre-run check with the sandbox on gave 6/6
+(2026-11-13). It waits on the end-to-end test on past puzzles. `shared/solver.py` is split into
 `shared/solving/` (`PLAN.md`, "Engineering", items 2 and 3; a replay of 140 recorded trials
 through the solver is identical before and after). The first replay found a harness race (fixed
 2026-11-12): from 2026-11-11 a busy program's timeout could be recorded as a crash, which cost 3

@@ -398,10 +398,10 @@ class Claim:
 
 
 CLAIMS = [
-    Claim("corpus runs", corpus_runs, "124 recorded experiment runs",
-          {"RESULTS.md": ["124 recorded experiment runs", "The corpus is 124 runs"]}),
-    Claim("corpus attempts", corpus_attempts, "3,836 candidate attempts",
-          {"RESULTS.md": ["3,836 candidate attempts", "3,836 candidate attempts and about 235\nGPU-hours"]}),
+    Claim("corpus runs", corpus_runs, "125 recorded experiment runs",
+          {"RESULTS.md": ["125 recorded experiment runs", "The corpus is 125 runs"]}),
+    Claim("corpus attempts", corpus_attempts, "3,842 candidate attempts",
+          {"RESULTS.md": ["3,842 candidate attempts", "3,842 candidate attempts and about 235\nGPU-hours"]}),
     Claim("corpus GPU-hours", corpus_hours, "~235 GPU-hours", {"RESULTS.md": ["~235 GPU-hours"]}),
     Claim("corpus tokens", corpus_tokens, "48.2M tokens", {"RESULTS.md": ["48.2M tokens"]}),
     Claim("95% Newcombe intervals", intervals,
@@ -461,11 +461,11 @@ CLAIMS = [
     Claim("repair by model", repair_by_model, "17/427 vs 14/80; same problems 16/417 vs 8/67",
           {"RESULTS.md": ["succeeded 17 times in 427, muse's 14 times in 80. On the problems both models repaired, 16 in 417\nagainst 8 in 67"],
            "README.md": ["rarely succeeded (17 of 427 attempts)"]}),
-    Claim("repair share of solves", repair_share_of_solves, "17 of 320 vs 14 of 131",
-          {"RESULTS.md": ["17 of the reference's 320 solves came\n  from repair, against 14 of 131",
-                          "17 of\nits 320 solved cells were solved by repair", "solved 14 of\nits 131 by repair",
-                          "contributed 17 of the reference model's 320 solves", "(17 of its 320 solves came from repair)"],
-           "PLAN.md": ["repair produced 17\nof the reference model's 320 solves"]}),
+    Claim("repair share of solves", repair_share_of_solves, "17 of 326 vs 14 of 131",
+          {"RESULTS.md": ["17 of the reference's 326 solves came\n  from repair, against 14 of 131",
+                          "17 of\nits 326 solved cells were solved by repair", "solved 14 of\nits 131 by repair",
+                          "contributed 17 of the reference model's 326 solves", "(17 of its 326 solves came from repair)"],
+           "PLAN.md": ["repair produced 17\nof the reference model's 326 solves"]}),
     Claim("arm 3 decider", arm3, "10/10 vs 1/10, p 0.0001",
           {"RESULTS.md": ["10/10 against the reference's 1/10 in the decider (+90 points", "one-sided Fisher p = 0.0001). It also gave"]}),
 ]
