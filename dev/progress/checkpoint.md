@@ -7,7 +7,10 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-11-12)
 
-**Now: the AoC 2026 submitter decision** (by about 2026-11-25). `shared/solver.py` is split into
+**Now: the AoC 2026 registration** (draft, `aoc2026-registration.md`): answers submitted
+automatically from a dedicated experiment account under a fixed budget, by an unattended nightly
+run starting five hours after each release; waits on the maintainer creating the account and settling the draft's open decisions, then
+code and an end-to-end test on past puzzles. `shared/solver.py` is split into
 `shared/solving/` (`PLAN.md`, "Engineering", items 2 and 3; a replay of 140 recorded trials
 through the solver is identical before and after). The first replay found a harness race (fixed
 2026-11-12): from 2026-11-11 a busy program's timeout could be recorded as a crash, which cost 3
@@ -52,8 +55,8 @@ verified attempt records the worked examples' verdict beside the oracle's
 depend on an exact checker; on 2025 d9 p2 the example passed 59 of the 104 Part 2 attempts the
 oracle rejected in the power test and 137 of 249 in the replication, where a selector using it
 alone took a wrong draft in 15 of 35 trials. What is next, in priority order, is `PLAN.md`,
-"Open": AoC 2026 (needs the
-submitter decision by about 2026-11-25); then the test of
+"Open": AoC 2026 (the registration
+draft, its account and code); then the test of
 whether the Part 1 context informs or cues recall, designed for AoC 2026 (`part2-context-heldout-plan.md`). Nothing starts without the
 maintainer's go. The sections below are the dated record, newest
 first.

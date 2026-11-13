@@ -1,7 +1,7 @@
 # Plan: does the Part 1 context inform, or cue recall? — registered design on AoC 2026, not yet run
 
-**Status (2026-11-09): approved design; runs during AoC 2026** (opens 2026-12-01). Depends on
-the AoC 2026 submitter decision (`PLAN.md`, "Open").
+**Status (2026-11-09): approved design; runs during AoC 2026** (opens 2026-12-01). Runs under
+the AoC 2026 registration (`aoc2026-registration.md`, a draft), on its experiment account.
 
 ## The question
 
@@ -35,7 +35,9 @@ so the test runs there.
 ## Design
 
 - **Problems:** the AoC 2026 Part 2s (12 days, opening 2026-12-01; days without a Part 2 are
-  skipped), each run once Part 1 is solved on the account, since Part 2's text is only visible then.
+  skipped), each run once a model's Part 1 answer is accepted on the experiment account, since Part 2's
+  text is only visible then. Part 2s unlocked by a Part 1 the maintainer solved are excluded: the
+  context arm carries the model's own verified Part 1 program.
 - **Arms**, interleaved one trial at a time:
   - **cold:** `problem_context=legacy`, Part 2 posed with its own article only.
   - **with context:** `problem_context=aoc, gate_part_two=false`: Part 2 posed with Part 1's

@@ -368,10 +368,11 @@ mid-rate problem, an inconclusive test and then a registered replication, p = 0.
 splits by whether time or tokens is the binding cost; portfolios: the one complementary pair was
 one-way, so the ensemble was not run. Open, in priority order (`PLAN.md`, "Open"):
 1. **AoC 2026, the clean contamination test.** The first problems published after the models'
-   training cutoff. *Waits on a maintainer decision* by about 2026-11-25: submit answers
-   automatically or by hand, and at what rate; then the submitter is wired in (without it an
-   unseen year cannot reach Part 2), and the models, prompts and configuration are frozen before
-   2026-12-01.
+   training cutoff. Answers are submitted automatically, from a dedicated experiment account under
+   a fixed budget, by an unattended nightly run that starts five hours after each release (draft registration:
+   `dev/progress/aoc2026-registration.md`). *Waits on* the maintainer creating that account and
+   settling the draft's open decisions, then code and an end-to-end test on past puzzles; the
+   models, prompts and configuration are frozen before 2026-12-01.
 2. **Does the Part 1 context inform, or cue recall?** The headline's caveat, tested on AoC 2026,
    where nothing can be recalled: Part 2 with and without the Part 1 context
    (`dev/progress/part2-context-heldout-plan.md`). *Waits on* item 1.
