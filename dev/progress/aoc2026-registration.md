@@ -27,12 +27,13 @@ models, not on the date.
 - **Every account has its own inputs**, so each account's data lives in its own workspace (its own
   `years/`) with its own session variable in `.env`. Nothing mixes inputs, answers or submission
   history across accounts.
-- **No switching accounts** to escape a wait, in testing or in the event: a new account has new
-  inputs, so it would be a different measurement, and it would evade the waits AoC uses against
-  guessing.
-- **The account joins no private leaderboard.** AoC's FAQ leaves AI rules to each private
-  leaderboard, and its answer to "Should I use AI to solve Advent of Code puzzles?" is no; the
-  project measures models and does not compete.
+- **One account for the whole event**, and every wait AoC states is respected. (A second account
+  would have different inputs, so it would also be a different measurement.)
+- **AoC's FAQ advises people not to use AI to solve the puzzles**, because the point is to learn
+  by solving them. This project solves them for no one: it measures models on them, as it has on
+  the 2024 and 2025 puzzles, without competing. The account joins
+  no leaderboard, and the submission budget below keeps its load to a handful of requests a
+  night.
 - **Nothing from AoC is redistributed:** puzzle text and inputs stay out of git, as AoC asks.
   Results name puzzles by year, day and part and may link to them.
 
@@ -92,11 +93,13 @@ loop never sees AoC's replies.
   `PLAN.md` ("Beyond AoC", step 1), the worked examples' false accepts and false rejects, are
   reported on every attempt.
 
-## Puzzles written against AI
+## Unseen pages, run unattended
 
-A 2026 puzzle may carry text aimed at models: hidden instructions, or wording meant to mislead.
-The oracle is unaffected (a trick can make a model fail, never make a wrong answer count), and a
-trick that works is itself a result. The run is protected and audited:
+AoC's FAQ says the puzzles are designed for humans, with "no consideration … made for whether AI
+can or cannot solve a puzzle". Still, a new page can hold text a model misreads, or text the page
+does not display, and its code runs unattended. The oracle is unaffected: such text can make a
+model fail, never make a wrong answer count, and a failure it causes is itself a result. The run
+is protected and audited:
 
 - Generated code runs under a sandbox profile that denies network access, on top of the existing
   limits (`shared/sandbox.py`). Unattended runs of code written against an unseen puzzle are the
