@@ -3768,28 +3768,6 @@ run,problem_id,trial,model,stage,repair_iteration,draft_index,outcome,input_toke
 20261112T104633Z_m5pro-d9p2-speed-off-b5_80b37d599dd8.json,2025_day09_part2,3,qwen3.8:27b,repair,1,0,wrong,4953,980,40.685664,1,1,False,
 20261112T104633Z_m5pro-d9p2-speed-off-b5_80b37d599dd8.json,2025_day09_part2,3,qwen3.8:27b,repair,2,0,no_candidate,4825,980,42.054345,,,False,
 20261112T104633Z_m5pro-d9p2-speed-off-b5_80b37d599dd8.json,2025_day09_part2,4,qwen3.8:27b,generate,0,0,solved,19354,10836,445.620156,1,1,False,
-20261112T111435Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,0,qwen3.8:27b,generate,0,0,solved,16110,8089,359.938591,1,1,False,
-20261112T111435Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,1,qwen3.8:27b,generate,0,0,wrong,11688,3534,168.940296,0,1,False,
-20261112T111435Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,1,qwen3.8:27b,repair,1,0,error,5427,1360,59.612499,0,1,False,timeout
-20261112T111435Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,1,qwen3.8:27b,repair,2,0,error,5346,1388,58.281434,0,1,False,timeout
-20261112T111435Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,2,qwen3.8:27b,generate,0,0,solved,18085,10574,433.945042,1,1,False,
-20261112T111435Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,3,qwen3.8:27b,generate,0,0,wrong,18259,9993,434.737299,0,1,False,
-20261112T111435Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,3,qwen3.8:27b,repair,1,0,error,5296,1494,67.701601,0,1,False,timeout
-20261112T111435Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,3,qwen3.8:27b,repair,2,0,wrong,5479,7124,299.0257,0,1,False,
-20261112T111435Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,generate,0,0,error,11246,2735,116.344591,1,1,False,crash
-20261112T111435Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,repair,1,0,no_candidate,4875,1050,40.600087,,,False,
-20261112T115318Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,0,qwen3.8:27b,generate,0,0,wrong,16576,7834,323.487984,1,1,False,
-20261112T115318Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,0,qwen3.8:27b,repair,1,0,error,4830,1478,64.263104,0,1,False,memory cap
-20261112T115318Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,0,qwen3.8:27b,repair,2,0,error,5321,1450,60.065485,0,1,False,memory cap
-20261112T115318Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,1,qwen3.8:27b,generate,0,0,wrong,16640,9050,392.019166,0,1,False,
-20261112T115318Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,1,qwen3.8:27b,repair,1,0,error,5980,1934,82.296439,0,1,False,memory cap
-20261112T115318Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,1,qwen3.8:27b,repair,2,0,wrong,5777,2021,86.864981,0,1,False,
-20261112T115318Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,2,qwen3.8:27b,generate,0,0,solved,18140,9846,417.269041,1,1,False,
-20261112T115318Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,3,qwen3.8:27b,generate,0,0,error,12178,3776,163.805907,1,1,False,crash
-20261112T115318Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,3,qwen3.8:27b,repair,1,0,error,4984,1143,42.624832,1,1,False,crash
-20261112T115318Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,3,qwen3.8:27b,repair,2,0,no_candidate,4968,1143,43.788918,,,False,
-20261112T115318Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,generate,0,0,wrong,13602,5425,226.670704,0,1,False,
-20261112T115318Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,repair,1,0,solved,5403,3339,130.934075,1,1,False,
 20261112T123050Z_m5pro-d9p2-speed-off-b6_80b37d599dd8.json,2025_day09_part2,0,qwen3.8:27b,generate,0,0,error,11741,3834,161.962354,1,1,False,memory cap
 20261112T123050Z_m5pro-d9p2-speed-off-b6_80b37d599dd8.json,2025_day09_part2,0,qwen3.8:27b,repair,1,0,error,5489,1327,50.498996,1,1,False,memory cap
 20261112T123050Z_m5pro-d9p2-speed-off-b6_80b37d599dd8.json,2025_day09_part2,0,qwen3.8:27b,repair,2,0,no_candidate,5162,1327,49.340584,,,False,
@@ -3827,3 +3805,33 @@ run,problem_id,trial,model,stage,repair_iteration,draft_index,outcome,input_toke
 20261112T134719Z_m5pro-d9p2-speed-on-b7_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,generate,0,0,wrong,17938,9075,379.024497,0,1,False,
 20261112T134719Z_m5pro-d9p2-speed-on-b7_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,repair,1,0,error,4717,2411,90.801841,1,1,False,timeout
 20261112T134719Z_m5pro-d9p2-speed-on-b7_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,repair,2,0,wrong,6411,2858,116.210842,0,1,False,
+20261112T232725Z_m5pro-precheck-cpulimit_1ac712678732.json,2024_day01_part1,0,qwen3.8:27b,generate,0,0,solved,6769,1169,65.942042,1,1,False,
+20261112T232725Z_m5pro-precheck-cpulimit_1ac712678732.json,2024_day01_part2,0,qwen3.8:27b,generate,0,0,solved,8118,2002,99.253565,1,1,False,
+20261112T232725Z_m5pro-precheck-cpulimit_1ac712678732.json,2024_day01_part1,1,qwen3.8:27b,generate,0,0,solved,6746,1126,60.41851,1,1,False,
+20261112T232725Z_m5pro-precheck-cpulimit_1ac712678732.json,2024_day01_part2,1,qwen3.8:27b,generate,0,0,solved,7380,1263,64.223906,1,1,False,
+20261112T232725Z_m5pro-precheck-cpulimit_1ac712678732.json,2024_day01_part1,2,qwen3.8:27b,generate,0,0,solved,7365,1647,83.223479,1,1,False,
+20261112T232725Z_m5pro-precheck-cpulimit_1ac712678732.json,2024_day01_part2,2,qwen3.8:27b,generate,0,0,solved,7224,1221,63.349728,1,1,False,
+20261112T233512Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,0,qwen3.8:27b,generate,0,0,wrong,14956,6574,283.945126,0,1,False,
+20261112T233512Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,0,qwen3.8:27b,repair,1,0,wrong,5199,1215,51.34528,0,1,False,
+20261112T233512Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,0,qwen3.8:27b,repair,2,0,solved,5235,1282,51.805318,1,1,False,
+20261112T233512Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,1,qwen3.8:27b,generate,0,0,solved,18477,10784,475.414933,1,1,False,
+20261112T233512Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,2,qwen3.8:27b,generate,0,0,error,13004,4649,187.877389,0,1,False,memory cap
+20261112T233512Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,2,qwen3.8:27b,repair,1,0,error,5048,1204,45.402212,0,1,False,memory cap
+20261112T233512Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,2,qwen3.8:27b,repair,2,0,error,5046,1643,60.110414,1,1,False,memory cap
+20261112T233512Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,3,qwen3.8:27b,generate,0,0,error,17739,9948,410.829977,0,1,False,memory cap
+20261112T233512Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,3,qwen3.8:27b,repair,1,0,error,5612,1517,60.41427,0,1,False,memory cap
+20261112T233512Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,3,qwen3.8:27b,repair,2,0,no_candidate,5359,1517,57.374181,,,False,
+20261112T233512Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,generate,0,0,error,12671,4836,215.148088,0,1,False,timeout
+20261112T233512Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,repair,1,0,wrong,5712,1900,76.488433,0,1,False,
+20261112T233512Z_m5pro-d9p2-speed-on-b5_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,repair,2,0,wrong,5901,1904,71.074733,0,1,False,
+20261113T001051Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,0,qwen3.8:27b,generate,0,0,solved,16117,8147,343.150797,1,1,False,
+20261113T001051Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,1,qwen3.8:27b,generate,0,0,error,9564,1482,78.879655,1,1,False,timeout
+20261113T001051Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,1,qwen3.8:27b,repair,1,0,error,4953,976,40.526509,1,1,False,timeout
+20261113T001051Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,1,qwen3.8:27b,repair,2,0,error,4976,1558,67.904049,1,1,False,timeout
+20261113T001051Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,2,qwen3.8:27b,generate,0,0,wrong,12079,3470,156.944615,1,1,False,
+20261113T001051Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,2,qwen3.8:27b,repair,1,0,error,4964,1910,73.728599,1,1,False,timeout
+20261113T001051Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,2,qwen3.8:27b,repair,2,0,wrong,5910,2256,92.662283,1,1,False,
+20261113T001051Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,3,qwen3.8:27b,generate,0,0,solved,15995,7629,321.234457,1,1,False,
+20261113T001051Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,generate,0,0,wrong,13533,5716,240.984828,0,1,False,
+20261113T001051Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,repair,1,0,wrong,5759,4546,194.802315,0,1,False,
+20261113T001051Z_m5pro-d9p2-speed-on-b6_a94e453a5791.json,2025_day09_part2,4,qwen3.8:27b,repair,2,0,error,5444,1128,50.919526,1,1,False,timeout
