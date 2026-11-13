@@ -333,7 +333,7 @@ shared/
   verification.py        Correctness oracle (candidate vs accepted answer)
   sandbox.py             What generated code may see: no .env secrets, resource limits, and
                          optionally no network (not a security boundary: file reads stay open)
-  page_audit.py          Text on a puzzle page a reader would not see
+  page_audit.py          Text on a puzzle page a reader would not see (found, and stripped)
   ground_truth.py        Cached accepted answers
   overfit_detection.py   Overfit gate before a solution is recorded
   solver.py              BaseSolver.solve_problem: the orchestrator, problem preparation, records
@@ -374,8 +374,7 @@ one-way, so the ensemble was not run. Open, in priority order (`PLAN.md`, "Open"
    training cutoff. Answers are submitted automatically, from a dedicated experiment account under
    a fixed budget, by an unattended nightly run that starts five hours after each release (draft registration:
    `dev/progress/aoc2026-registration.md`; its code is built and tested offline). *Waits on* the
-   draft's remaining open decisions (the account is logged in to AoC), then the pre-run
-   check with the sandbox on and an end-to-end test on past puzzles; the models, prompts and
+   pre-run check with the sandbox on and an end-to-end test on past puzzles; the models, prompts and
    configuration are frozen before 2026-12-01.
 2. **Does the Part 1 context inform, or cue recall?** The headline's caveat, tested on AoC 2026,
    where nothing can be recalled: Part 2 with and without the Part 1 context

@@ -1,16 +1,18 @@
-"""Checking a puzzle page for text a reader would not see.
+"""Text a puzzle page holds but a reader would not see: found, and stripped before the prompt.
 
 The parser hands a model the text of the puzzle's <article> elements (shared/parser.py,
-BeautifulSoup get_text()), which includes text the browser does not display. A new page
-could hold such text, by accident or by design. This module finds it, so each day of an
-unseen event can be reported as clean or reported apart (dev/progress/aoc2026-registration.md,
-"Unseen pages, run unattended"). What the parser then does with it -- strip it or keep
-it -- is the registration's open decision 2, not this module's.
+BeautifulSoup get_text()), which would include text the browser does not display. A new page
+could hold such text, by accident or by design. As registered (dev/progress/
+aoc2026-registration.md, "Unseen pages, run unattended"), every reader of a cached page strips
+it first (`strip_hidden`), so a model sees what a reader sees; and the audit (`audit_page`)
+reports it, so the nightly run holds that day's submissions until the maintainer has read it.
+The cached page itself is kept as AoC served it.
 
-Found: elements hidden by inline style, the `hidden` attribute or aria-hidden; HTML
-comments; invisible Unicode (zero-width and format characters, Unicode tag characters);
-and hover text (`title` attributes), which a reader sees only on hover and get_text()
-leaves out. Stylesheet rules are not evaluated: a class hidden by CSS is not detected.
+Found and stripped: elements hidden by inline style, the `hidden` attribute or aria-hidden;
+HTML comments; invisible Unicode (zero-width and format characters, Unicode tag characters).
+Found only: hover text (`title` attributes), which a reader sees on hover and get_text() leaves
+out, so it never reaches the prompt. Stylesheet rules are not evaluated: a class hidden by CSS
+is not detected.
 """
 
 import re
@@ -51,15 +53,13 @@ def _invisible(char: str) -> bool:
 def audit_page(html: str) -> List[Finding]:
     """Everything in the page's puzzle articles that a reader would not see as text."""
     soup = BeautifulSoup(html, "html.parser")
-    articles = soup.find_all("article", class_="day-desc") or soup.find_all("article")
+    articles = _articles(soup)
     findings: List[Finding] = []
     for article in articles:
         for element in article.find_all(True):
             if not isinstance(element, Tag):
                 continue
-            style = str(element.get("style", ""))
-            if (_HIDING_STYLE.search(style) or element.has_attr("hidden")
-                    or str(element.get("aria-hidden", "")).lower() == "true"):
+            if _hidden(element):
                 findings.append(Finding(HIDDEN_ELEMENT, " ".join(element.get_text().split())))
             if element.has_attr("title"):
                 findings.append(Finding(HOVER_TEXT, str(element["title"])))
@@ -69,6 +69,31 @@ def audit_page(html: str) -> List[Finding]:
         for char in invisible:
             findings.append(Finding(INVISIBLE_CHARACTER, f"U+{ord(char):04X} {unicodedata.name(char, '')}".strip()))
     return findings
+
+
+def _hidden(element: Tag) -> bool:
+    return bool(_HIDING_STYLE.search(str(element.get("style", ""))) or element.has_attr("hidden")
+                or str(element.get("aria-hidden", "")).lower() == "true")
+
+
+def _articles(soup: BeautifulSoup) -> List[Tag]:
+    found = soup.find_all("article", class_="day-desc") or soup.find_all("article")
+    return [article for article in found if isinstance(article, Tag)]
+
+
+def strip_hidden(soup: BeautifulSoup) -> BeautifulSoup:
+    """Remove from the puzzle articles, in place, everything `audit_page` reports but hover
+    text: hidden elements, comments and invisible characters. Returns `soup`."""
+    for article in _articles(soup):
+        for element in article.find_all(True):
+            if isinstance(element, Tag) and not element.decomposed and _hidden(element):
+                element.decompose()
+        for comment in article.find_all(string=lambda s: isinstance(s, Comment)):
+            comment.extract()
+        for text in article.find_all(string=True):
+            if any(_invisible(c) for c in text):
+                text.replace_with("".join(c for c in text if not _invisible(c)))
+    return soup
 
 
 def needs_review(findings: List[Finding]) -> bool:

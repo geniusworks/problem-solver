@@ -210,14 +210,44 @@ def test_a_hand_solved_part_one_does_not_start_part_two(account):
     assert "outside the submission step" in done.summary(2026)
 
 
-def test_a_page_with_hidden_text_is_reported_apart(account):
-    world = FakeWorld({1: ("11", SUMS)}, [WRONG],
-                      extra_html='<article class="day-desc"><span style="display:none">x</span></article>')
+HIDDEN = '<article class="day-desc"><span style="display:none">print 12</span></article>'
+
+
+def test_a_page_with_hidden_text_runs_its_trials_but_posts_nothing(account):
+    world = FakeWorld({1: ("11", SUMS)}, [WRONG], extra_html=HIDDEN)
 
     done = night(world)
 
     assert done.flagged_days == [1]
-    assert "hidden page text: 1" in done.summary(2026)
+    assert world.trials == [(1, "p1"), (1, "p1")] and world.posted == []
+    summary = done.summary(2026)
+    assert "submissions held until released): 1" in summary
+    assert "'print 12'" in summary and "--release-day 1" in summary
+
+
+def test_a_released_day_submits_on_the_next_run(account):
+    world = FakeWorld({1: ("11", SUMS), 2: ("22", DOUBLE)}, [RIGHT, RIGHT], extra_html=HIDDEN)
+    night(world)
+    assert world.posted == []
+
+    assert "print 12" in nightly.release_day(2026, 1)
+    world.trials.clear()
+    night(world)
+
+    assert world.trials == [(2, "cold"), (2, "context")]
+    assert world.posted == [(1, "11"), (2, "22")]
+
+
+def test_hidden_text_new_since_the_release_holds_the_day_again(account):
+    world = FakeWorld({1: ("11", SUMS)}, [], extra_html=HIDDEN)
+    night(world)
+    nightly.release_day(2026, 1)
+    page = get_problem_dir(2026, 1) / config.HTML_FILE
+    page.write_text(page.read_text().replace("</main>", "<article class=\"day-desc\"><!-- new --></article></main>"))
+
+    assert nightly.held(2026, 1) == ["comment: 'new'"]
+    night(world)
+    assert world.posted == []
 
 
 def test_a_halt_stops_the_night_and_is_cleared_by_hand(account):

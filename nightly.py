@@ -9,7 +9,9 @@ dev/progress/aoc2026-registration.md, "The nightly run":
      runs without network (execution.deny_network / DENY_NETWORK).
   2. One request checks the session; the run stops, loudly, if it has expired.
   3. Fetches the day's page and input once. If either is unavailable it stops and
-     reports; it never polls. The page is audited for hidden text.
+     reports; it never polls. The page is audited for hidden text: the prompt never sees it
+     (shared/page_audit.py), and a day whose page holds any runs its trials but submits
+     nothing until the maintainer has read it and released the day (--release-day).
   4. For every event day up to tonight's, in order, does whatever is still owed: Part 1
      trials (config/nightly.yaml), the submission step, and once a model's Part 1 is
      accepted, the recorded answers scored, the page refreshed for Part 2, Part 2's
@@ -22,10 +24,13 @@ Usage:
     AOC_ACCOUNT=experiment venv/bin/python nightly.py --day 3    # catch up to day 3
     AOC_ACCOUNT=experiment venv/bin/python nightly.py --year 2025 --from-day 9 --day 9
                                                                  # one past day (end-to-end test)
+    AOC_ACCOUNT=experiment venv/bin/python nightly.py --release-day 3
+                                                                 # submit day 3 despite hidden text
 """
 
 import argparse
 import asyncio
+import json
 import logging
 import os
 import sys
@@ -123,7 +128,8 @@ class Night:
     def summary(self, year: int) -> str:
         head = f"# AoC {year} nightly run, {self.started.astimezone(RELEASE_ZONE):%Y-%m-%d %H:%M %Z}\n"
         status = f"\n**Stopped:** {self.stopped}\n" if self.stopped else "\n**Completed.**\n"
-        flagged = (f"\nDays reported apart for hidden page text: {', '.join(map(str, self.flagged_days))}\n"
+        flagged = (f"\nDays whose page hides text (reported apart; submissions held until "
+                   f"released): {', '.join(map(str, self.flagged_days))}\n"
                    if self.flagged_days else "")
         return head + status + flagged + "\n" + "\n".join(f"- {line}" for line in self.lines) + "\n"
 
@@ -221,6 +227,12 @@ def install_part_one_program(year: int, day: int, experiments: List[ExperimentRe
 
 
 async def submit(year: int, day: int, part: int, tools: Tools, night: Night) -> StepReport:
+    if held(year, day):
+        report = StepReport(problem_id(year, day, part), "held",
+                            detail="the page hides text; read it above, then "
+                                   f"`nightly.py --release-day {day}`")
+        night.note(report.line())
+        return report
     experiments = [ExperimentResult.load(path) for path in recorded(year, day, part)]
     report = await tools.submit_part(year, day, part, experiments)
     night.note(report.line())
@@ -264,6 +276,42 @@ async def advance_day(year: int, day: int, plan: Plan, tools: Tools, night: Nigh
         await run_trials(year, day, 2, plan, tools, night)
         await submit(year, day, 2, tools, night)
     score_recorded(year, day, 2, night)
+
+
+def hidden_text(year: int, day: int) -> List[str]:
+    """What the day's cached page hides beyond hover text, one line per finding."""
+    html = (get_problem_dir(year, day) / settings.HTML_FILE).read_text(encoding="utf-8")
+    findings = audit_page(html)
+    return [f.line() for f in findings if needs_review([f])]
+
+
+def released_path() -> Path:
+    return account_dir() / "released_pages.json"
+
+
+def _released() -> Dict[str, List[str]]:
+    path = released_path()
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+
+
+def held(year: int, day: int) -> List[str]:
+    """The page's hidden text the maintainer has not yet released. A release covers the
+    text it was given for: anything new on a refreshed page holds the day again."""
+    released = set(_released().get(f"{year}-{day}", []))
+    return [line for line in hidden_text(year, day) if line not in released]
+
+
+def release_day(year: int, day: int) -> str:
+    """Record that the maintainer has read the day's hidden page text; its submissions go ahead."""
+    lines = hidden_text(year, day)
+    if not lines:
+        return f"day {day}: the page hides nothing; there is nothing to release"
+    released = _released()
+    released[f"{year}-{day}"] = sorted(set(released.get(f"{year}-{day}", [])) | set(lines))
+    path = released_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(released, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return f"day {day}: released; its page hides\n" + "\n".join(f"  {line}" for line in lines)
 
 
 def audit(year: int, day: int, night: Night) -> None:
@@ -351,6 +399,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                         help="First day to work on (default 1; the end-to-end test runs one day)")
     parser.add_argument("--refresh-page", type=int, metavar="DAY",
                         help="Fetch DAY's page once (after solving a part by hand) and exit")
+    parser.add_argument("--release-day", type=int, metavar="DAY",
+                        help="Let DAY's submissions go ahead after reading its hidden page text, and exit")
     parser.add_argument("--clear-halt", action="store_true",
                         help="Clear a submission halt after reviewing it, and exit")
     args = parser.parse_args(argv)
@@ -360,6 +410,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         plan.year = args.year
     if args.clear_halt:
         print(clear_halt())
+        return 0
+    if args.release_day:
+        print(release_day(plan.year, args.release_day))
         return 0
     if args.refresh_page:
         from shared.aoc import refresh_problem_page
