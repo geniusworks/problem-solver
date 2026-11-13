@@ -157,47 +157,6 @@ class LearningDatabase:
             )
             conn.commit()
 
-    def count_strategy_attempts(self, problem_id: str) -> int:
-        """Number of recorded strategy results for a problem."""
-        with self.connect() as conn:
-            cursor = conn.execute(
-                "SELECT COUNT(*) FROM strategy_results WHERE problem_id = ?",
-                (problem_id,),
-            )
-            row = cursor.fetchone()
-            return int(row[0]) if row else 0
-
-    def add_problem_result(self, result: Any) -> None:
-        """Record a StrategyResultForProblem.
-
-        Called by StrategyOptimizer.record_problem_result, which previously
-        referenced this method although it did not exist.
-        """
-        timestamp = getattr(result, "timestamp", None) or datetime.now()
-        if isinstance(timestamp, datetime):
-            timestamp = timestamp.isoformat()
-
-        with self.connect() as conn:
-            conn.execute(
-                """
-                INSERT OR REPLACE INTO strategy_results
-                    (problem_id, timestamp, strategies_used, success,
-                     execution_time, memory_usage, attempts, failure_points)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    result.problem_id,
-                    timestamp,
-                    json.dumps(list(result.strategies_used)),
-                    bool(result.success),
-                    result.execution_time,
-                    result.memory_usage,
-                    result.attempts,
-                    json.dumps(list(result.failure_points or [])),
-                ),
-            )
-            conn.commit()
-
     def update_model_performance(
         self,
         model_name: str,

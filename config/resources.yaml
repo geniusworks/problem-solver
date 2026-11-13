@@ -19,3 +19,9 @@ cache:
 
 submission:
   enabled: false  # Default submission behavior, can be overridden by SUBMIT_SOLUTIONS env var
+  # The budget (submission/policy.py, Budget); proposals until the AoC 2026 registration is frozen.
+  wrong_per_part: 3         # wrong answers per part over the whole event, all models and trials
+  per_night: 6              # posts across all parts ...
+  night_hours: 20           # ... in any window this long
+  wait_margin_seconds: 30   # added to every wait AoC states
+  longest_wait_seconds: 900 # a longer wait ends the step for the night

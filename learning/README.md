@@ -98,15 +98,7 @@ db = LearningDatabase()
 stats = db.get_strategy_weights()
 ```
 
-2. **Analyze Patterns**
-   ```python
-from learning.optimizer import StrategyOptimizer
-
-optimizer = StrategyOptimizer(learning_dir, workspace_dir)
-patterns = optimizer.analyze_failures()
-```
-
-3. **Reset Learning**
+2. **Reset Learning**
    ```bash
    rm learning/solver.db
    venv/bin/python -c "from learning.database import LearningDatabase; LearningDatabase()"

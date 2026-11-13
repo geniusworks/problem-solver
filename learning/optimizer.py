@@ -4,7 +4,6 @@ import dataclasses
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Dict, List, Optional, Set, Any
 from pathlib import Path
 
@@ -21,18 +20,6 @@ class StrategyResult:
     execution_time: float
     success: bool
     memory_usage: Optional[float] = None
-
-@dataclass
-class StrategyResultForProblem:
-    """Records the effectiveness of strategies for a specific problem."""
-    problem_id: str
-    strategies_used: List[str]
-    success: bool
-    execution_time: float
-    memory_usage: float
-    attempts: int
-    failure_points: List[str]
-    timestamp: datetime = dataclasses.field(default_factory=datetime.now)
 
 class StrategyOptimizer:
     """Learns and optimizes strategy selection."""
@@ -59,7 +46,6 @@ class StrategyOptimizer:
         # always-empty ./solver.db that the optimizer read from and nothing
         # populated -- so strategy effectiveness was computed over zero rows.
         self.db = LearningDatabase(learning_dir)
-        self.problem_results: List[StrategyResultForProblem] = []
 
     def _load_results(self) -> None:
         """Load strategy results from storage."""
@@ -82,11 +68,6 @@ class StrategyOptimizer:
         self.results.append(result)
         self._save_results()
         
-    def record_problem_result(self, result: StrategyResultForProblem) -> None:
-        """Record a new strategy result."""
-        self.problem_results.append(result)
-        self.db.add_problem_result(result)
-
     def get_strategy_effectiveness(
             self, characteristics: Dict[str, Any], strategy_names: List[str]
         ) -> Dict[str, float]:
@@ -116,18 +97,6 @@ class StrategyOptimizer:
             else:
                 scores[strategy] = 0.5  # Default score for untried strategies
         return scores
-
-    def analyze_failures(self) -> Dict[str, Dict[str, int]]:
-        """Analyze common failure patterns and their relationships to strategies."""
-        failure_patterns: Dict[str, Dict[str, int]] = {}
-        for result in self.problem_results:
-            if not result.success:
-                for strategy in result.strategies_used:
-                    if strategy not in failure_patterns:
-                        failure_patterns[strategy] = {}
-                    for point in result.failure_points:
-                        failure_patterns[strategy][point] = failure_patterns[strategy].get(point, 0) + 1
-        return failure_patterns
 
     def get_recommended_strategies(
             self, problem_characteristics: Dict[str, float]

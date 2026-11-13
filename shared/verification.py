@@ -226,13 +226,19 @@ def _overfit_reasons(
 
     Never raises: a detector failure must not turn a real result into an error.
     """
-    reasons: list = []
     try:
         source = path.read_text(encoding="utf-8")
     except OSError as e:  # pragma: no cover - defensive
         logger.warning("Could not read %s for overfit analysis: %s", path, e)
-        return reasons
+        return []
+    return overfit_reasons_for_source(source, year, day, part, expected)
 
+
+def overfit_reasons_for_source(
+    source: str, year: int, day: int, part: int, expected: Optional[str] = None
+) -> list:
+    """`_overfit_reasons` for source text, e.g. an attempt's recorded code. Never raises."""
+    reasons: list = []
     try:
         from shared.overfit_detection import analyze_overfit_risk
 
@@ -240,7 +246,7 @@ def _overfit_reasons(
         if analysis.is_suspicious:
             reasons.extend(analysis.reasons)
     except Exception as e:  # pragma: no cover - defensive
-        logger.warning("Overfit analysis failed for %s: %s", path, e)
+        logger.warning("Overfit analysis failed for %d day %d part %d: %s", year, day, part, e)
 
     if expected and answer_appears_as_literal(source, expected):
         reasons.append(

@@ -10,7 +10,6 @@ import json
 import pytest
 
 from learning.database import LearningDatabase
-from learning.optimizer import StrategyResultForProblem
 
 
 @pytest.fixture
@@ -44,28 +43,6 @@ def test_record_strategy_result_writes_to_strategy_results(db):
     assert row[3] == pytest.approx(1.5)
     assert row[4] == 2
     assert json.loads(row[5]) == ["timeout"]
-
-
-def test_add_problem_result_round_trips(db):
-    """StrategyOptimizer.record_problem_result called this missing method."""
-    result = StrategyResultForProblem(
-        problem_id="2024_day02_part1",
-        strategies_used=["simulation"],
-        success=False,
-        execution_time=2.0,
-        memory_usage=50.0,
-        attempts=3,
-        failure_points=["wrong answer"],
-    )
-
-    db.add_problem_result(result)
-
-    with db.connect() as conn:
-        row = conn.execute(
-            "SELECT problem_id, success, attempts FROM strategy_results"
-        ).fetchone()
-
-    assert row == ("2024_day02_part1", 0, 3)
 
 
 def test_record_improvement_writes_history(db):
@@ -183,13 +160,3 @@ def test_optimizer_shares_the_learning_dir_database(tmp_path):
     assert not (workspace_dir / "solver.db").exists(), (
         "constructing the optimizer must not create a second root database"
     )
-
-
-def test_count_strategy_attempts_is_scoped_per_problem(db):
-    db.record_strategy_result("2024_day01_part1", ["a"], True, {})
-    db.record_strategy_result("2024_day01_part1", ["b"], False, {})
-    db.record_strategy_result("2024_day05_part2", ["c"], True, {})
-
-    assert db.count_strategy_attempts("2024_day01_part1") == 2
-    assert db.count_strategy_attempts("2024_day05_part2") == 1
-    assert db.count_strategy_attempts("2024_day09_part1") == 0
