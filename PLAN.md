@@ -33,11 +33,11 @@ on:
 Done 2026-11-12:
 - **Speed-directed repair on 2025 d9 p2: inconclusive** (`m5pro-d9p2-speed-repair.md`).
   `targeted_feedback` off 8/35, on 12/35, one draft; one-sided Fisher p = 0.21, 11 points apart.
-  The gap is in first drafts, which the flag does not touch; none of 39 repairs after a timeout or
-  memory-cap stop solved. The flag stays off for AoC 2026. 8.9 GPU-hours. A harness race found
-  later the same day (timeouts recorded as crashes) cost 3 "on" repairs their guidance; blocks
-  on-b5 and on-b6 meet the registered harness-failure rule and are to be rerun (about 1 GPU-hour,
-  approved by the maintainer, after the solver split).
+  The gap is in first drafts, which the flag does not touch; none of 43 repairs after a timeout or
+  memory-cap stop solved. The flag stays off for AoC 2026. A harness race found later the same
+  day (timeouts recorded as crashes) cost 3 "on" repairs their guidance, so blocks on-b5 and
+  on-b6 were rerun under the registered harness-failure rule: 2/5 each, as before, and the reading
+  stands. 8.8 GPU-hours as counted, 1.3 more in the superseded blocks.
 - `--include-replay` now saves each attempt's prompt and raw response beside its code; until
   2026-11-12 it saved only the code.
 
@@ -62,7 +62,7 @@ is the testbed. Every result so far rests on an exact checker, the accepted answ
 domains lack. Generalising is therefore sequenced as measurements, each gating the next, not as a
 framework built ahead of evidence: of the components a general system might make pluggable, some
 have measured value here and some do not (mixing models lost to choosing one; repair produced 17
-of the reference model's 314 solves).
+of the reference model's 320 solves).
 
 1. **How much does the method depend on an exact checker?** Record, per attempt, the verdict of the
    worked examples alongside the oracle's. **Wired 2026-11-09:** every verified attempt records
@@ -108,8 +108,8 @@ p2, then, a longer limit would not have helped within 600 s; efficiency guidance
 have to fix them. **The trigger is met on 2025 d9 p2** (2026-11-11), and the A/B is registered
 (`m5pro-d9p2-speed-repair.md`). **Run 2026-11-12: inconclusive** (8/35 off, 12/35 on, p = 0.21;
 the gap is in first drafts, which the flag does not touch). Most slow drafts now stop at the 8 GB
-memory cap before the 60 s limit, and the guidance is keyed to the timeout, so it reached 5 repair
-prompts; none solved, and no repair after a time or memory stop solved in either arm (0 of 39).
+memory cap before the 60 s limit, and the guidance is keyed to the timeout, so it reached 7 repair
+prompts; none solved, and no repair after a time or memory stop solved in either arm (0 of 43).
 Not pursued before AoC 2026. Making the guidance fire on a memory-cap stop is a code change that
 would need its own registered test.
 
@@ -150,8 +150,7 @@ replay differs unexplained is reverted and waits. The rest wait until after the 
    `shared/solving/`, and `solver.py` (536 lines) coordinates the stages. Behaviour unchanged:
    item 2's suite and the fingerprint test pass, and a replay of the speed-repair and
    replication runs (140 trials) gives every trial the same outcome, attempts, problem and
-   repair feedback as the replay of the code before the split. The `--trials 3` pre-run check
-   runs before the next GPU run.
+   repair feedback as the replay of the code before the split.
 4. **One capped runner in `shared/sandbox.py`.** `communicate_capped` (asyncio: the solve loop and
    `dev/rerun_timeouts.py`) and `run_capped` (subprocess: the oracle's own runner and the example
    runs) repeat the same watch loop. They have already drifted: only the asyncio one gives a

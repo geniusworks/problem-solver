@@ -3,9 +3,10 @@
 **Status (2026-11-12): run and read.** Off 8/35, on 12/35: one-sided Fisher p = 0.21, 11 points
 apart, so by the registered readings **inconclusive**, and `targeted_feedback` stays off for AoC
 2026. The whole gap is in first drafts (4 against 10), which the flag cannot touch; repair rescued
-4 trials with it off and 2 with it on, and none of the 39 repairs that followed a timeout or a
-memory-cap stop solved, 5 of them with the speed guidance. Design, prediction and readings below
-were registered before launch (#72) and are unchanged.
+4 trials with it off and 2 with it on, and none of the 43 repairs that followed a timeout or a
+memory-cap stop solved, 7 of them with the speed guidance. Two "on" blocks were rerun under the
+registered harness-failure rule (below). Design, prediction and readings below were registered
+before launch (#72) and are unchanged.
 
 > **2026-11-12, later: two "on" blocks meet the registered harness-failure rule.** Replaying this
 > run through the solver showed that 6 attempts recorded as crashes ("Process failed: Unknown
@@ -19,6 +20,14 @@ were registered before launch (#72) and are unchanged.
 > attempts and the off arm 13, the speed guidance should have reached 8 repair prompts, and none
 > of 43 repairs after a timeout or memory-cap stop solved. The reading below stands until the
 > two blocks are rerun (approved by the maintainer).
+>
+> **Rerun the same day:** blocks on-b5 and on-b6 were rerun whole after the fix, and the figures
+> on this page count the rerun in their place. Each block gave 2/5, as the original blocks did, so
+> the arm stays at 12/35 and the reading stands. In the rerun every timed-out attempt carried the
+> speed guidance and none was recorded as a crash. The superseded result files are kept outside
+> the export (`dev/experiments/superseded/`, local like every result file). One race-affected
+> attempt remains, in the off arm (off-b4 trial 1, recorded as a crash; its repair stopped again);
+> the off arm takes no guidance, so the rule does not apply to it.
 
 A first launch at 21:28 PST on 2026-11-11 was stopped within a minute, before any result was
 written: its "off" block reported fingerprint `619ec3965b58` instead of `80b37d599dd8`, because
@@ -132,8 +141,10 @@ Rates are over all 35 trials per arm.
 ## Result
 
 Run 2026-11-11 21:32 to 2026-11-12 06:26 PST on `m5pro-64` from `e613910`, clean tree, Ollama
-0.40.11, the 14 blocks in the registered order, none rerun. Every trial carries its arm's
-fingerprint. 8.9 GPU-hours.
+0.40.11, the 14 blocks in the registered order. Blocks on-b5 and on-b6 were rerun on 2026-11-12,
+15:35 to 16:44 PST, from `29767ef` (the timeout fix and the solver split, behaviour checked by
+replay; the `--trials 3` pre-run check after the fix gave 6/6 from `edd1733`), and replace the originals. Every trial carries
+its arm's fingerprint. 8.8 GPU-hours as counted, and 1.3 more in the two superseded blocks.
 
 | | off | on |
 |---|---|---|
@@ -155,47 +166,50 @@ now, 13/35 then (one-sided p = 0.15).
 
 ### Did it fire
 
-In the "on" arm the speed guidance was in the recorded feedback of all 8 attempts recorded as
-timed out and the wrong-answer guidance in all 28 wrong answers; the "off" arm's feedback carried
-neither. Five more "on" attempts were timeouts recorded as crashes, and blocks on-b5 and on-b6
-meet the harness-failure rule (see the dated note under the status). Feedback on a trial's last attempt reaches no repair, so the speed
-guidance reached 5 repair prompts and the wrong-answer guidance 21.
+In the "on" arm the speed guidance was in the recorded feedback of all 11 timed-out attempts and
+the wrong-answer guidance in all 29 wrong answers; the "off" arm's feedback carried neither.
+Feedback on a trial's last attempt reaches no repair, so the speed guidance reached 7 repair
+prompts and the wrong-answer guidance 22.
 
 **What the registration did not foresee: most slow drafts now stop at the memory cap.** The cap
-(8 GB of physical footprint, in force since 2026-11-11) stopped 16 attempts in the off arm and 19
-in the on arm, against 12 and 8 timeouts. Drafts that grow without bound reach 8 GB before the 60 s
+(8 GB of physical footprint, in force since 2026-11-11) stopped 16 attempts in the off arm and 21
+in the on arm, against 12 and 11 timeouts. Drafts that grow without bound reach 8 GB before the 60 s
 limit: in the replication's 600 s re-run, 26 of the 45 timed-out drafts hit the cap, most within
 10 s. The speed guidance is keyed to the timeout, so
 a memory-cap stop gets the plain error, with or without the flag. Among first drafts in the on
-arm, 7 stopped at the cap and none timed out: the case the registration counted on, about 11
-timed-out drafts per arm, did not occur. The guidance acted only on repairs that timed out.
+arm, 9 stopped at the cap and 2 timed out: the case the registration counted on, about 11
+timed-out drafts per arm, did not occur. The guidance acted mostly on repairs that timed out.
 
 ### Where rescues came from
 
 | first draft | off | rescued | on | rescued |
 |---|---|---|---|---|
 | solved | 4 | | 10 | |
-| wrong answer | 23 | 4 | 16 | 2 |
-| memory cap | 5 | 0 | 7 | 0 |
-| timed out | 2 | 0 | 0 | |
-| crashed | 1 | 0 | 2 | 0 |
+| wrong answer | 23 | 4 | 14 | 2 |
+| memory cap | 5 | 0 | 9 | 0 |
+| timed out | 2 | 0 | 2 | 0 |
+| crashed | 1 | 0 | 0 | |
+
+The off arm's crashed draft is the race-affected attempt in off-b4: a timeout.
 
 ### What the repairs did after a time or memory stop
 
 | | off | on |
 |---|---|---|
-| repairs after a timeout or memory-cap stop | 19 | 20 |
+| repairs after a timeout or memory-cap stop | 19 | 24 |
 | solved | 0 | 0 |
-| stopped again (cap or timeout) | 13 | 12 |
+| stopped again (cap or timeout) | 13 | 15 |
 | answered wrong | 2 | 3 |
-| crashed or returned no code | 4 | 5 |
+| crashed or returned no code | 4 | 6 |
 
-The 5 repairs that received the speed guidance: 2 timed out again, 2 answered wrong, 1 crashed.
+Counting off-b4's race-affected draft as the timeout it was adds one off repair, which stopped
+again: 0 of 44. The 7 repairs that received the speed guidance: 3 timed out again, 3 answered
+wrong, 1 crashed.
 
 ### Would a higher memory cap have helped? (exploratory, not registered)
 
-All 35 attempts the 8 GB cap stopped, drafts and repairs in both arms, were re-executed after the
-run from their saved code, one at a time, under the same 60 s limit and a 24 GB cap (with an 8 GB
+All 35 attempts the 8 GB cap stopped in the run as first recorded (before on-b5 and on-b6 were
+rerun), drafts and repairs in both arms, were re-executed from their saved code, one at a time, under the same 60 s limit and a 24 GB cap (with an 8 GB
 free-memory floor), on 2026-11-12:
 
 ```
@@ -211,20 +225,20 @@ needing a little more room, and the fix would have to be the algorithm.
 
 | | off | on |
 |---|---|---|
-| GPU time | 4.3 h | 4.6 h |
-| time per solve | 1,932 s | 1,378 s |
-| tokens per solve | 147,205 | 96,953 |
+| GPU time | 4.3 h | 4.5 h |
+| time per solve | 1,932 s | 1,344 s |
+| tokens per solve | 147,205 | 96,541 |
 
 Per solve the on arm was cheaper because it had more solves, which came from first drafts.
 
-The worked example passed 44 of the 81 attempts the oracle rejected in the off arm and 27 of 61 in
+The worked example passed 44 of the 81 attempts the oracle rejected in the off arm and 31 of 64 in
 the on arm, and rejected 1 of the 20 correct attempts across both.
 
 ### What this means
 
 On 2025 d9 p2 under the corrected harness, nothing measured here says the guidance helps, and
 nothing rules out a moderate effect: the interval runs to +31 points. The more useful finding is
-about the failure itself. Repair after a slow draft rescued none of 39 attempts here, none of 11
+about the failure itself. Repair after a slow draft rescued none of 43 attempts here, none of 11
 trials in the replication's one-draft arm, and a longer limit rescued none of 45 drafts there. The
 drafts that fail by speed on this problem fail by an approach that does not scale, and neither
 more time, more memory nor a repair told to find a faster algorithm turned one into a solve.
@@ -234,5 +248,5 @@ before it could be used; it is not adopted for AoC 2026.
 ### Reproducing
 
 The blocks were run by a local script holding the registered order; each block is the command
-above with its name and flag. Exported with `dev/export_results.py`; the tables are in
+above with its name and flag, and so were the reruns of on-b5 and on-b6. Exported with `dev/export_results.py`; the tables are in
 `dev/results/` under the run names `m5pro-d9p2-speed-off-b1` to `-on-b7`.

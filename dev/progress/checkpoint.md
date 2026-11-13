@@ -7,16 +7,17 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-11-12)
 
-**Now: rerunning speed-repair blocks on-b5 and on-b6**, after `shared/solver.py` was split into
+**Now: the AoC 2026 submitter decision** (by about 2026-11-25). `shared/solver.py` is split into
 `shared/solving/` (`PLAN.md`, "Engineering", items 2 and 3; a replay of 140 recorded trials
-through the solver is identical before and after); then the AoC 2026 submitter decision. The first replay found a harness race (fixed 2026-11-12): from
-2026-11-11 a busy program's timeout could be recorded as a crash, which cost 3 repairs in the
-speed-repair test's "on" arm their guidance, so its blocks on-b5 and on-b6 meet the registered
-harness-failure rule and are to be rerun (approved by the maintainer). The registered
+through the solver is identical before and after). The first replay found a harness race (fixed
+2026-11-12): from 2026-11-11 a busy program's timeout could be recorded as a crash, which cost 3
+repairs in the speed-repair test's "on" arm their guidance, so its blocks on-b5 and on-b6 were
+rerun under the registered harness-failure rule, 2/5 each as before. The registered
 speed-directed repair test on 2025 d9 p2 finished 2026-11-12 and was **inconclusive**
 (`m5pro-d9p2-speed-repair.md`): `targeted_feedback` off 8/35, on 12/35, one draft, one-sided
-Fisher p = 0.21; the gap is in first drafts, which the flag does not touch, and none of 39 repairs
-after a timeout or memory-cap stop solved; the flag stays off for AoC 2026; 8.9 GPU-hours. Since
+Fisher p = 0.21; the gap is in first drafts, which the flag does not touch, and none of 43 repairs
+after a timeout or memory-cap stop solved; the flag stays off for AoC 2026; 8.8 GPU-hours as
+counted, 1.3 more in the two superseded blocks. Since
 2026-11-12, `--include-replay` saves each attempt's prompt and raw response beside its code. The
 registered replication of the k1-vs-k3 test on 2025 d9 p2
 finished 2026-11-11 and did **not re-establish** sampling on that problem
