@@ -23,6 +23,7 @@ from bs4 import BeautifulSoup
 
 from shared import config
 from shared.errors import SessionError
+from shared.page_audit import strip_hidden
 from shared.parser import parse_problem_text
 
 logger = logging.getLogger(__name__)
@@ -270,8 +271,8 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, A
         with open(cache_file, "r", encoding="utf-8") as f:
             html = f.read()
 
-        # Parse HTML and extract examples
-        soup = BeautifulSoup(html, "html.parser")
+        # Parse HTML and extract examples. Text the page hides never reaches a prompt.
+        soup = strip_hidden(BeautifulSoup(html, "html.parser"))
         state, part1_answer, part2_answer = await _get_problem_state(soup)
 
         # Extract examples from HTML before converting to text
@@ -310,8 +311,9 @@ async def fetch_problem_text(year: int, day: int, part: int = 1) -> Tuple[str, A
         response = await make_request(url)
         html = response
         
-        # Get current state and answers
-        soup = BeautifulSoup(html, "html.parser")
+        # Get current state and answers. Text the page hides never reaches a prompt; the
+        # cache keeps the page as served.
+        soup = strip_hidden(BeautifulSoup(html, "html.parser"))
         state, part1_answer, part2_answer = await _get_problem_state(soup)
         
         # Extract examples from HTML before saving

@@ -1,8 +1,9 @@
 # AoC 2026 registration — draft, not yet registered
 
 **Status (2026-11-13): draft for the maintainer's review.** The engineering below is built and
-tested offline; nothing has run against AoC. It becomes the registration when the open decisions
-at the end are made and the engineering has passed its end-to-end test; from then until the last 2026 trial is scored, nothing it names
+tested offline; against AoC only the experiment account's session has been checked, and nothing
+has been submitted. Its decisions are made (the end); it becomes the registration when the
+engineering has passed its end-to-end test; from then until the last 2026 trial is scored, nothing it names
 changes. It covers the clean contamination test (`PLAN.md` §4b) and the run conditions for the
 held-out Part 1 context test (`part2-context-heldout-plan.md`), whose design and readings are
 registered there.
@@ -56,7 +57,7 @@ start without the experiment account and the network-denying sandbox.
 1. Starts at 02:00 PST (the Mac is woken in time). A session check fetches one page that needs a
    login and stops the run, loudly, if the session has expired.
 2. Fetches the day's page and input once and caches them. If either is unavailable, the run stops
-   and reports it; it never polls.
+   and reports it; it never polls. The page is audited for text it hides (below).
 3. Runs the registered Part 1 trials, recording every attempt's prompt, code and answer
    (`--include-replay`).
 4. Runs the submission step (below). If Part 1 is accepted, scores the recorded Part 1 answers,
@@ -67,6 +68,9 @@ start without the experiment account and the network-denying sandbox.
 Each night also does what earlier nights left owed (trials a stopped run did not finish, a part
 whose stated wait outlasted the night, a Part 2 unlocked late), and a run restarted the same
 night resumes at the trial. A Part 1 accepted outside the submission step does not start Part 2.
+A day whose page hides text runs its trials but submits nothing until the maintainer has read the
+hidden text and released the day (`nightly.py --release-day N`); text that appears on the page
+after a release holds the day again.
 
 ## Submitting
 
@@ -115,10 +119,13 @@ is protected and audited:
 - Generated code runs under a sandbox profile that denies network access, on top of the existing
   limits (`shared/sandbox.py`). Unattended runs of code written against an unseen puzzle are the
   less trusted case PLAN names.
-- The parser's handling of text the page hides is decided before the freeze (open decision 2) and
-  not changed during the event.
+- Text the page hides never reaches a prompt: every reader of a cached page strips hidden
+  elements, comments and invisible characters from the puzzle articles first, so a model sees what
+  a reader sees (hover text already never reached it). The cached page keeps what AoC served. On
+  the 37 cached 2024–2025 pages every prompt input is byte-identical with and without the
+  stripping.
 - Every prompt is saved; each day's page is checked for hidden or unusual content, and days with
-  any are reported apart.
+  any are reported apart, with their submissions held until the maintainer has read it.
 
 ## Engineering before the freeze
 
@@ -139,7 +146,8 @@ Built 2026-11-13, each with the test that fails without it:
    `tests/integration/test_network_sandbox.py`.
 4. **The hidden-text audit** (`shared/page_audit.py`): hidden elements, comments, invisible
    characters and hover text in the puzzle articles; a day with any but hover text is reported
-   apart. The handling itself waits on open decision 2. `tests/unit/test_page_audit.py`.
+   apart and its submissions held. All but hover text is stripped before the prompt
+   (`strip_hidden`). `tests/unit/test_page_audit.py`, `tests/unit/test_aoc_fetch_cache.py`.
 5. **The nightly driver** (`nightly.py`, plan in `config/nightly.yaml`, launchd template in
    `scripts/`): session check, one fetch, trials resumable at the trial, submission, Part 2, log
    and summary. The wake and schedule are tested on the test night. `tests/unit/test_nightly.py`.
@@ -157,15 +165,16 @@ be:
   and respected, a repeated answer refused, and the budget stopping at its cap.
 - The schedule and wake are tested at an arbitrary hour on a test night.
 
-## Open decisions
+## Decisions
 
 1. **Provider for the experiment account:** *decided 2026-11-13*, GitHub (`problem-solver-aoc`).
-2. **Text the page hides:** stripped before the prompt, or kept as the page has it. On the 37
-   cached 2024–2025 pages the audit finds hover text only, which the parser already leaves out,
-   so either choice leaves every past prompt unchanged.
-3. **Models and trials:** which models besides the reference `qwen3.8:27b`, and trials per part
-   (`config/nightly.yaml`; its entries are proposals).
-4. **The numbers in the budget:** 3 wrong per part and 6 per night are proposals
+2. **Text the page hides:** *decided 2026-11-13*, stripped before the prompt, and the day's
+   submissions held until the maintainer has read it (above, "Unseen pages, run unattended").
+   Stripping leaves every 2024–2025 prompt unchanged.
+3. **Models and trials:** *decided 2026-11-13*, the reference `qwen3.8:27b` alone, 3 trials of
+   Part 1 and 3 of each Part 2 arm (`config/nightly.yaml`). A second model is added only if the
+   pre-run check shows the night has room for it, and only before the freeze.
+4. **The numbers in the budget:** *decided 2026-11-13*, 3 wrong per part and 6 per night
    (`config/resources.yaml`, `submission:`).
 
 The session cookie is refreshed around 2026-11-29 and checked daily through the event.

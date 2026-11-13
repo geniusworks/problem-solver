@@ -22,6 +22,7 @@ from bs4 import BeautifulSoup
 
 from shared import config
 from shared.ground_truth import get_known_answer
+from shared.page_audit import strip_hidden
 from shared.paths import get_problem_dir
 from shared.sandbox import memory_cap_bytes, run_capped
 
@@ -35,7 +36,7 @@ def part_one_statement(year: int, day: int) -> Optional[str]:
     html_path = get_problem_dir(year, day) / config.HTML_FILE
     if not html_path.exists():
         return None
-    soup = BeautifulSoup(html_path.read_text(encoding="utf-8"), "html.parser")
+    soup = strip_hidden(BeautifulSoup(html_path.read_text(encoding="utf-8"), "html.parser"))
     articles = soup.find_all("article", class_="day-desc")
     if not articles:
         return None
@@ -194,7 +195,7 @@ def part_two_example(
     html_path = get_problem_dir(year, day) / config.HTML_FILE
     if not html_path.exists():
         return None
-    soup = BeautifulSoup(html_path.read_text(encoding="utf-8"), "html.parser")
+    soup = strip_hidden(BeautifulSoup(html_path.read_text(encoding="utf-8"), "html.parser"))
     articles = soup.find_all("article", class_="day-desc")
     if len(articles) < 2:
         return None
@@ -300,7 +301,7 @@ def statement_examples(
     puzzle_input = input_path.read_text(encoding="utf-8", errors="replace")
     if not puzzle_input.strip():
         return None
-    soup = BeautifulSoup(html_path.read_text(encoding="utf-8"), "html.parser")
+    soup = strip_hidden(BeautifulSoup(html_path.read_text(encoding="utf-8"), "html.parser"))
     articles = soup.find_all("article", class_="day-desc")[: int(part)]
     if len(articles) < int(part):
         return None

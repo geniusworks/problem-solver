@@ -1,6 +1,6 @@
 # The AoC 2026 nightly run (nightly.py; dev/progress/aoc2026-registration.md, "The nightly run").
 # Frozen with the registration: nothing here changes from 2026-12-01 until the last 2026 trial
-# is scored. Until then the models and trial counts are proposals (open decision 3).
+# is scored. The models and trial counts are the registration's decision 3.
 #
 # Each config is an experiment.py --config string. Trials run one at a time, interleaving the
 # configs of a part, so every arm has the same number of complete trials when a run stops.

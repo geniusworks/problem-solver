@@ -138,7 +138,8 @@ See `.env.example` for available environment variables.
   config, so verification/ground_truth/ledger can depend on it without a cycle
 - `aoc.py`: Advent of Code I/O — session/auth, HTTP, problem fetch + caching; one
   request per fetch, a logged-out page refused rather than cached, `check_session`
-- `page_audit.py`: text in a puzzle's articles a reader would not see
+- `page_audit.py`: text in a puzzle's articles a reader would not see: found for the
+  nightly's hold, stripped before every prompt (`strip_hidden`)
 - `ledger.py`: the solution ledger — `record_solution`/`save_solution_file`,
   oracle-gated so nothing is recorded without producing the accepted answer
 - `logging_setup.py`: application logging configuration

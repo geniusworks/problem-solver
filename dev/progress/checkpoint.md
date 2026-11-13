@@ -12,9 +12,10 @@ automatically from a dedicated experiment account under a fixed budget, by an un
 run starting five hours after each release. Its code is built and tested offline (2026-11-13):
 the submission step, workspaces per account (`AOC_ACCOUNT`), a network-denying sandbox profile
 (off by default; with it on, all 69 ledger solutions verify), the hidden-text audit (the 37
-cached pages hold hover text only) and the nightly driver. It waits on the draft's remaining open decisions
-(the account, `problem-solver-aoc`, is logged in to AoC), then the pre-run check with the sandbox on
-and an end-to-end test on past puzzles. `shared/solver.py` is split into
+cached pages hold hover text only; hidden text is stripped before the prompt and holds the day's
+submissions) and the nightly driver. Its decisions are made and the account,
+`problem-solver-aoc`, is logged in to AoC. It waits on the pre-run check with the sandbox on and
+an end-to-end test on past puzzles. `shared/solver.py` is split into
 `shared/solving/` (`PLAN.md`, "Engineering", items 2 and 3; a replay of 140 recorded trials
 through the solver is identical before and after). The first replay found a harness race (fixed
 2026-11-12): from 2026-11-11 a busy program's timeout could be recorded as a crash, which cost 3
@@ -48,7 +49,7 @@ independent (27% per draft predicts 61% at k3, 65% measured); 11.9 GPU-hours. Ea
 a verdict (`RESULTS.md`): arm 1 measured and replicated under the original prompts and not
 re-established under the corrected ones; arm 2 splits by cost type; arm 3's one complementary pair was one-way, so the
 ensemble was not run. Ledger 69 verified, 0 wrong (2024 d2 p2 added 2026-11-09 by the sandbox
-plumbing check, 12/12 at k1, `1ac712678732`); tests 434 passing, and CI runs them, `mypy` and
+plumbing check, 12/12 at k1, `1ac712678732`); tests 442 passing, and CI runs them, `mypy` and
 `dev/recompute_results.py --check` on every PR. Generated code now runs without `.env` secrets
 (`shared/sandbox.py`), and each result file records Ollama, model digests and machine. A
 reconciliation pass on 2026-11-08 checked every published claim against the result files and added

@@ -39,7 +39,7 @@ def state_path() -> Path:
 class StepReport:
     problem: str
     # accepted | already_accepted | budget_spent | night_cap | no_candidates | waiting |
-    # halted | disabled
+    # halted | disabled | held (by the nightly, for hidden page text)
     outcome: str
     posted: List[Tuple[str, str]] = field(default_factory=list)
     would_post: Optional[str] = None
