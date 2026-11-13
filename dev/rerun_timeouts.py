@@ -38,7 +38,9 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
 from shared.config import RESOURCES_CONFIG  # noqa: E402
-from shared.sandbox import child_env, communicate_capped, cpu_limit_seconds, resource_limiter  # noqa: E402
+from shared.sandbox import (  # noqa: E402
+    child_env, communicate_capped, cpu_limit_seconds, resource_limiter, sandboxed,
+)
 
 
 Draft = Tuple[str, Dict[str, Any], Dict[str, Any]]
@@ -73,7 +75,7 @@ async def run_capped(code: str, input_file: Path, timeout: int, max_bytes: int,
         module = Path(tmp) / "draft.py"
         module.write_text(code)
         process = await asyncio.create_subprocess_exec(
-            sys.executable, str(module), str(input_file),
+            *sandboxed([sys.executable, str(module), str(input_file)]),
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
             cwd=str(input_file.parent), env=child_env(),
             preexec_fn=resource_limiter(execution.get("max_memory_mb", 512),

@@ -59,3 +59,11 @@ def test_environment_is_written_to_the_result_file(tmp_path):
     saved = json.loads(result.save(tmp_path / "r.json").read_text())
 
     assert saved["environment"] == {"python": "3.11"}
+
+
+def test_records_whether_generated_code_ran_without_network(monkeypatch):
+    monkeypatch.setattr(requests, "get", lambda url, timeout: FakeResponse({}))
+    monkeypatch.setenv("DENY_NETWORK", "true")
+    assert environment.capture_environment([])["network_denied"] is True
+    monkeypatch.setenv("DENY_NETWORK", "false")
+    assert environment.capture_environment([])["network_denied"] is False

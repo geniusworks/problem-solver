@@ -23,7 +23,7 @@ from shared.quality.code_formatter import format_code
 from shared.tempfiles import TempFileManager
 from shared.config import RESOURCES_CONFIG, DEFAULT_EXECUTION_TIMEOUT
 from shared.sandbox import (
-    OVER_MEMORY, child_env, communicate_capped, configured_limiter, cpu_limit_seconds,
+    OVER_MEMORY, child_env, communicate_capped, configured_limiter, cpu_limit_seconds, sandboxed,
     memory_cap_bytes, resource_limiter,
 )
 import asyncio
@@ -139,9 +139,7 @@ async def execute_solution(code: str, input_data: str, timeout: int = 5) -> "Exe
     start = time.time()
     try:
         process = await asyncio.create_subprocess_exec(
-            sys.executable,
-            "-c",
-            runner,
+            *sandboxed([sys.executable, "-c", runner]),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=str(module_path.parent),
@@ -320,9 +318,7 @@ class SolutionExecutor:
                 # limit=, which is asyncio's StreamReader buffer size, not a memory cap:
                 # generated code ran with no resource limits at all.
                 process = await asyncio.create_subprocess_exec(
-                    sys.executable,
-                    str(Path(module_path).resolve()),
-                    str(run_input),
+                    *sandboxed([sys.executable, str(Path(module_path).resolve()), str(run_input)]),
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                     cwd=workdir,

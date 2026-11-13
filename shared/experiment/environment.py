@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 
 from shared import config
+from shared.sandbox import network_denied
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -93,4 +94,6 @@ def capture_environment(models: Iterable[str]) -> Dict[str, Any]:
         "git": {"commit": commit, "dirty": bool(status)},
         # "" is the maintainer's account; a name is a separate account with its own inputs.
         "aoc_account": config.account_name(),
+        # Whether model-written code ran under the no-network profile (shared/sandbox.py).
+        "network_denied": network_denied(),
     }
