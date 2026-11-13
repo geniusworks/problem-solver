@@ -266,3 +266,16 @@ def test_one_day_can_be_run_alone(account):
     night(world, last_day=9, first_day=9)
 
     assert world.fetches == [9]
+
+
+def test_part_two_never_runs_on_a_page_without_it(account):
+    world = FakeWorld({1: ("11", SUMS), 2: ("22", DOUBLE)}, [RIGHT])
+
+    async def stale_refresh(year, day):
+        world.refreshes.append(day)
+
+    world.refresh_problem_page = stale_refresh
+    done = night(world)
+
+    assert "shows no Part 2" in done.stopped
+    assert all(part == 1 for part, _ in world.trials) and world.posted == [(1, "11")]

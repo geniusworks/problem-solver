@@ -118,6 +118,13 @@ def verify_solution_code(
         return verify_solution_file(scratch, year, day, part, timeout=timeout)
 
 
+def answer_line(output: Optional[str]) -> str:
+    """The answer in a program's output: its last non-empty line, where the standardised
+    template prints it (generated solutions sometimes print narration first)."""
+    lines = [line.strip() for line in (output or "").splitlines() if line.strip()]
+    return lines[-1] if lines else ""
+
+
 def verify_solution_file(
     path: Path,
     year: Optional[int] = None,
@@ -150,11 +157,7 @@ def verify_solution_file(
             verdict=Verdict.UNVERIFIED, actual=output,
         )
 
-    # Generated solutions sometimes print a trailing narration line; compare the
-    # last non-empty line, which is where the standardised template prints the
-    # answer.
-    lines = [line.strip() for line in (output or "").splitlines() if line.strip()]
-    actual = lines[-1] if lines else ""
+    actual = answer_line(output)
 
     if actual != expected.strip():
         return VerificationResult(

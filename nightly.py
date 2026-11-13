@@ -246,8 +246,15 @@ async def advance_day(year: int, day: int, plan: Plan, tools: Tools, night: Nigh
     # Part 2, visible once Part 1 is accepted
     page = get_problem_dir(year, day) / settings.HTML_FILE
     if "--- Part Two ---" not in page.read_text(encoding="utf-8"):
-        await tools.refresh_problem_page(year, day)
-        await tools.ensure_problem_files(year, day)
+        try:
+            await tools.refresh_problem_page(year, day)
+            await tools.ensure_problem_files(year, day)
+        except Exception as error:
+            night.stop(f"day {day}: refreshing the page for Part 2 failed ({error}); not retried")
+            return
+        if "--- Part Two ---" not in page.read_text(encoding="utf-8"):
+            night.stop(f"day {day}: Part 1 is accepted but the refreshed page shows no Part 2")
+            return
         audit(year, day, night)
     if not part_has_puzzle(year, day, 2):
         night.note(f"{problem_id(year, day, 2)}: the last day's Part 2 is not a puzzle")

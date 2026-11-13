@@ -14,6 +14,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from shared.config import RESOURCES_CONFIG
 from shared.experiment.results import UNSCORED, ExperimentResult, Outcome
+from shared.verification import answer_line
 from submission.replies import COUNTS_AS_WRONG, JUDGED, ReplyKind
 
 # Outcomes whose answer is a candidate: the program ran and printed something.
@@ -62,8 +63,9 @@ def _example_tier(examples_passed: Optional[int], examples_total: Optional[int])
 
 
 def normalise(answer: Optional[str]) -> Optional[str]:
-    """The submittable form of a recorded answer, or None if it is not one."""
-    text = (answer or "").strip()
+    """The submittable form of a recorded answer, or None if it is not one. An unverified
+    record keeps the program's whole output; the answer is its last line, as the oracle reads it."""
+    text = answer_line(answer)
     if not text or len(text) > _MAX_ANSWER_LENGTH or any(c.isspace() for c in text):
         return None
     return text
@@ -116,8 +118,10 @@ class PartState:
     submissions: List[Dict[str, Any]] = field(default_factory=list)
 
     def tried(self) -> set:
+        # A wrong-level reply never judged the answer, but posting it again would only repeat
+        # a contradiction the maintainer has already been stopped for.
         return {s["answer"] for s in self.submissions if s["reply"] in {k.value for k in JUDGED}
-                or s["reply"] in (ReplyKind.UNKNOWN.value, PENDING)}
+                or s["reply"] in (ReplyKind.UNKNOWN.value, ReplyKind.WRONG_LEVEL.value, PENDING)}
 
     def wrong_count(self) -> int:
         counted = {k.value for k in COUNTS_AS_WRONG} | {PENDING}

@@ -85,6 +85,9 @@ async def submit_part(
     candidates = rank_candidates(experiments, problem)
     while True:
         decision = decide(state, problem, candidates, budget, now())
+        if decision.reason == "accepted" and get_known_answer(year, day, part) is None:
+            # Accepted before a crash kept it from the answer cache.
+            save_known_answers(year, day, {part: str(state.part(problem).accepted)})
         if decision.answer is None:
             report.outcome = decision.reason
             report.detail = state.halted or ""

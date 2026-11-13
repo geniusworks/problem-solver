@@ -356,3 +356,25 @@ def test_a_saved_result_loads_back_the_same(tmp_path):
     run = experiment(trial(attempt("5", passed=1, total=2), answer="5"))
     path = run.save(tmp_path / "r.json", include_replay=True)
     assert ExperimentResult.load(path).to_dict(True) == run.to_dict(True)
+
+
+def test_a_trial_answer_is_its_last_printed_line_as_live():
+    run = experiment(trial(attempt("parsing...\n123456", model="a"), answer="parsing...\n123456"))
+    rescore(run, 2026, 1, 1, "123456")
+    # the trial is read as the oracle reads it; the attempt as candidates.py compared it
+    assert run.results[0].outcome is Outcome.SOLVED
+    assert run.results[0].attempts[0].outcome is Outcome.WRONG
+    assert [c.answer for c in rank_candidates([experiment(trial(attempt("note\n42")))], PROBLEM)] == ["42"]
+
+
+def test_an_answer_that_drew_wrong_level_is_never_posted_again():
+    state = SubmissionState()
+    submitted(state, PROBLEM, ("1", "wrong_level"))
+    assert decide(state, PROBLEM, candidates("1", "2"), Budget(), START).answer == "2"
+
+
+def test_an_acceptance_lost_before_the_answer_cache_is_restored(account):
+    state = SubmissionState(parts={PROBLEM: PartState(accepted="650")})
+    state.save(step.state_path())
+    assert run_step([experiment(trial(attempt("650")))], FakeAoC(), Clock()).outcome == "accepted"
+    assert get_known_answer(2026, 1, 1) == "650"
