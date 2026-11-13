@@ -66,8 +66,10 @@ Each is detailed under [Scope and limits](#scope-and-limits) and
   costs 0.64× the wall-clock per solution and at least 3.09× the tokens, and solved 7 of 8
   problem-parts against 8 (one trial).
 - **What still fails is mostly speed.** On the hardest problems the commonest failure is a
-  program that runs past the 60 s timeout on the full input, often after passing the example. On
-  2025 d9 p2, none of 45 such drafts finished correctly within 600 s under an 8 GB memory cap,
+  program that runs past the 60 s timeout on the full input, often after passing the example.
+  Advent of Code states that every problem has a solution that completes in at most 15 seconds on
+  ten-year-old hardware (adventofcode.com/about), so such a program has the wrong algorithm, not
+  too little time. On 2025 d9 p2, none of 45 such drafts finished correctly within 600 s under an 8 GB memory cap,
   and a registered test of repair guidance aimed at speed was inconclusive (8/35 without, 12/35
   with, one-sided p = 0.21) with the whole gap in first drafts, which the guidance does not
   touch: no repair after a timeout or memory-cap stop solved, 0 of 43.

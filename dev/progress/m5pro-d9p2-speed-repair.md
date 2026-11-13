@@ -242,6 +242,9 @@ about the failure itself. Repair after a slow draft rescued none of 43 attempts 
 trials in the replication's one-draft arm, and a longer limit rescued none of 45 drafts there. The
 drafts that fail by speed on this problem fail by an approach that does not scale, and neither
 more time, more memory nor a repair told to find a faster algorithm turned one into a solve.
+That is how the puzzles are built: Advent of Code states that "every problem has a solution that
+completes in at most 15 seconds on ten-year-old hardware" (adventofcode.com/about), so a program
+still running at the 60 s limit on this machine is not a near-miss but the wrong algorithm.
 Whether the guidance should also fire on a memory-cap stop is a code change with its own test
 before it could be used; it is not adopted for AoC 2026.
 
