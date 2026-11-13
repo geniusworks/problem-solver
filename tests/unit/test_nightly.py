@@ -309,3 +309,18 @@ def test_part_two_never_runs_on_a_page_without_it(account):
 
     assert "shows no Part 2" in done.stopped
     assert all(part == 1 for part, _ in world.trials) and world.posted == [(1, "11")]
+
+
+def test_the_launchd_job_keeps_the_mac_awake_and_runs_as_the_experiment_account():
+    import plistlib
+    from pathlib import Path
+
+    plist = Path(__file__).resolve().parents[2] / "scripts" / "com.problem-solver.nightly.plist"
+    job = plistlib.loads(plist.read_bytes())
+
+    # A scheduled wake is brief; without caffeinate the Mac may sleep partway through a night.
+    assert job["ProgramArguments"] == [
+        "/usr/bin/caffeinate", "-i", "REPO_DIR/venv/bin/python", "REPO_DIR/nightly.py",
+    ]
+    assert job["EnvironmentVariables"] == {"AOC_ACCOUNT": "experiment", "DENY_NETWORK": "true"}
+    assert job["StartCalendarInterval"] == {"Hour": 2, "Minute": 0}
