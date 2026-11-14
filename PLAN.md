@@ -20,8 +20,11 @@ on:
    offline (2026-11-13: the submission step, workspaces per account, a network-denying sandbox,
    the hidden-text audit, the nightly driver). Its decisions are made and the account,
    `problem-solver-aoc`, is logged in to AoC. The pre-run check with the sandbox on gave 6/6, and
-   the end-to-end test on past puzzles passed from the experiment account (2026-11-13).
-   *Waits on* the maintainer installing the schedule and wake, and their test night. **Frozen before
+   the end-to-end test on past puzzles passed from the experiment account, test night included
+   (2026-11-14). The test night found the solver refusing parts with no checkable example when no
+   answer is cached, which would have biased the held-out context test; the configurations now
+   set `require_oracle=false`. *Waits on* the `--trials 3` pre-run check on the changed
+   configurations, with the maintainer's go. **Frozen before
    2026-12-01**, each item recorded in the registration: the models by digest;
    prompts, configuration and fingerprints; each model's release date and stated training cutoff;
    no setting tuned on a 2026 problem; results published per problem as well as in aggregate.

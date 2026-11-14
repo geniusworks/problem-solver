@@ -146,7 +146,11 @@ class SolverConfig:
 
     # --- verification ----------------------------------------------------
     # Refuse to accept a candidate for a problem with no oracle (no example
-    # with a known expected output, and no cached accepted answer).
+    # with a known expected output, and no cached accepted answer). Off, an
+    # unseen puzzle is attempted anyway and every answer is kept as unverified,
+    # even one whose worked example failed, to be scored once an answer is
+    # accepted (the AoC 2026 nightly). With an accepted answer cached it changes
+    # nothing.
     require_oracle: bool = True
 
     # --- execution -------------------------------------------------------

@@ -374,9 +374,9 @@ one-way, so the ensemble was not run. Open, in priority order (`PLAN.md`, "Open"
    training cutoff. Answers are submitted automatically, from a dedicated experiment account under
    a fixed budget, by an unattended nightly run that starts five hours after each release (draft registration:
    `dev/progress/aoc2026-registration.md`; its code is built and tested offline). The pre-run check
-   with the sandbox on gave 6/6, and the end-to-end test on past puzzles passed. *Waits on* the
-   maintainer installing the schedule and wake, and their test night; the models, prompts and
-   configuration are frozen before 2026-12-01.
+   with the sandbox on gave 6/6, and the end-to-end test on past puzzles passed, test night
+   included. *Waits on* the pre-run check on the configurations as changed after the test night;
+   the models, prompts and configuration are frozen before 2026-12-01.
 2. **Does the Part 1 context inform, or cue recall?** The headline's caveat, tested on AoC 2026,
    where nothing can be recalled: Part 2 with and without the Part 1 context
    (`dev/progress/part2-context-heldout-plan.md`). *Waits on* item 1.

@@ -1,9 +1,10 @@
 # AoC 2026 registration — draft, not yet registered
 
-**Status (2026-11-13): draft for the maintainer's review.** The engineering below is built and
-tested offline and has passed its end-to-end test on past puzzles from the experiment account
-(below). Its decisions are made (the end); it becomes the registration once the schedule and wake
-have passed their test night; from then until the last 2026 trial is scored, nothing it names
+**Status (2026-11-14): draft for the maintainer's review.** The engineering below is built and
+tested offline and has passed its end-to-end test on past puzzles from the experiment account,
+test night included (below). Its decisions are made (the end); it becomes the registration once
+the `--trials 3` pre-run check has run on the configurations as changed after the test night;
+from then until the last 2026 trial is scored, nothing it names
 changes. It covers the clean contamination test (`PLAN.md` §4b) and the run conditions for the
 held-out Part 1 context test (`part2-context-heldout-plan.md`), whose design and readings are
 registered there.
@@ -100,6 +101,11 @@ loop never sees AoC's replies.
 
 - An answer counts as solved only against the accepted answer. Answers never confirmed stay
   `unverified` and count as not solved, so the reported rates are lower bounds.
+- No accepted answer is cached while a trial runs, so every configuration sets
+  `require_oracle=false`: a part with no worked example to check is still attempted, and an
+  attempt whose example fails is run on the full input anyway and its answer kept as
+  `unverified`. The examples rank candidates and drive repair; they never discard an answer.
+  With an accepted answer cached the setting changes nothing.
 - **Part 1 is the headline**: every day has one and every Part 1 is attempted.
 - **Part 2 is reported given Part 1 was solved**, and compared with 2024–2025 computed the same
   way (Part 2 over the days where the model solved Part 1), from the existing data.
@@ -173,7 +179,20 @@ Its inputs and answers are new to the project, as 2026's will be.
   the second was posted 90 seconds after the first (the wait plus the 30-second margin), and a
   further step stopped at the night's cap of 6 posts. A repeated answer being refused, the bounds
   and the cap of 3 wrong per part are covered by `tests/unit/test_submission.py` only.
-- The schedule and wake are tested at an arbitrary hour on a test night.
+- **The test night,** 2026-11-14: launchd started a copy of the job at 11:00 on 2024 d2. Part 1
+  3 of 3 trials solved, Part 2 3 of 6, each accepted on its first post; the job exited 0. The
+  installed job's own 02:00 run that night found no puzzle open and exited 0. This Mac does not
+  sleep (system sleep is off; only the display sleeps), so the 01:50 wake is a backup for a Mac
+  that does, and was not exercised.
+- **What the test night found:** all 3 cold Part 2 trials ended with no answer. With no accepted
+  answer cached, the solver refused a part with no worked example it could check
+  (`require_oracle`), and 2024 d2's Part 2 reuses Part 1's example, which the cold arm does not
+  see. On the 37 cached 2024–2025 days, read offline, that refusal would have hit 3 Part 1s
+  (nothing posted, Part 2 never unlocked) and, of the 35 Part 2s, 15 in the cold arm and 13 in
+  the context arm, at least one arm on 20. The same default also dropped the full-input answer of
+  any attempt whose worked example failed, so it could neither be posted nor scored. Every
+  earlier run had an accepted answer cached, where neither happens. The nightly configurations
+  now set `require_oracle=false` (below, "Scoring").
 
 ## Decisions
 
