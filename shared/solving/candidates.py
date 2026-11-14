@@ -129,8 +129,12 @@ class CandidateMixin(FeedbackMixin):
         Oracle hierarchy: the accepted AoC answer wins when known, because the
         parser can mis-pair an expected output with the wrong <pre> block and a
         bad example must never veto a correct answer. Without ground truth,
-        every example must pass -- they are the only oracle available.
+        every example must pass -- they are the only oracle available. With
+        require_oracle off (an unseen puzzle scored once an answer is accepted),
+        a candidate that fails an example is still run on the full input and its
+        answer kept as unverified, so a mis-paired example cannot discard it.
         """
+        keep_answers = known_answer is None and not self.config.require_oracle
         example_results, full_result, full_answer = (
             await self.solution_executor.test_solution(
                 solution_code=solution,
@@ -140,7 +144,7 @@ class CandidateMixin(FeedbackMixin):
                 test_cases=test_cases,
                 model_name=model_name,
                 debug=self.debug,
-                force_full_input=known_answer is not None,
+                force_full_input=known_answer is not None or keep_answers,
             )
         )
 
@@ -170,7 +174,7 @@ class CandidateMixin(FeedbackMixin):
         examples_failed = bool(example_results) and any(
             r.error is not None for r in example_results
         )
-        if examples_failed and known_answer is None:
+        if examples_failed and known_answer is None and not keep_answers:
             return _reject(Outcome.WRONG)
         if not full_result or full_result.error is not None:
             return _reject(Outcome.ERROR)
@@ -189,6 +193,9 @@ class CandidateMixin(FeedbackMixin):
                     return _reject(Outcome.ERROR)
                 return _reject(Outcome.WRONG)
             outcome = Outcome.SOLVED
+        elif examples_failed:
+            # Rejected for repair, but the answer stays to be scored.
+            return _reject(Outcome.UNVERIFIED)
         else:
             # Examples all passed, but nothing confirms the full-input answer.
             outcome = Outcome.UNVERIFIED

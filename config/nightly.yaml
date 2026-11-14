@@ -4,18 +4,21 @@
 #
 # Each config is an experiment.py --config string. Trials run one at a time, interleaving the
 # configs of a part, so every arm has the same number of complete trials when a run stops.
+# require_oracle=false: no accepted answer is cached while a trial runs, so a part with no
+# checkable worked example is still attempted, and an answer whose example failed is kept,
+# unverified, to be scored once an answer is accepted.
 
 year: 2026
 
 part1:
   trials: 3
   configs:
-    - "name=aoc2026-p1-qwen38-k3,models=qwen3.8:27b,temperature=0.7,samples_per_model=3,enable_thinking=false"
+    - "name=aoc2026-p1-qwen38-k3,models=qwen3.8:27b,temperature=0.7,samples_per_model=3,enable_thinking=false,require_oracle=false"
 
 # The held-out Part 1 context test (dev/progress/part2-context-heldout-plan.md): its two arms.
 # Run only on Part 2s unlocked by the submission step's acceptance of a model's Part 1.
 part2:
   trials: 3
   configs:
-    - "name=aoc2026-p2-cold,models=qwen3.8:27b,temperature=0.7,samples_per_model=1,enable_thinking=false,enable_fallback_models=false,problem_context=legacy"
-    - "name=aoc2026-p2-context,models=qwen3.8:27b,temperature=0.7,samples_per_model=1,enable_thinking=false,enable_fallback_models=false,problem_context=aoc,gate_part_two=false"
+    - "name=aoc2026-p2-cold,models=qwen3.8:27b,temperature=0.7,samples_per_model=1,enable_thinking=false,enable_fallback_models=false,problem_context=legacy,require_oracle=false"
+    - "name=aoc2026-p2-context,models=qwen3.8:27b,temperature=0.7,samples_per_model=1,enable_thinking=false,enable_fallback_models=false,problem_context=aoc,gate_part_two=false,require_oracle=false"

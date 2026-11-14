@@ -44,8 +44,8 @@ so the test runs there.
     statement, its accepted answer, the verified Part 1 program and an input preview, without
     re-solving Part 1 in the trial.
 - **Held constant:** `models=qwen3.8:27b, samples_per_model=1, temperature=0.7,
-  enable_thinking=false, enable_fallback_models=false`, the current `example_tests` and
-  `analysis_temperature`, one machine, one Ollama version (recorded in each result file).
+  enable_thinking=false, enable_fallback_models=false, require_oracle=false`, the current
+  `example_tests` and `analysis_temperature`, one machine, one Ollama version (recorded in each result file).
 - **Trials:** 3 per Part 2 per arm, about 33 per arm.
 - **Scoring:** Part 2's accepted answer is unknown until it is submitted, so these runs record
   `unverified` with each attempt's answer; once the accepted answer is cached, the recorded

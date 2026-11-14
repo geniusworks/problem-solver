@@ -276,6 +276,21 @@ def test_the_registered_plan_parses():
     assert plan.configs[2][1].gate_part_two is False
 
 
+def test_every_registered_config_is_attempted_and_scored_without_an_oracle():
+    # No accepted answer is cached while a 2026 trial runs; with require_oracle on, a part
+    # with no checkable example is refused and a failed example discards the answer.
+    plan = nightly.Plan.load()
+    assert [c.require_oracle for part in (1, 2) for c in plan.configs[part]] == [False] * 3
+
+
+def test_the_two_part_two_arms_differ_only_in_the_part_one_context():
+    cold, context = (c.to_dict() for c in nightly.Plan.load().configs[2])
+    for arm in (cold, context):
+        for key in ("name", "problem_context", "gate_part_two"):
+            arm.pop(key)
+    assert cold == context
+
+
 def test_an_unverified_part_one_program_never_reaches_the_context_arm(account):
     # the solve loop saved a program it could not verify; the trials' answer is accepted,
     # but their code was not recorded, so nothing can be verified in its place

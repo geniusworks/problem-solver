@@ -77,3 +77,79 @@ def test_the_attempt_record_carries_the_example_verdict(solver, monkeypatch):
 def test_attempts_without_a_verdict_leave_it_unrecorded(solver):
     record = solver._record_attempt("m", 2099, 1, 1, Outcome.NO_CANDIDATE)
     assert (record.examples_passed, record.examples_total) == (None, None)
+
+
+# -- No accepted answer cached: the AoC 2026 nightly (require_oracle=false) -----------------
+#
+# The registration scores every recorded answer once one is accepted, so an attempt must keep
+# its full-input answer even when a worked example fails, and a part with no checkable example
+# must still be attempted. With the default (require_oracle=true) neither happens.
+
+
+def verify_unseen(solver, monkeypatch, example_results, full_answer):
+    calls = {}
+
+    async def fake_test_solution(**kwargs):
+        calls.update(kwargs)
+        return example_results, ExecutionResult(output=full_answer), full_answer
+
+    monkeypatch.setattr(solver.solution_executor, "test_solution", fake_test_solution)
+    verdict = asyncio.run(solver._verify_candidate("m", "code", 2099, 1, 1, CASES, None))
+    return verdict, calls["force_full_input"]
+
+
+@pytest.fixture
+def unseen_solver(tmp_path, monkeypatch):
+    monkeypatch.setattr(BaseSolver, "_resolve_available_models", lambda self: [])
+    return BaseSolver(tmp_path, config=SolverConfig(require_oracle=False))
+
+
+def test_without_an_oracle_a_failed_example_keeps_the_answer_unverified(unseen_solver, monkeypatch):
+    verdict, forced = verify_unseen(unseen_solver, monkeypatch, [OK, BAD], "7")
+    assert forced is True
+    assert (verdict.accepted, verdict.outcome, verdict.answer) == (False, Outcome.UNVERIFIED, "7")
+    assert (verdict.examples_passed, verdict.examples_total) == (1, 2)
+
+
+def test_without_an_oracle_passing_examples_is_still_only_unverified(unseen_solver, monkeypatch):
+    verdict, _ = verify_unseen(unseen_solver, monkeypatch, [OK, OK], "7")
+    assert (verdict.accepted, verdict.outcome) == (True, Outcome.UNVERIFIED)
+
+
+def test_by_default_a_failed_example_still_rejects_without_running_the_input(solver, monkeypatch):
+    verdict, forced = verify_unseen(solver, monkeypatch, [OK, BAD], "7")
+    assert forced is False
+    assert (verdict.accepted, verdict.outcome) == (False, Outcome.WRONG)
+
+
+def _no_oracle_run(solver, monkeypatch):
+    from shared.solving.state import _Candidates, _Prep
+    import shared.ground_truth
+
+    monkeypatch.setattr(shared.ground_truth, "get_known_answer", lambda *a: None)
+    reached = []
+
+    async def repair_loop(*args):
+        reached.append(args[-1])
+        return "program"
+
+    async def no_fallback(*args):
+        return None
+
+    monkeypatch.setattr(solver, "_repair_loop", repair_loop)
+    monkeypatch.setattr(solver, "_try_fallback_models", no_fallback)
+    monkeypatch.setattr(solver, "_print_consensus_summary", lambda *a: None)
+    cands = _Candidates(answers={"m": "code"})
+    solved = asyncio.run(solver._execute_and_repair(cands, {}, _Prep(), 2099, 1, 2))
+    return solved, reached
+
+
+def test_without_an_oracle_a_part_with_no_checkable_example_is_attempted(unseen_solver, monkeypatch):
+    solved, reached = _no_oracle_run(unseen_solver, monkeypatch)
+    assert solved == "program"
+    assert len(reached) == 1 and reached[0].known_answer is None
+
+
+def test_by_default_a_part_with_no_oracle_is_refused(solver, monkeypatch):
+    solved, reached = _no_oracle_run(solver, monkeypatch)
+    assert solved is None and reached == []

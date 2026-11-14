@@ -16,8 +16,12 @@ cached pages hold hover text only; hidden text is stripped before the prompt and
 submissions) and the nightly driver. Its decisions are made and the account,
 `problem-solver-aoc`, is logged in to AoC. The pre-run check with the sandbox on gave 6/6
 (2026-11-13), and the end-to-end test on past puzzles passed from the experiment account
-(2026-11-13: 2024 d1 and 2025 d9 accepted, the wrong-answer path and the night's cap checked live).
-It waits on the maintainer installing the schedule and wake, and their test night. `shared/solver.py` is split into
+(2026-11-13: 2024 d1 and 2025 d9 accepted, the wrong-answer path and the night's cap checked live;
+2026-11-14: the test night, launchd starting 2024 d2, both parts accepted). The test night found
+that with no answer cached the solver refused parts with no checkable example and dropped the
+answers of attempts whose example failed; on the cached 2024–2025 pages that would have hit 3
+Part 1s and at least one context-test arm on 20 of 35 Part 2s. The configurations now set
+`require_oracle=false`. It waits on the `--trials 3` pre-run check on the changed configurations. `shared/solver.py` is split into
 `shared/solving/` (`PLAN.md`, "Engineering", items 2 and 3; a replay of 140 recorded trials
 through the solver is identical before and after). The first replay found a harness race (fixed
 2026-11-12): from 2026-11-11 a busy program's timeout could be recorded as a crash, which cost 3
@@ -51,7 +55,7 @@ independent (27% per draft predicts 61% at k3, 65% measured); 11.9 GPU-hours. Ea
 a verdict (`RESULTS.md`): arm 1 measured and replicated under the original prompts and not
 re-established under the corrected ones; arm 2 splits by cost type; arm 3's one complementary pair was one-way, so the
 ensemble was not run. Ledger 69 verified, 0 wrong (2024 d2 p2 added 2026-11-09 by the sandbox
-plumbing check, 12/12 at k1, `1ac712678732`); tests 447 passing, and CI runs them, `mypy` and
+plumbing check, 12/12 at k1, `1ac712678732`); tests 454 passing, and CI runs them, `mypy` and
 `dev/recompute_results.py --check` on every PR. Generated code now runs without `.env` secrets
 (`shared/sandbox.py`), and each result file records Ollama, model digests and machine. A
 reconciliation pass on 2026-11-08 checked every published claim against the result files and added
@@ -63,7 +67,7 @@ depend on an exact checker; on 2025 d9 p2 the example passed 59 of the 104 Part 
 oracle rejected in the power test and 137 of 249 in the replication, where a selector using it
 alone took a wrong draft in 15 of 35 trials. What is next, in priority order, is `PLAN.md`,
 "Open": AoC 2026 (the registration
-draft, its schedule and wake, and their test night); then the test of
+draft and its pre-run check on the changed configurations); then the test of
 whether the Part 1 context informs or cues recall, designed for AoC 2026 (`part2-context-heldout-plan.md`). Nothing starts without the
 maintainer's go. The sections below are the dated record, newest
 first.
