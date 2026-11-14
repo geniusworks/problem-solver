@@ -18,10 +18,18 @@
     sudo pmset repeat wakeorpoweron MTWRFSU 01:50:00
     pmset -g sched
 
-  It runs only in a logged-in session: a LaunchAgent, and Ollama's app, start at login. With
-  FileVault on, a Mac that shut down or restarted waits at the unlock screen and misses the
-  night, so through the event stay logged in, leave the Mac on (sleep is fine) and turn off
-  automatic restarts for macOS updates.
+  It runs only in a logged-in session: a LaunchAgent starts at login, and so does the Ollama
+  server it needs (here Homebrew's, run as a brew service). With FileVault on, a Mac that shut
+  down or restarted waits at the unlock screen and misses the night, so through the event stay
+  logged in, leave the Mac on (sleep is fine) and install any waiting macOS update by day. A
+  missed night is caught up the next: each run does whatever is still owed.
+
+  Ollama is part of the frozen instrument. Keep Homebrew from upgrading it until the event ends,
+  and do not open the Ollama app, which would start a second server and can install an update
+  it has downloaded:
+    brew pin ollama
+  After the event:
+    brew unpin ollama
 
   Test night: install a copy with another Label, the hour and minute to test, and nightly.py's
   options for 2024 day 2 added to ProgramArguments (year 2024, from-day 2, day 2; see

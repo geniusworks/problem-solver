@@ -139,11 +139,13 @@ is protected and audited:
 - Generated code runs under a sandbox profile that denies network access, on top of the existing
   limits (`shared/sandbox.py`). Unattended runs of code written against an unseen puzzle are the
   less trusted case PLAN names.
-- Text the page hides never reaches a prompt: every reader of a cached page strips hidden
-  elements, comments and invisible characters from the puzzle articles first, so a model sees what
-  a reader sees (hover text already never reached it). The cached page keeps what AoC served. On
-  the 37 cached 2024–2025 pages every prompt input is byte-identical with and without the
-  stripping.
+- Text the page hides by the means the audit detects never reaches a prompt: every reader of a
+  cached page strips elements hidden by inline style or the `hidden` or `aria-hidden` attribute,
+  comments and invisible characters from the puzzle articles first (hover text already never
+  reached it). The cached page keeps what AoC served. On the 37 cached 2024–2025 pages every
+  prompt input is byte-identical with and without the stripping. Text hidden only by a stylesheet
+  rule is not detected: stylesheets are not evaluated. On those pages the articles use two
+  classes, `star` and `quiet`, both displayed, and the only inline rule underlines hover text.
 - Every prompt is saved; each day's page is checked for hidden or unusual content, and days with
   any are reported apart, with their submissions held until the maintainer has read it.
 
