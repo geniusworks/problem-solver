@@ -5,15 +5,16 @@ The **live status snapshot** — where the project actually stands right now. Th
 `dev/benchmarks/cross-machine-results.md`; git history + merged PRs are the changelog. Keep this
 file current as work lands so it never goes stale.
 
-## Current status (2026-11-12)
+## Current status (2026-11-14)
 
 **Now: the AoC 2026 registration** (registered 2026-11-14, `aoc2026-registration.md`): answers submitted
 automatically from a dedicated experiment account under a fixed budget, by an unattended nightly
 run starting five hours after each release. Its code is built and tested offline (2026-11-13):
 the submission step, workspaces per account (`AOC_ACCOUNT`), a network-denying sandbox profile
 (off by default; with it on, all 69 ledger solutions verify), the hidden-text audit (the 37
-cached pages hold hover text only; hidden text is stripped before the prompt and holds the day's
-submissions) and the nightly driver. Its decisions are made and the account,
+cached pages hold hover text only; text hidden by inline style, attribute, comment or invisible
+character is stripped before the prompt and holds the day's submissions; stylesheet rules are not
+evaluated) and the nightly driver. Its decisions are made and the account,
 `problem-solver-aoc`, is logged in to AoC. The pre-run check with the sandbox on gave 6/6
 (2026-11-13), and the end-to-end test on past puzzles passed from the experiment account
 (2026-11-13: 2024 d1 and 2025 d9 accepted, the wrong-answer path and the night's cap checked live;
