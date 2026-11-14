@@ -1,7 +1,7 @@
 # Plan: does the Part 1 context inform, or cue recall? — registered design on AoC 2026, not yet run
 
 **Status (2026-11-09): approved design; runs during AoC 2026** (opens 2026-12-01). Runs under
-the AoC 2026 registration (`aoc2026-registration.md`, a draft), on its experiment account.
+the AoC 2026 registration (`aoc2026-registration.md`), on its experiment account.
 
 ## The question
 

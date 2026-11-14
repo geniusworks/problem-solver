@@ -16,15 +16,16 @@ on:
 1. **AoC 2026** (§4b), opening **2026-12-01**: the clean contamination test, and the only item
    with a deadline. *Decided 2026-11-12:* answers are submitted automatically from a dedicated
    experiment account, never the maintainer's, under a fixed submission budget, by an unattended
-   nightly run starting at 02:00 PST, five hours after release, so it races no one; the draft registration is `dev/progress/aoc2026-registration.md`. Its code is built and tested
+   nightly run starting at 02:00 PST, five hours after release, so it races no one; the registration is `dev/progress/aoc2026-registration.md`. Its code is built and tested
    offline (2026-11-13: the submission step, workspaces per account, a network-denying sandbox,
    the hidden-text audit, the nightly driver). Its decisions are made and the account,
    `problem-solver-aoc`, is logged in to AoC. The pre-run check with the sandbox on gave 6/6, and
    the end-to-end test on past puzzles passed from the experiment account, test night included
    (2026-11-14). The test night found the solver refusing parts with no checkable example when no
    answer is cached, which would have biased the held-out context test; the configurations now
-   set `require_oracle=false`. *Waits on* the `--trials 3` pre-run check on the changed
-   configurations, with the maintainer's go. **Frozen before
+   set `require_oracle=false`, and a run on 2024 d7 under them passed. Registered and its frozen
+   items recorded (2026-11-14). *Waits on* the maintainer refreshing the session cookie around
+   2026-11-29. **Frozen before
    2026-12-01**, each item recorded in the registration: the models by digest;
    prompts, configuration and fingerprints; each model's release date and stated training cutoff;
    no setting tuned on a 2026 problem; results published per problem as well as in aggregate.

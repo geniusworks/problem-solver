@@ -1,19 +1,18 @@
-# AoC 2026 registration — draft, not yet registered
+# AoC 2026 registration
 
-**Status (2026-11-14): draft for the maintainer's review.** The engineering below is built and
-tested offline and has passed its end-to-end test on past puzzles from the experiment account,
-test night included (below). Its decisions are made (the end); it becomes the registration once
-the `--trials 3` pre-run check has run on the configurations as changed after the test night;
-from then until the last 2026 trial is scored, nothing it names
-changes. It covers the clean contamination test (`PLAN.md` §4b) and the run conditions for the
+**Status (2026-11-14): registered.** The engineering below is built, tested offline, and has
+passed its end-to-end test on past puzzles from the experiment account, test night and the
+changed configurations included (below). Its decisions are made (the end) and what it freezes is
+recorded (below, "Frozen before 2026-12-01"). From now until the last 2026 trial is scored,
+nothing it names changes; the session cookie is refreshed around 2026-11-29. It covers the clean contamination test (`PLAN.md` §4b) and the run conditions for the
 held-out Part 1 context test (`part2-context-heldout-plan.md`), whose design and readings are
 registered there.
 
 ## What AoC 2026 measures
 
 AoC 2026 opens 2026-12-01 (midnight EST, 21:00 PST), one puzzle a day to mid-December (12 days in
-2025). Its puzzles are published after the training cutoff of every model registered here, so a
-solve cannot come from recall. That makes it the clean test of what the 2024–2025 capability
+2025). Its puzzles are published after the release of every model registered here, and so after
+any data it was trained on, so a solve cannot come from recall. That makes it the clean test of what the 2024–2025 capability
 results could not separate: ability from having seen the benchmark. The models are frozen by
 digest, so a trial run in January is as clean as one run on the night: freshness depends on the
 models, not on the date.
@@ -47,6 +46,20 @@ configurations and fingerprints; Ollama version, machine and `requirements.lock`
 policy below. No model released after 2026-12-01 is added, nothing is upgraded, and no setting is
 tuned on a 2026 puzzle, until the last trial of 2026 is scored (possibly in early 2027). An
 unplanned change is recorded as an instrument change and the affected results are reported apart.
+
+Recorded 2026-11-14:
+
+- **Model:** `qwen3.8:27b`, digest `sha256:aaee06c39dcf2437cde036998d960e1fc1494b8191be7cc9657d01e509097813`
+  (Ollama manifest), 27.3B parameters, Q4_K_M. Released 2026-08-14 (the QwenLM/Qwen3.8
+  repository's news). No training cutoff is stated on its Ollama page, its Hugging Face model
+  card or its repository; the release date bounds it.
+- **Code and prompts:** as at commit `be93751`, which this record changes only in documentation.
+- **Configurations:** `config/nightly.yaml`. Fingerprints `71ebf97447af` (Part 1), `82198a33b31c`
+  (Part 2 cold), `20faa44d9480` (Part 2 with context).
+- **Instrument:** Ollama 0.40.11; machine `m5pro-64` (Apple M5 Pro, 64 GB, macOS 27.0.1;
+  `dev/benchmarks/cross-machine-results.md`); Python 3.11.16; `requirements.lock` sha256
+  `bef53ce5b345dcb4052bb1b7923dec9f03f03618de92c5a85655d6f669da5fc3`.
+- **Submission policy:** below, with the numbers in `config/resources.yaml`, `submission:`.
 
 ## The nightly run
 
@@ -193,6 +206,13 @@ Its inputs and answers are new to the project, as 2026's will be.
   any attempt whose worked example failed, so it could neither be posted nor scored. Every
   earlier run had an accepted answer cached, where neither happens. The nightly configurations
   now set `require_oracle=false` (below, "Scoring").
+- **The changed configurations,** 2026-11-14, on 2024 d7 (`nightly.py --year 2024 --from-day 7
+  --day 7`, commit `be93751`): a day whose cold Part 2 has no worked example to check, as 2024
+  d2's. Part 1 3 of 3 trials solved, Part 2 cold 3 of 3 and with context 3 of 3, each part
+  accepted on its first post. The cold trials, with no example and no cached answer, recorded
+  their answers as `unverified`, and the rescore after acceptance scored them. No example failed,
+  so keeping an answer whose example failed is covered by `tests/unit/test_example_verdicts.py`
+  only.
 
 ## Decisions
 
