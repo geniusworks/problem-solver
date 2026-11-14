@@ -7,7 +7,7 @@ file current as work lands so it never goes stale.
 
 ## Current status (2026-11-12)
 
-**Now: the AoC 2026 registration** (draft, `aoc2026-registration.md`): answers submitted
+**Now: the AoC 2026 registration** (registered 2026-11-14, `aoc2026-registration.md`): answers submitted
 automatically from a dedicated experiment account under a fixed budget, by an unattended nightly
 run starting five hours after each release. Its code is built and tested offline (2026-11-13):
 the submission step, workspaces per account (`AOC_ACCOUNT`), a network-denying sandbox profile
@@ -21,7 +21,8 @@ submissions) and the nightly driver. Its decisions are made and the account,
 that with no answer cached the solver refused parts with no checkable example and dropped the
 answers of attempts whose example failed; on the cached 2024–2025 pages that would have hit 3
 Part 1s and at least one context-test arm on 20 of 35 Part 2s. The configurations now set
-`require_oracle=false`. It waits on the `--trials 3` pre-run check on the changed configurations. `shared/solver.py` is split into
+`require_oracle=false`; a run on 2024 d7 under them passed (cold Part 2 with no example to check,
+3 of 3). Its frozen items are recorded. It waits on the session cookie's refresh around 2026-11-29. `shared/solver.py` is split into
 `shared/solving/` (`PLAN.md`, "Engineering", items 2 and 3; a replay of 140 recorded trials
 through the solver is identical before and after). The first replay found a harness race (fixed
 2026-11-12): from 2026-11-11 a busy program's timeout could be recorded as a crash, which cost 3
@@ -67,7 +68,7 @@ depend on an exact checker; on 2025 d9 p2 the example passed 59 of the 104 Part 
 oracle rejected in the power test and 137 of 249 in the replication, where a selector using it
 alone took a wrong draft in 15 of 35 trials. What is next, in priority order, is `PLAN.md`,
 "Open": AoC 2026 (the registration
-draft and its pre-run check on the changed configurations); then the test of
+and the cookie's refresh); then the test of
 whether the Part 1 context informs or cues recall, designed for AoC 2026 (`part2-context-heldout-plan.md`). Nothing starts without the
 maintainer's go. The sections below are the dated record, newest
 first.
