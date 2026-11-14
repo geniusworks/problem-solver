@@ -53,7 +53,8 @@ Recorded 2026-11-14:
   (Ollama manifest), 27.3B parameters, Q4_K_M. Released 2026-08-14 (the QwenLM/Qwen3.8
   repository's news). No training cutoff is stated on its Ollama page, its Hugging Face model
   card or its repository; the release date bounds it.
-- **Code and prompts:** as at commit `be93751`, which this record changes only in documentation.
+- **Code and prompts:** as at commit `be93751`, tagged `aoc2026-registered`; later commits change
+  only documentation and comments.
 - **Configurations:** `config/nightly.yaml`. Fingerprints `71ebf97447af` (Part 1), `82198a33b31c`
   (Part 2 cold), `20faa44d9480` (Part 2 with context).
 - **Instrument:** Ollama 0.40.11; machine `m5pro-64` (Apple M5 Pro, 64 GB, macOS 27.0.1;
