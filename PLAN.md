@@ -165,6 +165,18 @@ replay differs unexplained is reverted and waits. The rest wait until after the 
    timed-out process five seconds to exit and honours a free-memory floor. One loop, with the
    other a thin wrapper, keeps the time and memory caps identical on every path that runs
    generated code. Checked by the sandbox tests on both paths and the ledger's 69 verifying.
+5. **A run anyone can do from a fresh clone.** Nothing runs end to end without an AoC session,
+   cached puzzles and a local model. A small puzzle written for the project (AoC text and inputs
+   cannot be redistributed), with its input, accepted answer and scripted model replies (as the
+   `ScriptedModel` of `tests/integration/test_solver_outcome_paths.py`, but with the real executor
+   and oracle, which that test also scripts), run through `experiment.py`, would show the harness,
+   oracle, overfit gate and result file working with no credentials or GPU. Checked by CI running
+   it.
+6. **An index from each published claim to its evidence.** `dev/recompute_results.py` already
+   holds every figure README, RESULTS and the social card publish; each claim there gains the
+   write-up, run names and fingerprints it rests on, and `--index` prints them as one table, so a
+   reader can go from a headline to its protocol, data and the command that recomputes it.
+   Checked by `--check`, which already fails when a figure drifts.
 
 The problem-and-checker boundary is "Beyond AoC", step 2, shaped by the second domain rather than
 built ahead of it. Not planned: a second LLM provider (nothing measured needs one yet), and
