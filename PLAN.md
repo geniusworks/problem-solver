@@ -171,12 +171,18 @@ replay differs unexplained is reverted and waits. The rest wait until after the 
    `ScriptedModel` of `tests/integration/test_solver_outcome_paths.py`, but with the real executor
    and oracle, which that test also scripts), run through `experiment.py`, would show the harness,
    oracle, overfit gate and result file working with no credentials or GPU. Checked by CI running
-   it.
+   it. The overfit gate's integration tests (`tests/integration/test_overfit_gate.py`) move onto
+   the same puzzle: they need an accepted answer and skip without one, so CI, which has no cached
+   puzzles, covers 51% of `shared/overfit_detection.py` against 98% with them, and a change that
+   broke the oracle's integrity gate could pass CI.
 6. **An index from each published claim to its evidence.** `dev/recompute_results.py` already
    holds every figure README, RESULTS and the social card publish; each claim there gains the
    write-up, run names and fingerprints it rests on, and `--index` prints them as one table, so a
    reader can go from a headline to its protocol, data and the command that recomputes it.
    Checked by `--check`, which already fails when a figure drifts.
+7. **At the next toolchain update,** drop the `isinstance(element, Tag)` guard in
+   `shared/page_audit.py`'s `audit_page`: newer BeautifulSoup type hints make it always true, and
+   mypy then reports the `continue` as unreachable. The pinned toolchain passes.
 
 The problem-and-checker boundary is "Beyond AoC", step 2, shaped by the second domain rather than
 built ahead of it. Not planned: a second LLM provider (nothing measured needs one yet), and
