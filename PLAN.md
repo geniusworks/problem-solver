@@ -183,6 +183,13 @@ replay differs unexplained is reverted and waits. The rest wait until after the 
 7. **At the next toolchain update,** drop the `isinstance(element, Tag)` guard in
    `shared/page_audit.py`'s `audit_page`: newer BeautifulSoup type hints make it always true, and
    mypy then reports the `continue` as unreachable. The pinned toolchain passes.
+8. **Merge the file confinement for generated code (PR #110),** once the last 2026 trial is
+   scored. `execution.confine_files` extends the no-network sandbox profile: no reading under
+   the home directory, the repository or the temp directory beyond the run's own files, and no
+   writes outside its directory. It is off by default and leaves the profile byte-identical
+   while off, but the nightly runs from the live checkout, and the registration records its code
+   as frozen at `aoc2026-registered`. Turning it on afterwards is an instrument change: a row in
+   `dev/benchmarks/cross-machine-results.md` and the `--trials 3` pre-run check.
 
 The problem-and-checker boundary is "Beyond AoC", step 2, shaped by the second domain rather than
 built ahead of it. Not planned: a second LLM provider (nothing measured needs one yet), and
