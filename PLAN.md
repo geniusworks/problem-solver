@@ -837,8 +837,10 @@ The Milestone C deferred cleanups are done (PR #26), and so are the 2026-11-09 o
 clean on all code and runs in CI, `OllamaProvider` takes its model as a required argument (the
 stale `codellama:7b` default is gone), and autopep8 is 2.3.2 (formatter output byte-identical to
 2.0.4 on all 74 recorded and fixture programs). Generated code runs without `.env` secrets and under resource limits,
-including an 8 GB memory cap that macOS also enforces (`shared/sandbox.py`), but with network access and the user's file permissions; a macOS sandbox
-profile that denies network is the next step if less trusted code is ever run.
+including an 8 GB memory cap that macOS also enforces (`shared/sandbox.py`). A macOS sandbox profile
+can also deny it the network (`execution.deny_network`, required by the AoC 2026 nightly run) and
+confine it to its own run's files (`execution.confine_files`); both are off by default, so the
+measurement path keeps network access and the user's file permissions.
 
 ## Documentation
 

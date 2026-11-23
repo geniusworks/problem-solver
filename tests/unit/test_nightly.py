@@ -116,7 +116,7 @@ def account(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "BASE_DIR", tmp_path)
     monkeypatch.setattr(config, "AOC_ACCOUNT", "experiment")
     # The driver's precondition; the profile itself is macOS-only and covered by
-    # tests/integration/test_network_sandbox.py, so the fake trials here run without it.
+    # tests/integration/test_sandbox_profile.py, so the fake trials here run without it.
     monkeypatch.setattr(nightly, "network_denied", lambda: True)
     return tmp_path / "accounts" / "experiment"
 

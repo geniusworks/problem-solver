@@ -332,7 +332,7 @@ shared/
   experiment/            The platform: SolverConfig, results, runner
   verification.py        Correctness oracle (candidate vs accepted answer)
   sandbox.py             What generated code may see: no .env secrets, resource limits, and
-                         optionally no network (not a security boundary: file reads stay open)
+                         optionally no network and no files outside its run (macOS only)
   page_audit.py          Text on a puzzle page a reader would not see (found, and stripped)
   ground_truth.py        Cached accepted answers
   overfit_detection.py   Overfit gate before a solution is recorded

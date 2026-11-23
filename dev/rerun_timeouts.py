@@ -28,6 +28,7 @@ import argparse
 import asyncio
 import collections
 import json
+import shutil
 import sys
 import tempfile
 import time
@@ -67,17 +68,20 @@ def stopped_drafts(paths: Iterable[str], stopped_by: str = "timeout",
 
 async def run_capped(code: str, input_file: Path, timeout: int, max_bytes: int,
                      min_free: int = 0) -> Tuple[str, str]:
-    """Run a draft as the harness does (module file, input path as argv, sandboxed env and
-    limits) under the shared watchdog (`shared.sandbox.communicate_capped`).
+    """Run a draft as the harness does (module file, input path as argv, a fresh directory
+    holding a copy of the input as its working directory, sandboxed env and limits) under
+    the shared watchdog (`shared.sandbox.communicate_capped`).
     Returns (status, stdout) with status "ok", "failed", "timed out" or "over the memory cap"."""
     execution = RESOURCES_CONFIG.get("execution", {})
     with tempfile.TemporaryDirectory() as tmp:
         module = Path(tmp) / "draft.py"
         module.write_text(code)
+        run_input = Path(tmp) / "input.txt"
+        shutil.copyfile(input_file, run_input)
         process = await asyncio.create_subprocess_exec(
-            *sandboxed([sys.executable, str(module), str(input_file)]),
+            *sandboxed([sys.executable, str(module), str(run_input)], tmp),
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-            cwd=str(input_file.parent), env=child_env(),
+            cwd=tmp, env=child_env(),
             preexec_fn=resource_limiter(execution.get("max_memory_mb", 512),
                                         execution.get("max_processes", 1),
                                         cpu_seconds=cpu_limit_seconds(timeout)),

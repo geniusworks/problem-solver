@@ -4,6 +4,7 @@ execution:
   max_memory_mb: 8192  # Per-process memory cap: RLIMIT_AS on Linux, a physical-footprint watchdog everywhere (shared/sandbox.py)
   max_processes: 1    # Default process limit
   deny_network: false # Run model-written code under a no-network sandbox profile (shared/sandbox.py); DENY_NETWORK overrides
+  confine_files: false # Confine model-written code's file access to its own run (shared/sandbox.py); CONFINE_FILES overrides
 
 requests:
   timeout_seconds: 60  # Default API request timeout

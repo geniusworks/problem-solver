@@ -139,7 +139,7 @@ async def execute_solution(code: str, input_data: str, timeout: int = 5) -> "Exe
     start = time.time()
     try:
         process = await asyncio.create_subprocess_exec(
-            *sandboxed([sys.executable, "-c", runner]),
+            *sandboxed([sys.executable, "-c", runner], module_path.parent),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=str(module_path.parent),
@@ -318,7 +318,8 @@ class SolutionExecutor:
                 # limit=, which is asyncio's StreamReader buffer size, not a memory cap:
                 # generated code ran with no resource limits at all.
                 process = await asyncio.create_subprocess_exec(
-                    *sandboxed([sys.executable, str(Path(module_path).resolve()), str(run_input)]),
+                    *sandboxed([sys.executable, str(Path(module_path).resolve()), str(run_input)],
+                              workdir, readable=[module_path]),
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                     cwd=workdir,

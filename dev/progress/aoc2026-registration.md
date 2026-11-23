@@ -167,7 +167,7 @@ Built 2026-11-13, each with the test that fails without it:
    every path that runs generated code, off by default. With it on, the 69-solution ledger
    re-verifies 69/69, and the `--trials 3` pre-run check with it on gave 6/6 (2024 d1, fingerprint
    `1ac712678732`, run `20261113T183412Z_m5pro-precheck-sandbox`).
-   `tests/integration/test_network_sandbox.py`.
+   `tests/integration/test_sandbox_profile.py`.
 4. **The hidden-text audit** (`shared/page_audit.py`): hidden elements, comments, invisible
    characters and hover text in the puzzle articles; a day with any but hover text is reported
    apart and its submissions held. All but hover text is stripped before the prompt
