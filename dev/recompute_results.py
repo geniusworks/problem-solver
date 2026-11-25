@@ -398,7 +398,8 @@ class Claim:
 
 
 # The videos' scripts and scene page publish figures too (dev/video/).
-I, O, H = "dev/video/intro.json", "dev/video/overview.json", "dev/video/scenes.html"
+I, O, H = "dev/video/intro.json", "dev/video/overview.json", "dev/video/intro.html"
+D = "dev/video/overview.html"
 
 CLAIMS = [
     Claim("corpus runs", corpus_runs, "125 recorded experiment runs",
@@ -407,10 +408,6 @@ CLAIMS = [
           {"RESULTS.md": ["3,842 candidate attempts", "3,842 candidate attempts and about 235\nGPU-hours"]}),
     Claim("corpus GPU-hours", corpus_hours, "~235 GPU-hours", {"RESULTS.md": ["~235 GPU-hours"]}),
     Claim("corpus tokens", corpus_tokens, "48.2M tokens", {"RESULTS.md": ["48.2M tokens"]}),
-    Claim("corpus, as the overview video says it", lambda: "; ".join(
-              [corpus_runs(), corpus_attempts(), corpus_hours(), corpus_tokens()]),
-          "125 recorded experiment runs; 3,842 candidate attempts; ~235 GPU-hours; 48.2M tokens",
-          {O: ["125 experiment runs, 3,842 attempts, about 235 GPU-hours and 48.2 million tokens"]}),
     Claim("95% Newcombe intervals", intervals,
           "d19 +42 to +85; 13 cells +56 to +85; band -24 to +33; decider +48 to +98; "
           "2024 -1 to +57; 2025 +23 to +93; power -2 to +56; replication -14 to +30",
@@ -419,24 +416,26 @@ CLAIMS = [
                           "+23 to +93", "interval −2 to +56", "interval −14 to +30"]}),
     Claim("ledger", ledger_size, "69 verified solutions",
           {"README.md": ["**69 verified solutions**"], "RESULTS.md": ["69 oracle-verified solutions"],
-           "assets/social-preview.html": ["69 verified solutions"], O: ["all 69 recorded solutions"]}),
+           "assets/social-preview.html": ["69 verified solutions"]}),
     Claim("headline, matched single drafts", headline_matched, "13 cells: 2/53 -> 29/37",
           {"README.md": ["2 of 53 trials solved to 29 of 37"],
            "RESULTS.md": ["2 of 53\n  trials solved to 29 of 37", "| 2/53 | **29/37** |"],
-           O: ["from 2 in 53 to 29 in 37"]}),
+           O: ["from 2 out of 53 to 29 out of 37"], D: [">2 of 53<", ">29 of 37<", "(2 / 53)", "(29 / 37)"]}),
     Claim("headline, all trials", headline_all_trials, "13/71 -> 32/40",
           {"RESULTS.md": ["those Part 2s were 13/71 on\nrecord and 32/40 after"]}),
     Claim("d19 p2 controlled A/B", d19_ab, "6/20 -> 19/19, p = 2.6e-06",
           {"RESULTS.md": ["| 6/20 | **19/19** (one-sided Fisher p = 2.6e-6) |"],
            "README.md": ["took one problem from 6/20 to 19/19"],
            I: ["from 6 out of 20 to 19 out of 19"], O: ["from 6 out of 20 to 19 out of 19"],
-           H: [">6 of 20<", ">19 of 19<", "(6 / 20)", "(19 / 19)"]}),
+           H: [">6 of 20<", ">19 of 19<", "(6 / 20)", "(19 / 19)"],
+           D: [">6 of 20<", ">19 of 19<", "(6 / 20)", "(19 / 19)"]}),
     Claim("arm 1, original harness", arm1_original,
           "10/24 -> 9/12 (blind 7/12), p 0.061; 2025 2/8 -> 6/6, p 0.009; combined 0.005",
           {"RESULTS.md": ["| 2024 alone | 10/24 → 9/12 (+33 points, 95% interval −1 to +57) | **p ≈ 0.061 — marginal** |",
                           "| 2025 replication | 2/8 → 6/6 (+75 points, +23 to +93) | **p ≈ 0.009** |",
                           "**p ≈ 0.005**"],
-           "README.md": ["**42% to 75%**"], O: ["from 42% to 75%"]}),
+           "README.md": ["**42% to 75%**"], O: ["from 42% to 75%"],
+           D: ['42% <span style="font-family:Lato; color:var(--muted)">→</span> <span style="color:var(--green)">75%</span>']}),
     Claim("arm 1, corrected harness", arm1_corrected, "9/19 -> 11/21",
           {"RESULTS.md": ["gave 9/19 at one draft and 11/21 at three"]}),
     Claim("arm 1, powered test on 2025 d9 p2", arm1_power, "5/15 -> 13/20, p 0.065",
@@ -447,7 +446,8 @@ CLAIMS = [
           "12/35 right, 15 wrong, 8 none; oracle 14/35",
           {"README.md": ["solved 12 of 35 three-draft trials and\n  took a wrong answer in 15, where the oracle solved 14"],
            "RESULTS.md": ["solved 12 of 35 three-draft trials and took a wrong answer in 15"],
-           O: ["picked a wrong program in 15 of 35 trials"]}),
+           O: ["15 of 35 trials picked a program that passed the example but got the real puzzle wrong"],
+           D: ['15 <span style="font-family:Lato; font-weight:400; font-size:30px; color:var(--muted)">of</span> 35</div>\n    <div class="lab">trials picked a program that passed the example but got the real puzzle wrong']}),
     Claim("2025 d9 p2 replication timeouts", replication_timeouts,
           "45 of 140 drafts; 138 of 249 rejected; 94 passed the example; example passed 137 of 249",
           {"RESULTS.md": ["138 of 249 on 2025 d9 p2", "and 94 of the 138"],
@@ -458,7 +458,9 @@ CLAIMS = [
                           "| 28/140 (20%) | 49% | 40% (14/35) |", "| **52%** (39 expected) | **49%** (37) |"],
            "README.md": ["three drafts solved 49% of 75 trials where the single-draft rates predicted 52%"],
            "assets/social-preview.html": ['class="predicted">52%<', 'class="to">49%<'],
-           O: ["three drafts solved 49% where single-draft rates predicted 52%"]}),
+           O: ["three tries solved 49% where single-try rates predicted 52%"],
+           D: ['<span style="color:var(--muted)">52%</span>', '<span style="color:var(--green)">49%</span>', "75 trials in three tests",
+              "[[16, 80, 10, 20], [20, 75, 13, 20], [28, 140, 14, 35]]", "[39, 37, 75]"]}),
     Claim("arm 1, registered replication on 2025 d9 p2", arm1_replication, "13/35 -> 16/35, p 0.31",
           {"RESULTS.md": ["| solved | 13/35 (37%) | 16/35 (46%) | **p = 0.31 — not re-established** |",
                           "replication at 13/35 against 16/35 (one-sided p = 0.31;"],
@@ -473,7 +475,8 @@ CLAIMS = [
           {"RESULTS.md": ["| 7/8 | **891 s** (0.64×) | ≥119,068 (≥3.09×) |", "1,389 s"]}),
     Claim("repair by model", repair_by_model, "17/427 vs 14/80; same problems 16/417 vs 8/67",
           {"RESULTS.md": ["succeeded 17 times in 427, muse's 14 times in 80. On the problems both models repaired, 16 in 417\nagainst 8 in 67"],
-           "README.md": ["rarely succeeded (17 of 427 attempts)"], O: ["17 times in 427"]}),
+           "README.md": ["rarely succeeded (17 of 427 attempts)"], O: ["17 times in 427"],
+           D: ['17 <span style="font-family:Lato; font-weight:400; font-size:30px; color:var(--muted)">of</span> 427']}),
     Claim("repair share of solves", repair_share_of_solves, "17 of 326 vs 14 of 131",
           {"RESULTS.md": ["17 of the reference's 326 solves came\n  from repair, against 14 of 131",
                           "17 of\nits 326 solved cells were solved by repair", "solved 14 of\nits 131 by repair",
@@ -481,7 +484,7 @@ CLAIMS = [
            "PLAN.md": ["repair produced 17\nof the reference model's 326 solves"]}),
     Claim("arm 3 decider", arm3, "10/10 vs 1/10, p 0.0001",
           {"RESULTS.md": ["10/10 against the reference's 1/10 in the decider (+90 points", "one-sided Fisher p = 0.0001). It also gave"],
-           O: ["10 times in 10 that my reference model solved once in 10"]}),
+           O: ["10 times in 10 that my reference model solved once in 10"], D: [">10 of 10<", ">1 of 10<"]}),
 ]
 
 
@@ -499,7 +502,8 @@ def social_card_rendered() -> List[str]:
 
 # Each published video and the sources its picture and soundtrack are made from
 # (dev/video/make-video.sh records them).
-VIDEOS = {"intro": ["dev/video/intro.json", "dev/video/scenes.html"]}
+VIDEOS = {name: [f"dev/video/{name}.json", f"dev/video/{name}.html", "dev/video/scenes.css", "dev/video/scenes.js"]
+          for name in ("intro", "overview")}
 
 
 def videos_rendered() -> List[str]:

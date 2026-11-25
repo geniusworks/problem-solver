@@ -9,14 +9,14 @@ spec = importlib.util.spec_from_file_location("recompute_results", SCRIPT)
 recompute = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(recompute)
 
-SOURCES = ["dev/video/intro.json", "dev/video/scenes.html"]
+SOURCES = ["dev/video/intro.json", "dev/video/intro.html"]
 
 
 def video(tmp_path, monkeypatch, script, recorded_script):
     (tmp_path / "dev" / "video").mkdir(parents=True)
     (tmp_path / "assets" / "video").mkdir(parents=True)
     (tmp_path / "dev" / "video" / "intro.json").write_text(script)
-    (tmp_path / "dev" / "video" / "scenes.html").write_text("<p>6 of 20</p>")
+    (tmp_path / "dev" / "video" / "intro.html").write_text("<p>6 of 20</p>")
     if recorded_script is not None:
         lines = [f"sha256 {hashlib.sha256(text.encode()).hexdigest()} {path}"
                  for path, text in zip(SOURCES, [recorded_script, "<p>6 of 20</p>"])]

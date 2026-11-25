@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Makes a narrated Problem Solver video from scratch: dev/video/make-video.sh <intro|overview> [voice]
-# The script (<name>.json) is voiced by the local Phonon model in Ollama, its scenes (scenes.html)
+# The script (<name>.json) is voiced by the local Phonon model in Ollama, its scenes (<name>.html)
 # are drawn frame by frame in headless Chrome, and ffmpeg joins picture, narration, captions and
 # chapters. A local whisper transcript of the finished soundtrack is compared with the script.
 # Needs Ollama with phonon (localhost:11434), Google Chrome, Node 22+, ffmpeg, and whisper-cli with
@@ -18,7 +18,7 @@ script="$here/$name.json"
 [ -f "$script" ] || { echo "no script $script" >&2; exit 1; }
 case "$name" in
   intro) title="Problem Solver: what this is" ;;
-  overview) title="Problem Solver: the long version" ;;
+  overview) title="Problem Solver in detail" ;;
   *) title="Problem Solver" ;;
 esac
 out="$repo/assets/video"
@@ -38,7 +38,7 @@ node "$here/assemble.mjs" "$script" "$title" "$work/frames" "$work/timeline.json
 cp "$work/video.mp4" "$base.mp4"
 cp "$work/video.srt" "$base.srt"
 cp "$work/video-chapters.txt" "$base-chapters.txt"
-(cd "$repo" && shasum -a 256 "dev/video/$name.json" dev/video/scenes.html | awk '{print "sha256", $1, $2}') > "$base.rendered-from"
+(cd "$repo" && shasum -a 256 "dev/video/$name.json" "dev/video/$name.html" dev/video/scenes.css dev/video/scenes.js | awk '{print "sha256", $1, $2}') > "$base.rendered-from"
 
 echo "4/4 Checking the soundtrack against the script"
 model="$HOME/Library/Application Support/superwhisper/ggml-small.bin"

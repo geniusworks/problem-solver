@@ -1,0 +1,589 @@
+<!doctype html>
+<!-- The scenes of "Problem Solver in detail", one per segment of overview.json. Uses scenes.css and
+     scenes.js (shared with intro.html): record.mjs calls setup(timeline) once, then render(t) for
+     every frame, so each scene is drawn from the time alone and nothing here may depend on the clock
+     or on CSS animations. A scene keys its steps to the moment the narration says a phrase,
+     cue(seg, phrase); a phrase the narration no longer says is an error. Figures shown here are
+     published claims: each must match dev/recompute_results.py. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Problem Solver in detail</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Lato:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500;700&display=block" rel="stylesheet">
+<link href="scenes.css" rel="stylesheet">
+<script src="scenes.js"></script>
+<style>
+  .box { position: absolute; width: 210px; height: 176px; box-sizing: border-box; padding: 20px 18px; border-radius: 18px;
+         background: var(--panel); border: 2px solid var(--line); text-align: center; }
+  .box .t { font: 700 26px Poppins, sans-serif; line-height: 1.15; }
+  .box .s { font-size: 21px; color: var(--muted); margin-top: 8px; line-height: 1.25; }
+  .arrow { position: absolute; font-size: 34px; color: var(--faint); }
+  .h2 { position: absolute; left: 160px; top: 90px; font: 700 56px Poppins, sans-serif; }
+  .row { display: flex; align-items: center; gap: 24px; }
+  .track { height: 56px; background: rgba(148,163,184,.12); border-radius: 10px; position: relative; flex-shrink: 0; }
+  .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 10px; width: 0; }
+  .num { font: 700 34px "JetBrains Mono", monospace; white-space: nowrap; }
+  .stat { position: absolute; padding: 26px 32px; border-radius: 20px; background: var(--panel); border: 2px solid var(--line); }
+  .stat .big { font: 700 46px "JetBrains Mono", monospace; }
+  .stat .lab { font-size: 26px; color: var(--muted); margin-top: 6px; }
+  .defect { height: 118px; box-sizing: border-box; padding: 18px 20px; border-radius: 14px; background: #1e2440;
+            border: 2px solid rgba(248,113,113,.35); font-size: 24px; line-height: 1.3; color: var(--soft); }
+  .defect b { display: block; font: 700 20px "JetBrains Mono", monospace; color: var(--red); margin-bottom: 4px; }
+  .night { position: absolute; left: 210px; width: 1500px; height: 104px; box-sizing: border-box; padding: 0 34px;
+           display: flex; align-items: center; gap: 26px; border-radius: 18px; background: var(--panel); border: 2px solid var(--line); }
+  .night .t { font: 700 32px Poppins, sans-serif; white-space: nowrap; }
+  .night .s { font-size: 26px; color: var(--muted); }
+  .dot { position: absolute; width: 16px; height: 16px; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<!-- ======================= recap ======================= -->
+<section class="scene" id="recap">
+  <div class="abs" id="recap-title" style="left:0; right:0; top:300px; text-align:center">
+    <svg width="120" height="112" viewBox="0 0 60 56" fill="none">
+      <path d="M13 9 C 26 9, 30 22, 36 26" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+      <path d="M13 28 L 36 28" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M13 47 C 26 47, 30 34, 36 30" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="8" cy="9" r="5" stroke="#10b981" stroke-width="3"/>
+      <circle cx="8" cy="28" r="5" stroke="#94a3b8" stroke-width="3"/>
+      <circle cx="8" cy="47" r="5" stroke="#94a3b8" stroke-width="3"/>
+      <circle cx="47" cy="28" r="11" fill="#10b981"/>
+      <path d="M42 28 L 45.5 31.5 L 52 21" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h1 style="font-size:110px; margin-top:20px">Problem Solver <span style="color:var(--green)">in detail</span></h1>
+    <div class="kicker" style="margin-top:28px">What actually helps AI solve problems?</div>
+  </div>
+  <div class="abs" id="recap-steps" style="left:160px; top:330px; width:1600px; display:flex; gap:60px">
+    <div class="panel recap-step" style="flex:1; padding:38px 34px; height:350px; box-sizing:border-box">
+      <div class="mono" style="font-size:30px; color:#93c5fd">def solve(data):</div>
+      <div class="display" style="font-size:35px; margin-top:24px">An AI model writes a program to solve the problem</div>
+      <div class="label" style="margin-top:12px">on its own, with no human help</div>
+    </div>
+    <div class="panel recap-step" style="flex:1; padding:38px 34px; height:350px; box-sizing:border-box; border-color:rgba(52,211,153,.5)">
+      <svg width="44" height="44" viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="#10b981"/><path d="M10 18.5 L15.5 24 L26 12" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="display" style="font-size:35px; margin-top:20px">An independent judge runs it and compares the answer</div>
+      <div class="label" style="margin-top:12px">with the known correct one</div>
+    </div>
+    <div class="panel recap-step" style="flex:1; padding:38px 34px; height:350px; box-sizing:border-box">
+      <svg width="54" height="44" viewBox="0 0 54 44"><rect x="2" y="26" width="12" height="16" rx="2" fill="#94a3b8"/><rect x="20" y="14" width="12" height="28" rx="2" fill="#94a3b8"/><rect x="38" y="2" width="12" height="40" rx="2" fill="#34d399"/></svg>
+      <div class="display" style="font-size:35px; margin-top:20px">I measure which strategies help</div>
+      <div class="label" style="margin-top:12px">and by how much</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= loop ======================= -->
+<section class="scene" id="loop">
+  <div class="h2">How it works</div>
+  <div class="abs" id="loop-banner" style="left:160px; top:200px; font-size:34px; color:var(--green); font-style:italic; letter-spacing:.04em">No person in the loop, from puzzle to record</div>
+  <div id="loop-boxes"></div>
+</section>
+
+<!-- ======================= strategies ======================= -->
+<section class="scene" id="strategies">
+  <div class="h2">The strategies I measure</div>
+  <div class="abs" style="left:160px; top:240px; display:flex; gap:60px">
+    <div class="panel strat" style="width:493px; height:420px; padding:40px; box-sizing:border-box">
+      <div style="position:relative; height:110px">
+        <div class="card" style="position:absolute; left:0; top:0; width:200px; height:70px; font-size:22px">def solve…</div>
+        <div class="card" style="position:absolute; left:24px; top:18px; width:200px; height:70px; font-size:22px">def solve…</div>
+        <div class="card" style="position:absolute; left:48px; top:36px; width:200px; height:70px; font-size:22px">def solve…</div>
+      </div>
+      <div class="display" style="font-size:42px; margin-top:34px">Several tries</div>
+      <div class="label" style="margin-top:12px">instead of one</div>
+    </div>
+    <div class="panel strat" style="width:493px; height:420px; padding:40px; box-sizing:border-box">
+      <div style="height:110px; display:flex; align-items:center; gap:22px">
+        <svg width="90" height="90" viewBox="0 0 24 24" fill="none"><path d="M20 12 A8 8 0 1 1 15.5 4.8" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/><path d="M15 2 L16 5.2 L12.8 6.2" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="mono" style="font-size:24px; color:var(--red)">IndexError: list<br>index out of range</div>
+      </div>
+      <div class="display" style="font-size:42px; margin-top:34px">Repair</div>
+      <div class="label" style="margin-top:12px">a failed program, shown its own error</div>
+    </div>
+    <div class="panel strat" style="width:493px; height:420px; padding:40px; box-sizing:border-box">
+      <div style="height:110px; display:flex; align-items:center; gap:20px">
+        <div class="card" style="width:170px; height:80px; font-size:26px; font-family:Poppins">Model A</div>
+        <div class="card" style="width:170px; height:80px; font-size:26px; font-family:Poppins; border-color:rgba(251,191,36,.6); color:var(--amber)">Model B</div>
+      </div>
+      <div class="display" style="font-size:42px; margin-top:34px">A second model</div>
+      <div class="label" style="margin-top:12px">of a different kind</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= trials ======================= -->
+<section class="scene" id="trials">
+  <div class="h2">One run proves nothing</div>
+  <div class="abs" style="left:160px; top:240px; width:620px">
+    <div class="label trials-rule" style="font-size:34px; color:var(--soft); margin-bottom:34px">Every setup gets a fingerprint</div>
+    <div class="label trials-rule" style="font-size:34px; color:var(--soft); margin-bottom:34px">Every experiment runs several trials</div>
+    <div class="label trials-rule" style="font-size:34px; color:var(--soft); margin-bottom:34px">Every try is recorded, solved or not</div>
+    <div class="display trials-rule" style="font-size:38px; line-height:1.25; color:var(--amber)">The same model writes a different program each time</div>
+  </div>
+  <div class="stat" id="trials-one" style="left:930px; top:240px; width:780px; box-sizing:border-box; border-color:rgba(248,113,113,.5)">
+    <div class="lab" style="margin:0 0 8px">A single test, after a software update</div>
+    <div class="big" style="color:var(--red)">0 out of 2</div>
+    <div class="lab">looked like the update had broken something</div>
+  </div>
+  <div class="stat" id="trials-three" style="left:930px; top:500px; width:780px; box-sizing:border-box; border-color:rgba(52,211,153,.6)">
+    <div class="lab" style="margin:0 0 8px">Three trials on the same two problems, same setup</div>
+    <div class="big" style="color:var(--green)">6 out of 6</div>
+  </div>
+</section>
+
+<!-- ======================= local (who does what) ======================= -->
+<section class="scene" id="local">
+  <div class="h2">Who does what</div>
+  <div class="abs" style="left:160px; top:230px; display:flex; gap:60px">
+    <div class="panel who-col" style="width:493px; height:500px; padding:44px; box-sizing:border-box">
+      <svg width="96" height="72" viewBox="0 0 48 36" fill="none"><rect x="8" y="3" width="32" height="22" rx="2.5" stroke="#cbd5e1" stroke-width="2.5"/><path d="M3 30 H45" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/></svg>
+      <div class="display" style="font-size:44px; margin-top:24px">Local AI models</div>
+      <div class="tag" style="background:rgba(148,163,184,.18); color:var(--soft); margin-top:18px">solve the puzzles</div>
+      <div class="label" style="margin-top:28px; line-height:1.4">Run locally: tries are cheap, and a model can't change mid-experiment</div>
+    </div>
+    <div class="panel who-col" style="width:493px; height:500px; padding:44px; box-sizing:border-box">
+      <svg width="96" height="72" viewBox="0 0 48 36" fill="none"><path d="M16 8 L6 18 L16 28 M32 8 L42 18 L32 28 M27 5 L21 31" stroke="#cbd5e1" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="display" style="font-size:44px; margin-top:24px">AI assistants</div>
+      <div class="tag" style="background:rgba(148,163,184,.18); color:var(--soft); margin-top:18px">helped build it</div>
+      <div class="label" style="margin-top:28px; line-height:1.4">Engineering partners for the platform; never the judge</div>
+    </div>
+    <div class="panel who-col" style="width:493px; height:500px; padding:44px; box-sizing:border-box; border-color:rgba(52,211,153,.5)">
+      <svg width="72" height="72" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="16" fill="#10b981"/><path d="M10 18.5 L15.5 24 L26 12" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="display" style="font-size:44px; margin-top:24px">Scripts</div>
+      <div class="tag" style="background:rgba(52,211,153,.18); color:var(--green); margin-top:18px">judge</div>
+      <div class="label" style="margin-top:28px; line-height:1.4">Decide what's solved, and recompute every number I publish</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= history-start ======================= -->
+<section class="scene" id="history-start">
+  <div class="h2">How I got here</div>
+  <div class="abs" style="left:200px; top:330px; width:1520px; height:4px; background:var(--line)"></div>
+  <div class="abs" id="hs-mark" style="left:120px; top:230px; width:320px; text-align:center">
+    <div class="display" style="font-size:34px">Dec 2024</div>
+    <div style="width:26px; height:26px; border-radius:50%; background:var(--soft); margin:24px auto 0"></div>
+    <div class="label" style="margin-top:22px">small models</div>
+  </div>
+  <div id="hs-dots"></div>
+  <div class="abs" id="hs-noise" style="left:700px; top:420px; font-size:34px" ><span class="label" style="font-size:34px">Single runs:</span> <span style="color:var(--amber)">noise</span></div>
+  <div class="abs display" id="hs-rule" style="left:700px; top:620px; font-size:46px">The rule: <span style="color:var(--green)">repeated A/B tests</span></div>
+</section>
+
+<!-- ======================= history-27b ======================= -->
+<section class="scene" id="history-27b">
+  <div class="h2">How I got here</div>
+  <div class="abs" style="left:200px; top:330px; width:1520px; height:4px; background:var(--line)"></div>
+  <div class="abs" style="left:120px; top:230px; width:320px; text-align:center; opacity:.5">
+    <div class="display" style="font-size:34px">Dec 2024</div>
+    <div style="width:26px; height:26px; border-radius:50%; background:var(--soft); margin:24px auto 0"></div>
+    <div class="label" style="margin-top:22px">small models</div>
+  </div>
+  <div class="abs" id="h27-mark" style="left:620px; top:230px; width:420px; text-align:center">
+    <div class="display" style="font-size:34px">Aug 2026</div>
+    <div style="width:26px; height:26px; border-radius:50%; background:var(--green); margin:24px auto 0"></div>
+    <div class="label" style="margin-top:22px">a 27-billion-parameter model</div>
+  </div>
+  <div class="abs display" id="h27-q" style="left:160px; top:460px; width:1600px; font-size:44px; line-height:1.25">Does coordinating tries keep its value <span style="color:var(--green)">as models get stronger?</span></div>
+  <div class="abs label" id="h27-five-label" style="left:160px; top:565px; font-size:28px">Five predictions, proven wrong in a row</div>
+  <div class="abs" id="h27-five" style="left:160px; top:620px; display:flex; gap:20px; align-items:stretch"></div>
+  <div class="abs" id="h27-filter" style="left:160px; top:780px; display:flex; align-items:center; gap:20px">
+    <svg width="50" height="50" viewBox="0 0 24 24" fill="none"><path d="M3 4 H21 L14 12.5 V19 L10 21 V12.5 Z" stroke="#34d399" stroke-width="2" stroke-linejoin="round"/></svg>
+    <div class="display" style="font-size:38px">Rule of thumb: <span style="color:var(--green)">does it add new information?</span></div>
+  </div>
+</section>
+
+<!-- ======================= finding-harness ======================= -->
+<section class="scene" id="finding-harness">
+  <div class="h2">Finding 1: the harness, not the model</div>
+  <div class="abs" id="fh-found" style="left:160px; top:180px; font-size:28px; color:var(--muted); font-style:italic">found by reading the model's saved programs</div>
+  <div class="abs" style="left:160px; top:250px; width:560px; height:400px">
+    <div class="abs panel" id="fh-slot" style="left:0; top:0; width:520px; height:150px; box-sizing:border-box; border-style:dashed; display:flex; align-items:center; justify-content:center">
+      <div class="label" id="fh-missing">Part 1 story: <span style="color:var(--amber)">missing</span></div>
+    </div>
+    <div class="abs panel" id="fh-part1" style="left:0; top:0; width:520px; height:150px; padding:26px 32px; box-sizing:border-box; border-color:rgba(52,211,153,.6); background:#1c2a3a">
+      <div class="display" style="font-size:36px">Part 1</div>
+      <div class="label" style="margin-top:6px">its story, rules and input format</div>
+    </div>
+    <div class="abs panel" id="fh-part2" style="left:0; top:190px; width:520px; height:150px; padding:26px 32px; box-sizing:border-box">
+      <div class="display" style="font-size:36px">Part 2</div>
+      <div class="label" style="margin-top:6px">builds on Part 1</div>
+    </div>
+  </div>
+  <div class="abs" style="left:820px; top:250px; width:960px">
+    <div class="label" style="margin-bottom:20px">One puzzle (2024 day 19, part 2), single tries solved</div>
+    <div class="row" style="margin-bottom:16px"><div class="label" style="width:210px; color:var(--soft)">Without</div><div class="track" style="width:400px"><div class="fill" id="fh-b1" style="background:var(--muted)"></div></div><div class="num" id="fh-n1" style="color:var(--soft)">6 of 20</div></div>
+    <div class="row" style="margin-bottom:44px"><div class="label" style="width:210px; color:var(--soft)">With Part 1</div><div class="track" style="width:400px"><div class="fill" id="fh-b2" style="background:var(--green)"></div></div><div class="num" id="fh-n2" style="color:var(--green)">19 of 19</div></div>
+    <div id="fh-wide">
+      <div class="label" style="margin-bottom:20px">13 Part 2s the model had failed, single tries solved</div>
+      <div class="row" style="margin-bottom:16px"><div class="label" style="width:210px; color:var(--soft)">Without</div><div class="track" style="width:400px"><div class="fill" id="fh-b3" style="background:var(--muted)"></div></div><div class="num" id="fh-n3" style="color:var(--soft)">2 of 53</div></div>
+      <div class="row"><div class="label" style="width:210px; color:var(--soft)">With Part 1</div><div class="track" style="width:400px"><div class="fill" id="fh-b4" style="background:var(--green)"></div></div><div class="num" id="fh-n4" style="color:var(--green)">29 of 37</div></div>
+      <div class="note" id="fh-caveat" style="margin-top:18px">chosen because they had failed; two smaller settings also changed</div>
+    </div>
+  </div>
+  <div class="abs display" id="fh-head" style="left:160px; top:720px; font-size:48px">Not a wall in the model: <span style="color:var(--green)">missing information</span></div>
+</section>
+
+<!-- ======================= finding-sampling ======================= -->
+<section class="scene" id="finding-sampling">
+  <div class="h2">Finding 2: extra tries pay off as predicted</div>
+  <svg class="abs" style="left:160px; top:220px" width="760" height="520" viewBox="0 0 760 520">
+    <line x1="80" y1="440" x2="740" y2="440" stroke="#475569" stroke-width="2"/>
+    <line x1="80" y1="40" x2="80" y2="440" stroke="#475569" stroke-width="2"/>
+    <text x="410" y="500" fill="#94a3b8" font-size="24" font-family="Lato" text-anchor="middle">how often one try solves it</text>
+    <text x="80" y="475" fill="#64748b" font-size="20" font-family="Lato" text-anchor="middle">never</text>
+    <text x="740" y="475" fill="#64748b" font-size="20" font-family="Lato" text-anchor="end">always</text>
+    <text x="30" y="240" fill="#94a3b8" font-size="24" font-family="Lato" text-anchor="middle" transform="rotate(-90 30 240)">gain from three tries</text>
+    <rect id="fs-band" x="146" y="40" width="528" height="400" fill="rgba(52,211,153,.08)"/>
+    <text id="fs-band-label" x="410" y="70" fill="#34d399" font-size="24" font-family="Lato" text-anchor="middle">"sometimes": most to gain</text>
+    <path id="fs-curve" fill="none" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+    <text id="fs-curve-label" x="610" y="150" fill="#94a3b8" font-size="24" font-family="Lato">predicted</text>
+    <g id="fs-gaps"></g>
+    <g id="fs-dots"></g>
+    <text id="fs-dots-label" x="240" y="380" fill="#34d399" font-size="24" font-family="Lato">measured: the three registered tests</text>
+    <text id="fs-pool-label" x="240" y="412" fill="#34d399" font-size="24" font-family="Lato" font-weight="700">large dot: all 75 trials</text>
+  </svg>
+  <div class="stat" id="fs-pred" style="left:1000px; top:220px; width:760px; box-sizing:border-box">
+    <div class="big"><span style="color:var(--muted)">52%</span> <span style="font-family:Lato; font-weight:400; font-size:28px; color:var(--muted)">predicted</span> &nbsp;<span style="color:var(--green)">49%</span> <span style="font-family:Lato; font-weight:400; font-size:28px; color:var(--muted)">measured</span></div>
+    <div class="lab">three tries, 75 trials in three tests</div>
+  </div>
+  <div class="stat" id="fs-orig" style="left:1000px; top:430px; width:760px; box-sizing:border-box">
+    <div class="lab" style="margin:0 0 6px">Original harness, the "sometimes" problems</div>
+    <div class="big">42% <span style="font-family:Lato; color:var(--muted)">→</span> <span style="color:var(--green)">75%</span></div>
+  </div>
+  <div class="stat" id="fs-after" style="left:1000px; top:620px; width:760px; box-sizing:border-box; border-color:rgba(251,191,36,.5)">
+    <div class="lab" style="margin:0; color:var(--amber)">After the fix: the lift was not confirmed</div>
+  </div>
+</section>
+
+<!-- ======================= finding-models ======================= -->
+<section class="scene" id="finding-models">
+  <div class="h2">Finding 3: choose a model; repair rarely rescues</div>
+  <div class="abs" id="fm-models" style="left:160px; top:240px; width:900px">
+    <div class="label" style="margin-bottom:24px">One problem, ten trials each</div>
+    <div class="row" style="margin-bottom:18px"><div class="label" style="width:260px; color:var(--soft)">Second model</div><div class="track" style="width:400px"><div class="fill" id="fm-b1" style="background:var(--green)"></div></div><div class="num" id="fm-n1" style="color:var(--green)">10 of 10</div></div>
+    <div class="row"><div class="label" style="width:260px; color:var(--soft)">Reference model</div><div class="track" style="width:400px"><div class="fill" id="fm-b2" style="background:var(--muted)"></div></div><div class="num" id="fm-n2" style="color:var(--soft)">1 of 10</div></div>
+    <div class="note" style="margin-top:20px">helped by being chosen, not mixed in</div>
+  </div>
+  <div class="stat" id="fm-repair" style="left:1180px; top:240px; width:580px; box-sizing:border-box">
+    <div class="lab" style="margin:0 0 6px">Repairs that rescued a failed program</div>
+    <div class="big">17 <span style="font-family:Lato; font-weight:400; font-size:30px; color:var(--muted)">of</span> 427</div>
+  </div>
+  <div class="stat" id="fm-slow" style="left:160px; top:580px; width:1600px; box-sizing:border-box; display:flex; align-items:center; gap:30px; border-color:rgba(251,191,36,.5)">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="9" stroke="#fbbf24" stroke-width="2"/><path d="M12 8 V13 L15 15 M9 2 H15" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/></svg>
+    <div><div class="display" style="font-size:38px">The hardest failures: too slow to finish</div>
+    <div class="lab">on the problem tested, neither more time nor a repair asking for a faster method fixed them</div></div>
+  </div>
+</section>
+
+<!-- ======================= finding-measurement ======================= -->
+<section class="scene" id="finding-measurement">
+  <div class="h2">Measurement is most of the work</div>
+  <div class="abs" id="fd-grid" style="left:160px; top:220px; width:1600px; display:grid; grid-template-columns:repeat(4, 1fr); gap:20px"></div>
+  <div class="abs display" id="fd-foot" style="left:160px; top:720px; font-size:40px">Twelve defects in my own instruments, <span style="color:var(--amber)">each one moved results</span></div>
+</section>
+
+<!-- ======================= next-caveat ======================= -->
+<section class="scene" id="next-caveat">
+  <div class="h2">What's next: the clean test</div>
+  <div class="abs" style="left:200px; top:420px; width:1520px; height:4px; background:var(--line)"></div>
+  <div id="nc-marks"></div>
+</section>
+
+<!-- ======================= next-nightly ======================= -->
+<section class="scene" id="next-nightly">
+  <div class="h2">AoC 2026, run unattended</div>
+  <div class="night" id="nn-1" style="top:210px"><div class="t">Plan registered in advance</div><div class="s">model, prompts and settings frozen</div></div>
+  <div class="night" id="nn-2" style="top:334px"><svg width="40" height="40" viewBox="0 0 24 24"><path d="M20 14.5 A8.5 8.5 0 1 1 9.5 4 A7 7 0 0 0 20 14.5 Z" fill="#fbbf24"/></svg><div class="t">Each night: a run attempts the new puzzle</div><div class="s">no human help</div></div>
+  <div class="night" id="nn-3" style="top:458px"><div class="t">Answers submitted from a separate account</div><div class="s">fixed budget of wrong answers</div></div>
+  <div class="night" id="nn-4" style="top:582px; border-color:rgba(251,191,36,.5)"><div class="t" style="color:var(--amber)">The one human check</div><div class="s">hidden page text holds that day's answers until I've read it; the model never sees it</div></div>
+  <div class="night" id="nn-5" style="top:706px; border-color:rgba(52,211,153,.5)"><div class="t" style="color:var(--green)">It also tests the caveat</div><div class="s">does the Part 1 context inform, or remind the model of something memorized?</div></div>
+</section>
+
+<!-- ======================= next-beyond ======================= -->
+<section class="scene" id="next-beyond">
+  <div class="h2">Beyond puzzles</div>
+  <div class="abs display" id="nb-key" style="left:160px; top:200px; font-size:44px; color:var(--soft)">Most real problems have no answer key</div>
+  <div class="stat" id="nb-exact" style="left:160px; top:320px; width:760px; box-sizing:border-box; border-color:rgba(52,211,153,.5)">
+    <div class="display" style="font-size:36px; color:var(--green)">Exact check</div>
+    <div class="lab">the known correct answer</div>
+  </div>
+  <div class="stat" id="nb-weak" style="left:1000px; top:320px; width:760px; box-sizing:border-box; border-color:rgba(251,191,36,.5)">
+    <div class="display" style="font-size:36px; color:var(--amber)">Weaker check</div>
+    <div class="lab">the puzzle's worked example alone</div>
+    <div class="big" style="margin-top:18px">15 <span style="font-family:Lato; font-weight:400; font-size:30px; color:var(--muted)">of</span> 35</div>
+    <div class="lab">trials picked a program that passed the example but got the real puzzle wrong</div>
+  </div>
+  <div class="abs display" id="nb-q" style="left:160px; top:700px; font-size:48px">How much do these strategies help <span style="color:var(--green)">with weaker checks?</span></div>
+</section>
+
+<!-- ======================= outro ======================= -->
+<section class="scene" id="outro">
+  <div class="abs" style="left:0; right:0; top:250px; text-align:center">
+    <svg width="110" height="103" viewBox="0 0 60 56" fill="none">
+      <path d="M13 9 C 26 9, 30 22, 36 26" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+      <path d="M13 28 L 36 28" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M13 47 C 26 47, 30 34, 36 30" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="8" cy="9" r="5" stroke="#10b981" stroke-width="3"/>
+      <circle cx="8" cy="28" r="5" stroke="#94a3b8" stroke-width="3"/>
+      <circle cx="8" cy="47" r="5" stroke="#94a3b8" stroke-width="3"/>
+      <circle cx="47" cy="28" r="11" fill="#10b981"/>
+      <path d="M42 28 L 45.5 31.5 L 52 21" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h1 style="font-size:92px; margin-top:20px">Problem Solver</h1>
+    <div class="kicker" style="margin-top:24px">What actually helps AI solve problems?</div>
+    <div class="mono" style="font-size:38px; color:var(--green); margin-top:44px">github.com/geniusworks/problem-solver</div>
+  </div>
+</section>
+
+<script>
+// ---- built once ----
+const LOOP = [
+  ['Puzzle', 'fetched and cached', 'each puzzle goes'],
+  ['Local model', 'via Ollama', 'large language model'],
+  ['Python program', "the model's code", 'writes a Python program'],
+  ['Sandbox', 'runs it on the real input', 'runs in a sandbox'],
+  ['Oracle', 'compares with the accepted answer', 'an oracle compares'],
+  ['Overfit gate', 'rejects copied example numbers', 'overfit gate'],
+  ['Recorded', 'solved or not', 'recording the result'],
+]
+LOOP.forEach(([t, s], i) => {
+  const b = document.createElement('div')
+  b.className = 'box loop-box'
+  b.style.left = `${87 + i * 256}px`
+  b.style.top = '380px'
+  if (i === 4) b.style.borderColor = 'rgba(52,211,153,.6)'
+  b.innerHTML = `<div class="t">${t}</div><div class="s">${s}</div>`
+  $('loop-boxes').appendChild(b)
+  if (i < LOOP.length - 1) {
+    const a = document.createElement('div')
+    a.className = 'arrow loop-arrow'
+    a.style.left = `${87 + i * 256 + 214}px`
+    a.style.top = '446px'
+    a.textContent = '→'
+    $('loop-boxes').appendChild(a)
+  }
+})
+// Single runs scattered as noise (fixed positions, so every render is the same).
+const DOTS = [[740,520],[790,505],[860,535],[905,498],[975,528],[1030,510],[1090,540],[1150,500],[1210,530],[1270,515],[1330,545],[1390,505]]
+DOTS.forEach(([x, y], i) => {
+  const d = document.createElement('div')
+  d.className = 'dot hs-dot'
+  d.style.left = `${x}px`
+  d.style.top = `${y}px`
+  d.style.background = i % 3 === 1 ? 'var(--green)' : 'var(--red)'
+  $('hs-dots').appendChild(d)
+})
+// The five predictions proven wrong (RESULTS.md, "Interventions that add no new information did not
+// help"); the last two are the ideas that failed, and gave the model nothing new.
+const PREDICTIONS = ['Insight problems resist sampling', 'Voting buys reliability, not ideas',
+  'Failure type predicts what is solvable', 'A higher temperature helps', 'Better-worded repair feedback helps']
+PREDICTIONS.forEach((text, i) => {
+  const c = document.createElement('div')
+  c.className = 'card h27-card'
+  c.style.cssText = 'width:290px; height:110px; padding:0 18px; font:500 23px/1.3 Lato, sans-serif; text-align:center; position:relative; box-sizing:border-box'
+  c.innerHTML = `${text}<div class="stamp no" style="width:40px; height:40px; font-size:24px; right:-14px; top:-14px">✗</div>`
+  $('h27-five').appendChild(c)
+})
+// The twelve instrument defects (RESULTS.md, "What the measurements cost").
+const DEFECTS = [
+  'Harness crashes scored as model failures', 'Overfit gate rejected a correct solution',
+  'Invented rows in a measurement store', 'Tests wrote into the live results',
+  'Repair cost understated', 'Repair ignored the set temperature',
+  'Ranking counted anything that parsed', 'Strategy scores computed over no data',
+  'Draft tokens copied onto every repair', 'Part 2 prompts missing Part 1',
+  'Example tests paired with the wrong input', "Last day's missing Part 2 scored as a miss",
+]
+DEFECTS.forEach((text, i) => {
+  const c = document.createElement('div')
+  c.className = 'defect fd-card'
+  c.innerHTML = `<b>${String(i + 1).padStart(2, '0')}</b>${text}`
+  $('fd-grid').appendChild(c)
+})
+const MARKS = [
+  { id: 'p24', x: 330, label: 'Dec 2024', what: '2024 puzzles', tag: 'public', color: 'var(--amber)' },
+  { id: 'p25', x: 760, label: 'Dec 2025', what: '2025 puzzles', tag: 'public', color: 'var(--amber)' },
+  { id: 'mod', x: 1190, label: 'Aug 2026', what: 'model released', tag: 'registered for 2026', color: 'var(--soft)' },
+  { id: 'p26', x: 1560, label: 'Dec 1, 2026', what: '2026 puzzles', tag: 'newer than the model', color: 'var(--green)' },
+]
+for (const m of MARKS) {
+  const el = document.createElement('div')
+  el.className = 'abs'
+  el.id = `nc-${m.id}`
+  el.style.cssText = `left:${m.x - 170}px; top:300px; width:340px; text-align:center`
+  el.innerHTML = `<div class="display" style="font-size:34px; color:${m.color}; white-space:nowrap">${m.what}</div>
+    <div style="width:26px; height:26px; border-radius:50%; background:${m.color}; margin:30px auto 0"></div>
+    <div class="label" style="margin-top:26px">${m.label}</div>
+    <div class="tag" style="margin-top:14px; border:2px solid ${m.color}; color:${m.color}">${m.tag}</div>`
+  $('nc-marks').appendChild(el)
+}
+// The three registered tests (RESULTS.md, the independence check): drafts solved of drafts drawn
+// at one try, and three-try trials solved of trials.
+const TESTS = [[16, 80, 10, 20], [20, 75, 13, 20], [28, 140, 14, 35]]
+// Pooled over the 75 three-try trials: [expected solved, measured solved, trials]. Plotted where the
+// prediction gives the expected share, so its gap to the curve is the pooled 52% vs 49%.
+const POOLED = [39, 37, 75]
+const X = (p) => 80 + p * 660, Y = (g) => 440 - g * 900
+const gain = (p) => 1 - Math.pow(1 - p, 3) - p
+const SVG = 'http://www.w3.org/2000/svg'
+const points = TESTS.map(([a, b, c, d]) => [a / b, c / d - a / b, 11])
+const pooledP = 1 - Math.cbrt(1 - POOLED[0] / POOLED[2])
+points.push([pooledP, POOLED[1] / POOLED[2] - pooledP, 17])
+points.forEach(([p, g, r]) => {
+  const gap = document.createElementNS(SVG, 'line')
+  gap.setAttribute('x1', X(p)); gap.setAttribute('x2', X(p)); gap.setAttribute('y1', Y(g)); gap.setAttribute('y2', Y(gain(p)))
+  gap.setAttribute('stroke', '#34d399'); gap.setAttribute('stroke-width', 3); gap.setAttribute('stroke-dasharray', '5 5')
+  gap.setAttribute('class', 'fs-gap')
+  $('fs-gaps').appendChild(gap)
+  const dot = document.createElementNS(SVG, 'circle')
+  dot.setAttribute('cx', X(p)); dot.setAttribute('cy', Y(g)); dot.setAttribute('r', r)
+  dot.setAttribute('fill', '#34d399'); dot.setAttribute('class', 'fs-dot')
+  if (r > 11) { dot.setAttribute('fill-opacity', 0.35); dot.setAttribute('stroke', '#34d399'); dot.setAttribute('stroke-width', 4) }
+  $('fs-dots').appendChild(dot)
+})
+// The gain from three independent tries over one, for a one-try rate p: 1 - (1-p)^3 - p.
+const curve = (share) => {
+  let d = ''
+  for (let i = 0; i <= 100 * share; i++) {
+    const p = i / 100, g = 1 - Math.pow(1 - p, 3) - p
+    d += `${i ? 'L' : 'M'}${(80 + p * 660).toFixed(1)} ${(440 - g * 900).toFixed(1)} `
+  }
+  return d
+}
+
+const scenes = {
+  recap(t, s) {
+    const steps = cue(s, 'write programs')
+    const title = $('recap-title'), out = prog(t, steps - 0.7, 0.7)
+    title.style.opacity = 1 - out
+    title.style.transform = `scale(${1 - 0.08 * out})`
+    const cards = document.querySelectorAll('.recap-step')
+    ;[steps, cue(s, 'automatic judge'), cue(s, 'I measure')].forEach((at, i) => show(cards[i], prog(t, at), 40))
+  },
+  loop(t, s) {
+    const boxes = document.querySelectorAll('.loop-box'), arrows = document.querySelectorAll('.loop-arrow')
+    LOOP.forEach(([, , phrase], i) => {
+      const at = cue(s, phrase)
+      show(boxes[i], prog(t, at - 0.2), 30)
+      if (i) arrows[i - 1].style.opacity = prog(t, at - 0.3)
+    })
+    show($('loop-banner'), prog(t, cue(s, 'no person steps in')))
+  },
+  strategies(t, s) {
+    const cards = document.querySelectorAll('.strat')
+    ;[cue(s, 'several tries'), cue(s, 'repairing'), cue(s, 'second model')].forEach((at, i) => show(cards[i], prog(t, at - 0.2), 40))
+  },
+  trials(t, s) {
+    const rules = document.querySelectorAll('.trials-rule')
+    ;[cue(s, 'fingerprint'), cue(s, 'several trials'), cue(s, 'every try is recorded'), cue(s, 'the models vary')].forEach((at, i) => show(rules[i], prog(t, at - 0.2)))
+    show($('trials-one'), prog(t, cue(s, 'a single test')))
+    show($('trials-three'), prog(t, cue(s, 'three trials')))
+  },
+  local(t, s) {
+    const cols = document.querySelectorAll('.who-col')
+    ;[cue(s, 'models under test'), cue(s, 'A I assistants'), cue(s, 'no A I decides')].forEach((at, i) => show(cols[i], prog(t, at - 0.2), 40))
+  },
+  'history-start'(t, s) {
+    show($('hs-mark'), prog(t, 0.2))
+    const noise = cue(s, 'single runs are noise')
+    document.querySelectorAll('.hs-dot').forEach((d, i) => { d.style.opacity = prog(t, noise - 0.8 + i * 0.07, 0.3) })
+    show($('hs-noise'), prog(t, noise))
+    show($('hs-rule'), prog(t, cue(s, 'repeated A B tests')))
+  },
+  'history-27b'(t, s) {
+    show($('h27-mark'), prog(t, 0.2))
+    show($('h27-q'), prog(t, cue(s, 'does coordinating')))
+    const five = cue(s, 'five of my predictions')
+    show($('h27-five-label'), prog(t, five - 0.2))
+    show($('h27-five'), prog(t, five - 0.2))
+    document.querySelectorAll('.h27-card .stamp').forEach((st, i) => {
+      const p = prog(t, five + 0.6 + 0.25 * i, 0.25)
+      st.style.opacity = p
+      st.style.transform = `scale(${0.4 + 0.6 * p})`
+    })
+    const failed = prog(t, cue(s, 'the two ideas that failed'), 0.5)
+    document.querySelectorAll('.h27-card').forEach((c, i) => {
+      if (i >= 3) { c.style.borderColor = `rgba(251,191,36,${0.25 + 0.6 * failed})`; c.style.color = failed > .5 ? 'var(--amber)' : '' }
+      else c.style.opacity = 1 - 0.5 * failed
+    })
+    show($('h27-filter'), prog(t, cue(s, 'rule of thumb') - 0.4))
+  },
+  'finding-harness'(t, s) {
+    show($('fh-found'), prog(t, cue(s, 'saved programs') - 0.4))
+    show($('fh-part2'), prog(t, 0.3))
+    show($('fh-slot'), prog(t, cue(s, 'left out')))
+    const back = prog(t, cue(s, 'restoring'), 0.9)
+    $('fh-part1').style.opacity = back
+    $('fh-part1').style.transform = `translateX(${-(1 - back) * 300}px)`
+    $('fh-missing').style.opacity = 1 - back
+    const one = cue(s, 'six out of'), all = cue(s, 'nineteen out of')
+    const b1 = prog(t, one, 1), b2 = prog(t, all, 1)
+    $('fh-b1').style.width = `${(6 / 20) * 100 * b1}%`
+    $('fh-b2').style.width = `${(19 / 19) * 100 * b2}%`
+    $('fh-n1').style.opacity = b1
+    $('fh-n2').style.opacity = b2
+    const wide = cue(s, 'thirteen Part Twos')
+    show($('fh-wide'), prog(t, wide - 0.3), 0)
+    const b3 = prog(t, cue(s, 'two out of fifty-three'), 1), b4 = prog(t, cue(s, 'twenty-nine out of thirty-seven'), 1)
+    $('fh-b3').style.width = `${(2 / 53) * 100 * b3}%`
+    $('fh-b4').style.width = `${(29 / 37) * 100 * b4}%`
+    $('fh-n3').style.opacity = b3
+    $('fh-n4').style.opacity = b4
+    $('fh-caveat').style.opacity = prog(t, cue(s, 'were picked'))
+    show($('fh-head'), prog(t, cue(s, 'mostly missing information')))
+  },
+  'finding-sampling'(t, s) {
+    const draw = prog(t, cue(s, 'independent tries predict') - 0.3, 1.8)
+    $('fs-curve').setAttribute('d', curve(Math.max(draw, 0.01)))
+    $('fs-curve').style.opacity = draw > 0 ? 1 : 0
+    $('fs-curve-label').style.opacity = prog(t, cue(s, 'independent tries predict') + 1)
+    const measured = cue(s, 'forty-nine percent') - 0.3
+    document.querySelectorAll('.fs-dot').forEach((d, i) => { d.style.opacity = prog(t, measured + 0.3 * i, 0.3) })
+    document.querySelectorAll('.fs-gap').forEach((g, i) => { g.style.opacity = prog(t, measured + 0.3 * i + 0.3, 0.3) })
+    $('fs-dots-label').style.opacity = prog(t, measured + 0.4)
+    $('fs-pool-label').style.opacity = prog(t, measured + 1.2)
+    const band = prog(t, cue(s, 'help most'))
+    $('fs-band').style.opacity = band
+    $('fs-band-label').style.opacity = band
+    show($('fs-pred'), prog(t, cue(s, 'forty-nine percent') - 0.3))
+    show($('fs-orig'), prog(t, cue(s, 'forty-two')))
+    show($('fs-after'), prog(t, cue(s, 'could not confirm') - 0.4))
+  },
+  'finding-models'(t, s) {
+    show($('fm-models'), prog(t, 0.2), 0)
+    const b1 = prog(t, cue(s, 'ten times in ten'), 1), b2 = prog(t, cue(s, 'once in ten'), 1)
+    $('fm-b1').style.width = `${100 * b1}%`
+    $('fm-b2').style.width = `${10 * b2}%`
+    $('fm-n1').style.opacity = b1
+    $('fm-n2').style.opacity = b2
+    show($('fm-repair'), prog(t, cue(s, 'repairing a failed program')))
+    show($('fm-slow'), prog(t, cue(s, 'too slow to finish') - 0.3))
+  },
+  'finding-measurement'(t, s) {
+    const at = cue(s, 'twelve defects')
+    document.querySelectorAll('.fd-card').forEach((c, i) => show(c, prog(t, at - 0.3 + i * 0.22, 0.4), 16))
+    show($('fd-foot'), prog(t, cue(s, 'better or worse')))
+  },
+  'next-caveat'(t, s) {
+    const pub = cue(s, 'are public')
+    show($('nc-p24'), prog(t, pub - 0.6))
+    show($('nc-p25'), prog(t, pub - 0.2))
+    show($('nc-mod'), prog(t, cue(s, 'older than the models')))
+    show($('nc-p26'), prog(t, cue(s, 'clean test') - 0.6))
+  },
+  'next-nightly'(t, s) {
+    ;[cue(s, 'registered the plan'), cue(s, 'scheduled run'), cue(s, 'separate account'), cue(s, 'one human check'), cue(s, 'biggest caveat')]
+      .forEach((at, i) => show($(`nn-${i + 1}`), prog(t, at - 0.2), 30))
+  },
+  'next-beyond'(t, s) {
+    show($('nb-key'), prog(t, cue(s, 'no answer key') - 0.3))
+    show($('nb-exact'), prog(t, cue(s, 'what that costs') - 0.2))
+    show($('nb-weak'), prog(t, cue(s, 'worked example alone') - 0.4))
+    show($('nb-q'), prog(t, cue(s, 'how much these strategies')))
+  },
+  outro() {},
+}
+</script>
+</body>
+</html>

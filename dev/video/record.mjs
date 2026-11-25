@@ -1,4 +1,4 @@
-// Renders a script's scenes (scenes.html) to frames in headless Chrome, one screenshot per frame.
+// Renders a script's scenes (<name>.html beside <name>.json) to frames in headless Chrome, one screenshot per frame.
 // The page draws each frame from a time value rather than playing animations, so the picture is
 // exact and the same on every run. Talks to Chrome over its DevTools protocol with Node's own
 // WebSocket, so nothing needs installing.
@@ -15,7 +15,7 @@ const here = dirname(fileURLToPath(import.meta.url))
 const segments = JSON.parse(readFileSync(SCRIPT, 'utf8'))
 const { durations } = JSON.parse(readFileSync(DURATIONS, 'utf8'))
 const FPS = 30
-const GAP = 0.8 // a pause after each segment's narration
+const GAP = 1.6 // a pause after each segment's narration, so what it showed last can be read
 const TAIL = 2.5 // the last scene holds after the narration ends
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -44,7 +44,12 @@ async function stop() {
   const exited = new Promise((resolve) => chrome.once('exit', resolve))
   chrome.kill()
   await exited
-  rmSync(profile, { recursive: true, force: true, maxRetries: 5 })
+  // Chrome's helper processes can still be writing to the profile for a moment after it exits.
+  try {
+    rmSync(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 })
+  } catch (error) {
+    console.warn(`left Chrome's temporary profile at ${profile}: ${error.code}`)
+  }
 }
 process.on('exit', () => { if (!stopped) chrome.kill() })
 
@@ -85,7 +90,7 @@ async function evaluate(expression) {
 await send('Runtime.enable')
 await send('Page.enable')
 await send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false })
-await send('Page.navigate', { url: pathToFileURL(join(here, 'scenes.html')).href })
+await send('Page.navigate', { url: pathToFileURL(SCRIPT.replace(/\.json$/, '.html')).href })
 for (let i = 0; i < 100; i++) {
   if (await evaluate('document.readyState === "complete" && typeof window.setup === "function"')) break
   await sleep(100)
@@ -93,7 +98,7 @@ for (let i = 0; i < 100; i++) {
 await evaluate('document.fonts.ready.then(() => true)')
 const data = timeline.map((t) => ({ ...t, say: (segments.find((s) => s.id === t.id).say ?? segments.find((s) => s.id === t.id).caption) }))
 const missing = await evaluate(`setup(${JSON.stringify(data)})`)
-if (missing.length) throw new Error(`scenes.html has no scene for: ${missing.join(', ')}`)
+if (missing.length) throw new Error(`the scene page has no scene for: ${missing.join(', ')}`)
 
 // ---- frames ----
 rmSync(OUT, { recursive: true, force: true })

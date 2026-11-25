@@ -1,37 +1,16 @@
 <!doctype html>
-<!-- The scenes of the Problem Solver videos, one per script segment (intro.json, overview.json).
-     record.mjs calls setup(timeline) once, then render(t) for every frame: each scene is drawn from
-     the time alone, so nothing here may depend on the clock or on CSS animations. A scene keys its
-     steps to the moment the narration says a phrase, cue(seg, phrase), so a re-voiced script stays
-     in step; a phrase the narration no longer says is an error. Figures shown here are published
-     claims: each must match dev/recompute_results.py. -->
+<!-- The scenes of the Problem Solver intro video, one per segment of intro.json. Uses scenes.css and scenes.js (shared with the other video's page): record.mjs calls
+     setup(timeline) once, then render(t) for every frame, so each scene is drawn from the time alone
+     and nothing here may depend on the clock or on CSS animations. A scene keys its steps to the
+     moment the narration says a phrase, cue(seg, phrase); a phrase the narration no longer says is an
+     error. Figures shown here are published claims: each must match dev/recompute_results.py. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Problem Solver scenes</title>
+<title>Problem Solver: what this is</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Lato:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500;700&display=block" rel="stylesheet">
-<style>
-  :root { --green: #34d399; --green-deep: #10b981; --red: #f87171; --amber: #fbbf24; --ink: #f8fafc;
-          --soft: #cbd5e1; --muted: #94a3b8; --faint: #64748b; --panel: rgba(148,163,184,.08); --line: rgba(148,163,184,.25); }
-  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
-  body { background: linear-gradient(180deg, #171b33 0%, #0f1222 100%); color: var(--ink); font-family: Lato, sans-serif; }
-  .scene { position: absolute; inset: 0; opacity: 0; }
-  .abs { position: absolute; }
-  h1, h2, .display { font-family: Poppins, sans-serif; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
-  .mono { font-family: "JetBrains Mono", monospace; }
-  .kicker { font-size: 26px; letter-spacing: .32em; color: var(--green); font-style: italic; text-transform: uppercase; }
-  .panel { background: var(--panel); border: 2px solid var(--line); border-radius: 22px; }
-  .card { width: 220px; height: 92px; border-radius: 16px; background: #1e2440; border: 2px solid var(--line);
-          display: flex; align-items: center; justify-content: center; font-family: "JetBrains Mono", monospace;
-          font-size: 34px; font-weight: 700; color: var(--soft); box-sizing: border-box; }
-  .stamp { position: absolute; right: -22px; top: -22px; width: 52px; height: 52px; border-radius: 50%;
-           display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: #0f1222; }
-  .stamp.no { background: var(--red); }
-  .stamp.yes { background: var(--green); }
-  .label { font-size: 30px; color: var(--muted); }
-  .note { font-size: 26px; color: var(--faint); font-style: italic; }
-  .tag { display: inline-block; padding: 8px 18px; border-radius: 999px; font-size: 24px; font-weight: 700; }
-</style>
+<link href="scenes.css" rel="stylesheet">
+<script src="scenes.js"></script>
 </head>
 <body>
 
@@ -203,27 +182,11 @@
     </svg>
     <h1 style="font-size:92px; margin-top:20px">Problem Solver</h1>
     <div class="mono" style="font-size:38px; color:var(--green); margin-top:30px">github.com/geniusworks/problem-solver</div>
-    <div class="label" id="outro-next" style="font-size:34px; margin-top:44px; color:var(--soft)">Next: the long version</div>
+    <div class="label" id="outro-next" style="font-size:34px; margin-top:44px; color:var(--soft)">Next: Problem Solver in detail</div>
   </div>
 </section>
 
 <script>
-const LEAD = 0.25 // the narration starts this long after its scene (assemble.mjs)
-const FADE = 0.7 // the old scene fades out over the first half, the new one in over the second
-let T = []
-const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x))
-const ease = (x) => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2 }
-// 0 → 1 over `len` seconds from `at`
-const prog = (t, at, len = 0.6) => ease((t - at) / len)
-const $ = (id) => document.getElementById(id)
-function show(el, p, dy = 24) { el.style.opacity = p; el.style.transform = `translateY(${(1 - p) * dy}px)` }
-// seconds into the segment at which the narration says `phrase`
-function cue(seg, phrase) {
-  const at = seg.say.toLowerCase().indexOf(phrase.toLowerCase())
-  if (at < 0) throw new Error(`${seg.id}: the narration does not say "${phrase}"`)
-  return LEAD + (at / seg.say.length) * seg.spoken
-}
-
 // ---- built once ----
 const grids = document.querySelectorAll('.intro-grid')
 ;[25, 12].forEach((days, g) => {
@@ -360,31 +323,6 @@ const scenes = {
   outro(t, s) {
     show($('outro-next'), prog(t, cue(s, 'longer video')))
   },
-}
-
-function setup(data) {
-  T = data
-  return T.filter((s) => !scenes[s.id]).map((s) => s.id)
-}
-
-function draw(seg, t, opacity, z) {
-  const el = $(seg.id)
-  el.style.opacity = opacity
-  el.style.zIndex = z
-  scenes[seg.id](t, seg)
-}
-
-function render(time) {
-  const k = Math.max(0, T.findIndex((s) => time < s.end) === -1 ? T.length - 1 : T.findIndex((s) => time < s.end))
-  for (const s of T) $(s.id).style.opacity = 0
-  const seg = T[k]
-  const local = time - seg.start
-  if (k > 0 && local < FADE / 2) {
-    const prev = T[k - 1]
-    draw(prev, prev.end - prev.start, 1 - ease(local / (FADE / 2)), 1)
-  }
-  draw(seg, local, k === 0 ? 1 : ease((local - FADE / 2) / (FADE / 2)), 2)
-  return true
 }
 </script>
 </body>
