@@ -10,6 +10,12 @@ The project grew out of competing in the 2024 and 2025 Advent of Code events mys
 puzzles by hand led me to ask whether local models could be coordinated to solve them systematically —
 and, more to the point, whether that could be *measured* rather than asserted.
 
+**▶ [What this is, in two and a half minutes](https://youtu.be/YGGniGLmTck)**: a narrated
+introduction for anyone, technical or not.
+
+**▶ [Problem Solver in detail, in five and a half minutes](https://youtu.be/0jn4Baeyyn8)**: how it
+works, how I got here, what I learned and what's next. Both have captions.
+
 > ### The quick version
 >
 > - **What it is** — local LLMs propose Python solutions to Advent of Code puzzles; an automatic
