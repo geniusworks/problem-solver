@@ -136,8 +136,10 @@ The dated record behind each finding is in [`dev/progress/`](dev/progress/); the
 It began on a 16 GB machine, where single runs turned out to be noise and repeat-trial A/Bs
 became the rule. A newer 27B model on a 32 GB machine swept the problems smaller models could not,
 and the question became the thesis: does coordinating attempts keep its value as models
-strengthen? Sampling and the cost trade-off were measured there. Five interventions that added no
-new information then failed in a row, which gave the project its filter for what to try next.
+strengthen? Sampling and the cost trade-off were measured there. Five predictions were then
+proven wrong in a row; the two interventions among them that failed, a higher temperature and
+reworded repair feedback, added no new information, which gave the project its filter for what to
+try next.
 A power test's saved drafts exposed the missing Part 1 statement; fixing it dissolved most of the
 problems that had been treated as walls, and every claim made under the old harness was re-tested.
 Model mixing got its first fair test on a 64 GB machine. [RESULTS.md](RESULTS.md) has the findings
