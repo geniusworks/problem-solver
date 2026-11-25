@@ -360,6 +360,8 @@ solutions/               Verified solutions + the ledger (README.md)
 dev/progress/            The measured findings (baselines, A/Bs, the capability frontier)
 dev/results/             Run outcomes as tables; recompute_results.py checks the docs against them
 dev/benchmarks/          Cross-machine results, keyed by hardware (solve rate by model/config)
+dev/video/               The narrated videos' scripts and scenes, built locally by make-video.sh
+assets/video/            The rendered videos, their captions and chapters
 years/                   Cached problem data (gitignored)
 ```
 

@@ -1,0 +1,45 @@
+[
+  {
+    "id": "intro",
+    "chapter": "Problem Solver",
+    "scene": "Title card, then the two event calendars: 25 days in 2024, 12 in 2025.",
+    "caption": "Every December, a website called Advent of Code publishes programming puzzles, one a day: 25 days of them in 2024, and 12 since 2025. I solved them by hand in 2024 and 2025, and kept wondering: could AI models solve them on their own, with no human help? And could I prove it, rather than just claim it?",
+    "say": "Every December, a website called Advent of Code publishes programming puzzles, one a day: twenty-five days of them in twenty twenty-four, and twelve since twenty twenty-five. I solved them by hand in twenty twenty-four and twenty twenty-five, and kept wondering: could A I models solve them on their own, with no human help? And could I prove it, rather than just claim it?"
+  },
+  {
+    "id": "idea",
+    "scene": "Three tries, one row each: a program appears, runs, and its result reaches the judge holding the known answer: wrong, an error, correct.",
+    "caption": "An AI model, the kind behind chatbots like ChatGPT or Claude, is a prediction machine: it guesses what a good answer looks like, and is often wrong. But once a puzzle has been solved, its correct answer is known, so any new answer can be checked instantly and exactly. So each model gets a set number of tries at each puzzle, and each try is a program it writes to solve it. An automatic judge runs every program and checks its answer against the correct one.",
+    "say": "An A I model, the kind behind chatbots like Chat G P T or Claude, is a prediction machine: it guesses what a good answer looks like, and is often wrong. But once a puzzle has been solved, its correct answer is known, so any new answer can be checked instantly and exactly. So each model gets a set number of tries at each puzzle, and each try is a program it writes to solve it. An automatic judge runs every program and checks its answer against the correct one."
+  },
+  {
+    "id": "question",
+    "scene": "One try vs several tries with the judge vs a second model; then the source-of-truth and goal lines.",
+    "caption": "One question I test: if an AI gets several tries at a puzzle, how much more often does it get it right than with one? And does a second, different model add anything? Previously solved puzzles are the source of truth. The long-term goal is to test AI problem-solving strategies, starting where every answer can be checked: narrow kinds of problems now, broader ones later."
+  },
+  {
+    "id": "who",
+    "chapter": "Who does what",
+    "scene": "Three columns fill in turn: local models guess, AI assistants helped build it, scripts judge.",
+    "caption": "The models being tested run locally, so thousands of tries cost nothing extra, and a model can't change in the middle of a test. I built the platform with AI as an engineering partner. And the judging is done by scripts, never by an AI, because it has to be exact."
+  },
+  {
+    "id": "finding",
+    "chapter": "What I learned",
+    "scene": "A puzzle's second part with its first-part story missing; it slides back in. Bar: 6/20 → 19/19.",
+    "caption": "The biggest surprise was about my own setup. Each puzzle has two parts, and I had been giving the model Part 2 without the Part 1 story it builds on. With that restored, and nothing else changed, one puzzle went from 6 out of 20 to 19 out of 19. What looked like the limit of the AI was mostly missing information.",
+    "say": "The biggest surprise was about my own setup. Each puzzle has two parts, and I had been giving the model Part Two without the Part One story it builds on. With that restored, and nothing else changed, one puzzle went from six out of twenty to nineteen out of nineteen. What looked like the limit of the A I was mostly missing information."
+  },
+  {
+    "id": "next",
+    "chapter": "What's next",
+    "scene": "Dec 1 2026 on the timeline; a Mac at night, 02:00, a run starts.",
+    "caption": "One catch: past puzzles are public, so a model may have seen their solutions. This year's puzzles, starting December 1st, are newer than every model I use. With the plan written down in advance, my Mac will attempt each one overnight.",
+    "say": "One catch: past puzzles are public, so a model may have seen their solutions. This year's puzzles, starting December first, are newer than every model I use. With the plan written down in advance, my Mac will attempt each one overnight."
+  },
+  {
+    "id": "outro",
+    "scene": "Closing card: repository link; 'The long version' pointer.",
+    "caption": "The code, and the measurements behind every result, are in the repository. A longer video walks through the details. Thanks for watching."
+  }
+]

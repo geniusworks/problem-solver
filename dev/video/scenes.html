@@ -1,0 +1,391 @@
+<!doctype html>
+<!-- The scenes of the Problem Solver videos, one per script segment (intro.json, overview.json).
+     record.mjs calls setup(timeline) once, then render(t) for every frame: each scene is drawn from
+     the time alone, so nothing here may depend on the clock or on CSS animations. A scene keys its
+     steps to the moment the narration says a phrase, cue(seg, phrase), so a re-voiced script stays
+     in step; a phrase the narration no longer says is an error. Figures shown here are published
+     claims: each must match dev/recompute_results.py. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Problem Solver scenes</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Lato:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500;700&display=block" rel="stylesheet">
+<style>
+  :root { --green: #34d399; --green-deep: #10b981; --red: #f87171; --amber: #fbbf24; --ink: #f8fafc;
+          --soft: #cbd5e1; --muted: #94a3b8; --faint: #64748b; --panel: rgba(148,163,184,.08); --line: rgba(148,163,184,.25); }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  body { background: linear-gradient(180deg, #171b33 0%, #0f1222 100%); color: var(--ink); font-family: Lato, sans-serif; }
+  .scene { position: absolute; inset: 0; opacity: 0; }
+  .abs { position: absolute; }
+  h1, h2, .display { font-family: Poppins, sans-serif; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+  .mono { font-family: "JetBrains Mono", monospace; }
+  .kicker { font-size: 26px; letter-spacing: .32em; color: var(--green); font-style: italic; text-transform: uppercase; }
+  .panel { background: var(--panel); border: 2px solid var(--line); border-radius: 22px; }
+  .card { width: 220px; height: 92px; border-radius: 16px; background: #1e2440; border: 2px solid var(--line);
+          display: flex; align-items: center; justify-content: center; font-family: "JetBrains Mono", monospace;
+          font-size: 34px; font-weight: 700; color: var(--soft); box-sizing: border-box; }
+  .stamp { position: absolute; right: -22px; top: -22px; width: 52px; height: 52px; border-radius: 50%;
+           display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: #0f1222; }
+  .stamp.no { background: var(--red); }
+  .stamp.yes { background: var(--green); }
+  .label { font-size: 30px; color: var(--muted); }
+  .note { font-size: 26px; color: var(--faint); font-style: italic; }
+  .tag { display: inline-block; padding: 8px 18px; border-radius: 999px; font-size: 24px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- ======================= intro ======================= -->
+<section class="scene" id="intro">
+  <div class="abs" id="intro-title" style="left:0; right:0; top:330px; text-align:center">
+    <svg width="132" height="123" viewBox="0 0 60 56" fill="none">
+      <path d="M13 9 C 26 9, 30 22, 36 26" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+      <path d="M13 28 L 36 28" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M13 47 C 26 47, 30 34, 36 30" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="8" cy="9" r="5" stroke="#10b981" stroke-width="3"/>
+      <circle cx="8" cy="28" r="5" stroke="#94a3b8" stroke-width="3"/>
+      <circle cx="8" cy="47" r="5" stroke="#94a3b8" stroke-width="3"/>
+      <circle cx="47" cy="28" r="11" fill="#10b981"/>
+      <path d="M42 28 L 45.5 31.5 L 52 21" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h1 style="font-size:120px; margin-top:24px">Problem Solver</h1>
+    <div class="kicker" style="margin-top:28px">What actually helps AI solve problems?</div>
+  </div>
+  <div class="abs" id="intro-cal" style="left:240px; top:120px; width:820px">
+    <div class="display" style="font-size:54px">December</div>
+    <div class="label" style="margin:6px 0 40px">one puzzle a day</div>
+    <div style="display:flex; gap:70px">
+      <div id="intro-y24"><div class="display" style="font-size:36px; margin-bottom:6px">2024</div><div class="label" style="font-size:26px; margin-bottom:22px">25 days</div>
+        <div class="intro-grid" style="display:grid; grid-template-columns:repeat(5, 76px); gap:12px"></div></div>
+      <div id="intro-y25"><div class="display" style="font-size:36px; margin-bottom:6px">2025</div><div class="label" style="font-size:26px; margin-bottom:22px">12 days</div>
+        <div class="intro-grid" style="display:grid; grid-template-columns:repeat(4, 76px); gap:12px"></div></div>
+    </div>
+  </div>
+  <div class="abs" id="intro-q" style="left:1130px; top:250px; width:700px">
+    <div class="label" id="intro-hand" style="font-size:34px; color:var(--soft)">2024 and 2025: solved by hand</div>
+    <div class="display" id="intro-q1" style="font-size:52px; line-height:1.15; margin-top:70px; width:660px">Could AI models solve them on their own?</div>
+    <div class="display" id="intro-q2" style="font-size:62px; line-height:1.15; margin-top:30px; color:var(--green)">Could I prove it?</div>
+  </div>
+</section>
+
+<!-- ======================= idea ======================= -->
+<section class="scene" id="idea">
+  <div class="abs panel" id="idea-model" style="left:110px; top:300px; width:380px; padding:40px 34px; box-sizing:border-box">
+    <div class="display" style="font-size:50px">AI model</div>
+    <div class="label" style="margin-top:14px">predicts what a good answer looks like</div>
+    <div class="note" style="margin-top:22px">like the ones behind ChatGPT or Claude</div>
+  </div>
+  <div class="abs display" id="idea-tries" style="left:560px; top:70px; font-size:36px; color:var(--muted)">Each try: a program it writes</div>
+  <div id="idea-rows"></div>
+  <div class="abs panel" id="idea-judge" style="left:1520px; top:150px; width:300px; height:640px; padding:34px 28px; box-sizing:border-box; text-align:center; border-color:rgba(52,211,153,.5)">
+    <div style="width:110px; height:110px; margin:0 auto; border-radius:50%; background:var(--green-deep); display:flex; align-items:center; justify-content:center">
+      <svg width="62" height="62" viewBox="0 0 24 24"><path d="M5 12.5 L10 17.5 L19 6.5" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="display" style="font-size:38px; margin-top:22px; line-height:1.15">Automatic judge</div>
+    <div class="label" style="font-size:25px; margin-top:12px">runs each program, checks its answer</div>
+    <div id="idea-known" style="margin-top:60px"><div class="label" style="font-size:24px">correct answer</div><div class="mono" style="font-size:40px; font-weight:700; color:var(--green); margin-top:6px">39 940</div></div>
+  </div>
+</section>
+
+<!-- ======================= question ======================= -->
+<section class="scene" id="question">
+  <div class="abs" id="q-one" style="left:200px; top:120px; display:flex; align-items:center; gap:50px">
+    <div class="label" style="width:460px; font-size:38px; color:var(--soft)">One try</div>
+    <div class="card" style="width:120px">?</div>
+  </div>
+  <div class="abs" id="q-many" style="left:200px; top:260px; display:flex; align-items:center; gap:50px">
+    <div class="label" style="width:460px; font-size:38px; color:var(--soft)">Several tries, checked</div>
+    <div style="display:flex; gap:22px" id="q-many-cards"></div>
+  </div>
+  <div class="abs" id="q-second" style="left:200px; top:400px; display:flex; align-items:center; gap:50px">
+    <div class="label" style="width:460px; font-size:38px; color:var(--soft)">A second, different model</div>
+    <div class="card" style="width:120px; border-color:rgba(251,191,36,.6); color:var(--amber)">+?</div>
+  </div>
+  <div class="abs" id="q-truth" style="left:200px; top:560px; font-size:34px" class="label"><span class="label" style="font-size:34px">Source of truth:</span> <span style="color:var(--soft)">puzzles already solved, with known answers</span></div>
+  <div class="abs" id="q-goal" style="left:200px; top:640px; width:1500px">
+    <div class="display" style="font-size:44px; line-height:1.25">The goal: AI problem-solving strategies,<br>tested <span style="color:var(--green)">where every answer can be checked</span></div>
+    <div class="label" style="font-size:32px; margin-top:14px">narrow kinds of problems now, broader ones later</div>
+  </div>
+</section>
+
+<!-- ======================= who ======================= -->
+<section class="scene" id="who">
+  <div class="abs display" style="left:160px; top:110px; font-size:56px">Who does what</div>
+  <div id="who-cols" class="abs" style="left:160px; top:240px; display:flex; gap:60px">
+    <div class="panel who-col" style="width:493px; height:540px; padding:44px; box-sizing:border-box">
+      <svg width="96" height="72" viewBox="0 0 48 36" fill="none"><rect x="8" y="3" width="32" height="22" rx="2.5" stroke="#cbd5e1" stroke-width="2.5"/><path d="M3 30 H45" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/></svg>
+      <div class="display" style="font-size:44px; margin-top:24px">Local AI models</div>
+      <div class="tag" style="background:rgba(148,163,184,.18); color:var(--soft); margin-top:18px">make the guesses</div>
+      <div class="label" style="margin-top:26px; line-height:1.35; color:var(--soft)">Solve each puzzle with no human help</div>
+      <div class="label" style="margin-top:14px; line-height:1.35; font-size:26px">Run locally: thousands of tries at no extra cost, and the model can't change mid-test</div>
+    </div>
+    <div class="panel who-col" style="width:493px; height:540px; padding:44px; box-sizing:border-box">
+      <svg width="96" height="72" viewBox="0 0 48 36" fill="none"><path d="M16 8 L6 18 L16 28 M32 8 L42 18 L32 28 M27 5 L21 31" stroke="#cbd5e1" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="display" style="font-size:44px; margin-top:24px">AI assistants</div>
+      <div class="tag" style="background:rgba(148,163,184,.18); color:var(--soft); margin-top:18px">helped build it</div>
+      <div class="label" style="margin-top:30px; line-height:1.4">An engineering partner for the platform</div>
+    </div>
+    <div class="panel who-col" style="width:493px; height:540px; padding:44px; box-sizing:border-box; border-color:rgba(52,211,153,.5)">
+      <svg width="72" height="72" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="16" fill="#10b981"/><path d="M10 18.5 L15.5 24 L26 12" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="display" style="font-size:44px; margin-top:24px">Scripts</div>
+      <div class="tag" style="background:rgba(52,211,153,.18); color:var(--green); margin-top:18px">judge</div>
+      <div class="label" style="margin-top:30px; line-height:1.4">Exact, every time; never an AI</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= finding ======================= -->
+<section class="scene" id="finding">
+  <div class="abs display" style="left:160px; top:100px; font-size:56px">The biggest surprise</div>
+  <div class="abs" style="left:160px; top:230px; width:620px; height:500px">
+    <div class="abs panel" id="f-slot" style="left:0; top:0; width:560px; height:170px; box-sizing:border-box; border-style:dashed; display:flex; align-items:center; justify-content:center">
+      <div class="label" id="f-missing">Part 1 story: <span style="color:var(--amber)">missing</span></div>
+    </div>
+    <div class="abs panel" id="f-part1" style="left:0; top:0; width:560px; height:170px; padding:30px 36px; box-sizing:border-box; border-color:rgba(52,211,153,.6); background:#1c2a3a">
+      <div class="display" style="font-size:38px">Part 1</div>
+      <div class="label" style="margin-top:8px">the story, the rules, the input format</div>
+    </div>
+    <div class="abs panel" id="f-part2" style="left:0; top:210px; width:560px; height:170px; padding:30px 36px; box-sizing:border-box">
+      <div class="display" style="font-size:38px">Part 2</div>
+      <div class="label" style="margin-top:8px">builds on Part 1</div>
+    </div>
+  </div>
+  <div class="abs" style="left:900px; top:230px; width:860px">
+    <div class="label" style="margin-bottom:34px">One puzzle, single attempts solved</div>
+    <div style="display:flex; align-items:center; gap:24px; margin-bottom:46px">
+      <div class="label" style="width:250px; flex-shrink:0; color:var(--soft)">Without Part 1</div>
+      <div style="width:400px; height:64px; background:rgba(148,163,184,.12); border-radius:10px; position:relative">
+        <div id="f-bar1" style="position:absolute; left:0; top:0; bottom:0; border-radius:10px; background:var(--muted)"></div>
+      </div>
+      <div class="mono" id="f-n1" style="white-space:nowrap; font-size:38px; font-weight:700; color:var(--soft)">6 of 20</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:24px">
+      <div class="label" style="width:250px; flex-shrink:0; color:var(--soft)">With Part 1</div>
+      <div style="width:400px; height:64px; background:rgba(148,163,184,.12); border-radius:10px; position:relative">
+        <div id="f-bar2" style="position:absolute; left:0; top:0; bottom:0; border-radius:10px; background:var(--green)"></div>
+      </div>
+      <div class="mono" id="f-n2" style="white-space:nowrap; font-size:38px; font-weight:700; color:var(--green)">19 of 19</div>
+    </div>
+    <div class="note" style="margin-top:40px">2024 day 19, part 2 · same model and settings, only the context changed</div>
+  </div>
+  <div class="abs display" id="f-head" style="left:160px; top:690px; font-size:52px">Not the AI's limit: <span style="color:var(--green)">missing information</span></div>
+</section>
+
+<!-- ======================= next ======================= -->
+<section class="scene" id="next">
+  <div class="abs display" style="left:160px; top:100px; font-size:56px">What's next</div>
+  <div class="abs" style="left:200px; top:420px; width:1520px; height:4px; background:var(--line)"></div>
+  <div id="next-marks"></div>
+  <div class="abs" id="next-plan" style="left:160px; top:640px; display:flex; gap:40px">
+    <div class="panel" style="padding:26px 34px; display:flex; align-items:center; gap:22px">
+      <svg width="44" height="54" viewBox="0 0 22 27" fill="none"><path d="M2 2 H14 L20 8 V25 H2 Z" stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round"/><path d="M6 13 H16 M6 17 H16 M6 21 H12" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/></svg>
+      <div><div class="display" style="font-size:32px">Plan written in advance</div><div class="label" style="font-size:26px">model and settings frozen</div></div>
+    </div>
+    <div class="panel" id="next-night" style="padding:26px 34px; display:flex; align-items:center; gap:22px">
+      <svg width="50" height="50" viewBox="0 0 24 24" fill="none"><path d="M20 14.5 A8.5 8.5 0 1 1 9.5 4 A7 7 0 0 0 20 14.5 Z" fill="#fbbf24"/></svg>
+      <div><div class="display" style="font-size:32px">Every night of the event</div><div class="label" style="font-size:26px">my Mac attempts the new puzzle</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= outro ======================= -->
+<section class="scene" id="outro">
+  <div class="abs" style="left:0; right:0; top:250px; text-align:center">
+    <svg width="110" height="103" viewBox="0 0 60 56" fill="none">
+      <path d="M13 9 C 26 9, 30 22, 36 26" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+      <path d="M13 28 L 36 28" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M13 47 C 26 47, 30 34, 36 30" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="8" cy="9" r="5" stroke="#10b981" stroke-width="3"/>
+      <circle cx="8" cy="28" r="5" stroke="#94a3b8" stroke-width="3"/>
+      <circle cx="8" cy="47" r="5" stroke="#94a3b8" stroke-width="3"/>
+      <circle cx="47" cy="28" r="11" fill="#10b981"/>
+      <path d="M42 28 L 45.5 31.5 L 52 21" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h1 style="font-size:92px; margin-top:20px">Problem Solver</h1>
+    <div class="mono" style="font-size:38px; color:var(--green); margin-top:30px">github.com/geniusworks/problem-solver</div>
+    <div class="label" id="outro-next" style="font-size:34px; margin-top:44px; color:var(--soft)">Next: the long version</div>
+  </div>
+</section>
+
+<script>
+const LEAD = 0.25 // the narration starts this long after its scene (assemble.mjs)
+const FADE = 0.7 // the old scene fades out over the first half, the new one in over the second
+let T = []
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x))
+const ease = (x) => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2 }
+// 0 → 1 over `len` seconds from `at`
+const prog = (t, at, len = 0.6) => ease((t - at) / len)
+const $ = (id) => document.getElementById(id)
+function show(el, p, dy = 24) { el.style.opacity = p; el.style.transform = `translateY(${(1 - p) * dy}px)` }
+// seconds into the segment at which the narration says `phrase`
+function cue(seg, phrase) {
+  const at = seg.say.toLowerCase().indexOf(phrase.toLowerCase())
+  if (at < 0) throw new Error(`${seg.id}: the narration does not say "${phrase}"`)
+  return LEAD + (at / seg.say.length) * seg.spoken
+}
+
+// ---- built once ----
+const grids = document.querySelectorAll('.intro-grid')
+;[25, 12].forEach((days, g) => {
+  for (let d = 1; d <= days; d++) {
+    const c = document.createElement('div')
+    c.className = 'cal'
+    c.style.cssText = 'height:62px; border-radius:12px; border:2px solid rgba(148,163,184,.25); display:flex; align-items:center; justify-content:center; font:700 26px "JetBrains Mono", monospace; color:#64748b'
+    c.textContent = d
+    grids[g].appendChild(c)
+  }
+})
+// Three tries at one made-up puzzle: what each program printed when run.
+const TRIES = [
+  { code: ['def solve(data):', '    rows = data.split()', '    return sum(map(len, rows))'], out: '41 822', ok: false },
+  { code: ['def solve(data):', '    grid = parse(data)', '    return walk(grid, grid[0][99])'], out: 'IndexError', ok: false },
+  { code: ['def solve(data):', '    grid = parse(data)', '    return len(reachable(grid))'], out: '39 940', ok: true },
+]
+TRIES.forEach((tr, i) => {
+  const row = document.createElement('div')
+  row.className = 'abs idea-row'
+  row.style.cssText = `left:560px; top:${170 + i * 215}px; display:flex; align-items:center; gap:26px`
+  row.innerHTML = `
+    <div class="idea-code" style="width:520px; height:150px; box-sizing:border-box; padding:18px 22px; border-radius:14px; background:#0b0e1b; border:2px solid var(--line); font:500 22px/1.55 'JetBrains Mono', monospace; color:#cbd5e1; white-space:pre">${tr.code.map((l) => `<div>${l.replace('def ', '<span style="color:#93c5fd">def </span>').replace('return ', '<span style="color:#93c5fd">return </span>')}</div>`).join('')}</div>
+    <div class="idea-run label" style="font-size:24px; width:70px; text-align:center">run<br>→</div>
+    <div class="idea-out card" style="width:230px; height:80px; font-size:${tr.ok ? 34 : 26}px; position:relative; color:${tr.ok ? 'var(--soft)' : tr.out === 'IndexError' ? 'var(--red)' : 'var(--soft)'}">${tr.out}<div class="stamp ${tr.ok ? 'yes' : 'no'}">${tr.ok ? '✓' : '✗'}</div></div>`
+  $('idea-rows').appendChild(row)
+})
+for (let i = 0; i < 5; i++) {
+  const c = document.createElement('div')
+  c.className = 'card'
+  c.style.width = '120px'
+  c.style.fontSize = '30px'
+  c.innerHTML = i === 2 ? '<span style="color:#34d399">✓</span>' : '<span style="color:#f87171">✗</span>'
+  $('q-many-cards').appendChild(c)
+}
+const MARKS = [
+  { id: 'p24', x: 330, label: 'Dec 2024', what: '2024 puzzles', tag: 'public', color: 'var(--amber)' },
+  { id: 'p25', x: 760, label: 'Dec 2025', what: '2025 puzzles', tag: 'public', color: 'var(--amber)' },
+  { id: 'mod', x: 1190, label: 'Aug 2026', what: 'model released', tag: '', color: 'var(--soft)' },
+  { id: 'p26', x: 1560, label: 'Dec 1, 2026', what: '2026 puzzles', tag: 'newer than the model', color: 'var(--green)' },
+]
+for (const m of MARKS) {
+  const el = document.createElement('div')
+  el.className = 'abs'
+  el.id = `mark-${m.id}`
+  el.style.cssText = `left:${m.x - 160}px; top:300px; width:320px; text-align:center`
+  el.innerHTML = `<div class="display" style="font-size:34px; color:${m.color}; white-space:nowrap">${m.what}</div>
+    <div style="width:26px; height:26px; border-radius:50%; background:${m.color}; margin:30px auto 0"></div>
+    <div class="label" style="margin-top:26px">${m.label}</div>
+    ${m.tag ? `<div class="tag" style="margin-top:14px; border:2px solid ${m.color}; color:${m.color}">${m.tag}</div>` : ''}`
+  $('next-marks').appendChild(el)
+}
+
+// ---- one draw function per segment: (t seconds into the segment, seg) ----
+const scenes = {
+  intro(t, s) {
+    const toCal = cue(s, 'publishes')
+    const title = $('intro-title')
+    const out = prog(t, toCal - 0.6, 0.7)
+    title.style.opacity = 1 - out
+    title.style.transform = `scale(${1 - 0.08 * out})`
+    show($('intro-cal'), prog(t, toCal, 0.7))
+    show($('intro-y24'), prog(t, cue(s, 'twenty-five days') - 0.3))
+    show($('intro-y25'), prog(t, cue(s, 'and twelve since') - 0.3))
+    const lights = [[...grids[0].children], cue(s, 'twenty-five days')], later = [[...grids[1].children], cue(s, 'and twelve since')]
+    for (const [cells, from] of [lights, later]) cells.forEach((c, i) => {
+      const lit = prog(t, from + i * 0.06, 0.3)
+      c.style.borderColor = `rgba(148,163,184,${0.25 + 0.35 * lit})`
+      c.style.color = lit > 0.5 ? '#cbd5e1' : '#64748b'
+      c.style.background = `rgba(148,163,184,${0.08 * lit})`
+    })
+    show($('intro-hand'), prog(t, cue(s, 'solved them by hand')))
+    show($('intro-q1'), prog(t, cue(s, 'could A I models')))
+    show($('intro-q2'), prog(t, cue(s, 'could I prove it')))
+  },
+  idea(t, s) {
+    show($('idea-model'), prog(t, 0.2))
+    const tries = cue(s, 'set number of tries')
+    show($('idea-tries'), prog(t, tries))
+    show($('idea-judge'), prog(t, cue(s, 'checked instantly')))
+    show($('idea-known'), prog(t, cue(s, 'correct answer is known')))
+    const runs = cue(s, 'runs every program'), checks = cue(s, 'checks its answer')
+    document.querySelectorAll('.idea-row').forEach((row, i) => {
+      show(row, prog(t, tries + 0.5 + 0.6 * i), 0)
+      const lines = row.querySelectorAll('.idea-code div')
+      lines.forEach((l, j) => { l.style.opacity = prog(t, tries + 0.5 + 0.6 * i + 0.25 * j, 0.3) })
+      row.querySelector('.idea-run').style.opacity = prog(t, runs + 0.3 * i, 0.4)
+      const out = row.querySelector('.idea-out')
+      out.style.opacity = prog(t, runs + 0.3 + 0.3 * i, 0.4)
+      const stamp = out.querySelector('.stamp'), p = prog(t, checks + 0.5 * i, 0.3)
+      stamp.style.opacity = p
+      stamp.style.transform = `scale(${0.4 + 0.6 * p})`
+      const done = prog(t, checks + 1.8, 0.5)
+      if (TRIES[i].ok) { out.style.borderColor = `rgba(52,211,153,${0.25 + 0.75 * done})`; out.style.color = done > .5 ? '#34d399' : '' }
+      else row.style.opacity = Math.min(Number(row.style.opacity), 1 - 0.45 * done)
+    })
+  },
+  question(t, s) {
+    show($('q-one'), prog(t, cue(s, 'than with one') - 0.6))
+    show($('q-many'), prog(t, cue(s, 'several tries') - 0.2))
+    show($('q-second'), prog(t, cue(s, 'second, different model') - 0.2))
+    show($('q-truth'), prog(t, cue(s, 'previously solved')))
+    show($('q-goal'), prog(t, cue(s, 'long-term goal')))
+  },
+  who(t, s) {
+    const cols = document.querySelectorAll('.who-col')
+    ;[cue(s, 'models being tested'), cue(s, 'I built'), cue(s, 'judging')].forEach((at, i) => show(cols[i], prog(t, at - 0.2), 40))
+  },
+  finding(t, s) {
+    show($('f-part2'), prog(t, 0.2))
+    show($('f-slot'), prog(t, cue(s, 'without the Part One')))
+    const back = prog(t, cue(s, 'restored'), 0.9)
+    const p1 = $('f-part1')
+    p1.style.opacity = back
+    p1.style.transform = `translateX(${-(1 - back) * 300}px)`
+    $('f-missing').style.opacity = 1 - back
+    const b1 = prog(t, cue(s, 'six out of'), 1.0), b2 = prog(t, cue(s, 'nineteen out of'), 1.0)
+    $('f-bar1').style.width = `${(6 / 20) * 100 * b1}%`
+    $('f-bar2').style.width = `${(19 / 19) * 100 * b2}%`
+    $('f-n1').style.opacity = b1
+    $('f-n2').style.opacity = b2
+    show($('f-head'), prog(t, cue(s, 'mostly missing information')))
+  },
+  next(t, s) {
+    const pub = cue(s, 'past puzzles are public')
+    show($('mark-p24'), prog(t, pub))
+    show($('mark-p25'), prog(t, pub + 0.4))
+    const newer = cue(s, 'newer than every model')
+    show($('mark-mod'), prog(t, newer - 0.4))
+    show($('mark-p26'), prog(t, newer + 0.3))
+    show($('next-plan'), prog(t, cue(s, 'plan written down')))
+    $('next-night').style.opacity = prog(t, cue(s, 'attempt each one'))
+  },
+  outro(t, s) {
+    show($('outro-next'), prog(t, cue(s, 'longer video')))
+  },
+}
+
+function setup(data) {
+  T = data
+  return T.filter((s) => !scenes[s.id]).map((s) => s.id)
+}
+
+function draw(seg, t, opacity, z) {
+  const el = $(seg.id)
+  el.style.opacity = opacity
+  el.style.zIndex = z
+  scenes[seg.id](t, seg)
+}
+
+function render(time) {
+  const k = Math.max(0, T.findIndex((s) => time < s.end) === -1 ? T.length - 1 : T.findIndex((s) => time < s.end))
+  for (const s of T) $(s.id).style.opacity = 0
+  const seg = T[k]
+  const local = time - seg.start
+  if (k > 0 && local < FADE / 2) {
+    const prev = T[k - 1]
+    draw(prev, prev.end - prev.start, 1 - ease(local / (FADE / 2)), 1)
+  }
+  draw(seg, local, k === 0 ? 1 : ease((local - FADE / 2) / (FADE / 2)), 2)
+  return true
+}
+</script>
+</body>
+</html>
