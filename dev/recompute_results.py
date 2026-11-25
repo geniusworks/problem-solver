@@ -506,20 +506,30 @@ VIDEOS = {name: [f"dev/video/{name}.json", f"dev/video/{name}.html", "dev/video/
           for name in ("intro", "overview")}
 
 
+# The thumbnails' sources (dev/video/make-thumbnails.sh records them).
+THUMBNAILS = [f"dev/video/thumbnails/{name}" for name in ("base.css", "intro.html", "overview.html")]
+
+
+def _rendered_from(record: Path, sources: List[str]) -> bool:
+    """`record` holds the current hashes of exactly `sources`."""
+    recorded = {}
+    if record.exists():
+        for line in record.read_text().splitlines():
+            digest, path = line.split()[1:3]
+            recorded[path] = digest
+    return recorded == {path: hashlib.sha256((REPO_ROOT / path).read_bytes()).hexdigest() for path in sources}
+
+
 def videos_rendered() -> List[str]:
-    """Each video in assets/video/ was rendered from its current sources."""
-    problems = []
-    for name, sources in VIDEOS.items():
-        record = REPO_ROOT / "assets" / "video" / f"problem-solver-{name}.rendered-from"
-        recorded = {}
-        if record.exists():
-            for line in record.read_text().splitlines():
-                digest, path = line.split()[1:3]
-                recorded[path] = digest
-        current = {path: hashlib.sha256((REPO_ROOT / path).read_bytes()).hexdigest() for path in sources}
-        if recorded != current:
-            problems.append(f"assets/video/problem-solver-{name}.mp4 was not rendered from the current "
-                            f"{', '.join(sources)}; run dev/video/make-video.sh {name}")
+    """Each video and the thumbnails in assets/video/ were rendered from their current sources."""
+    video = REPO_ROOT / "assets" / "video"
+    problems = [f"assets/video/problem-solver-{name}.mp4 was not rendered from the current "
+                f"{', '.join(sources)}; run dev/video/make-video.sh {name}"
+                for name, sources in VIDEOS.items()
+                if not _rendered_from(video / f"problem-solver-{name}.rendered-from", sources)]
+    if not _rendered_from(video / "thumbnails.rendered-from", THUMBNAILS):
+        problems.append("the thumbnails in assets/video/ were not rendered from the current "
+                        "dev/video/thumbnails/; run dev/video/make-thumbnails.sh")
     return problems
 
 
