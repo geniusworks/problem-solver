@@ -440,7 +440,7 @@ Under the original harness, five hypotheses were falsified by the next run:
    on 49 of 70 attempts.
 
 Read together they gave the project its filter for what to try next, a heuristic drawn from
-these five nulls and not itself tested:
+these five falsified predictions and not itself tested:
 
 > **Interventions that add no new information do not help, however well-targeted the wording.**
 > Temperature added variance without information. Reworded feedback added exhortation without
