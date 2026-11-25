@@ -310,7 +310,7 @@ Corpus it summarises: **57 runs · 1,475 attempts · ~121 GPU-hours · 16.3M tok
 solutions across two AoC years, 0 wrong in the ledger.**
 
 It covers: the three arms (1 confirmed + replicated, 2 splits by cost type, 3 untested for want of a
-pair); the two unpredicted findings (generation beats size; the information rule from five nulls);
+pair); the two unpredicted findings (generation beats size; the information rule from five falsified predictions);
 the eight instrument defects and six in-place corrections; scope and limits; and where the mechanism
 should and should not generalise.
 
@@ -413,7 +413,7 @@ the token-accounting bug; arm 3 (portfolios) untested at the frontier.**
 model-mixing A/B (arm 3) → 3) economic A/B (arm 2) → 4) **`RESULTS.md`**, the consolidated findings
 report and the deliverable for going public.
 
-### ❌ TARGETED FEEDBACK: no gain — but the five nulls now form a rule (2026-08-21)
+### ❌ TARGETED FEEDBACK: no gain — but five falsified predictions now form a rule (2026-08-21)
 
 Wrong-answer repair guidance ("your code produced X, that is INCORRECT; a clean-running wrong answer
 usually means a misread requirement, not a typo") on both target problems
