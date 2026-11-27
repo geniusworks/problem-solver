@@ -3,6 +3,7 @@
 #   dev/video/make-thumbnails.sh
 # Writes assets/video/problem-solver-<name>-thumbnail.png and assets/video/thumbnails.rendered-from,
 # the sources' hashes, which dev/recompute_results.py --check compares with the current sources.
+# Only the .rendered-from is committed; the thumbnails are uploaded with the videos.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 repo="$(cd "$here/../.." && pwd)"

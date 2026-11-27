@@ -8,7 +8,8 @@
 #
 # Writes assets/video/problem-solver-<name>.mp4, .srt, -chapters.txt, -transcript-check.txt and
 # .rendered-from: the sources' hashes, which dev/recompute_results.py --check compares with the
-# current sources, so an edited script or scene page without a new render fails CI.
+# current sources, so an edited script or scene page without a new render fails CI. Only the
+# .rendered-from is committed; the video and its side files are uploaded to YouTube (README links).
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 repo="$(cd "$here/../.." && pwd)"
