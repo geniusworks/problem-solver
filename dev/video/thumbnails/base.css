@@ -1,0 +1,10 @@
+/* Shared look of the video thumbnails (intro.html, overview.html), 1280x720. */
+html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; }
+body { background: linear-gradient(160deg, #1b2142 0%, #0f1222 70%); color: #f8fafc; font-family: Lato, sans-serif; position: relative; }
+.glyph { position: absolute; }
+.halo { position: absolute; border-radius: 50%; background: radial-gradient(circle, rgba(16,185,129,.22) 0 30%, rgba(16,185,129,.10) 30% 60%, rgba(16,185,129,0) 60% 100%); }
+h1 { font-family: Poppins, sans-serif; font-weight: 700; margin: 0; letter-spacing: -0.015em; }
+.tag { position: absolute; left: 80px; font-size: 30px; letter-spacing: .28em; text-transform: uppercase; color: #34d399; font-style: italic; }
+.foot { position: absolute; left: 80px; bottom: 56px; font-size: 30px; color: #94a3b8; }
+.foot b { color: #f8fafc; }
+.pill { display: inline-block; padding: 10px 24px; border-radius: 999px; border: 3px solid #34d399; color: #34d399; font-weight: 700; font-size: 30px; }

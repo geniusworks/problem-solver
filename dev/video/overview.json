@@ -1,0 +1,95 @@
+[
+  {
+    "id": "recap",
+    "chapter": "Problem Solver in detail",
+    "scene": "Title card with the subtitle, then the intro's tries-and-judge picture, shrunk to a corner.",
+    "caption": "This is Problem Solver in detail. In short: AI models write programs to solve Advent of Code puzzles on their own, with no human help. An automatic judge runs each program and checks its answer against the known correct one. And I measure what actually helps them, and by how much.",
+    "say": "This is Problem Solver in detail. In short: A I models write programs to solve Advent of Code puzzles on their own, with no human help. An automatic judge runs each program and checks its answer against the known correct one. And I measure what actually helps them, and by how much."
+  },
+  {
+    "id": "loop",
+    "chapter": "How it works",
+    "scene": "The pipeline, animated: puzzle → local model → Python program → sandbox → oracle → overfit gate → ledger; 'no person in the loop' along the top.",
+    "caption": "For technical viewers: each puzzle goes to a large language model running locally through Ollama. The model writes a Python program. The program runs in a sandbox against the real puzzle input, and an oracle compares its output with the accepted answer. An overfit gate rejects programs that just copy the example's numbers. From fetching the puzzle to recording the result, no person steps in."
+  },
+  {
+    "id": "strategies",
+    "scene": "Strategy layer over the loop: several tries, repair arrow, second model.",
+    "caption": "On top of that loop sit the strategies I measure: several tries instead of one, repairing a failed program using its own error, and a second model."
+  },
+  {
+    "id": "trials",
+    "scene": "Rules on the left; a single test after an update, 0 of 2, red; three trials on the same two problems, 6 of 6, green.",
+    "caption": "Every setup gets a fingerprint, every experiment runs several trials, and every try is recorded, solved or not. The models vary: the same model, given the same puzzle, writes a different program each time. A single test after a software update returned 0 out of 2, and looked like the update had broken something. Three trials on the same two problems, with the same setup, gave 6 out of 6.",
+    "say": "Every setup gets a fingerprint, every experiment runs several trials, and every try is recorded, solved or not. The models vary: the same model, given the same puzzle, writes a different program each time. A single test after a software update returned zero out of two, and looked like the update had broken something. Three trials on the same two problems, with the same setup, gave six out of six."
+  },
+  {
+    "id": "local",
+    "chapter": "Who does what",
+    "scene": "Three columns fill in turn: local models solve, AI assistants helped build, scripts judge and recompute every published number.",
+    "caption": "Responsibilities are well-defined. The models under test run locally, so tries are cheap and a model can't change mid-experiment. AI assistants helped me build the platform. But no AI decides what's solved: scripts do, including one that recomputes every number I publish and fails the build if one drifts.",
+    "say": "Responsibilities are well-defined. The models under test run locally, so tries are cheap and a model can't change mid-experiment. A I assistants helped me build the platform. But no A I decides what's solved: scripts do, including one that recomputes every number I publish and fails the build if one drifts."
+  },
+  {
+    "id": "history-start",
+    "chapter": "How I got here",
+    "scene": "Timeline begins: Dec 2024, small models; scattered dots of single runs.",
+    "caption": "It began in December 2024 with small models. The first lesson was that single runs are noise, so repeated A/B tests became the rule.",
+    "say": "It began in December twenty twenty-four with small models. The first lesson was that single runs are noise, so repeated A B tests became the rule."
+  },
+  {
+    "id": "history-27b",
+    "scene": "Timeline: August 2026, a 27-billion-parameter model; five predictions stamped wrong; the two failed ideas named; a filter: 'new information?'",
+    "caption": "In August 2026, a much stronger 27-billion-parameter model solved what the small models couldn't, and the question came into focus: does coordinating tries keep its value as models get stronger? Then five of my predictions were proven wrong in a row. The two ideas that failed, a higher temperature and rephrased repair feedback, gave the model nothing new to work with. What worked was giving it new information. That became my rule of thumb for what to try next.",
+    "say": "In August twenty twenty-six, a much stronger twenty-seven-billion-parameter model solved what the small models couldn't, and the question came into focus: does coordinating tries keep its value as models get stronger? Then five of my predictions were proven wrong in a row. The two ideas that failed, a higher temperature and rephrased repair feedback, gave the model nothing new to work with. What worked was giving it new information. That became my rule of thumb for what to try next."
+  },
+  {
+    "id": "finding-harness",
+    "chapter": "What I learned",
+    "scene": "A Part 2 prompt with the Part 1 story missing; it slides back in. Bars: 6/20 → 19/19; 2/53 → 29/37.",
+    "caption": "The biggest finding came from reading the model's saved programs, and it was about my own harness. My prompts for Part 2 of each puzzle left out the Part 1 story it builds on, so the model had to guess the rules. On one puzzle, restoring that context and nothing else took it from 6 out of 20 to 19 out of 19. On 13 Part 2s the model had failed, it went from 2 out of 53 to 29 out of 37. Those 13 were picked because they had failed, and two smaller settings changed too, but what looked like a wall in the model was mostly missing information.",
+    "say": "The biggest finding came from reading the model's saved programs, and it was about my own harness. My prompts for Part Two of each puzzle left out the Part One story it builds on, so the model had to guess the rules. On one puzzle, restoring that context and nothing else took it from six out of twenty to nineteen out of nineteen. On thirteen Part Twos the model had failed, it went from two out of fifty-three to twenty-nine out of thirty-seven. Those thirteen were picked because they had failed, and two smaller settings changed too, but what looked like a wall in the model was mostly missing information."
+  },
+  {
+    "id": "finding-sampling",
+    "scene": "Curve of one-try rate vs three-try gain: big in the middle, flat at the ends. Predicted 52%, measured 49%.",
+    "caption": "Second, extra tries pay off about as much as independent tries predict: in three tests, three tries solved 49% where single-try rates predicted 52%. So more tries help most on problems the model solves sometimes. Under my original harness, they lifted those problems from 42% to 75%. After the fix, few problems were left in that middle band, and on the one that was, a repeat test I registered in advance could not confirm the lift.",
+    "say": "Second, extra tries pay off about as much as independent tries predict: in three tests, three tries solved forty-nine percent where single-try rates predicted fifty-two. So more tries help most on problems the model solves sometimes. Under my original harness, they lifted those problems from forty-two to seventy-five percent. After the fix, few problems were left in that middle band, and on the one that was, a repeat test I registered in advance could not confirm the lift."
+  },
+  {
+    "id": "finding-models",
+    "scene": "Two models on one problem: 10/10 vs 1/10. Repair: 17 of 427. A program running past the clock.",
+    "caption": "Third, a second model helped by being chosen, not mixed in: one solved a problem 10 times in 10 that my reference model solved once in 10. Repairing a failed program rarely rescued it: 17 times in 427. And the hardest failures were programs too slow to finish, which on the problem tested neither more time nor a repair asking for a faster method fixed.",
+    "say": "Third, a second model helped by being chosen, not mixed in: one solved a problem ten times in ten that my reference model solved once in ten. Repairing a failed program rarely rescued it: seventeen times in four hundred twenty-seven. And the hardest failures were programs too slow to finish, which on the problem tested neither more time nor a repair asking for a faster method fixed."
+  },
+  {
+    "id": "finding-measurement",
+    "scene": "Twelve defect cards stack up; the corpus totals count up beside them.",
+    "caption": "Underneath it all: measurement is most of the work. I found twelve defects in my own instruments, each of which made results look better or worse than they were.",
+    "say": "Underneath it all: measurement is most of the work. I found twelve defects in my own instruments, each of which made results look better or worse than they were."
+  },
+  {
+    "id": "next-caveat",
+    "chapter": "What's next",
+    "scene": "Timeline: 2024 and 2025 puzzles tagged 'public'; the model's release; Dec 1 2026 beyond it, 'newer than the model'.",
+    "caption": "One caveat hangs over all of this. The 2024 and 2025 puzzles are public and older than the models, so a model may have seen solutions while it was trained. Advent of Code 2026, starting December 1st, is the clean test: puzzles published after the model I've registered for it.",
+    "say": "One caveat hangs over all of this. The twenty twenty-four and twenty twenty-five puzzles are public and older than the models, so a model may have seen solutions while it was trained. Advent of Code twenty twenty-six, starting December first, is the clean test: puzzles published after the model I've registered for it."
+  },
+  {
+    "id": "next-nightly",
+    "scene": "Night, 02:00: the run starts; answers go out from a separate account; a budget meter of wrong answers; a held day for hidden text.",
+    "caption": "I registered the plan in advance and froze the model, prompts and settings. Each night of the event, a scheduled run attempts it with no human help and submits answers from a separate account, under a fixed budget of wrong answers. The one human check: if a puzzle page hides text, that day's answers wait until I've read it. The model never sees that text either way. The run also tests my biggest caveat: does the Part 1 context help because it informs, or because it reminds the model of something it memorized?",
+    "say": "I registered the plan in advance and froze the model, prompts and settings. Each night of the event, a scheduled run attempts it with no human help and submits answers from a separate account, under a fixed budget of wrong answers. The one human check: if a puzzle page hides text, that day's answers wait until I've read it. The model never sees that text either way. The run also tests my biggest caveat: does the Part One context help because it informs, or because it reminds the model of something it memorized?"
+  },
+  {
+    "id": "next-beyond",
+    "scene": "The exact judge fades to a weaker one (worked example only): 15 of 35 trials pick a wrong program.",
+    "caption": "After that comes the larger goal: problems beyond puzzles. Most real problems have no answer key. My first data shows what that costs: choosing by the puzzle's worked example alone, 15 of 35 trials picked a program that passed the example but got the real puzzle wrong. How much these strategies still help with weaker checks is the next question.",
+    "say": "After that comes the larger goal: problems beyond puzzles. Most real problems have no answer key. My first data shows what that costs: choosing by the puzzle's worked example alone, fifteen of thirty-five trials picked a program that passed the example but got the real puzzle wrong. How much these strategies still help with weaker checks is the next question."
+  },
+  {
+    "id": "outro",
+    "scene": "Closing card: subtitle, repository link.",
+    "caption": "The code, and the measurements behind every result, are in the repository. Thanks for watching."
+  }
+]

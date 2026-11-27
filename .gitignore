@@ -73,3 +73,9 @@ submission_history.json
 
 # local agent settings
 .claude/
+
+# The rendered videos, captions, chapters, transcript checks and thumbnails (dev/video/): uploaded
+# to YouTube and kept outside the repo. The .rendered-from records stay, so
+# recompute_results.py --check can tell whether the uploaded videos match their sources.
+/assets/video/*
+!/assets/video/*.rendered-from

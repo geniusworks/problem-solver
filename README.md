@@ -10,7 +10,7 @@ The project grew out of competing in the 2024 and 2025 Advent of Code events mys
 puzzles by hand led me to ask whether local models could be coordinated to solve them systematically —
 and, more to the point, whether that could be *measured* rather than asserted.
 
-**▶ [What this is, in two and a half minutes](https://youtu.be/YGGniGLmTck)**: a narrated
+**▶ [Problem Solver in brief, in two and a half minutes](https://youtu.be/YGGniGLmTck)**: a narrated
 introduction for anyone, technical or not.
 
 **▶ [Problem Solver in detail, in five and a half minutes](https://youtu.be/0jn4Baeyyn8)**: how it
@@ -360,6 +360,10 @@ solutions/               Verified solutions + the ledger (README.md)
 dev/progress/            The measured findings (baselines, A/Bs, the capability frontier)
 dev/results/             Run outcomes as tables; recompute_results.py checks the docs against them
 dev/benchmarks/          Cross-machine results, keyed by hardware (solve rate by model/config)
+dev/video/               The narrated videos' scripts, scenes and thumbnails, built locally by
+                         make-video.sh and make-thumbnails.sh
+assets/video/            What each uploaded video was rendered from (.rendered-from); the videos,
+                         captions, chapters and thumbnails are rendered here but not committed
 years/                   Cached problem data (gitignored)
 ```
 
