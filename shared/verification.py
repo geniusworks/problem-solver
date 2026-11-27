@@ -89,7 +89,7 @@ def run_solution_file(
         shutil.copyfile(input_path, Path(workdir) / config.INPUT_FILE)
         stopped, proc = run_capped(
             [sys.executable, str(path.resolve())], cwd=workdir,
-            timeout=timeout, max_bytes=memory_cap_bytes(),
+            timeout=timeout, max_bytes=memory_cap_bytes(), readable=[path],
         )
     if stopped == OVER_MEMORY:
         return None, f"over the memory cap of {memory_cap_bytes() // (1024 * 1024)} MB"

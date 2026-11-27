@@ -67,3 +67,11 @@ def test_records_whether_generated_code_ran_without_network(monkeypatch):
     assert environment.capture_environment([])["network_denied"] is True
     monkeypatch.setenv("DENY_NETWORK", "false")
     assert environment.capture_environment([])["network_denied"] is False
+
+
+def test_records_whether_generated_code_was_confined_to_its_files(monkeypatch):
+    monkeypatch.setattr(requests, "get", lambda url, timeout: FakeResponse({}))
+    monkeypatch.setenv("CONFINE_FILES", "true")
+    assert environment.capture_environment([])["files_confined"] is True
+    monkeypatch.setenv("CONFINE_FILES", "false")
+    assert environment.capture_environment([])["files_confined"] is False

@@ -93,8 +93,12 @@ components.
      copy of `input.txt`, so the accepted answers and verified solutions beside the real input are
      not reachable by relative path. With `execution.deny_network` set (off by default; the
      AoC 2026 nightly run requires it), the child runs under a macOS sandbox profile denying
-     all network operations. It keeps the user's file permissions, so it is not a security
-     boundary.
+     all network operations. With `execution.confine_files` set (off by default), the same
+     profile denies reading file contents under the home directory, the repository and the
+     temporary directory, except the run's own directory, the Python installation, the program
+     and its input, and denies writes outside the run's directory. With neither set, the child
+     keeps the user's file permissions, and neither is a boundary against a deliberate escape:
+     the profile runs as the user, on macOS only.
    - A correctness **oracle**: candidates are judged against cached accepted AoC
      answers (`shared/ground_truth.py`) and worked examples, with an overfit gate
      (`shared/overfit_detection.py`). Claimed vs. verified is tracked separately;
@@ -106,7 +110,7 @@ Configuration is layered to separate shared defaults from local settings:
 
 ### YAML Configuration (Shared Defaults)
 - `config/resources.yaml`: the live config file — execution/request limits, the
-  no-network switch, and the submission toggle and budget (`shared/config.py` reads it
+  no-network and file-confinement switches, and the submission toggle and budget (`shared/config.py` reads it
   into `RESOURCES_CONFIG`).
 - `config/nightly.yaml`: the AoC 2026 nightly run's configurations and trials.
 
@@ -115,6 +119,7 @@ Configuration is layered to separate shared defaults from local settings:
 - `AOC_ACCOUNT`: another AoC account to act as; its workspace is `accounts/<name>/`
   (`shared/paths.py`, `account_dir`) and its cookie `AOC_SESSION_<NAME>`, with no fallback
 - `DENY_NETWORK`: overrides `execution.deny_network`
+- `CONFINE_FILES`: overrides `execution.confine_files`
 - `OLLAMA_HOST`, `SOLVER_MODELS`, `MAX_REPAIR_ITERATIONS`
 - `ENABLE_COLLABORATIVE_IMPROVEMENT`, `SUBMIT_SOLUTIONS`, `LOG_LEVEL`
 

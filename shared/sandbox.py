@@ -28,10 +28,16 @@ Two things are constrained:
   unchanged; the AoC 2026 runs, of code written against puzzles nobody has checked,
   turn it on (dev/progress/aoc2026-registration.md). Where the profile cannot be applied
   the run fails rather than proceed with network access.
+- **The filesystem**, when execution.confine_files is set (or CONFINE_FILES): the same
+  profile denies reading file contents under the home directory, the repository and the
+  temporary directory, except the run's own working directory, the Python installation
+  and the files the caller names (the program and its input); and it denies writing
+  anywhere but the working directory and /dev/null. Metadata stays readable, so a program
+  can stat a path but not list a directory or open a file. Off by default, for the same
+  reason as the network setting.
 
-Not constrained: reads elsewhere on the filesystem. Solutions run as the user, with the
-user's permissions; the environment scrub removes the one secret the process itself
-carried.
+With neither setting, solutions run as the user, with the user's permissions; the
+environment scrub removes the one secret the process itself carried.
 """
 
 import asyncio
@@ -40,8 +46,10 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import psutil
 
@@ -60,32 +68,68 @@ TIMED_OUT = "timed out"
 OVER_MEMORY = "over the memory cap"
 
 
-# A macOS sandbox profile: everything a solution needs, and no network operation at all.
-NO_NETWORK_PROFILE = "(version 1)(allow default)(deny network*)"
+def _setting(variable: str, key: str) -> bool:
+    raw = os.getenv(variable)
+    if raw is not None and raw.strip():
+        return raw.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(RESOURCES_CONFIG.get("execution", {}).get(key, False))
 
 
 def network_denied() -> bool:
     """Whether model-written code runs without network access (execution.deny_network)."""
-    raw = os.getenv("DENY_NETWORK")
-    if raw is not None and raw.strip():
-        return raw.strip().lower() in {"1", "true", "yes", "on"}
-    return bool(RESOURCES_CONFIG.get("execution", {}).get("deny_network", False))
+    return _setting("DENY_NETWORK", "deny_network")
 
 
-def sandboxed(args: List[str]) -> List[str]:
-    """The command that runs `args` as model-written code: under NO_NETWORK_PROFILE when
-    network_denied(), otherwise unchanged. sandbox-exec applies the profile and then execs
-    `args` in the same process, so the resource limits and the memory watchdog still apply
-    to the program itself."""
-    if not network_denied():
+def files_confined() -> bool:
+    """Whether model-written code is confined to its own files (execution.confine_files)."""
+    return _setting("CONFINE_FILES", "confine_files")
+
+
+_REPO = Path(__file__).resolve().parents[1]
+
+
+def _quoted(path: Union[str, Path]) -> str:
+    """`path`, resolved, as a sandbox-profile string literal."""
+    real = os.path.realpath(path)
+    return '"' + real.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def profile(workdir: Union[str, Path], readable: Iterable[Union[str, Path]] = ()) -> str:
+    """The sandbox profile for a run in `workdir` that may also read `readable`."""
+    rules = ["(version 1)", "(allow default)"]
+    if network_denied():
+        rules.append("(deny network*)")
+    if files_confined():
+        hidden = (Path.home(), _REPO, tempfile.gettempdir())
+        python = {sys.prefix, sys.base_prefix}
+        rules += [
+            "(deny file-read-data " + " ".join(f"(subpath {_quoted(p)})" for p in hidden) + ")",
+            "(allow file-read-data "
+            + " ".join(f"(subpath {_quoted(p)})" for p in (*sorted(python), workdir))
+            + "".join(f" (literal {_quoted(p)})" for p in readable) + ")",
+            "(deny file-write*)",
+            f'(allow file-write* (subpath {_quoted(workdir)}) (literal "/dev/null"))',
+        ]
+    return "".join(rules)
+
+
+def sandboxed(
+    args: List[str], workdir: Union[str, Path], readable: Iterable[Union[str, Path]] = ()
+) -> List[str]:
+    """The command that runs `args` as model-written code in `workdir`: under `profile()`
+    when network_denied() or files_confined(), otherwise unchanged. `readable` names the
+    files outside `workdir` the program needs (itself, its input). sandbox-exec applies
+    the profile and then execs `args` in the same process, so the resource limits and the
+    memory watchdog still apply to the program itself."""
+    if not (network_denied() or files_confined()):
         return list(args)
     tool = shutil.which("sandbox-exec") or ("/usr/bin/sandbox-exec" if sys.platform == "darwin" else None)
     if tool is None or not os.path.exists(tool):
         raise RuntimeError(
-            "execution.deny_network is set but sandbox-exec is unavailable; refusing to run "
-            "model-written code with network access"
+            "execution.deny_network or execution.confine_files is set but sandbox-exec is "
+            "unavailable; refusing to run model-written code unconfined"
         )
-    return [tool, "-p", NO_NETWORK_PROFILE, *args]
+    return [tool, "-p", profile(workdir, readable), *args]
 
 
 def child_env() -> Dict[str, str]:
@@ -220,15 +264,17 @@ async def communicate_capped(
 
 
 def run_capped(
-    args: List[str], cwd: str, timeout: float, max_bytes: int
+    args: List[str], cwd: str, timeout: float, max_bytes: int,
+    readable: Iterable[Union[str, Path]] = (),
 ) -> Tuple[Optional[str], "subprocess.CompletedProcess[str]"]:
     """Synchronous `communicate_capped` for code run with subprocess (text output).
 
-    Starts `args` with child_env() and configured_limiter(timeout). Returns
+    Starts `args` in `cwd`, under sandboxed(args, cwd, readable), with child_env() and
+    configured_limiter(timeout). Returns
     (stopped, completed); stopped is None, TIMED_OUT or OVER_MEMORY.
     """
     process = subprocess.Popen(
-        sandboxed(args), cwd=cwd, env=child_env(), preexec_fn=configured_limiter(timeout),
+        sandboxed(args, cwd, readable), cwd=cwd, env=child_env(), preexec_fn=configured_limiter(timeout),
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
     )
     deadline = time.monotonic() + timeout
